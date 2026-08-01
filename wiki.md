@@ -67,7 +67,7 @@ Nothing is published to the ecosystem yet — no Knowledge Pack integration, no 
 
 | Event (planned) | Trigger | Status |
 |---|---|---|
-| `logistics.trip.completed` / `logistics.trip.cancelled` | `Ride.status` reaches `completed` / `cancelled` | not implemented — no listener/observer on `Ride` yet |
+| `logistics.trip.completed` / `logistics.trip.cancelled` | `Ride.status` reaches `completed` / `cancelled` | outbound ecosystem event still not implemented. A `Ride` observer (`App\Observers\RideObserver`) now exists and fires on the `completed` transition, but it only dispatches the in-app `RideCompletedNotification` — no Knowledge Pack payload, no `cancelled` handling, no outbound bus wiring yet |
 | `logistics.corridor.congestion_shift` | Cell-level travel-time regime change | not implemented — no corridor/geohash concept in code yet |
 | `logistics.fleet.utilization_cycle` | Fleet reporting cycle | not implemented — no fleet entity to report on yet |
 
@@ -75,7 +75,8 @@ Nothing is published to the ecosystem yet — no Knowledge Pack integration, no 
 
 To keep this wiki honest as the repo grows:
 
-- **Real and working:** auth (Jetstream/Sanctum), the four domain tables and models, the dashboard query set, ecosystem SSO handoff route.
+- **Real and working:** auth (Jetstream/Sanctum), the four domain tables and models, the dashboard query set, ecosystem SSO handoff route, the in-app `RideCompletedNotification` (fired automatically by `App\Observers\RideObserver` when a ride's `status` transitions to `completed`, to both the passenger and the driver).
+- **Written but still dead:** `DriverApplicationSubmittedNotification` exists and is tested via manual dispatch, but has no automatic trigger — there is no "operator" recipient to wire it to until fleet-as-entity (§8) exists, since a `DriverProfile` has no team/operator relation today.
 - **Configured but unused:** Reverb (realtime), Anthropic API key/model (AI fare estimation / dispatch).
 - **Not started:** fare estimation, dispatch/matching, driver-facing mobile flow, passenger-facing request flow, Knowledge Pack publishing, fleet-as-entity (currently only Jetstream `Team`).
 
@@ -105,5 +106,6 @@ Once trip/dispatch logic lands, Dot.Ehail intends to publish four Knowledge Pack
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.3.1 | 2026-08-01 | Ehail Platform Lead | Incremental pass: wired the previously-dead `RideCompletedNotification` (existed, was tested only via manual dispatch, never fired by app code) to a real trigger via a new `App\Observers\RideObserver` that fires on `Ride.status` transitioning to `completed`, notifying both passenger and driver; added `RideObserverTest` covering the completed transition, non-completed transitions, no-op re-saves, and the no-driver-yet case; left `DriverApplicationSubmittedNotification` unwired and documented why (no operator/team relation exists on `DriverProfile` to notify) rather than fabricating one |
 | 0.3.0 | 2026-08-01 | Ehail Platform Lead | Platform-loop pass: real logo/favicon wired into nav, auth pages, and browser tab (removed the unreferenced `dot_ehail.png`, `docs/logo.svg`, and the stray root `index.html`/`styles.css`/`dot.logos2.png` "coming soon" template leftovers); added a rides search + detail page, a driver profile page, a database-channel notification bell, and a class-based dark mode toggle; fixed a real authorization gap (any authenticated user could view any driver's ride history and identifiers by ID) via a new `DriverProfilePolicy`; added Feature tests for the dashboard, ride view/search, driver profile access control, and the notification bell |
 | 0.2.0 | 2026-08-01 | Ehail Platform Lead | Initial wiki: documented the actual Laravel/Jetstream/Livewire scaffold (driver/vehicle/ride/rating models, live dashboard, ecosystem SSO route), marked event/Knowledge Pack integration as not-yet-implemented against Dot.Brain's platforms/dot-ehail.md target state |

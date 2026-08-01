@@ -7,10 +7,11 @@ use Illuminate\Notifications\Notification;
 
 /**
  * In-app (database channel only) notification sent when a ride reaches the
- * `completed` status. Not yet wired to any automatic trigger — dispatch
- * manually via `$user->notify(new RideCompletedNotification($ride))` until a
- * Ride lifecycle observer exists to emit it automatically (see wiki.md §5
- * and §8 — the planned `logistics.trip.completed` event has no listener yet).
+ * `completed` status. Dispatched automatically to the ride's passenger and
+ * driver by `App\Observers\RideObserver` whenever `Ride.status` transitions
+ * to `completed` (registered in `AppServiceProvider::boot()`). This is
+ * separate from the outbound `logistics.trip.completed` ecosystem event
+ * described in wiki.md §5/§8, which still has no publishing pipeline.
  */
 class RideCompletedNotification extends Notification
 {
