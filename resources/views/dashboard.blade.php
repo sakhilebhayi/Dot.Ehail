@@ -223,7 +223,7 @@
     <div style="background:#141416;border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;">
         <div style="padding:1.25rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;">
             <h3 style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:#f4f4f5;margin:0;text-transform:uppercase;letter-spacing:0.08em;">Recent Rides</h3>
-            <span style="font-size:0.68rem;color:#71717a;">Last 10</span>
+            <a href="{{ route('rides.index') }}" style="font-size:0.68rem;color:#38bdf8;text-decoration:none;font-weight:600;">View all &amp; search →</a>
         </div>
 
         @if($recentRides->isEmpty())
@@ -261,7 +261,7 @@
                         $pickup   = strlen($ride->pickup_address)   > 28 ? substr($ride->pickup_address, 0, 28).'…'   : $ride->pickup_address;
                         $dropoff  = strlen($ride->dropoff_address)  > 28 ? substr($ride->dropoff_address, 0, 28).'…'  : $ride->dropoff_address;
                     @endphp
-                    <tr style="border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;" onmouseover="this.style.background='rgba(26,36,56,0.6)'" onmouseout="this.style.background='transparent'">
+                    <tr onclick="window.location='{{ route('rides.show', $ride) }}'" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;" onmouseover="this.style.background='rgba(26,36,56,0.6)'" onmouseout="this.style.background='transparent'">
                         <td style="padding:0.85rem 1.5rem;font-size:0.75rem;font-weight:600;color:#71717a;font-family:'Syne',sans-serif;">#{{ $ride->id }}</td>
                         <td style="padding:0.85rem 1rem;max-width:220px;">
                             <div style="font-size:0.75rem;color:#f4f4f5;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $pickup }}</div>

@@ -5,11 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Dot.Ehail</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { corePlugins: { preflight: false } }</script>
+    <script>tailwind.config = { darkMode: 'class', corePlugins: { preflight: false } }</script>
+    <script>
+        // Dark mode: this dashboard's own markup is intentionally fixed-dark (inline styles,
+        // not Tailwind dark: classes), so this toggle mainly affects Jetstream-rendered pages
+        // (Profile, Team Settings) which do use dark: classes. Kept for theme consistency
+        // ecosystem-wide and so those subpages respect the user's light/dark preference.
+        (function () {
+            const stored = localStorage.getItem('dot-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (stored === 'dark' || (!stored && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
     <style>
         :root { --accent: #38bdf8; --accent-rgb: 56,189,248; }
         *, *::before, *::after { box-sizing: border-box; }
@@ -71,6 +87,9 @@
         .dot-badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; }
         .dot-badge-accent { background:rgba(56,189,248,0.12); color:#38bdf8; }
         select.dot-input option { background:#1a1a1f; }
+        .dot-loading-overlay { display:flex; align-items:center; justify-content:center; padding:2.5rem 0; }
+        .dot-spin { animation: dot-spin 0.9s linear infinite; }
+        @keyframes dot-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
     </style>
     @livewireStyles
     <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
@@ -99,6 +118,10 @@
                 <span class="material-symbols-rounded nav-icon">dashboard</span>
                 Dashboard
             </a>
+            <a href="{{ route('rides.index') }}" class="nav-item {{ request()->routeIs('rides.*') ? 'active' : '' }}">
+                <span class="material-symbols-rounded nav-icon">local_taxi</span>
+                Rides
+            </a>
             <div class="sidebar-divider" style="margin:10px 0;"></div>
             <a href="{{ route('profile.show') }}" class="nav-item {{ request()->routeIs('profile.show') ? 'active' : '' }}">
                 <span class="material-symbols-rounded nav-icon">manage_accounts</span>
@@ -126,7 +149,16 @@
         </div>
         @auth
         <span class="topbar-team">{{ Auth::user()->currentTeam->name ?? 'Personal' }}</span>
+        <livewire:notification-bell />
         @endauth
+        <button
+            type="button"
+            onclick="document.documentElement.classList.toggle('dark'); localStorage.setItem('dot-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');"
+            class="topbar-btn"
+            title="Toggle dark mode"
+        >
+            <span class="material-symbols-rounded">dark_mode</span>
+        </button>
         <a href="{{ route('profile.show') }}" class="topbar-btn" title="Profile">
             <span class="material-symbols-rounded">account_circle</span>
         </a>

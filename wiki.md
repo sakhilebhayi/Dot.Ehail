@@ -105,4 +105,5 @@ Once trip/dispatch logic lands, Dot.Ehail intends to publish four Knowledge Pack
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.3.0 | 2026-08-01 | Ehail Platform Lead | Platform-loop pass: real logo/favicon wired into nav, auth pages, and browser tab (removed the unreferenced `dot_ehail.png`, `docs/logo.svg`, and the stray root `index.html`/`styles.css`/`dot.logos2.png` "coming soon" template leftovers); added a rides search + detail page, a driver profile page, a database-channel notification bell, and a class-based dark mode toggle; fixed a real authorization gap (any authenticated user could view any driver's ride history and identifiers by ID) via a new `DriverProfilePolicy`; added Feature tests for the dashboard, ride view/search, driver profile access control, and the notification bell |
 | 0.2.0 | 2026-08-01 | Ehail Platform Lead | Initial wiki: documented the actual Laravel/Jetstream/Livewire scaffold (driver/vehicle/ride/rating models, live dashboard, ecosystem SSO route), marked event/Knowledge Pack integration as not-yet-implemented against Dot.Brain's platforms/dot-ehail.md target state |

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\EcosystemAuthController;
+use App\Http\Controllers\Ehail\DriverController;
+use App\Http\Controllers\Ehail\RideController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -43,4 +45,8 @@ Route::middleware([
             'totalRevenue', 'statusCounts', 'recentRides'
         ));
     })->name('dashboard');
+
+    Route::get('/rides', [RideController::class, 'index'])->name('rides.index');
+    Route::get('/rides/{ride}', [RideController::class, 'show'])->name('rides.show');
+    Route::get('/drivers/{driverProfile}', [DriverController::class, 'show'])->name('drivers.show');
 });
