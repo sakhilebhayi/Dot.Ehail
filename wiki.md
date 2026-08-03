@@ -1,10 +1,10 @@
 ---
 title: Dot.Ehail — Platform Wiki
-version: 0.2.0
+version: 0.3.2
 status: draft
 owners: [Ehail Platform Lead]
 platform-id: dot-ehail
-last-review: 2026-08-01
+last-review: 2026-08-03
 ---
 
 # Dot.Ehail
@@ -106,6 +106,7 @@ Once trip/dispatch logic lands, Dot.Ehail intends to publish four Knowledge Pack
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.3.2 | 2026-08-03 | Sakhile Bhayi | Built a full custom marketing welcome page from scratch — `resources/views/welcome.blade.php` had never received a design pass (unlike sibling Dot platforms) and was still the stock Laravel/Jetstream starter template with no nav, hero, or footer to speak of. New page follows the shared Dot marketing-site pattern: fixed header with the real logo (`public/images/logo.png`) and nav links, a two-column hero (headline/stat-row/CTA on the left, an illustrative operations-dashboard mock on the right), a 6-card features grid and a 6-card capabilities grid describing only entities/workflows that actually exist in code (driver onboarding states, vehicle tiers, the ride status lifecycle, fare/rating fields, Jetstream teams, Postgres/Sanctum/Reverb architecture — no fabricated stats or social proof), a closing CTA section, and a footer with the real logo. Hero background: night city street with car, photo by Luke Miller (@bylukemiller), unsplash.com/photos/a-car-driving-down-a-busy-city-street-at-night-kY1LdHhIcRU. CTA section background: driver navigating with an in-car GPS system, photo by Dan Gold (@danielcgold), unsplash.com/photos/kARZuSYMfrA. Both direct `images.unsplash.com` URLs were verified via `curl -sI` returning `HTTP/2 200` before use. Also corrected frontmatter `version` (was stuck at 0.2.0 despite the changelog already having 0.3.0/0.3.1 entries) to follow the table's actual latest version. |
 | 0.3.1 | 2026-08-01 | Ehail Platform Lead | Incremental pass: wired the previously-dead `RideCompletedNotification` (existed, was tested only via manual dispatch, never fired by app code) to a real trigger via a new `App\Observers\RideObserver` that fires on `Ride.status` transitioning to `completed`, notifying both passenger and driver; added `RideObserverTest` covering the completed transition, non-completed transitions, no-op re-saves, and the no-driver-yet case; left `DriverApplicationSubmittedNotification` unwired and documented why (no operator/team relation exists on `DriverProfile` to notify) rather than fabricating one |
 | 0.3.0 | 2026-08-01 | Ehail Platform Lead | Platform-loop pass: real logo/favicon wired into nav, auth pages, and browser tab (removed the unreferenced `dot_ehail.png`, `docs/logo.svg`, and the stray root `index.html`/`styles.css`/`dot.logos2.png` "coming soon" template leftovers); added a rides search + detail page, a driver profile page, a database-channel notification bell, and a class-based dark mode toggle; fixed a real authorization gap (any authenticated user could view any driver's ride history and identifiers by ID) via a new `DriverProfilePolicy`; added Feature tests for the dashboard, ride view/search, driver profile access control, and the notification bell |
 | 0.2.0 | 2026-08-01 | Ehail Platform Lead | Initial wiki: documented the actual Laravel/Jetstream/Livewire scaffold (driver/vehicle/ride/rating models, live dashboard, ecosystem SSO route), marked event/Knowledge Pack integration as not-yet-implemented against Dot.Brain's platforms/dot-ehail.md target state |
