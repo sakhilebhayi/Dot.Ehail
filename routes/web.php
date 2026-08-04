@@ -23,9 +23,15 @@ Route::middleware([
         $cancelledRides   = \App\Models\Ride::where('status', 'cancelled')->count();
         $requestedRides   = \App\Models\Ride::where('status', 'requested')->count();
 
-        $totalDrivers     = \App\Models\DriverProfile::count();
-        $availableDrivers = \App\Models\DriverProfile::where('is_online', true)->count();
-        $approvedDrivers  = \App\Models\DriverProfile::where('status', 'approved')->count();
+        // DriverProfile now carries HasUserScope (a driver's own profile is
+        // single-owner tenant data — see app/Models/Concerns/HasUserScope.php),
+        // but this dashboard is a documented platform-wide ops view (wiki.md
+        // §4), so its aggregate counts must stay unscoped or every operator
+        // would silently see driver counts of 0/1 instead of the real
+        // platform-wide numbers.
+        $totalDrivers     = \App\Models\DriverProfile::withoutGlobalScope('user')->count();
+        $availableDrivers = \App\Models\DriverProfile::withoutGlobalScope('user')->where('is_online', true)->count();
+        $approvedDrivers  = \App\Models\DriverProfile::withoutGlobalScope('user')->where('status', 'approved')->count();
 
         $totalRevenue     = \App\Models\Ride::where('status', 'completed')->sum('final_fare');
 

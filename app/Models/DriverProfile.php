@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasUserScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DriverProfile extends Model
 {
+    use HasUserScope;
+
     protected $fillable = ['user_id', 'license_number', 'id_number', 'status', 'is_online', 'rating', 'total_rides'];
 
     protected $casts = [
