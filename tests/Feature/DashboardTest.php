@@ -38,6 +38,28 @@ class DashboardTest extends TestCase
             ->assertSee('No rides recorded yet.');
     }
 
+    public function test_authenticated_user_with_no_current_team_can_view_the_dashboard(): void
+    {
+        // Regression test: navigation-menu.blade.php (rendered on every
+        // authenticated page via layouts/app.blade.php's
+        // @livewire('navigation-menu')) used to dereference
+        // Auth::user()->currentTeam->name/->id unguarded. currentTeam is
+        // genuinely null for a user with no current_team_id — e.g. a user
+        // authenticated via EcosystemAuthController (SSO login that never
+        // runs CreateNewUser's personal-team bootstrap) or a team owner
+        // whose only team was deleted (DeleteTeam -> Team::purge() does not
+        // null out former members' current_team_id). Previously this threw
+        // a UrlGenerationException from route('teams.show', null) because
+        // isset() on a null value is false, so the {team} route parameter
+        // was never filled in.
+        $user = User::factory()->create(['current_team_id' => null]);
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('No Team');
+    }
+
     public function test_dashboard_reflects_real_ride_and_driver_counts(): void
     {
         $user      = User::factory()->withPersonalTeam()->create();
