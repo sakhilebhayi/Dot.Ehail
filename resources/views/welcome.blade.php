@@ -140,16 +140,20 @@
 
         <!-- Hero -->
         <section class="relative pt-32 pb-16 sm:pb-24 px-5 sm:px-8 overflow-hidden">
-            <div class="max-w-[1400px] mx-auto">
+            <!-- Photo: night-time city street with a car, by Luke Miller (@bylukemiller), unsplash.com/photos/a-car-driving-down-a-busy-city-street-at-night-kY1LdHhIcRU -->
+            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1482029255085-35a4a48b7084?q=80&w=2400&auto=format&fit=crop');"></div>
+            <div class="absolute inset-0" style="background: linear-gradient(100deg, rgba(27,32,26,0.92) 0%, rgba(27,32,26,0.80) 32%, rgba(27,32,26,0.45) 55%, rgba(27,32,26,0.18) 75%, rgba(27,32,26,0.02) 92%);"></div>
+            <div class="absolute inset-0" style="background: linear-gradient(180deg, rgba(27,32,26,0) 0%, rgba(27,32,26,0.10) 55%, rgba(27,32,26,0.35) 80%, #f6f5ef 100%);"></div>
+            <div class="relative z-10 max-w-[1400px] mx-auto">
                 <div class="grid lg:grid-cols-[1.05fr_0.95fr] gap-14 lg:gap-10 items-center">
                     <div class="reveal" data-reveal>
                         <p class="font-mono text-xs tracking-[0.18em] uppercase text-[var(--gold)] mb-6">
                             E-hailing operator platform
                         </p>
-                        <h1 class="font-display font-semibold text-4xl sm:text-5xl lg:text-6xl leading-[1.05] tracking-tight text-[var(--ink)] mb-6">
+                        <h1 class="font-display font-semibold text-4xl sm:text-5xl lg:text-6xl leading-[1.05] tracking-tight text-[var(--paper)] mb-6">
                             Your fleet.<br>Your brand.<br>Your rides.
                         </h1>
-                        <p class="text-lg text-[var(--ink-soft)] leading-relaxed max-w-xl mb-10">
+                        <p class="text-lg text-[var(--paper)] leading-relaxed max-w-xl mb-10">
                             Dot.Ehail lets an operator — a single owner-driver or a multi-vehicle fleet — run a branded e-hailing business: onboard drivers, register vehicles, take ride requests, dispatch, track trips in real time, settle fares, and collect ratings.
                         </p>
 
@@ -158,7 +162,7 @@
                                 <a href="{{ route('register') }}" class="press px-7 py-3.5 bg-[var(--ink)] hover:bg-[var(--sage)] text-white font-display font-semibold rounded-full transition-colors">
                                     Create account
                                 </a>
-                                <a href="#dashboard" class="press flex items-center gap-2 px-7 py-3.5 text-[var(--ink)] font-medium rounded-full border border-[var(--line)] hover:border-[var(--sage-bright)] transition-colors">
+                                <a href="#dashboard" class="press flex items-center gap-2 px-7 py-3.5 text-[var(--paper)] font-medium rounded-full border border-[rgba(246,245,239,0.35)] hover:border-[var(--sage-bright)] transition-colors">
                                     See the dashboard
                                 </a>
                             </div>
@@ -310,11 +314,14 @@
 
         <!-- CTA -->
         <section class="relative py-28 sm:py-36 px-5 sm:px-8 overflow-hidden">
+            <!-- Photo: driver navigating with an in-car GPS system, by Dan Gold (@danielcgold), unsplash.com/photos/kARZuSYMfrA -->
+            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1715645978589-a43840f228df?q=80&w=2400&auto=format&fit=crop');"></div>
+            <div class="absolute inset-0" style="background: linear-gradient(180deg, #f6f5ef 0%, rgba(27,32,26,0.80) 20%, rgba(27,32,26,0.85) 50%, rgba(27,32,26,0.80) 80%, #f6f5ef 100%);"></div>
             <div class="relative z-10 max-w-2xl mx-auto text-center reveal" data-reveal>
-                <h2 class="font-display font-semibold text-3xl sm:text-4xl text-[var(--ink)] leading-tight mb-5">
+                <h2 class="font-display font-semibold text-3xl sm:text-4xl text-[var(--paper)] leading-tight mb-5">
                     Onboard your first driver today
                 </h2>
-                <p class="text-[var(--ink-soft)] leading-relaxed mb-10 max-w-lg mx-auto">
+                <p class="text-[var(--paper)] leading-relaxed mb-10 max-w-lg mx-auto">
                     Sign in with your Dot Ecosystem account or create one to start registering drivers and vehicles.
                 </p>
 
@@ -323,7 +330,7 @@
                         <a href="{{ route('register') }}" class="press px-8 py-3.5 bg-[var(--ink)] hover:bg-[var(--sage)] text-white font-display font-semibold rounded-full transition-colors">
                             Create account
                         </a>
-                        <a href="{{ route('login') }}" class="press px-8 py-3.5 text-[var(--ink)] font-medium rounded-full border border-[var(--line)] hover:border-[var(--sage-bright)] transition-colors">
+                        <a href="{{ route('login') }}" class="press px-8 py-3.5 text-[var(--paper)] font-medium rounded-full border border-[rgba(246,245,239,0.35)] hover:border-[var(--sage-bright)] transition-colors">
                             Sign in
                         </a>
                     </div>

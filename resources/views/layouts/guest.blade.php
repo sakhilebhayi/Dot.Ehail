@@ -12,8 +12,9 @@
         <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
 
         <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=Overpass+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -21,29 +22,32 @@
         <!-- Styles -->
         @livewireStyles
 
-        <!-- Dark mode: apply persisted/system preference before paint to avoid a flash. -->
-        <script>
-            (function () {
-                const stored = localStorage.getItem('dot-theme');
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (stored === 'dark' || (!stored && prefersDark)) {
-                    document.documentElement.classList.add('dark');
-                }
-            })();
-        </script>
+        <style>
+            :root {
+                --paper: #f6f5ef;
+                --panel: #fdfcf8;
+                --ink: #1b201a;
+                --ink-soft: #565c53;
+                --gold: #c99626;
+                --gold-bright: #e2b13d;
+                --sage: #5c8447;
+                --sage-bright: #7fa863;
+                --line: rgba(27, 32, 26, 0.12);
+                --font-display: 'Space Grotesk', ui-sans-serif, sans-serif;
+                --font-body: 'Manrope', system-ui, sans-serif;
+                --font-mono: 'Overpass Mono', ui-monospace, monospace;
+                --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+            }
+            html { background: var(--paper); }
+            body { font-family: var(--font-body); background: var(--paper); color: var(--ink); }
+            .font-display { font-family: var(--font-display); }
+            .font-mono { font-family: var(--font-mono); }
+            .press { transition: transform 160ms var(--ease-out); }
+            .press:active { transform: scale(0.97); }
+        </style>
     </head>
     <body>
-        <div class="font-sans text-gray-900 dark:text-gray-100 antialiased">
-            <button
-                type="button"
-                onclick="document.documentElement.classList.toggle('dark'); localStorage.setItem('dot-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');"
-                class="fixed top-4 right-4 z-50 inline-flex items-center justify-center h-9 w-9 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white transition"
-                title="Toggle dark mode"
-            >
-                <span class="dark:hidden">🌙</span>
-                <span class="hidden dark:inline">☀️</span>
-            </button>
-
+        <div class="font-body text-[var(--ink)] antialiased">
             {{ $slot }}
         </div>
 
