@@ -17,11 +17,11 @@ class Ride extends Model
     ];
 
     protected $casts = [
-        'requested_at'   => 'datetime',
-        'accepted_at'    => 'datetime',
-        'completed_at'   => 'datetime',
+        'requested_at' => 'datetime',
+        'accepted_at' => 'datetime',
+        'completed_at' => 'datetime',
         'estimated_fare' => 'decimal:2',
-        'final_fare'     => 'decimal:2',
+        'final_fare' => 'decimal:2',
     ];
 
     public function passenger(): BelongsTo

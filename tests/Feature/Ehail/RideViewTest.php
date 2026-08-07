@@ -16,10 +16,10 @@ class RideViewTest extends TestCase
         $passenger = User::factory()->create();
 
         $ride = Ride::create([
-            'passenger_id'    => $passenger->id,
-            'pickup_address'  => '10 Kloof Street',
+            'passenger_id' => $passenger->id,
+            'pickup_address' => '10 Kloof Street',
             'dropoff_address' => '20 Long Street',
-            'status'          => 'requested',
+            'status' => 'requested',
         ]);
 
         $this->get(route('rides.show', $ride))->assertRedirect('/login');
@@ -27,15 +27,15 @@ class RideViewTest extends TestCase
 
     public function test_authenticated_user_can_view_a_ride(): void
     {
-        $user      = User::factory()->withPersonalTeam()->create();
+        $user = User::factory()->withPersonalTeam()->create();
         $passenger = User::factory()->create();
 
         $ride = Ride::create([
-            'passenger_id'    => $passenger->id,
-            'pickup_address'  => '10 Kloof Street',
+            'passenger_id' => $passenger->id,
+            'pickup_address' => '10 Kloof Street',
             'dropoff_address' => '20 Long Street',
-            'status'          => 'completed',
-            'final_fare'      => 64.00,
+            'status' => 'completed',
+            'final_fare' => 64.00,
         ]);
 
         $this->actingAs($user)
@@ -48,20 +48,20 @@ class RideViewTest extends TestCase
 
     public function test_ride_search_filters_by_pickup_address(): void
     {
-        $user      = User::factory()->withPersonalTeam()->create();
+        $user = User::factory()->withPersonalTeam()->create();
         $passenger = User::factory()->create();
 
         Ride::create([
-            'passenger_id'    => $passenger->id,
-            'pickup_address'  => 'Unique Pickup Alpha',
+            'passenger_id' => $passenger->id,
+            'pickup_address' => 'Unique Pickup Alpha',
             'dropoff_address' => 'Somewhere',
-            'status'          => 'requested',
+            'status' => 'requested',
         ]);
         Ride::create([
-            'passenger_id'    => $passenger->id,
-            'pickup_address'  => 'Totally Different Beta',
+            'passenger_id' => $passenger->id,
+            'pickup_address' => 'Totally Different Beta',
             'dropoff_address' => 'Elsewhere',
-            'status'          => 'requested',
+            'status' => 'requested',
         ]);
 
         $response = $this->actingAs($user)->get(route('rides.index', ['q' => 'Alpha']));

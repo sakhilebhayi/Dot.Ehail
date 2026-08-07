@@ -62,25 +62,25 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_reflects_real_ride_and_driver_counts(): void
     {
-        $user      = User::factory()->withPersonalTeam()->create();
+        $user = User::factory()->withPersonalTeam()->create();
         $passenger = User::factory()->create();
-        $driver    = User::factory()->create();
+        $driver = User::factory()->create();
 
         DriverProfile::create([
-            'user_id'        => $driver->id,
+            'user_id' => $driver->id,
             'license_number' => 'LIC-100',
-            'id_number'      => 'ID-100',
-            'status'         => 'approved',
-            'is_online'      => true,
+            'id_number' => 'ID-100',
+            'status' => 'approved',
+            'is_online' => true,
         ]);
 
         Ride::create([
-            'passenger_id'    => $passenger->id,
-            'driver_id'       => $driver->id,
-            'pickup_address'  => '1 Main Street',
+            'passenger_id' => $passenger->id,
+            'driver_id' => $driver->id,
+            'pickup_address' => '1 Main Street',
             'dropoff_address' => '2 Second Avenue',
-            'status'          => 'completed',
-            'final_fare'      => 85.50,
+            'status' => 'completed',
+            'final_fare' => 85.50,
         ]);
 
         $response = $this->actingAs($user)->get('/dashboard');

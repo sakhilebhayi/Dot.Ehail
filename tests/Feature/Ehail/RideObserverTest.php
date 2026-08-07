@@ -18,21 +18,21 @@ class RideObserverTest extends TestCase
         Notification::fake();
 
         $passenger = User::factory()->create();
-        $driver    = User::factory()->withPersonalTeam()->create();
+        $driver = User::factory()->withPersonalTeam()->create();
 
         $ride = Ride::create([
-            'passenger_id'    => $passenger->id,
-            'driver_id'       => $driver->id,
-            'pickup_address'  => '10 Kloof Street',
+            'passenger_id' => $passenger->id,
+            'driver_id' => $driver->id,
+            'pickup_address' => '10 Kloof Street',
             'dropoff_address' => '20 Long Street',
-            'status'          => 'accepted',
+            'status' => 'accepted',
         ]);
 
         Notification::assertNothingSent();
 
         $ride->update([
-            'status'      => 'completed',
-            'final_fare'  => 64.00,
+            'status' => 'completed',
+            'final_fare' => 64.00,
             'completed_at' => now(),
         ]);
 
@@ -45,14 +45,14 @@ class RideObserverTest extends TestCase
         Notification::fake();
 
         $passenger = User::factory()->create();
-        $driver    = User::factory()->withPersonalTeam()->create();
+        $driver = User::factory()->withPersonalTeam()->create();
 
         $ride = Ride::create([
-            'passenger_id'    => $passenger->id,
-            'driver_id'       => $driver->id,
-            'pickup_address'  => '10 Kloof Street',
+            'passenger_id' => $passenger->id,
+            'driver_id' => $driver->id,
+            'pickup_address' => '10 Kloof Street',
             'dropoff_address' => '20 Long Street',
-            'status'          => 'requested',
+            'status' => 'requested',
         ]);
 
         $ride->update(['status' => 'accepted']);
@@ -63,14 +63,14 @@ class RideObserverTest extends TestCase
     public function test_updating_an_already_completed_ride_without_changing_status_does_not_renotify(): void
     {
         $passenger = User::factory()->create();
-        $driver    = User::factory()->withPersonalTeam()->create();
+        $driver = User::factory()->withPersonalTeam()->create();
 
         $ride = Ride::create([
-            'passenger_id'    => $passenger->id,
-            'driver_id'       => $driver->id,
-            'pickup_address'  => '10 Kloof Street',
+            'passenger_id' => $passenger->id,
+            'driver_id' => $driver->id,
+            'pickup_address' => '10 Kloof Street',
             'dropoff_address' => '20 Long Street',
-            'status'          => 'accepted',
+            'status' => 'accepted',
         ]);
 
         $ride->update(['status' => 'completed', 'final_fare' => 64.00]);
@@ -91,10 +91,10 @@ class RideObserverTest extends TestCase
         $passenger = User::factory()->create();
 
         $ride = Ride::create([
-            'passenger_id'    => $passenger->id,
-            'pickup_address'  => '10 Kloof Street',
+            'passenger_id' => $passenger->id,
+            'pickup_address' => '10 Kloof Street',
             'dropoff_address' => '20 Long Street',
-            'status'          => 'requested',
+            'status' => 'requested',
         ]);
 
         $ride->update(['status' => 'completed', 'final_fare' => 64.00]);

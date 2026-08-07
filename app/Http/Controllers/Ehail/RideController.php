@@ -35,7 +35,7 @@ class RideController extends Controller
             ->withQueryString();
 
         return view('rides.index', [
-            'rides'  => $rides,
+            'rides' => $rides,
             'search' => $search,
         ]);
     }

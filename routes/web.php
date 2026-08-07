@@ -3,10 +3,11 @@
 use App\Http\Controllers\Auth\EcosystemAuthController;
 use App\Http\Controllers\Ehail\DriverController;
 use App\Http\Controllers\Ehail\RideController;
+use App\Models\DriverProfile;
+use App\Models\Ride;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Laravel\Jetstream\Jetstream;
-
 
 Route::get('/auth/ecosystem', [EcosystemAuthController::class, 'handle'])->name('ecosystem.auth');
 Route::get('/', function () {
@@ -28,11 +29,11 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', function () {
-        $totalRides       = \App\Models\Ride::count();
-        $activeRides      = \App\Models\Ride::whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])->count();
-        $completedRides   = \App\Models\Ride::where('status', 'completed')->count();
-        $cancelledRides   = \App\Models\Ride::where('status', 'cancelled')->count();
-        $requestedRides   = \App\Models\Ride::where('status', 'requested')->count();
+        $totalRides = Ride::count();
+        $activeRides = Ride::whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])->count();
+        $completedRides = Ride::where('status', 'completed')->count();
+        $cancelledRides = Ride::where('status', 'cancelled')->count();
+        $requestedRides = Ride::where('status', 'requested')->count();
 
         // DriverProfile now carries HasUserScope (a driver's own profile is
         // single-owner tenant data — see app/Models/Concerns/HasUserScope.php),
@@ -40,18 +41,18 @@ Route::middleware([
         // §4), so its aggregate counts must stay unscoped or every operator
         // would silently see driver counts of 0/1 instead of the real
         // platform-wide numbers.
-        $totalDrivers     = \App\Models\DriverProfile::withoutGlobalScope('user')->count();
-        $availableDrivers = \App\Models\DriverProfile::withoutGlobalScope('user')->where('is_online', true)->count();
-        $approvedDrivers  = \App\Models\DriverProfile::withoutGlobalScope('user')->where('status', 'approved')->count();
+        $totalDrivers = DriverProfile::withoutGlobalScope('user')->count();
+        $availableDrivers = DriverProfile::withoutGlobalScope('user')->where('is_online', true)->count();
+        $approvedDrivers = DriverProfile::withoutGlobalScope('user')->where('status', 'approved')->count();
 
-        $totalRevenue     = \App\Models\Ride::where('status', 'completed')->sum('final_fare');
+        $totalRevenue = Ride::where('status', 'completed')->sum('final_fare');
 
-        $statusCounts = \App\Models\Ride::selectRaw('status, count(*) as count')
+        $statusCounts = Ride::selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
 
-        $recentRides = \App\Models\Ride::with(['driver', 'passenger', 'vehicle'])
+        $recentRides = Ride::with(['driver', 'passenger', 'vehicle'])
             ->latest()
             ->limit(10)
             ->get();

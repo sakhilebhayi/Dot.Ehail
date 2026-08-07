@@ -17,10 +17,10 @@ class DriverProfileViewTest extends TestCase
         $driver = User::factory()->create();
 
         $profile = DriverProfile::create([
-            'user_id'        => $driver->id,
+            'user_id' => $driver->id,
             'license_number' => 'LIC-200',
-            'id_number'      => 'ID-200',
-            'status'         => 'approved',
+            'id_number' => 'ID-200',
+            'status' => 'approved',
         ]);
 
         $this->get(route('drivers.show', $profile))->assertRedirect('/login');
@@ -31,21 +31,21 @@ class DriverProfileViewTest extends TestCase
         $driver = User::factory()->withPersonalTeam()->create();
 
         $profile = DriverProfile::create([
-            'user_id'        => $driver->id,
+            'user_id' => $driver->id,
             'license_number' => 'LIC-201',
-            'id_number'      => 'ID-201',
-            'status'         => 'approved',
-            'total_rides'    => 3,
+            'id_number' => 'ID-201',
+            'status' => 'approved',
+            'total_rides' => 3,
         ]);
 
         $passenger = User::factory()->create();
         Ride::create([
-            'passenger_id'    => $passenger->id,
-            'driver_id'       => $driver->id,
-            'pickup_address'  => '5 Church Street',
+            'passenger_id' => $passenger->id,
+            'driver_id' => $driver->id,
+            'pickup_address' => '5 Church Street',
             'dropoff_address' => '9 Bree Street',
-            'status'          => 'completed',
-            'final_fare'      => 120,
+            'status' => 'completed',
+            'final_fare' => 120,
         ]);
 
         $this->actingAs($driver)
@@ -74,13 +74,13 @@ class DriverProfileViewTest extends TestCase
     public function test_a_different_authenticated_user_cannot_view_someone_elses_driver_profile(): void
     {
         $otherUser = User::factory()->withPersonalTeam()->create();
-        $driver    = User::factory()->create();
+        $driver = User::factory()->create();
 
         $profile = DriverProfile::create([
-            'user_id'        => $driver->id,
+            'user_id' => $driver->id,
             'license_number' => 'LIC-202',
-            'id_number'      => 'ID-202',
-            'status'         => 'approved',
+            'id_number' => 'ID-202',
+            'status' => 'approved',
         ]);
 
         $this->actingAs($otherUser)
@@ -99,13 +99,13 @@ class DriverProfileViewTest extends TestCase
     public function test_scope_alone_blocks_cross_user_access_even_without_a_policy_check(): void
     {
         $otherUser = User::factory()->withPersonalTeam()->create();
-        $driver    = User::factory()->create();
+        $driver = User::factory()->create();
 
         $profile = DriverProfile::create([
-            'user_id'        => $driver->id,
+            'user_id' => $driver->id,
             'license_number' => 'LIC-203',
-            'id_number'      => 'ID-203',
-            'status'         => 'approved',
+            'id_number' => 'ID-203',
+            'status' => 'approved',
         ]);
 
         $this->actingAs($otherUser);

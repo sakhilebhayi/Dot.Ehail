@@ -29,7 +29,7 @@ class DriverController extends Controller
 
         return view('drivers.show', [
             'driverProfile' => $driverProfile,
-            'rides'         => $rides,
+            'rides' => $rides,
         ]);
     }
 }

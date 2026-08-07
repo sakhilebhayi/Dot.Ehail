@@ -14,9 +14,7 @@ use Illuminate\Notifications\Notification;
  */
 class DriverApplicationSubmittedNotification extends Notification
 {
-    public function __construct(public DriverProfile $driverProfile)
-    {
-    }
+    public function __construct(public DriverProfile $driverProfile) {}
 
     /**
      * @return array<int, string>
@@ -32,11 +30,11 @@ class DriverApplicationSubmittedNotification extends Notification
     public function toDatabase(object $notifiable): array
     {
         return [
-            'type'              => 'driver_application_submitted',
-            'title'             => 'New driver application',
-            'message'           => "{$this->driverProfile->user?->name} applied to drive (license {$this->driverProfile->license_number}).",
+            'type' => 'driver_application_submitted',
+            'title' => 'New driver application',
+            'message' => "{$this->driverProfile->user?->name} applied to drive (license {$this->driverProfile->license_number}).",
             'driver_profile_id' => $this->driverProfile->id,
-            'url'               => route('drivers.show', $this->driverProfile),
+            'url' => route('drivers.show', $this->driverProfile),
         ];
     }
 }

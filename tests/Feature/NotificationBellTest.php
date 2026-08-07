@@ -26,16 +26,16 @@ class NotificationBellTest extends TestCase
 
     public function test_unread_count_reflects_database_notifications(): void
     {
-        $user      = User::factory()->withPersonalTeam()->create();
+        $user = User::factory()->withPersonalTeam()->create();
         $passenger = User::factory()->create();
 
         $ride = Ride::create([
-            'passenger_id'    => $passenger->id,
-            'driver_id'       => $user->id,
-            'pickup_address'  => '1 Adderley Street',
+            'passenger_id' => $passenger->id,
+            'driver_id' => $user->id,
+            'pickup_address' => '1 Adderley Street',
             'dropoff_address' => '2 Strand Street',
-            'status'          => 'completed',
-            'final_fare'      => 55,
+            'status' => 'completed',
+            'final_fare' => 55,
         ]);
 
         $user->notify(new RideCompletedNotification($ride));
@@ -54,16 +54,16 @@ class NotificationBellTest extends TestCase
 
     public function test_mark_all_as_read_clears_unread_count(): void
     {
-        $user      = User::factory()->withPersonalTeam()->create();
+        $user = User::factory()->withPersonalTeam()->create();
         $passenger = User::factory()->create();
 
         $ride = Ride::create([
-            'passenger_id'    => $passenger->id,
-            'driver_id'       => $user->id,
-            'pickup_address'  => '3 Loop Street',
+            'passenger_id' => $passenger->id,
+            'driver_id' => $user->id,
+            'pickup_address' => '3 Loop Street',
             'dropoff_address' => '4 Wale Street',
-            'status'          => 'completed',
-            'final_fare'      => 40,
+            'status' => 'completed',
+            'final_fare' => 40,
         ]);
 
         $user->notify(new RideCompletedNotification($ride));

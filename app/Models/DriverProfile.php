@@ -15,7 +15,7 @@ class DriverProfile extends Model
 
     protected $casts = [
         'is_online' => 'boolean',
-        'rating'    => 'decimal:2',
+        'rating' => 'decimal:2',
     ];
 
     public function user(): BelongsTo

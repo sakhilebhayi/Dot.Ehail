@@ -15,9 +15,7 @@ use Illuminate\Notifications\Notification;
  */
 class RideCompletedNotification extends Notification
 {
-    public function __construct(public Ride $ride)
-    {
-    }
+    public function __construct(public Ride $ride) {}
 
     /**
      * @return array<int, string>
@@ -33,15 +31,15 @@ class RideCompletedNotification extends Notification
     public function toDatabase(object $notifiable): array
     {
         $fare = $this->ride->final_fare !== null
-            ? 'R ' . number_format((float) $this->ride->final_fare, 2)
+            ? 'R '.number_format((float) $this->ride->final_fare, 2)
             : 'fare pending';
 
         return [
-            'type'    => 'ride_completed',
-            'title'   => 'Ride completed',
+            'type' => 'ride_completed',
+            'title' => 'Ride completed',
             'message' => "Ride #{$this->ride->id} from {$this->ride->pickup_address} to {$this->ride->dropoff_address} finished ({$fare}).",
             'ride_id' => $this->ride->id,
-            'url'     => route('rides.show', $this->ride),
+            'url' => route('rides.show', $this->ride),
         ];
     }
 }
