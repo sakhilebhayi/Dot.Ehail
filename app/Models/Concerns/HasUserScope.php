@@ -6,10 +6,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Dot.Ehail has no fleet/operator entity yet (see wiki.md §3/§7/§8) — the
- * only genuinely single-owner tenancy relationship that exists today is a
- * driver's own profile (`driver_profiles.user_id`). This is the direct
- * analog of Dot.Mines' HasTeamFilters / Dot.Finance's HasUserScope: every
+ * Dot.Ehail's Fleet/Operator entity (app/Models/Fleet.php) exists now, but
+ * it is deliberately not given this scope — any authenticated user must be
+ * able to see the fleet list to apply to. DriverProfile keeps this scope:
+ * the only genuinely single-owner tenancy relationship on it is still the
+ * driver's own row (driver_profiles.user_id); FleetController explicitly
+ * calls withoutGlobalScope('user') wherever a fleet owner needs to see a
+ * driver profile that isn't their own. This is the direct analog of
+ * Dot.Mines' HasTeamFilters / Dot.Finance's HasUserScope: every
  * model that owns a user_id column identifying a single owning user applies
  * this trait so a query against it is scoped to the authenticated user by
  * default, the same way Dot.Finance now scopes Account/Budget/Category/
