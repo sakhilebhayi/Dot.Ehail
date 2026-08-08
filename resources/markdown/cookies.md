@@ -28,4 +28,4 @@ We may update this Cookie Policy if the cookies Dot.Ehail sets change. We'll cha
 
 ## Contact us
 
-Questions about this Cookie Policy can be sent to [privacy@infodot.co.za](mailto:privacy@infodot.co.za). See also our [Privacy Policy](/policy) and [Terms & Conditions](/terms).
+Questions about this Cookie Policy can be sent to [privacy@infodot.co.za](mailto:privacy@infodot.co.za). See also our [Privacy Policy](/privacy-policy) and [Terms & Conditions](/terms-of-service).
