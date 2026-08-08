@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\DriverProfile;
+use App\Models\Fleet;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -65,9 +66,11 @@ class DashboardTest extends TestCase
         $user = User::factory()->withPersonalTeam()->create();
         $passenger = User::factory()->create();
         $driver = User::factory()->create();
+        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => User::factory()->create()->id]);
 
         DriverProfile::create([
             'user_id' => $driver->id,
+            'fleet_id' => $fleet->id,
             'license_number' => 'LIC-100',
             'id_number' => 'ID-100',
             'status' => 'approved',

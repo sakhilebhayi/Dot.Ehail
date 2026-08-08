@@ -3,6 +3,7 @@
 namespace Tests\Feature\Ehail;
 
 use App\Models\DriverProfile;
+use App\Models\Fleet;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,12 +13,25 @@ class DriverProfileViewTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Every DriverProfile now belongs to a Fleet (fleet_id is NOT NULL).
+     * The fleet's owner is a fresh, unrelated user by default so these
+     * pre-existing view tests (predating Fleet) keep testing only the
+     * driver-vs-stranger boundary they were written for, not accidentally
+     * granting access via DriverProfilePolicy::view's fleet-owner clause.
+     */
+    private function fleet(): Fleet
+    {
+        return Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => User::factory()->create()->id]);
+    }
+
     public function test_guest_cannot_view_a_driver_profile(): void
     {
         $driver = User::factory()->create();
 
         $profile = DriverProfile::create([
             'user_id' => $driver->id,
+            'fleet_id' => $this->fleet()->id,
             'license_number' => 'LIC-200',
             'id_number' => 'ID-200',
             'status' => 'approved',
@@ -32,6 +46,7 @@ class DriverProfileViewTest extends TestCase
 
         $profile = DriverProfile::create([
             'user_id' => $driver->id,
+            'fleet_id' => $this->fleet()->id,
             'license_number' => 'LIC-201',
             'id_number' => 'ID-201',
             'status' => 'approved',
@@ -78,6 +93,7 @@ class DriverProfileViewTest extends TestCase
 
         $profile = DriverProfile::create([
             'user_id' => $driver->id,
+            'fleet_id' => $this->fleet()->id,
             'license_number' => 'LIC-202',
             'id_number' => 'ID-202',
             'status' => 'approved',
@@ -103,6 +119,7 @@ class DriverProfileViewTest extends TestCase
 
         $profile = DriverProfile::create([
             'user_id' => $driver->id,
+            'fleet_id' => $this->fleet()->id,
             'license_number' => 'LIC-203',
             'id_number' => 'ID-203',
             'status' => 'approved',
