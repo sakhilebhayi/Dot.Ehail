@@ -29,9 +29,19 @@ class DriverProfilePolicy
 
     /**
      * Determine whether the user can view the given driver profile and its ride history.
+     *
+     * Extended (2026-08-09, Fleet/Operator entity): also allows the
+     * driver's own fleet owner -- they now have a real reason to
+     * (reviewing/having reviewed the application). This is additive to the
+     * 2026-08-01 fix's intent: a stranger still cannot view an unrelated
+     * driver's profile.
      */
     public function view(User $user, DriverProfile $driverProfile): bool
     {
-        return $user->id === $driverProfile->user_id;
+        if ($user->id === $driverProfile->user_id) {
+            return true;
+        }
+
+        return $driverProfile->fleet && $user->id === $driverProfile->fleet->owner_user_id;
     }
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\EcosystemAuthController;
 use App\Http\Controllers\Ehail\DriverApplicationController;
 use App\Http\Controllers\Ehail\DriverController;
+use App\Http\Controllers\Ehail\FleetController;
 use App\Http\Controllers\Ehail\RideController;
 use App\Models\DriverProfile;
 use App\Models\Ride;
@@ -71,4 +72,8 @@ Route::middleware([
 
     Route::get('/drive/apply', [DriverApplicationController::class, 'create'])->name('drive.apply');
     Route::post('/drive/apply', [DriverApplicationController::class, 'store'])->name('drive.apply.store');
+
+    Route::get('/fleets/{fleet}', [FleetController::class, 'show'])->name('fleets.show');
+    Route::post('/fleets/{fleet}/drivers/{driverProfileId}/approve', [FleetController::class, 'approveDriver'])->name('fleets.drivers.approve');
+    Route::post('/fleets/{fleet}/drivers/{driverProfileId}/reject', [FleetController::class, 'rejectDriver'])->name('fleets.drivers.reject');
 });
