@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\EcosystemAuthController;
+use App\Http\Controllers\Ehail\DriverApplicationController;
 use App\Http\Controllers\Ehail\DriverController;
 use App\Http\Controllers\Ehail\RideController;
 use App\Models\DriverProfile;
@@ -67,4 +68,7 @@ Route::middleware([
     Route::get('/rides', [RideController::class, 'index'])->name('rides.index');
     Route::get('/rides/{ride}', [RideController::class, 'show'])->name('rides.show');
     Route::get('/drivers/{driverProfile}', [DriverController::class, 'show'])->name('drivers.show');
+
+    Route::get('/drive/apply', [DriverApplicationController::class, 'create'])->name('drive.apply');
+    Route::post('/drive/apply', [DriverApplicationController::class, 'store'])->name('drive.apply.store');
 });

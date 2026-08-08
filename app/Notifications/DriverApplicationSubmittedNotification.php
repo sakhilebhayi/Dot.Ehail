@@ -7,10 +7,9 @@ use Illuminate\Notifications\Notification;
 
 /**
  * In-app (database channel only) notification for a new driver application
- * (a `DriverProfile` created with `status = pending`). Not yet wired to any
- * automatic trigger — dispatch manually via
- * `$operator->notify(new DriverApplicationSubmittedNotification($driverProfile))`
- * until driver onboarding has real observer/event wiring (see wiki.md §8).
+ * (a `DriverProfile` created with `status = pending`). Fired automatically
+ * by DriverApplicationController::store() to the applicant's fleet owner
+ * the moment a driver application is submitted.
  */
 class DriverApplicationSubmittedNotification extends Notification
 {
