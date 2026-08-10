@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Events\RideStatusUpdated;
 use App\Models\Ride;
 use App\Notifications\RideCompletedNotification;
 
@@ -14,6 +15,11 @@ use App\Notifications\RideCompletedNotification;
  * transition the notification was built for: a ride's `status` becoming
  * `completed`.
  *
+ * Also broadcasts RideStatusUpdated on ANY status transition (not just
+ * completed) so a ride's detail page updates live for its passenger/driver
+ * -- a separate, broader concern from the completed-only in-app
+ * notification above.
+ *
  * Scope note: this only wires the existing *in-app* (`database` channel)
  * notification to a real domain event. It is not the outbound
  * `logistics.trip.completed` ecosystem event described in wiki.md §5/§8 —
@@ -24,7 +30,13 @@ class RideObserver
 {
     public function updated(Ride $ride): void
     {
-        if (! $ride->wasChanged('status') || $ride->status !== 'completed') {
+        if (! $ride->wasChanged('status')) {
+            return;
+        }
+
+        broadcast(new RideStatusUpdated($ride))->toOthers();
+
+        if ($ride->status !== 'completed') {
             return;
         }
 

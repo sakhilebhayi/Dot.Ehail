@@ -75,4 +75,31 @@
         @endif
     </div>
 </div>
+
+{{--
+    Reaching this page already passed RideController::show()'s
+    Gate::authorize('view', $ride) (RidePolicy::view() -- true for any
+    authenticated user, an intentional platform-wide ops-list gap, see
+    RidePolicy's own docblock). The real restriction on who receives live
+    updates is the ride.{id} channel's own authorization (passenger/driver
+    only, see BroadcastServiceProvider) -- an unauthorized subscription
+    from this same page simply never receives anything, so no extra
+    server-side check is needed in the script below.
+--}}
+<script>
+    (function () {
+        if (! window.Echo) {
+            return; // No Reverb credentials configured -- nothing to subscribe to.
+        }
+
+        window.Echo.private('ride.{{ $ride->id }}')
+            .listen('.status.updated', () => {
+                // This is a plain Blade page, not Livewire -- a full reload
+                // is the simplest correct way to reflect the new status
+                // without hand-building a DOM patcher for a single ops
+                // detail page.
+                window.location.reload();
+            });
+    })();
+</script>
 </x-app-layout>

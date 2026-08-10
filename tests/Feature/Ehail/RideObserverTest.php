@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Ehail;
 
+use App\Events\RideStatusUpdated;
 use App\Models\Ride;
 use App\Models\User;
 use App\Notifications\RideCompletedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -101,5 +103,70 @@ class RideObserverTest extends TestCase
 
         Notification::assertSentTo($passenger, RideCompletedNotification::class);
         Notification::assertCount(1);
+    }
+
+    // -----------------------------------------------------------------------
+    // Real-time broadcasting -- separate from the completed-only in-app
+    // notification above. RideStatusUpdated fires on ANY status transition.
+    // -----------------------------------------------------------------------
+
+    public function test_transitioning_to_a_non_completed_status_still_broadcasts_ride_status_updated(): void
+    {
+        Event::fake([RideStatusUpdated::class]);
+
+        $passenger = User::factory()->create();
+        $driver = User::factory()->create();
+
+        $ride = Ride::create([
+            'passenger_id' => $passenger->id,
+            'driver_id' => $driver->id,
+            'pickup_address' => '10 Kloof Street',
+            'dropoff_address' => '20 Long Street',
+            'status' => 'requested',
+        ]);
+
+        $ride->update(['status' => 'accepted']);
+
+        Event::assertDispatched(RideStatusUpdated::class, fn ($event) => $event->ride->is($ride));
+    }
+
+    public function test_transitioning_to_completed_broadcasts_and_notifies(): void
+    {
+        Event::fake([RideStatusUpdated::class]);
+        Notification::fake();
+
+        $passenger = User::factory()->create();
+        $driver = User::factory()->create();
+
+        $ride = Ride::create([
+            'passenger_id' => $passenger->id,
+            'driver_id' => $driver->id,
+            'pickup_address' => '10 Kloof Street',
+            'dropoff_address' => '20 Long Street',
+            'status' => 'accepted',
+        ]);
+
+        $ride->update(['status' => 'completed', 'final_fare' => 64.00]);
+
+        Event::assertDispatched(RideStatusUpdated::class, fn ($event) => $event->ride->is($ride));
+        Notification::assertSentTo($passenger, RideCompletedNotification::class);
+    }
+
+    public function test_updating_a_ride_without_changing_status_does_not_broadcast(): void
+    {
+        Event::fake([RideStatusUpdated::class]);
+
+        $passenger = User::factory()->create();
+
+        $ride = Ride::create([
+            'passenger_id' => $passenger->id,
+            'pickup_address' => '10 Kloof Street',
+            'dropoff_address' => '20 Long Street',
+            'status' => 'accepted',
+        ]);
+
+        $ride->update(['estimated_fare' => 55.00]);
+
+        Event::assertNotDispatched(RideStatusUpdated::class);
     }
 }
