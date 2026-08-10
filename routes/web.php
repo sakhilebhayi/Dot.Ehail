@@ -5,6 +5,7 @@ use App\Http\Controllers\Ehail\DriverApplicationController;
 use App\Http\Controllers\Ehail\DriverController;
 use App\Http\Controllers\Ehail\FleetController;
 use App\Http\Controllers\Ehail\RideController;
+use App\Http\Controllers\RealtimeHealthController;
 use App\Models\DriverProfile;
 use App\Models\Ride;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,11 @@ use Illuminate\Support\Str;
 use Laravel\Jetstream\Jetstream;
 
 Route::get('/auth/ecosystem', [EcosystemAuthController::class, 'handle'])->name('ecosystem.auth');
+
+// Real-time infrastructure health check -- unauthenticated like Laravel's
+// own /up, for uptime monitors/load balancers.
+Route::get('/up/realtime', [RealtimeHealthController::class, 'check'])->name('health.realtime');
+
 Route::get('/', function () {
     return view('welcome');
 });

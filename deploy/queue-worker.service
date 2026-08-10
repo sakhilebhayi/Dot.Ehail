@@ -1,0 +1,12 @@
+[Unit]
+Description=Dot.Ehail Laravel Queue Worker
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+Restart=always
+ExecStart=/usr/bin/php /var/www/html/artisan queue:work redis --sleep=3 --tries=3 --timeout=90
+
+[Install]
+WantedBy=multi-user.target
