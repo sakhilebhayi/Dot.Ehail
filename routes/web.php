@@ -3,8 +3,11 @@
 use App\Http\Controllers\Auth\EcosystemAuthController;
 use App\Http\Controllers\Ehail\DriverApplicationController;
 use App\Http\Controllers\Ehail\DriverController;
+use App\Http\Controllers\Ehail\DriverDocumentController;
 use App\Http\Controllers\Ehail\FleetController;
 use App\Http\Controllers\Ehail\RideController;
+use App\Http\Controllers\Ehail\RideLifecycleController;
+use App\Http\Controllers\Ehail\RideRequestController;
 use App\Http\Controllers\RealtimeHealthController;
 use App\Models\DriverProfile;
 use App\Models\Ride;
@@ -73,8 +76,22 @@ Route::middleware([
     })->name('dashboard');
 
     Route::get('/rides', [RideController::class, 'index'])->name('rides.index');
+    // Literal segments ("create"/"available") must stay registered before
+    // "{ride}" below, otherwise they're swallowed by {ride}'s implicit
+    // route-model binding.
+    Route::get('/rides/create', [RideRequestController::class, 'create'])->name('rides.create');
+    Route::post('/rides', [RideRequestController::class, 'store'])->name('rides.store');
+    Route::get('/rides/available', [RideLifecycleController::class, 'available'])->name('rides.available');
     Route::get('/rides/{ride}', [RideController::class, 'show'])->name('rides.show');
+    Route::post('/rides/{ride}/accept', [RideLifecycleController::class, 'accept'])->name('rides.accept');
+    Route::patch('/rides/{ride}/advance', [RideLifecycleController::class, 'advance'])->name('rides.advance');
+    Route::post('/rides/{ride}/cancel', [RideLifecycleController::class, 'cancel'])->name('rides.cancel');
     Route::get('/drivers/{driverProfile}', [DriverController::class, 'show'])->name('drivers.show');
+    Route::patch('/drivers/{driverProfile}/toggle-online', [DriverController::class, 'toggleOnline'])->name('drivers.toggle-online');
+
+    Route::post('/drive/documents', [DriverDocumentController::class, 'store'])->name('drivers.documents.store');
+    Route::get('/drive/documents/{document}', [DriverDocumentController::class, 'show'])->name('drivers.documents.show');
+    Route::delete('/drive/documents/{document}', [DriverDocumentController::class, 'destroy'])->name('drivers.documents.destroy');
 
     Route::get('/drive/apply', [DriverApplicationController::class, 'create'])->name('drive.apply');
     Route::post('/drive/apply', [DriverApplicationController::class, 'store'])->name('drive.apply.store');

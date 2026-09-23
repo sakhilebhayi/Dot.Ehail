@@ -52,6 +52,11 @@ class DriverProfile extends Model
         return $this->hasMany(Vehicle::class);
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(DriverDocument::class);
+    }
+
     public function activeVehicle(): ?Vehicle
     {
         return $this->vehicles()->where('is_active', true)->first();

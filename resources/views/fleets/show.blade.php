@@ -20,6 +20,18 @@
                 <p style="font-size:0.78rem;color:#a1a1aa;margin:0 0 0.75rem;">{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} ({{ $vehicle->color }}) — {{ $vehicle->plate_number }}</p>
             @endforeach
 
+            @if($profile->documents->isEmpty())
+                <p style="font-size:0.72rem;color:#71717a;margin:0 0 0.75rem;">No documents uploaded.</p>
+            @else
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+                    @foreach($profile->documents as $document)
+                    <a href="{{ route('drivers.documents.show', $document) }}" style="font-size:0.7rem;color:#38bdf8;text-decoration:none;padding:0.25rem 0.6rem;background:rgba(56,189,248,0.08);border-radius:9999px;">
+                        {{ ucfirst(str_replace('_', ' ', $document->type)) }}
+                    </a>
+                    @endforeach
+                </div>
+            @endif
+
             <div style="display:flex;gap:0.5rem;align-items:flex-start;">
                 <form method="POST" action="{{ route('fleets.drivers.approve', [$fleet, $profile]) }}">
                     @csrf

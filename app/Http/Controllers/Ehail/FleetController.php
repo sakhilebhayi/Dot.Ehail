@@ -25,7 +25,7 @@ class FleetController extends Controller
 
         $driverProfiles = DriverProfile::withoutGlobalScope('user')
             ->where('fleet_id', $fleet->id)
-            ->with(['user', 'vehicles'])
+            ->with(['user', 'vehicles', 'documents'])
             ->latest()
             ->get();
 

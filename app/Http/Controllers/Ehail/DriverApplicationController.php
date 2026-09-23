@@ -42,6 +42,14 @@ class DriverApplicationController extends Controller
             'vehicle_color' => 'required|string',
             'vehicle_plate_number' => 'required|string|unique:vehicles,plate_number',
             'vehicle_type' => 'required|string|in:economy,standard,premium,suv',
+            // All three optional -- a driver can also upload/replace these
+            // later via DriverDocumentController, so the application
+            // itself doesn't hard-require them (existing applicants with
+            // no documents on file should still be reviewable, not
+            // silently blocked by a new required field).
+            'license_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'id_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'vehicle_inspection_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
         $validator->after(function ($validator) use ($request) {
@@ -78,6 +86,19 @@ class DriverApplicationController extends Controller
             'plate_number' => $validated['vehicle_plate_number'],
             'type' => $validated['vehicle_type'],
         ]);
+
+        foreach (['license_document' => 'license', 'id_document' => 'id', 'vehicle_inspection_document' => 'vehicle_inspection'] as $field => $type) {
+            if (! $request->hasFile($field)) {
+                continue;
+            }
+
+            $file = $request->file($field);
+            $profile->documents()->create([
+                'type' => $type,
+                'file_path' => $file->store('', 'driver-documents'),
+                'original_filename' => $file->getClientOriginalName(),
+            ]);
+        }
 
         $fleet->owner->notify(new DriverApplicationSubmittedNotification($profile));
 

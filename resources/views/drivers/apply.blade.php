@@ -12,7 +12,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('drive.apply.store') }}" class="dot-card" style="padding:1.5rem;display:flex;flex-direction:column;gap:1rem;">
+    <form method="POST" action="{{ route('drive.apply.store') }}" enctype="multipart/form-data" class="dot-card" style="padding:1.5rem;display:flex;flex-direction:column;gap:1rem;">
         @csrf
 
         <div>
@@ -74,6 +74,22 @@
                     <option value="suv">SUV</option>
                 </select>
             </div>
+        </div>
+
+        <hr style="border-color:rgba(255,255,255,0.08);">
+
+        <p style="font-size:0.75rem;color:#a1a1aa;margin:0;">Documents (optional — you can also add these later from your driver profile)</p>
+        <div>
+            <label style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Driver's License</label>
+            <input type="file" name="license_document" accept=".pdf,.jpg,.jpeg,.png" style="width:100%;font-size:0.8rem;color:#a1a1aa;">
+        </div>
+        <div>
+            <label style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">ID Document</label>
+            <input type="file" name="id_document" accept=".pdf,.jpg,.jpeg,.png" style="width:100%;font-size:0.8rem;color:#a1a1aa;">
+        </div>
+        <div>
+            <label style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Vehicle Inspection Record</label>
+            <input type="file" name="vehicle_inspection_document" accept=".pdf,.jpg,.jpeg,.png" style="width:100%;font-size:0.8rem;color:#a1a1aa;">
         </div>
 
         <button type="submit" style="margin-top:0.5rem;padding:0.6rem;border-radius:8px;background:#f59e0b;color:#18181b;font-weight:700;border:none;cursor:pointer;">

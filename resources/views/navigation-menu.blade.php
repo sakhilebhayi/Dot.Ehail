@@ -10,11 +10,36 @@
                     </a>
                 </div>
 
+                {{-- Rides/drive-related routes had no nav entry anywhere before
+                     this -- reachable only by typing the URL directly.
+                     $ownedDriverProfile is looked up once and reused below
+                     for both the desktop and mobile nav blocks. --}}
+                @php
+                    $ownedDriverProfile = auth()->check()
+                        ? \App\Models\DriverProfile::withoutGlobalScope('user')->where('user_id', auth()->id())->first()
+                        : null;
+                @endphp
+
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('rides.create') }}" :active="request()->routeIs('rides.create')">
+                        {{ __('Request a Ride') }}
+                    </x-nav-link>
+                    @if($ownedDriverProfile)
+                    <x-nav-link href="{{ route('rides.available') }}" :active="request()->routeIs('rides.available')">
+                        {{ __('Available Rides') }}
+                    </x-nav-link>
+                    <x-nav-link href="{{ route('drivers.show', $ownedDriverProfile) }}" :active="request()->routeIs('drivers.show')">
+                        {{ __('My Driver Profile') }}
+                    </x-nav-link>
+                    @else
+                    <x-nav-link href="{{ route('drive.apply') }}" :active="request()->routeIs('drive.apply')">
+                        {{ __('Drive with Us') }}
+                    </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -150,6 +175,21 @@
             <x-responsive-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('rides.create') }}" :active="request()->routeIs('rides.create')">
+                {{ __('Request a Ride') }}
+            </x-responsive-nav-link>
+            @if($ownedDriverProfile)
+            <x-responsive-nav-link href="{{ route('rides.available') }}" :active="request()->routeIs('rides.available')">
+                {{ __('Available Rides') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('drivers.show', $ownedDriverProfile) }}" :active="request()->routeIs('drivers.show')">
+                {{ __('My Driver Profile') }}
+            </x-responsive-nav-link>
+            @else
+            <x-responsive-nav-link href="{{ route('drive.apply') }}" :active="request()->routeIs('drive.apply')">
+                {{ __('Drive with Us') }}
+            </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

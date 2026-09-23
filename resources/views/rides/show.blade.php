@@ -7,6 +7,34 @@
         </a>
     </div>
 
+    @if (session('status'))
+    <div style="margin-bottom:1.25rem;padding:0.65rem 1rem;border-radius:0.6rem;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);color:#4ade80;font-size:0.8rem;">
+        {{ session('status') }}
+    </div>
+    @endif
+    @if ($errors->any())
+    <div style="margin-bottom:1.25rem;padding:0.65rem 1rem;border-radius:0.6rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;font-size:0.8rem;">
+        @foreach ($errors->all() as $error)
+        <div>{{ $error }}</div>
+        @endforeach
+    </div>
+    @endif
+
+    @php
+        $statusColors = [
+            'requested' => '#f59e0b', 'accepted' => '#38bdf8', 'en_route' => '#38bdf8',
+            'arrived' => '#a78bfa', 'in_progress' => '#a78bfa', 'completed' => '#4ade80', 'cancelled' => '#71717a',
+        ];
+        $statusColor = $statusColors[$ride->status] ?? '#38bdf8';
+        $nextStage = match ($ride->status) {
+            'accepted' => 'en_route',
+            'en_route' => 'arrived',
+            'arrived' => 'in_progress',
+            'in_progress' => 'completed',
+            default => null,
+        };
+    @endphp
+
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
         <div>
             <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.2rem;letter-spacing:-0.01em;">
@@ -14,9 +42,36 @@
             </h1>
             <p style="font-size:0.78rem;color:#52525b;margin:0;">Requested {{ $ride->created_at->format('l, F j, Y \a\t g:i A') }}</p>
         </div>
-        <span style="font-size:11px;font-weight:600;padding:4px 12px;border-radius:100px;background:rgba(56,189,248,0.1);color:#38bdf8;">
-            {{ ucfirst(str_replace('_', ' ', $ride->status)) }}
-        </span>
+        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+            <span style="font-size:11px;font-weight:600;padding:4px 12px;border-radius:100px;background:{{ $statusColor }}1a;color:{{ $statusColor }};">
+                {{ ucfirst(str_replace('_', ' ', $ride->status)) }}
+            </span>
+
+            @can('accept', $ride)
+            <form method="POST" action="{{ route('rides.accept', $ride) }}">
+                @csrf
+                <button type="submit" class="dot-btn dot-btn-primary">Accept Ride</button>
+            </form>
+            @endcan
+
+            @if($nextStage)
+            @can('advance', $ride)
+            <form method="POST" action="{{ route('rides.advance', $ride) }}">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="status" value="{{ $nextStage }}">
+                <button type="submit" class="dot-btn dot-btn-primary">Mark {{ ucfirst(str_replace('_', ' ', $nextStage)) }}</button>
+            </form>
+            @endcan
+            @endif
+
+            @can('cancel', $ride)
+            <form method="POST" action="{{ route('rides.cancel', $ride) }}" onsubmit="return confirm('Cancel this ride?');">
+                @csrf
+                <button type="submit" class="dot-btn dot-btn-ghost" style="color:#f87171;">Cancel</button>
+            </form>
+            @endcan
+        </div>
     </div>
 
     <div class="dot-card" style="padding:1.5rem;margin-bottom:1.25rem;">

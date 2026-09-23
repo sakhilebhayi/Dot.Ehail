@@ -44,4 +44,14 @@ class DriverProfilePolicy
 
         return $driverProfile->fleet && $user->id === $driverProfile->fleet->owner_user_id;
     }
+
+    /**
+     * Only the driver themselves may flip their own online/offline
+     * status -- unlike view(), a fleet owner does not get to force a
+     * driver online or offline.
+     */
+    public function update(User $user, DriverProfile $driverProfile): bool
+    {
+        return $user->id === $driverProfile->user_id;
+    }
 }
