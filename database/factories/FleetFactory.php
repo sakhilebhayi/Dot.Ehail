@@ -15,6 +15,7 @@ class FleetFactory extends Factory
         return [
             'name' => $this->faker->company(),
             'owner_user_id' => User::factory(),
+            'status' => 'approved',
         ];
     }
 }

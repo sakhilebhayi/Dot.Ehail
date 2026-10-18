@@ -35,7 +35,7 @@ class FleetDriverReviewTest extends TestCase
     public function test_fleet_owner_can_view_pending_applications(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
         $this->actingAs($owner)
@@ -47,7 +47,7 @@ class FleetDriverReviewTest extends TestCase
     public function test_fleet_owner_can_approve_a_pending_driver(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
         $this->actingAs($owner)
@@ -63,7 +63,7 @@ class FleetDriverReviewTest extends TestCase
     public function test_reject_without_a_reason_is_blocked(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
         $this->actingAs($owner)
@@ -77,7 +77,7 @@ class FleetDriverReviewTest extends TestCase
     public function test_reject_with_a_reason_marks_the_driver_rejected(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
         $this->actingAs($owner)
@@ -92,11 +92,11 @@ class FleetDriverReviewTest extends TestCase
     public function test_a_different_fleets_owner_cannot_view_or_approve(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
         $stranger = User::factory()->create();
-        Fleet::create(['name' => 'Other Fleet', 'owner_user_id' => $stranger->id]);
+        Fleet::create(['status' => 'approved', 'name' => 'Other Fleet', 'owner_user_id' => $stranger->id]);
 
         $this->actingAs($stranger)
             ->get(route('fleets.show', $fleet))
@@ -113,7 +113,7 @@ class FleetDriverReviewTest extends TestCase
     public function test_approving_an_already_decided_driver_is_refused(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
         $profile->update(['status' => 'approved']);
 

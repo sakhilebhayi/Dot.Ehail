@@ -64,9 +64,10 @@ class DashboardTest extends TestCase
     public function test_dashboard_reflects_real_ride_and_driver_counts(): void
     {
         $user = User::factory()->withPersonalTeam()->create();
+        $user->forceFill(['is_platform_operator' => true])->save();
         $passenger = User::factory()->create();
         $driver = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => User::factory()->create()->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => User::factory()->create()->id]);
 
         DriverProfile::create([
             'user_id' => $driver->id,

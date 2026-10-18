@@ -28,6 +28,11 @@
                     <x-nav-link href="{{ route('rides.create') }}" :active="request()->routeIs('rides.create')">
                         {{ __('Request a Ride') }}
                     </x-nav-link>
+                    @if(Auth::user()->isPlatformOperator())
+                    <x-nav-link href="{{ route('operator.fleets.index') }}" :active="request()->routeIs('operator.fleets.*')">
+                        {{ __('Fleet Review') }}
+                    </x-nav-link>
+                    @endif
                     @if($ownedDriverProfile)
                     <x-nav-link href="{{ route('rides.available') }}" :active="request()->routeIs('rides.available')">
                         {{ __('Available Rides') }}

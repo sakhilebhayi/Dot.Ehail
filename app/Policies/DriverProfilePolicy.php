@@ -38,7 +38,7 @@ class DriverProfilePolicy
      */
     public function view(User $user, DriverProfile $driverProfile): bool
     {
-        if ($user->id === $driverProfile->user_id) {
+        if ($user->id === $driverProfile->user_id || $user->isPlatformOperator()) {
             return true;
         }
 

@@ -30,7 +30,7 @@ class DriverDocumentPolicy
             return false;
         }
 
-        if ($user->id === $profile->user_id) {
+        if ($user->id === $profile->user_id || $user->isPlatformOperator()) {
             return true;
         }
 

@@ -57,6 +57,16 @@ class User extends Authenticatable
     ];
 
     /**
+     * Platform operators are the Dot.Ehail staff who vet fleets and may
+     * review any driver application and see platform-wide figures. The flag
+     * is not in $fillable, so it can never be set through mass assignment.
+     */
+    public function isPlatformOperator(): bool
+    {
+        return (bool) $this->is_platform_operator;
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -66,6 +76,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_platform_operator' => 'boolean',
         ];
     }
 }

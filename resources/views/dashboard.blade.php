@@ -73,7 +73,8 @@
 
     </div>
 
-    {{-- KPI Cards — row 2 --}}
+    @if($showFleetStats)
+    {{-- KPI Cards — row 2 (drivers + revenue: operators and fleet owners only) --}}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;">
 
         {{-- Total Drivers --}}
@@ -116,8 +117,10 @@
 
     </div>
 
+    @endif
+
     {{-- Middle row: Status breakdown + Driver availability --}}
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem;margin-bottom:2rem;align-items:start;">
+    <div style="display:grid;grid-template-columns:{{ $showFleetStats ? '1fr 340px' : '1fr' }};gap:1.5rem;margin-bottom:2rem;align-items:start;">
 
         {{-- Ride status breakdown --}}
         <div style="background:#141416;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.5rem;">
@@ -165,6 +168,7 @@
             @endif
         </div>
 
+        @if($showFleetStats)
         {{-- Driver availability card --}}
         <div style="background:#141416;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.5rem;">
             <h3 style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:#f4f4f5;margin:0 0 1.25rem;text-transform:uppercase;letter-spacing:0.08em;">Driver Fleet</h3>
@@ -216,6 +220,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
     </div>
 

@@ -11,9 +11,9 @@ use Illuminate\View\View;
 class RideController extends Controller
 {
     /**
-     * Searchable ride list. No team/fleet scoping exists on Ride yet (see
-     * wiki.md §3 & §7), so — matching the existing `/dashboard` ops view —
-     * this lists rides platform-wide for any authenticated user.
+     * Searchable ride list, limited to the rides the user may see (their
+     * own, their fleet's, or everything for a platform operator) -- the
+     * search only ever runs inside that set.
      */
     public function index(Request $request): View
     {
@@ -21,7 +21,8 @@ class RideController extends Controller
 
         $search = trim((string) $request->get('q', ''));
 
-        $rides = Ride::with(['driver', 'passenger', 'vehicle'])
+        $rides = Ride::visibleTo($request->user())
+            ->with(['driver', 'passenger', 'vehicle'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('pickup_address', 'like', "%{$search}%")

@@ -15,7 +15,7 @@ class DriverProfileTest extends TestCase
     public function test_a_driver_profile_belongs_to_a_fleet(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $driver = User::factory()->create();
 
         $profile = DriverProfile::create([
@@ -32,7 +32,7 @@ class DriverProfileTest extends TestCase
     public function test_status_can_be_rejected_with_a_reason_and_reviewer(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $driver = User::factory()->create();
 
         $profile = DriverProfile::create([

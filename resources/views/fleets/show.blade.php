@@ -5,6 +5,12 @@
     </h1>
     <p style="font-size:0.78rem;color:#71717a;margin:0 0 2rem;">Driver applications</p>
 
+    @unless ($fleet->isApproved())
+        <div class="dot-card" style="padding:0.75rem 1rem;margin-bottom:1.5rem;border:1px solid rgba(245,158,11,0.3);">
+            <p style="font-size:0.8rem;color:#f59e0b;margin:0;">This fleet is pending platform review. Applications can only be decided by a platform operator until it is approved.</p>
+        </div>
+    @endunless
+
     @if (session('status'))
         <div class="dot-card" style="padding:0.75rem 1rem;margin-bottom:1.5rem;border:1px solid rgba(34,197,94,0.3);">
             <p style="font-size:0.8rem;color:#4ade80;margin:0;">{{ session('status') }}</p>
@@ -32,6 +38,7 @@
                 </div>
             @endif
 
+            @can('reviewDriver', [$fleet, $profile])
             <div style="display:flex;gap:0.5rem;align-items:flex-start;">
                 <form method="POST" action="{{ route('fleets.drivers.approve', [$fleet, $profile]) }}">
                     @csrf
@@ -43,6 +50,9 @@
                     <button type="submit" style="padding:0.4rem 1rem;border-radius:6px;background:#ef4444;color:#3f0d0d;font-weight:700;border:none;font-size:0.78rem;cursor:pointer;">Reject</button>
                 </form>
             </div>
+            @else
+            <p style="font-size:0.72rem;color:#71717a;margin:0;">You can't decide this application. It needs review by someone other than the applicant{{ $fleet->isApproved() ? '' : ', and a platform operator while the fleet is pending' }}.</p>
+            @endcan
         </div>
     @empty
         <p style="font-size:0.8rem;color:#71717a;">No pending applications.</p>

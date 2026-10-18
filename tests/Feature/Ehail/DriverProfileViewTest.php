@@ -22,7 +22,7 @@ class DriverProfileViewTest extends TestCase
      */
     private function fleet(): Fleet
     {
-        return Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => User::factory()->create()->id]);
+        return Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => User::factory()->create()->id]);
     }
 
     public function test_guest_cannot_view_a_driver_profile(): void

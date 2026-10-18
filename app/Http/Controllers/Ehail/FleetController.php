@@ -53,6 +53,8 @@ class FleetController extends Controller
             ->where('fleet_id', $fleet->id)
             ->findOrFail($driverProfileId);
 
+        Gate::authorize('reviewDriver', [$fleet, $driverProfile]);
+
         if ($driverProfile->status !== 'pending') {
             return back()->withErrors(['status' => 'Only a pending application can be approved.']);
         }
@@ -73,6 +75,8 @@ class FleetController extends Controller
         $driverProfile = DriverProfile::withoutGlobalScope('user')
             ->where('fleet_id', $fleet->id)
             ->findOrFail($driverProfileId);
+
+        Gate::authorize('reviewDriver', [$fleet, $driverProfile]);
 
         if ($driverProfile->status !== 'pending') {
             return back()->withErrors(['status' => 'Only a pending application can be rejected.']);

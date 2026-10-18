@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,21 @@ class Fleet extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'owner_user_id'];
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_APPROVED = 'approved';
+
+    protected $fillable = ['name', 'owner_user_id', 'status'];
+
+    public function isApproved(): bool
+    {
+        return $this->status === self::STATUS_APPROVED;
+    }
+
+    public function scopeApproved(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_APPROVED);
+    }
 
     public function owner(): BelongsTo
     {

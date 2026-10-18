@@ -8,18 +8,21 @@ use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 /**
- * `Ride` has no fleet/team relation yet (see wiki.md §3/§7 — fleet-as-entity
- * isn't modeled), so the existing `/dashboard` route already surfaces every
- * ride platform-wide to any authenticated user by design — that is today's
- * documented operator ops view, not a gap this pass introduces or changes.
- * This policy exists so the new `/rides/{ride}` detail route (added for the
- * ride search flow) is authorized the same way instead of being wide open
- * with no Gate check at all.
+ * A ride is private to its passenger, its assigned driver, that driver's
+ * fleet owner (approved fleets only) and platform operators. The ride list
+ * and the dashboard apply the same rule through Ride::scopeVisibleTo().
+ * The open-request claim queue is separate: it is only shown to approved,
+ * online drivers (RideLifecycleController::available) and carries no
+ * passenger identity.
  */
 class RidePolicy
 {
     use HandlesAuthorization;
 
+    /**
+     * Anyone signed in may open the ride list; it is filtered to the rides
+     * they may see via Ride::visibleTo().
+     */
     public function viewAny(User $user): bool
     {
         return true;
@@ -27,7 +30,7 @@ class RidePolicy
 
     public function view(User $user, Ride $ride): bool
     {
-        return true;
+        return Ride::query()->visibleTo($user)->whereKey($ride->getKey())->exists();
     }
 
     /**

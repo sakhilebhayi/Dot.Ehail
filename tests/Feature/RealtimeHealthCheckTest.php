@@ -39,10 +39,25 @@ class RealtimeHealthCheckTest extends TestCase
         fclose($server);
 
         $response->assertOk()
-            ->assertJsonPath('status', 'ok')
-            ->assertJsonPath('checks.broadcasting_config.status', 'ok')
-            ->assertJsonPath('checks.queue_connection.status', 'ok')
-            ->assertJsonPath('checks.reverb_process.status', 'ok');
+            ->assertExactJson(['status' => 'ok']);
+    }
+
+    public function test_never_leaks_broadcast_config_or_reverb_host_and_port(): void
+    {
+        $this->configureHealthyBroadcasting();
+        config([
+            'queue.default' => 'database',
+            'reverb.servers.reverb.host' => '127.0.0.1',
+            'reverb.servers.reverb.port' => 1,
+        ]);
+
+        $response = $this->getJson('/up/realtime');
+
+        $response->assertStatus(503)->assertExactJson(['status' => 'degraded']);
+        $body = $response->getContent();
+        foreach (['reverb', '127.0.0.1', 'test-key', 'test-secret', 'test-app-id', 'checks', 'detail', 'BROADCAST_CONNECTION'] as $needle) {
+            $this->assertStringNotContainsStringIgnoringCase($needle, $body);
+        }
     }
 
     public function test_reports_degraded_when_broadcast_driver_is_not_reverb(): void
@@ -52,7 +67,7 @@ class RealtimeHealthCheckTest extends TestCase
         $this->getJson('/up/realtime')
             ->assertStatus(503)
             ->assertJsonPath('status', 'degraded')
-            ->assertJsonPath('checks.broadcasting_config.status', 'fail');
+            ->assertExactJson(['status' => 'degraded']);
     }
 
     public function test_reports_degraded_when_reverb_credentials_are_missing(): void
@@ -67,7 +82,7 @@ class RealtimeHealthCheckTest extends TestCase
 
         $this->getJson('/up/realtime')
             ->assertStatus(503)
-            ->assertJsonPath('checks.broadcasting_config.status', 'fail');
+            ->assertExactJson(['status' => 'degraded']);
     }
 
     public function test_reports_degraded_when_reverb_process_is_unreachable(): void
@@ -82,8 +97,7 @@ class RealtimeHealthCheckTest extends TestCase
 
         $this->getJson('/up/realtime')
             ->assertStatus(503)
-            ->assertJsonPath('status', 'degraded')
-            ->assertJsonPath('checks.reverb_process.status', 'fail');
+            ->assertExactJson(['status' => 'degraded']);
     }
 
     public function test_reports_degraded_when_redis_queue_connection_is_unreachable(): void
@@ -97,6 +111,6 @@ class RealtimeHealthCheckTest extends TestCase
 
         $this->getJson('/up/realtime')
             ->assertStatus(503)
-            ->assertJsonPath('checks.queue_connection.status', 'fail');
+            ->assertExactJson(['status' => 'degraded']);
     }
 }

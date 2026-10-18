@@ -34,6 +34,17 @@ class RideObserver
             return;
         }
 
+        $this->publishStatusChange($ride);
+    }
+
+    /**
+     * The side effects of a ride's status changing. Public so that a code
+     * path which has to write with a guarded query-builder update (and so
+     * never triggers model events -- RideLifecycleController::accept) can
+     * run exactly the same broadcast/notification the observer would.
+     */
+    public function publishStatusChange(Ride $ride): void
+    {
         broadcast(new RideStatusUpdated($ride))->toOthers();
 
         if ($ride->status !== 'completed') {

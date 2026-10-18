@@ -54,7 +54,7 @@ class DriverApplicationTest extends TestCase
     {
         Notification::fake();
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Existing Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Existing Fleet', 'owner_user_id' => $owner->id]);
         $applicant = User::factory()->create();
 
         $this->actingAs($applicant)
@@ -72,7 +72,7 @@ class DriverApplicationTest extends TestCase
     public function test_submitting_with_both_fleet_options_fails_validation(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Existing Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Existing Fleet', 'owner_user_id' => $owner->id]);
         $applicant = User::factory()->create();
 
         $this->actingAs($applicant)
@@ -100,7 +100,7 @@ class DriverApplicationTest extends TestCase
     {
         Notification::fake();
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Existing Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Existing Fleet', 'owner_user_id' => $owner->id]);
         $applicant = User::factory()->create();
 
         $this->actingAs($applicant)->post(route('drive.apply.store'), $this->validPayload([
@@ -115,7 +115,7 @@ class DriverApplicationTest extends TestCase
     {
         Notification::fake();
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Existing Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Existing Fleet', 'owner_user_id' => $owner->id]);
         $applicant = User::factory()->create();
         DriverProfile::create([
             'user_id' => $applicant->id,

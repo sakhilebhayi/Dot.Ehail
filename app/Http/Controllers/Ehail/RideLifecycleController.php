@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ehail;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Ride;
+use App\Observers\RideObserver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -43,7 +44,10 @@ class RideLifecycleController extends Controller
             && $profile->activeVehicle() !== null;
 
         $rides = $canAcceptRides
-            ? Ride::where('status', 'requested')->whereNull('driver_id')->with('passenger')->latest()->get()
+            // Only what a driver needs to decide whether to claim: no
+            // passenger relation, no passenger id, no coordinates.
+            ? Ride::select(['id', 'status', 'pickup_address', 'dropoff_address', 'vehicle_type', 'estimated_fare', 'created_at'])
+                ->where('status', 'requested')->whereNull('driver_id')->latest()->get()
             : collect();
 
         return view('rides.available', [
@@ -53,7 +57,7 @@ class RideLifecycleController extends Controller
         ]);
     }
 
-    public function accept(Ride $ride, Request $request): RedirectResponse
+    public function accept(Ride $ride, Request $request, RideObserver $observer): RedirectResponse
     {
         Gate::authorize('accept', $ride);
 
@@ -81,6 +85,11 @@ class RideLifecycleController extends Controller
             return redirect()->route('rides.available')->withErrors(['ride' => 'That ride was just claimed by another driver.']);
         }
 
+        // A query-builder update never fires model events, so RideObserver
+        // did not run. Reload the claimed row and publish the same status
+        // change (live broadcast to the passenger) the observer would have.
+        $observer->publishStatusChange($ride->fresh());
+
         return redirect()->route('rides.show', $ride)->with('status', 'Ride accepted.');
     }
 
@@ -103,6 +112,14 @@ class RideLifecycleController extends Controller
 
         if ($currentIndex === false || $nextIndex <= $currentIndex) {
             return back()->withErrors(['status' => 'That status change is not allowed.']);
+        }
+
+        // A completed ride must carry a final fare, and the estimate is the
+        // only fare this app can produce (see below) -- so a ride that was
+        // requested without coordinates (no estimate) cannot be completed
+        // with a NULL fare that would silently drop out of revenue.
+        if ($validated['status'] === 'completed' && $ride->estimated_fare === null) {
+            return back()->withErrors(['status' => 'This ride has no fare estimate, so it cannot be completed.']);
         }
 
         $update = ['status' => $validated['status']];
