@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Ehail;
 
 use App\Http\Controllers\Controller;
+use App\Models\DriverProfile;
 use App\Models\Ride;
+use App\Models\RideRating;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -48,10 +50,20 @@ class RideController extends Controller
     {
         Gate::authorize('view', $ride);
 
-        $ride->load(['driver', 'passenger', 'vehicle', 'rating']);
+        $ride->load(['driver', 'passenger', 'vehicle', 'ratings.rater']);
+
+        // The driver's public standing: an aggregate only, never the
+        // comments or who left them.
+        $driverRating = $ride->driver_id
+            ? [
+                'average' => DriverProfile::withoutGlobalScope('user')->where('user_id', $ride->driver_id)->value('rating'),
+                'count' => RideRating::where('rated_user_id', $ride->driver_id)->where('rated_role', RideRating::ROLE_DRIVER)->count(),
+            ]
+            : null;
 
         return view('rides.show', [
             'ride' => $ride,
+            'driverRating' => $driverRating,
         ]);
     }
 }

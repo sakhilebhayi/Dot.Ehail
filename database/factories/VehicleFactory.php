@@ -20,6 +20,7 @@ class VehicleFactory extends Factory
             'color' => 'White',
             'plate_number' => 'CA '.$this->faker->unique()->numberBetween(100000, 999999),
             'type' => 'standard',
+            'seats' => 4,
             'is_active' => true,
         ];
     }

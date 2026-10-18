@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Events\RideStatusUpdated;
 use App\Models\Ride;
 use App\Notifications\RideCompletedNotification;
+use App\Services\Ehail\DriverStats;
 
 /**
  * Fires the in-app notifications that already existed as dead code:
@@ -35,6 +36,12 @@ class RideObserver
         }
 
         $this->publishStatusChange($ride);
+
+        // total_rides is derived from completed rides, and the update that
+        // completed this one is still inside its transaction.
+        if ($ride->status === 'completed' && $ride->driver_id !== null) {
+            app(DriverStats::class)->refresh($ride->driver_id);
+        }
     }
 
     /**

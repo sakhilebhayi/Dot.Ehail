@@ -40,4 +40,15 @@ class FleetPolicy
 
         return $fleet->isApproved() && $user->id === $fleet->owner_user_id;
     }
+
+    /**
+     * The register of every vehicle driven in a fleet: platform operators, and
+     * the owner once an operator has approved the fleet (an unvetted fleet's
+     * owner is only an applicant until then).
+     */
+    public function viewVehicles(User $user, Fleet $fleet): bool
+    {
+        return $user->isPlatformOperator()
+            || ($fleet->isApproved() && $user->id === $fleet->owner_user_id);
+    }
 }

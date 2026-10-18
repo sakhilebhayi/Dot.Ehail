@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ehail;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
+use App\Models\Vehicle;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -29,8 +30,16 @@ class FleetController extends Controller
             ->latest()
             ->get();
 
+        $vehicles = Gate::allows('viewVehicles', $fleet)
+            ? Vehicle::whereIn('driver_profile_id', $driverProfiles->pluck('id'))
+                ->with(['driverProfile' => fn ($q) => $q->withoutGlobalScope('user')->with('user')])
+                ->orderBy('plate_number')
+                ->get()
+            : null;
+
         return view('fleets.show', [
             'fleet' => $fleet,
+            'vehicles' => $vehicles,
             'pending' => $driverProfiles->where('status', 'pending'),
             'reviewed' => $driverProfiles->whereIn('status', ['approved', 'suspended', 'rejected']),
         ]);

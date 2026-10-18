@@ -42,17 +42,23 @@ class RideLifecycleController extends Controller
             && $profile->is_online
             && $profile->activeVehicle() !== null;
 
+        $vehicle = $canAcceptRides ? $profile->activeVehicle() : null;
+
         $rides = $canAcceptRides
             // Only what a driver needs to decide whether to claim: no
-            // passenger relation, no passenger id, no coordinates.
+            // passenger relation, no passenger id, no coordinates -- and only
+            // the tiers the active vehicle may serve.
             ? Ride::select(['id', 'status', 'pickup_address', 'dropoff_address', 'vehicle_type', 'estimated_fare', 'created_at'])
-                ->where('status', 'requested')->whereNull('driver_id')->latest()->get()
+                ->where('status', 'requested')->whereNull('driver_id')
+                ->whereIn('vehicle_type', $vehicle->servableTiers())
+                ->latest()->get()
             : collect();
 
         return view('rides.available', [
             'rides' => $rides,
             'canAcceptRides' => $canAcceptRides,
             'profile' => $profile,
+            'vehicle' => $vehicle,
         ]);
     }
 

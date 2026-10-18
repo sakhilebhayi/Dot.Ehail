@@ -7,7 +7,7 @@ use App\Enums\RideStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ride extends Model
 {
@@ -117,8 +117,8 @@ class Ride extends Model
         return $this->belongsTo(Vehicle::class);
     }
 
-    public function rating(): HasOne
+    public function ratings(): HasMany
     {
-        return $this->hasOne(RideRating::class);
+        return $this->hasMany(RideRating::class);
     }
 }

@@ -10,7 +10,9 @@ use App\Http\Controllers\Ehail\OperatorFleetController;
 use App\Http\Controllers\Ehail\OperatorRideController;
 use App\Http\Controllers\Ehail\RideController;
 use App\Http\Controllers\Ehail\RideLifecycleController;
+use App\Http\Controllers\Ehail\RideRatingController;
 use App\Http\Controllers\Ehail\RideRequestController;
+use App\Http\Controllers\Ehail\VehicleController;
 use App\Http\Controllers\RealtimeHealthController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -55,12 +57,20 @@ Route::middleware([
     Route::post('/rides/{ride}/accept', [RideLifecycleController::class, 'accept'])->name('rides.accept');
     Route::patch('/rides/{ride}/advance', [RideLifecycleController::class, 'advance'])->name('rides.advance');
     Route::post('/rides/{ride}/cancel', [RideLifecycleController::class, 'cancel'])->name('rides.cancel');
+    Route::post('/rides/{ride}/ratings', [RideRatingController::class, 'store'])->name('rides.ratings.store');
     Route::get('/drivers/{driverProfile}', [DriverController::class, 'show'])->name('drivers.show');
     Route::patch('/drivers/{driverProfile}/toggle-online', [DriverController::class, 'toggleOnline'])->name('drivers.toggle-online');
 
     Route::post('/drive/documents', [DriverDocumentController::class, 'store'])->name('drivers.documents.store');
     Route::get('/drive/documents/{document}', [DriverDocumentController::class, 'show'])->name('drivers.documents.show');
     Route::delete('/drive/documents/{document}', [DriverDocumentController::class, 'destroy'])->name('drivers.documents.destroy');
+
+    Route::get('/drive/vehicles', [VehicleController::class, 'index'])->name('drivers.vehicles.index');
+    Route::post('/drive/vehicles', [VehicleController::class, 'store'])->name('drivers.vehicles.store');
+    Route::get('/drive/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->name('drivers.vehicles.edit');
+    Route::patch('/drive/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('drivers.vehicles.update');
+    Route::post('/drive/vehicles/{vehicle}/activate', [VehicleController::class, 'activate'])->name('drivers.vehicles.activate');
+    Route::post('/drive/vehicles/{vehicle}/deactivate', [VehicleController::class, 'deactivate'])->name('drivers.vehicles.deactivate');
 
     Route::get('/drive/apply', [DriverApplicationController::class, 'create'])->name('drive.apply');
     Route::post('/drive/apply', [DriverApplicationController::class, 'store'])->name('drive.apply.store');

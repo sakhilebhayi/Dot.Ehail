@@ -99,6 +99,11 @@
             <div>
                 <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.35rem;">Driver</div>
                 <div style="font-size:12px;color:#d4d4d8;">{{ $ride->driver?->name ?? 'Unassigned' }}</div>
+                @if($driverRating && $driverRating['count'] > 0)
+                <div style="font-size:11px;color:#71717a;margin-top:2px;"><span class="metric-val" style="color:#f59e0b;" data-figure="driver-rating">{{ number_format((float) $driverRating['average'], 2) }}</span> from {{ $driverRating['count'] }} {{ \Illuminate\Support\Str::plural('rating', $driverRating['count']) }}</div>
+                @elseif($driverRating)
+                <div style="font-size:11px;color:#71717a;margin-top:2px;">No ratings yet</div>
+                @endif
             </div>
             <div>
                 <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.35rem;">Vehicle</div>
@@ -157,22 +162,58 @@
     </div>
     @endcan
 
+    @if($ride->status === 'completed')
+    @php
+        $myRating = $ride->ratings->firstWhere('rated_by', auth()->id());
+        $isOperatorViewer = auth()->user()->isPlatformOperator();
+    @endphp
     <div class="dot-card" style="padding:1.5rem;">
-        <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 1.25rem;">Rating</h3>
-        @if($ride->rating)
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-                <span style="font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;color:#f59e0b;">{{ $ride->rating->rating }}/5</span>
-                @if($ride->rating->comment)
-                    <span style="font-size:0.8rem;color:#a1a1aa;">"{{ $ride->rating->comment }}"</span>
-                @endif
+        @if($myRating)
+            <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 0.75rem;">Your rating</h3>
+            <div style="display:flex;align-items:baseline;gap:0.75rem;">
+                <span class="metric-val" style="font-size:1.25rem;color:#f59e0b;">{{ $myRating->rating }}/5</span>
+                @if($myRating->comment)<span style="font-size:0.8rem;color:#a1a1aa;">{{ $myRating->comment }}</span>@endif
             </div>
+        @elsecan('rate', $ride)
+            <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 0.25rem;">
+                {{ $viewerRole === \App\Enums\RideActor::Passenger ? 'Rate your driver' : 'Rate your passenger' }}
+            </h3>
+            <p style="font-size:0.75rem;color:#71717a;margin:0 0 1rem;">One rating per ride. It cannot be changed afterwards.</p>
+            <form method="POST" action="{{ route('rides.ratings.store', $ride) }}" style="display:flex;flex-direction:column;gap:0.9rem;max-width:460px;">
+                @csrf
+                <fieldset style="border:0;padding:0;margin:0;">
+                    <legend style="font-size:0.75rem;color:#a1a1aa;margin-bottom:0.4rem;padding:0;">Rating, 1 (poor) to 5 (excellent)</legend>
+                    <div style="display:flex;gap:0.4rem;">
+                        @foreach([1, 2, 3, 4, 5] as $value)
+                        <label style="display:flex;align-items:center;gap:0.35rem;padding:0.4rem 0.7rem;border:1px solid rgba(255,255,255,0.12);border-radius:8px;cursor:pointer;font-size:0.85rem;color:#d4d4d8;">
+                            <input type="radio" name="rating" value="{{ $value }}" required @checked((int) old('rating') === $value)>
+                            <span class="metric-val">{{ $value }}</span>
+                        </label>
+                        @endforeach
+                    </div>
+                </fieldset>
+                <div>
+                    <label for="rating-comment" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Comment (optional, up to 500 characters)</label>
+                    <textarea id="rating-comment" name="comment" rows="3" maxlength="500" class="dot-input" style="resize:vertical;">{{ old('comment') }}</textarea>
+                </div>
+                <button type="submit" class="dot-btn dot-btn-primary" style="align-self:flex-start;">Save rating</button>
+            </form>
         @else
-            <div style="text-align:center;padding:2rem 0;">
-                <span class="material-symbols-rounded" style="font-size:36px;color:#3f3f46;display:block;margin-bottom:0.75rem;">star_border</span>
-                <p style="font-size:0.8rem;color:#52525b;margin:0;">This ride hasn't been rated yet.</p>
+            <p style="font-size:0.8rem;color:#71717a;margin:0;">Ratings for this ride can only be left by its passenger and driver.</p>
+        @endcan
+
+        @if($isOperatorViewer && $ride->ratings->isNotEmpty())
+        <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.06);">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.5rem;">All ratings on this ride (operators only)</div>
+            @foreach($ride->ratings as $entry)
+            <div style="font-size:0.78rem;color:#a1a1aa;padding:0.2rem 0;">
+                {{ $entry->rater?->name ?? 'A user' }} rated the {{ $entry->rated_role }} <span class="metric-val" style="color:#f59e0b;">{{ $entry->rating }}/5</span>@if($entry->comment) — {{ $entry->comment }}@endif
             </div>
+            @endforeach
+        </div>
         @endif
     </div>
+    @endif
 </div>
 
 {{--

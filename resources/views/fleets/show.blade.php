@@ -58,6 +58,28 @@
         <p style="font-size:0.8rem;color:#71717a;">No pending applications.</p>
     @endforelse
 
+    @if($vehicles !== null)
+    <h2 style="font-size:1rem;font-weight:700;color:#f4f4f5;margin:2rem 0 1rem;">Vehicle register ({{ $vehicles->count() }})</h2>
+    <div class="dot-card" style="overflow:hidden;">
+        @forelse($vehicles as $vehicle)
+        <div style="padding:0.85rem 1.25rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;{{ $loop->last ? '' : 'border-bottom:1px solid rgba(255,255,255,0.06);' }}">
+            <div>
+                <span class="metric-val" style="font-size:0.9rem;color:#f4f4f5;">{{ $vehicle->plate_number }}</span>
+                <span style="font-size:0.78rem;color:#a1a1aa;margin-left:0.5rem;">{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} · {{ $vehicle->color }} · {{ $vehicle->seats }} seats · {{ $vehicle->type === 'suv' ? 'SUV' : ucfirst($vehicle->type) }}</span>
+                <div style="font-size:0.72rem;color:#71717a;">Driven by {{ $vehicle->driverProfile?->user?->name ?? 'unknown' }} ({{ $vehicle->driverProfile?->status }})</div>
+            </div>
+            @if($vehicle->is_active)
+            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:rgba(74,222,128,0.1);color:#4ade80;">Active</span>
+            @else
+            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:rgba(161,161,170,0.12);color:#a1a1aa;">Inactive</span>
+            @endif
+        </div>
+        @empty
+        <p style="padding:1.25rem;font-size:0.8rem;color:#71717a;margin:0;">No vehicles registered in this fleet yet.</p>
+        @endforelse
+    </div>
+    @endif
+
     <h2 style="font-size:1rem;font-weight:700;color:#f4f4f5;margin:2rem 0 1rem;">Reviewed</h2>
     @forelse ($reviewed as $profile)
         <div class="dot-card" style="padding:1rem 1.25rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;">

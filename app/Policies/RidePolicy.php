@@ -45,10 +45,10 @@ class RidePolicy
     }
 
     /**
-     * A driver may claim an open request if they have an approved,
-     * online DriverProfile with at least one active vehicle -- matches
-     * the same "can this user actually drive" check DriverController's
-     * own views already rely on via DriverProfile::activeVehicle().
+     * A driver may claim an open request if they have an approved, online
+     * DriverProfile whose active vehicle may serve the ride's requested
+     * tier (config/ehail.php vehicle_tiers: a premium ride needs a premium
+     * vehicle unless the mapping says otherwise).
      */
     public function accept(User $user, Ride $ride): bool
     {
@@ -68,7 +68,7 @@ class RidePolicy
         return $profile !== null
             && $profile->status === 'approved'
             && $profile->is_online
-            && $profile->activeVehicle() !== null;
+            && $profile->activeVehicleFor($ride->vehicle_type) !== null;
     }
 
     /**
@@ -95,6 +95,18 @@ class RidePolicy
             RideActor::Driver => in_array($ride->status, ['accepted', 'en_route', 'arrived'], true),
             default => false,
         };
+    }
+
+    /**
+     * Only the passenger and the driver of a completed ride may rate it (each
+     * the other; RideRatings enforces once per person). An operator who is
+     * neither party may read ratings but never write one.
+     */
+    public function rate(User $user, Ride $ride): bool
+    {
+        return $ride->status === 'completed'
+            && $ride->driver_id !== null
+            && in_array($ride->actorFor($user), [RideActor::Passenger, RideActor::Driver], true);
     }
 
     /**

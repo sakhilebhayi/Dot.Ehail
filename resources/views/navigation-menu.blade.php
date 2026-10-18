@@ -40,6 +40,9 @@
                     <x-nav-link href="{{ route('rides.available') }}" :active="request()->routeIs('rides.available')">
                         {{ __('Available Rides') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('drivers.vehicles.index') }}" :active="request()->routeIs('drivers.vehicles.*')">
+                        {{ __('My Vehicles') }}
+                    </x-nav-link>
                     <x-nav-link href="{{ route('drivers.show', $ownedDriverProfile) }}" :active="request()->routeIs('drivers.show')">
                         {{ __('My Driver Profile') }}
                     </x-nav-link>
@@ -194,6 +197,9 @@
             @if($ownedDriverProfile)
             <x-responsive-nav-link href="{{ route('rides.available') }}" :active="request()->routeIs('rides.available')">
                 {{ __('Available Rides') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('drivers.vehicles.index') }}" :active="request()->routeIs('drivers.vehicles.*')">
+                {{ __('My Vehicles') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link href="{{ route('drivers.show', $ownedDriverProfile) }}" :active="request()->routeIs('drivers.show')">
                 {{ __('My Driver Profile') }}

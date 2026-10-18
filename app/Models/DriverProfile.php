@@ -61,4 +61,15 @@ class DriverProfile extends Model
     {
         return $this->vehicles()->where('is_active', true)->first();
     }
+
+    /**
+     * The active vehicle, but only if it may serve a ride requested in
+     * $rideTier (see config/ehail.php vehicle_tiers).
+     */
+    public function activeVehicleFor(string $rideTier): ?Vehicle
+    {
+        $vehicle = $this->activeVehicle();
+
+        return $vehicle?->canServe($rideTier) ? $vehicle : null;
+    }
 }

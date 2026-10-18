@@ -31,11 +31,15 @@ class RideLifecycle
 
         $claimed = $this->transition(
             $ride, RideStatus::Accepted, RideActor::Driver,
-            fn (Ride $locked) => [
-                'driver_id' => $driver->id,
-                'vehicle_id' => $profile->activeVehicle()?->id,
-                'accepted_at' => now(),
-            ],
+            function (Ride $locked) use ($driver, $profile) {
+                $vehicle = $profile->activeVehicleFor($locked->vehicle_type);
+
+                if ($vehicle === null) {
+                    throw new InvalidRideTransition('Your active vehicle cannot serve this ride\'s vehicle type.');
+                }
+
+                return ['driver_id' => $driver->id, 'vehicle_id' => $vehicle->id, 'accepted_at' => now()];
+            },
             guard: fn (Ride $locked) => $locked->driver_id === null,
         );
 

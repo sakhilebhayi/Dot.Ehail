@@ -29,6 +29,13 @@ class DriverDocumentController extends Controller
 
         $validated = $request->validate([
             'type' => ['required', Rule::in(['license', 'id', 'vehicle_inspection'])],
+            // Optional: attach an inspection record to one of the driver's own
+            // vehicles. Same upload, same disk -- only the link is new.
+            'vehicle_id' => [
+                'nullable',
+                'prohibited_unless:type,vehicle_inspection',
+                Rule::exists('vehicles', 'id')->where('driver_profile_id', $profile->id),
+            ],
             'document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ]);
 
@@ -36,6 +43,7 @@ class DriverDocumentController extends Controller
 
         $profile->documents()->create([
             'type' => $validated['type'],
+            'vehicle_id' => $validated['vehicle_id'] ?? null,
             'file_path' => $path,
             'original_filename' => $request->file('document')->getClientOriginalName(),
         ]);
