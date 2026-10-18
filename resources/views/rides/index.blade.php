@@ -41,7 +41,7 @@
             @endif
         </div>
         @else
-        <div style="overflow-x:auto;">
+        <div class="table-scroll" style="overflow-x:auto;" role="region" aria-label="Rides" tabindex="0">
             <table style="width:100%;border-collapse:collapse;">
                 <thead>
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
