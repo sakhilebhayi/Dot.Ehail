@@ -163,6 +163,71 @@ and retry; if Notify stays down they are dropped after their third try). Retries
 share an idempotency key, `"{event}:{ride id | driver profile id}:{sha1(recipient email)}:{bucket}"`
 (bucket: ride status plus how many times the driver changed, or the decision), so Notify collapses them.
 
+## Daily metrics to Dot.Analytics
+
+Once a day this app posts aggregate numbers, server to server, to Dot.Analytics
+(`POST {ANALYTICS_INGEST_URL}`, the full URL ending `/api/ingest/snapshots`). The request is signed
+exactly like the Dot.Notify one: HMAC-SHA256 over `"{timestamp}.{raw body}"` with
+`ANALYTICS_INGEST_SECRET`, headers `X-InfoDot-Timestamp` (unix seconds) and `X-InfoDot-Signature`
+(`sha256=<hex>`), computed when the request is sent, so a retry carries a fresh timestamp. The body is
+
+```json
+{"platform": "ehail", "company_uuid": "<uuid>", "taken_at": "2026-11-05T00:00:00Z", "period": "day", "metrics": {"rides_completed_7d": 0, "drivers_online": 0, "avg_rating": 4.5}}
+```
+
+`ehail:publish-metrics` collects and queues one `SendAnalyticsSnapshot` job per company. It takes
+`--company=<uuid>` (one company only) and `--dry-run` (collect and print, queue and send nothing).
+
+**What is sent: these keys and nothing else** (Dot.Analytics' metrics contract, `config/metrics.php`):
+
+| Key | Meaning | Fleet owner's snapshot | Operating company's snapshot |
+|---|---|---|---|
+| `rides_requested_7d` | rides requested in the last 7 whole UTC days, counted once each by their original request time (`created_at`; a ride a driver hands back is not a new request) | omitted | yes, platform-wide |
+| `rides_completed_7d` | rides with status `completed` whose `completed_at` fell in those 7 days | rides its own drivers completed | platform-wide |
+| `rides_expired_7d` | rides with status `expired` whose `expired_at` fell in those 7 days | omitted | yes, platform-wide |
+| `drivers_online` | approved drivers marked online right now (the ones who can take a ride) | its own drivers | platform-wide |
+| `avg_rating` | mean of the passengers' 1 to 5 ratings of drivers, all time, 2 decimals. Left out when there are none, never `0` | its own drivers | platform-wide |
+
+Aggregates only: no names, emails, addresses, plates, licence or ID numbers, fares, ratings comments
+and no row ever appears in the body. Counts are whole numbers; a company with no activity sends true
+zeros (zero is a real count).
+
+**Which company.** Ehail has two kinds of owner, so it publishes two kinds of snapshot:
+
+- **Fleet owners.** Drivers belong to a fleet and a fleet to its owner, a user, and Dot.Analytics
+  wants a company, so the company is the InfoDot team (`infodot_team_uuid`) the fleet owner currently
+  belongs to: their current team's uuid, or their personal team's if the current team has none (the
+  rule the Dot.Notify client uses). It is the same "owned **approved** fleets" scope the app's own
+  dashboard gives a fleet owner; all fleets of one company are added together. A fleet owner with no
+  `infodot_team_uuid`, or a fleet still pending vetting, publishes nothing. A driver is counted with
+  the fleet they belong to now. Because **a requested ride has no driver, and an expired ride has had its
+  driver cleared**, neither belongs to any fleet: `rides_requested_7d` and `rides_expired_7d` are
+  **omitted from fleet snapshots** rather than guessed.
+- **The operating company.** The app's own dashboard shows platform operators platform-wide figures,
+  and those figures have no fleet owner. They are published **only** under the company named by
+  `ANALYTICS_COMPANY_UUID` (the InfoDot company uuid of whoever operates Dot.Ehail), with all five
+  keys. **Blank means no platform-wide snapshot is published.** If that company also owns a fleet,
+  Dot.Analytics gets the one platform-wide snapshot for it (one snapshot per company and day), and the
+  other fleet owners still see only their own.
+
+**Windows are UTC.** `taken_at` is the start of the UTC day the command runs on, and the three "7d"
+numbers cover the seven whole UTC days before it, so a re-run on the same day describes the same
+snapshot and Dot.Analytics keeps the first one (replays are idempotent per company, platform,
+`taken_at` and period). `drivers_online` is read at collection time, shortly after 00:15 UTC.
+
+**What it takes for anything to be sent:** nothing is collected, queued or sent until
+`ANALYTICS_INGEST_URL` **and** `ANALYTICS_INGEST_SECRET` are both set. The secret is this app's
+`ANALYTICS_INGEST_SECRET_EHAIL` value in Dot.Analytics' `.env` (same value; `ANALYTICS_PLATFORM_KEY`
+is `ehail`), and each company must be connected there. The **scheduler cron is required**
+(`* * * * * php artisan schedule:run`; the command runs daily at 00:15 UTC) and so is a **queue
+worker** (`php artisan queue:work`); with `QUEUE_CONNECTION=sync` the send happens inside the command.
+
+**Safety:** a Dot.Analytics outage or misconfiguration cannot affect this app. The send is a queued
+job, never part of a request; it has a 5 second HTTP timeout, 3 tries with 30 s and 120 s backoff,
+never throws, logs without secrets or numbers, and a cache-based circuit breaker pauses calls for 60
+seconds after 5 consecutive failures (separate from the Dot.Notify breaker). A refusal (401, 404, 422)
+is not retried. A collection or queueing error is logged and only ends that run of the command.
+
 ## 🚢 Deployment
 
 ### Production Checklist
