@@ -6,6 +6,7 @@ use App\Models\DriverProfile;
 use App\Models\Fleet;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Support\DriverIdentifiers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,8 +20,8 @@ class FleetDriverReviewTest extends TestCase
         $profile = DriverProfile::create([
             'user_id' => $applicant->id,
             'fleet_id' => $fleet->id,
-            'license_number' => 'LIC-'.$applicant->id,
-            'id_number' => 'ID-'.$applicant->id,
+            'license_number' => 'ZA-LICENCE-'.str_pad((string) $applicant->id, 6, '0', STR_PAD_LEFT),
+            'id_number' => '800101'.str_pad((string) $applicant->id, 7, '0', STR_PAD_LEFT),
             'status' => 'pending',
         ]);
         Vehicle::create([
@@ -35,19 +36,20 @@ class FleetDriverReviewTest extends TestCase
     public function test_fleet_owner_can_view_pending_applications(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
         $this->actingAs($owner)
             ->get(route('fleets.show', $fleet))
             ->assertOk()
-            ->assertSee($profile->license_number);
+            ->assertDontSee($profile->license_number)
+            ->assertSee(DriverIdentifiers::mask($profile->license_number));
     }
 
     public function test_fleet_owner_can_approve_a_pending_driver(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
         $this->actingAs($owner)
@@ -63,7 +65,7 @@ class FleetDriverReviewTest extends TestCase
     public function test_reject_without_a_reason_is_blocked(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
         $this->actingAs($owner)
@@ -77,7 +79,7 @@ class FleetDriverReviewTest extends TestCase
     public function test_reject_with_a_reason_marks_the_driver_rejected(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
         $this->actingAs($owner)
@@ -92,11 +94,11 @@ class FleetDriverReviewTest extends TestCase
     public function test_a_different_fleets_owner_cannot_view_or_approve(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
         $stranger = User::factory()->create();
-        Fleet::create(['name' => 'Other Fleet', 'owner_user_id' => $stranger->id]);
+        Fleet::create(['status' => 'approved', 'name' => 'Other Fleet', 'owner_user_id' => $stranger->id]);
 
         $this->actingAs($stranger)
             ->get(route('fleets.show', $fleet))
@@ -113,7 +115,7 @@ class FleetDriverReviewTest extends TestCase
     public function test_approving_an_already_decided_driver_is_refused(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
         $profile->update(['status' => 'approved']);
 

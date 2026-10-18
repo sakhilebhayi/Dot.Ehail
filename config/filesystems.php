@@ -60,6 +60,21 @@ return [
             'report' => false,
         ],
 
+        // Driver license / ID / vehicle-inspection uploads -- never served
+        // by a public URL (serve: false, visibility: private); only ever
+        // reachable by streaming through DriverDocumentController, which
+        // Gate-checks the viewer first. Same shape as this ecosystem's
+        // other sensitive-document disks (Dot.Engage's contracts disk,
+        // Dot.Tutor's lesson-resources disk).
+        'driver-documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/driver-documents'),
+            'serve' => false,
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*

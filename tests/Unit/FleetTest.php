@@ -14,7 +14,7 @@ class FleetTest extends TestCase
     public function test_a_fleet_belongs_to_its_owner(): void
     {
         $owner = User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
 
         $this->assertTrue($fleet->owner->is($owner));
     }

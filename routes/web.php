@@ -1,17 +1,31 @@
 <?php
 
 use App\Http\Controllers\Auth\EcosystemAuthController;
+use App\Http\Controllers\Ehail\DashboardController;
 use App\Http\Controllers\Ehail\DriverApplicationController;
 use App\Http\Controllers\Ehail\DriverController;
+use App\Http\Controllers\Ehail\DriverDocumentController;
 use App\Http\Controllers\Ehail\FleetController;
+use App\Http\Controllers\Ehail\OperatorFleetController;
+use App\Http\Controllers\Ehail\OperatorRideController;
 use App\Http\Controllers\Ehail\RideController;
-use App\Models\DriverProfile;
-use App\Models\Ride;
+use App\Http\Controllers\Ehail\RideLifecycleController;
+use App\Http\Controllers\Ehail\RideRatingController;
+use App\Http\Controllers\Ehail\RideRequestController;
+use App\Http\Controllers\Ehail\VehicleController;
+use App\Http\Controllers\RealtimeHealthController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Laravel\Jetstream\Jetstream;
 
-Route::get('/auth/ecosystem', [EcosystemAuthController::class, 'handle'])->name('ecosystem.auth');
+Route::get('/auth/ecosystem', [EcosystemAuthController::class, 'handle'])
+    ->middleware('throttle:10,1')
+    ->name('ecosystem.auth');
+
+// Real-time infrastructure health check -- unauthenticated like Laravel's
+// own /up, for uptime monitors/load balancers.
+Route::get('/up/realtime', [RealtimeHealthController::class, 'check'])->name('health.realtime');
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -30,48 +44,44 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        $totalRides = Ride::count();
-        $activeRides = Ride::whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])->count();
-        $completedRides = Ride::where('status', 'completed')->count();
-        $cancelledRides = Ride::where('status', 'cancelled')->count();
-        $requestedRides = Ride::where('status', 'requested')->count();
-
-        // DriverProfile now carries HasUserScope (a driver's own profile is
-        // single-owner tenant data — see app/Models/Concerns/HasUserScope.php),
-        // but this dashboard is a documented platform-wide ops view (wiki.md
-        // §4), so its aggregate counts must stay unscoped or every operator
-        // would silently see driver counts of 0/1 instead of the real
-        // platform-wide numbers.
-        $totalDrivers = DriverProfile::withoutGlobalScope('user')->count();
-        $availableDrivers = DriverProfile::withoutGlobalScope('user')->where('is_online', true)->count();
-        $approvedDrivers = DriverProfile::withoutGlobalScope('user')->where('status', 'approved')->count();
-
-        $totalRevenue = Ride::where('status', 'completed')->sum('final_fare');
-
-        $statusCounts = Ride::selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
-
-        $recentRides = Ride::with(['driver', 'passenger', 'vehicle'])
-            ->latest()
-            ->limit(10)
-            ->get();
-
-        return view('dashboard', compact(
-            'totalRides', 'activeRides', 'completedRides', 'cancelledRides', 'requestedRides',
-            'totalDrivers', 'availableDrivers', 'approvedDrivers',
-            'totalRevenue', 'statusCounts', 'recentRides'
-        ));
-    })->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('/rides', [RideController::class, 'index'])->name('rides.index');
+    // Literal segments ("create"/"available") must stay registered before
+    // "{ride}" below, otherwise they're swallowed by {ride}'s implicit
+    // route-model binding.
+    Route::get('/rides/create', [RideRequestController::class, 'create'])->name('rides.create');
+    Route::post('/rides', [RideRequestController::class, 'store'])->name('rides.store');
+    Route::get('/rides/available', [RideLifecycleController::class, 'available'])->name('rides.available');
     Route::get('/rides/{ride}', [RideController::class, 'show'])->name('rides.show');
+    Route::post('/rides/{ride}/accept', [RideLifecycleController::class, 'accept'])->name('rides.accept');
+    Route::patch('/rides/{ride}/advance', [RideLifecycleController::class, 'advance'])->name('rides.advance');
+    Route::post('/rides/{ride}/cancel', [RideLifecycleController::class, 'cancel'])->name('rides.cancel');
+    Route::post('/rides/{ride}/ratings', [RideRatingController::class, 'store'])->name('rides.ratings.store');
     Route::get('/drivers/{driverProfile}', [DriverController::class, 'show'])->name('drivers.show');
+    Route::patch('/drivers/{driverProfile}/toggle-online', [DriverController::class, 'toggleOnline'])->name('drivers.toggle-online');
+
+    Route::post('/drive/documents', [DriverDocumentController::class, 'store'])->name('drivers.documents.store');
+    Route::get('/drive/documents/{document}', [DriverDocumentController::class, 'show'])->name('drivers.documents.show');
+    Route::delete('/drive/documents/{document}', [DriverDocumentController::class, 'destroy'])->name('drivers.documents.destroy');
+
+    Route::get('/drive/vehicles', [VehicleController::class, 'index'])->name('drivers.vehicles.index');
+    Route::post('/drive/vehicles', [VehicleController::class, 'store'])->name('drivers.vehicles.store');
+    Route::get('/drive/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->name('drivers.vehicles.edit');
+    Route::patch('/drive/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('drivers.vehicles.update');
+    Route::post('/drive/vehicles/{vehicle}/activate', [VehicleController::class, 'activate'])->name('drivers.vehicles.activate');
+    Route::post('/drive/vehicles/{vehicle}/deactivate', [VehicleController::class, 'deactivate'])->name('drivers.vehicles.deactivate');
 
     Route::get('/drive/apply', [DriverApplicationController::class, 'create'])->name('drive.apply');
     Route::post('/drive/apply', [DriverApplicationController::class, 'store'])->name('drive.apply.store');
+
+    Route::middleware('operator')->prefix('operator')->name('operator.')->group(function () {
+        Route::get('/fleets', [OperatorFleetController::class, 'index'])->name('fleets.index');
+        Route::post('/fleets/{fleet}/approve', [OperatorFleetController::class, 'approve'])->name('fleets.approve');
+        Route::get('/rides', [OperatorRideController::class, 'index'])->name('rides.index');
+        Route::post('/rides/{ride}/complete', [OperatorRideController::class, 'complete'])->name('rides.complete');
+        Route::post('/rides/{ride}/cancel', [OperatorRideController::class, 'cancel'])->name('rides.cancel');
+    });
 
     Route::get('/fleets/{fleet}', [FleetController::class, 'show'])->name('fleets.show');
     Route::post('/fleets/{fleet}/drivers/{driverProfileId}/approve', [FleetController::class, 'approveDriver'])->name('fleets.drivers.approve');

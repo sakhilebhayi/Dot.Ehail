@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Ride;
+use App\Services\Ehail\FareCalculator;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -31,7 +32,7 @@ class RideCompletedNotification extends Notification
     public function toDatabase(object $notifiable): array
     {
         $fare = $this->ride->final_fare !== null
-            ? 'R '.number_format((float) $this->ride->final_fare, 2)
+            ? FareCalculator::format($this->ride->final_fare)
             : 'fare pending';
 
         return [

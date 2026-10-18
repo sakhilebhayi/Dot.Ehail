@@ -2,8 +2,10 @@
 
 namespace App\Observers;
 
+use App\Events\RideStatusUpdated;
 use App\Models\Ride;
 use App\Notifications\RideCompletedNotification;
+use App\Services\Ehail\DriverStats;
 
 /**
  * Fires the in-app notifications that already existed as dead code:
@@ -13,6 +15,11 @@ use App\Notifications\RideCompletedNotification;
  * change. This observer closes that gap by watching for the one lifecycle
  * transition the notification was built for: a ride's `status` becoming
  * `completed`.
+ *
+ * Also broadcasts RideStatusUpdated on ANY status transition (not just
+ * completed) so a ride's detail page updates live for its passenger/driver
+ * -- a separate, broader concern from the completed-only in-app
+ * notification above.
  *
  * Scope note: this only wires the existing *in-app* (`database` channel)
  * notification to a real domain event. It is not the outbound
@@ -24,7 +31,30 @@ class RideObserver
 {
     public function updated(Ride $ride): void
     {
-        if (! $ride->wasChanged('status') || $ride->status !== 'completed') {
+        if (! $ride->wasChanged('status')) {
+            return;
+        }
+
+        $this->publishStatusChange($ride);
+
+        // total_rides is derived from completed rides, and the update that
+        // completed this one is still inside its transaction.
+        if ($ride->status === 'completed' && $ride->driver_id !== null) {
+            app(DriverStats::class)->refresh($ride->driver_id);
+        }
+    }
+
+    /**
+     * The side effects of a ride's status changing. Public so that a code
+     * path which has to write with a guarded query-builder update (and so
+     * never triggers model events -- RideLifecycleController::accept) can
+     * run exactly the same broadcast/notification the observer would.
+     */
+    public function publishStatusChange(Ride $ride): void
+    {
+        broadcast(new RideStatusUpdated($ride))->toOthers();
+
+        if ($ride->status !== 'completed') {
             return;
         }
 

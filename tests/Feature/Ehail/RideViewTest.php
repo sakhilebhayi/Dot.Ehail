@@ -25,10 +25,10 @@ class RideViewTest extends TestCase
         $this->get(route('rides.show', $ride))->assertRedirect('/login');
     }
 
-    public function test_authenticated_user_can_view_a_ride(): void
+    public function test_the_passenger_can_view_their_ride(): void
     {
-        $user = User::factory()->withPersonalTeam()->create();
-        $passenger = User::factory()->create();
+        $passenger = User::factory()->withPersonalTeam()->create();
+        $user = $passenger;
 
         $ride = Ride::create([
             'passenger_id' => $passenger->id,
@@ -49,7 +49,7 @@ class RideViewTest extends TestCase
     public function test_ride_search_filters_by_pickup_address(): void
     {
         $user = User::factory()->withPersonalTeam()->create();
-        $passenger = User::factory()->create();
+        $passenger = $user;
 
         Ride::create([
             'passenger_id' => $passenger->id,

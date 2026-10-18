@@ -22,7 +22,7 @@ class DriverProfileViewTest extends TestCase
      */
     private function fleet(): Fleet
     {
-        return Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => User::factory()->create()->id]);
+        return Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => User::factory()->create()->id]);
     }
 
     public function test_guest_cannot_view_a_driver_profile(): void
@@ -102,6 +102,25 @@ class DriverProfileViewTest extends TestCase
         $this->actingAs($otherUser)
             ->get(route('drivers.show', $profile))
             ->assertNotFound();
+    }
+
+    public function test_the_fleet_owner_and_a_platform_operator_can_open_a_drivers_profile(): void
+    {
+        $fleet = $this->fleet();
+        $profile = DriverProfile::create([
+            'user_id' => User::factory()->create()->id,
+            'fleet_id' => $fleet->id,
+            'license_number' => 'LIC-204',
+            'id_number' => 'ID-204',
+            'status' => 'approved',
+        ]);
+        $operator = User::factory()->withPersonalTeam()->create();
+        $operator->forceFill(['is_platform_operator' => true])->save();
+
+        // DriverProfilePolicy::view always allowed these two; the scoped route
+        // binding used to 404 them before the policy ran.
+        $this->actingAs($fleet->owner)->get(route('drivers.show', $profile))->assertOk();
+        $this->actingAs($operator)->get(route('drivers.show', $profile))->assertOk();
     }
 
     /**

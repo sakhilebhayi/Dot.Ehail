@@ -5,18 +5,22 @@ namespace App\Http\Controllers\Ehail;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
+use App\Models\User;
 use App\Models\Vehicle;
 use App\Notifications\DriverApplicationSubmittedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class DriverApplicationController extends Controller
 {
     public function create(): View
     {
-        $fleets = Fleet::orderBy('name')->get();
+        // Only operator-approved fleets can be joined; a freshly created
+        // fleet is pending until a platform operator vets it.
+        $fleets = Fleet::approved()->orderBy('name')->get();
 
         return view('drivers.apply', ['fleets' => $fleets]);
     }
@@ -32,9 +36,23 @@ class DriverApplicationController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'license_number' => 'required|string|unique:driver_profiles,license_number',
-            'id_number' => 'required|string|unique:driver_profiles,id_number',
-            'existing_fleet_id' => 'nullable|required_without:new_fleet_name|exists:fleets,id',
+            // Unique through the blind index: the stored values are encrypted,
+            // so a plain `unique:` rule could never match.
+            'license_number' => ['required', 'string', 'max:100', function (string $attribute, mixed $value, \Closure $fail) {
+                if (DriverProfile::licenseNumberTaken((string) $value)) {
+                    $fail('The license number has already been taken.');
+                }
+            }],
+            'id_number' => ['required', 'string', 'max:100', function (string $attribute, mixed $value, \Closure $fail) {
+                if (DriverProfile::idNumberTaken((string) $value)) {
+                    $fail('The id number has already been taken.');
+                }
+            }],
+            'existing_fleet_id' => [
+                'nullable',
+                'required_without:new_fleet_name',
+                Rule::exists('fleets', 'id')->where('status', Fleet::STATUS_APPROVED),
+            ],
             'new_fleet_name' => 'nullable|string|required_without:existing_fleet_id',
             'vehicle_make' => 'required|string',
             'vehicle_model' => 'required|string',
@@ -42,6 +60,14 @@ class DriverApplicationController extends Controller
             'vehicle_color' => 'required|string',
             'vehicle_plate_number' => 'required|string|unique:vehicles,plate_number',
             'vehicle_type' => 'required|string|in:economy,standard,premium,suv',
+            // All three optional -- a driver can also upload/replace these
+            // later via DriverDocumentController, so the application
+            // itself doesn't hard-require them (existing applicants with
+            // no documents on file should still be reviewable, not
+            // silently blocked by a new required field).
+            'license_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'id_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'vehicle_inspection_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
         $validator->after(function ($validator) use ($request) {
@@ -56,9 +82,12 @@ class DriverApplicationController extends Controller
             $fleet = Fleet::create([
                 'name' => $validated['new_fleet_name'],
                 'owner_user_id' => $request->user()->id,
+                // The applicant owning the fleet must never be what
+                // approves them: the fleet starts pending operator review.
+                'status' => Fleet::STATUS_PENDING,
             ]);
         } else {
-            $fleet = Fleet::findOrFail($validated['existing_fleet_id']);
+            $fleet = Fleet::approved()->findOrFail($validated['existing_fleet_id']);
         }
 
         $profile = DriverProfile::create([
@@ -79,9 +108,32 @@ class DriverApplicationController extends Controller
             'type' => $validated['vehicle_type'],
         ]);
 
-        $fleet->owner->notify(new DriverApplicationSubmittedNotification($profile));
+        foreach (['license_document' => 'license', 'id_document' => 'id', 'vehicle_inspection_document' => 'vehicle_inspection'] as $field => $type) {
+            if (! $request->hasFile($field)) {
+                continue;
+            }
+
+            $file = $request->file($field);
+            $profile->documents()->create([
+                'type' => $type,
+                'file_path' => $file->store('', 'driver-documents'),
+                'original_filename' => $file->getClientOriginalName(),
+            ]);
+        }
+
+        // An unvetted fleet's owner is the applicant themselves, so the
+        // reviewers are the platform operators; otherwise the fleet owner.
+        $reviewers = $fleet->isApproved()
+            ? collect([$fleet->owner])
+            : User::where('is_platform_operator', true)->get();
+
+        foreach ($reviewers->filter()->reject(fn (User $reviewer) => $reviewer->id === $request->user()->id) as $reviewer) {
+            $reviewer->notify(new DriverApplicationSubmittedNotification($profile));
+        }
 
         return redirect()->route('drivers.show', $profile)
-            ->with('status', 'Application submitted. The fleet owner will review it.');
+            ->with('status', $fleet->isApproved()
+                ? 'Application submitted. The fleet owner will review it.'
+                : 'Application submitted. A platform operator will review your new fleet and your application.');
     }
 }

@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <title>Dot.Ehail</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
@@ -122,6 +123,12 @@
                 <span class="material-symbols-rounded nav-icon">local_taxi</span>
                 Rides
             </a>
+            @if(Auth::user()->isPlatformOperator())
+            <a href="{{ route('operator.rides.index') }}" class="nav-item {{ request()->routeIs('operator.rides.*') ? 'active' : '' }}">
+                <span class="material-symbols-rounded nav-icon">fact_check</span>
+                Ride operations
+            </a>
+            @endif
             <div class="sidebar-divider" style="margin:10px 0;"></div>
             <a href="{{ route('profile.show') }}" class="nav-item {{ request()->routeIs('profile.show') ? 'active' : '' }}">
                 <span class="material-symbols-rounded nav-icon">manage_accounts</span>

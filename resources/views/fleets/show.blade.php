@@ -5,6 +5,12 @@
     </h1>
     <p style="font-size:0.78rem;color:#71717a;margin:0 0 2rem;">Driver applications</p>
 
+    @unless ($fleet->isApproved())
+        <div class="dot-card" style="padding:0.75rem 1rem;margin-bottom:1.5rem;border:1px solid rgba(245,158,11,0.3);">
+            <p style="font-size:0.8rem;color:#f59e0b;margin:0;">This fleet is pending platform review. Applications can only be decided by a platform operator until it is approved.</p>
+        </div>
+    @endunless
+
     @if (session('status'))
         <div class="dot-card" style="padding:0.75rem 1rem;margin-bottom:1.5rem;border:1px solid rgba(34,197,94,0.3);">
             <p style="font-size:0.8rem;color:#4ade80;margin:0;">{{ session('status') }}</p>
@@ -15,11 +21,24 @@
     @forelse ($pending as $profile)
         <div class="dot-card" style="padding:1.25rem;margin-bottom:1rem;">
             <p style="font-size:0.95rem;font-weight:600;color:#f4f4f5;margin:0 0 0.25rem;">{{ $profile->user?->name }}</p>
-            <p style="font-size:0.78rem;color:#71717a;margin:0 0 0.75rem;">License {{ $profile->license_number }} · ID {{ $profile->id_number }}</p>
+            <p style="font-size:0.78rem;color:#71717a;margin:0 0 0.75rem;">License {{ \App\Support\DriverIdentifiers::mask($profile->license_number) }} · ID {{ \App\Support\DriverIdentifiers::mask($profile->id_number) }} · <a href="{{ route('drivers.show', $profile) }}" style="color:#38bdf8;text-decoration:none;">Open profile</a> (logged)</p>
             @foreach ($profile->vehicles as $vehicle)
                 <p style="font-size:0.78rem;color:#a1a1aa;margin:0 0 0.75rem;">{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} ({{ $vehicle->color }}) — {{ $vehicle->plate_number }}</p>
             @endforeach
 
+            @if($profile->documents->isEmpty())
+                <p style="font-size:0.72rem;color:#71717a;margin:0 0 0.75rem;">No documents uploaded.</p>
+            @else
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+                    @foreach($profile->documents as $document)
+                    <a href="{{ route('drivers.documents.show', $document) }}" style="font-size:0.7rem;color:#38bdf8;text-decoration:none;padding:0.25rem 0.6rem;background:rgba(56,189,248,0.08);border-radius:9999px;">
+                        {{ ucfirst(str_replace('_', ' ', $document->type)) }}
+                    </a>
+                    @endforeach
+                </div>
+            @endif
+
+            @can('reviewDriver', [$fleet, $profile])
             <div style="display:flex;gap:0.5rem;align-items:flex-start;">
                 <form method="POST" action="{{ route('fleets.drivers.approve', [$fleet, $profile]) }}">
                     @csrf
@@ -31,17 +50,42 @@
                     <button type="submit" style="padding:0.4rem 1rem;border-radius:6px;background:#ef4444;color:#3f0d0d;font-weight:700;border:none;font-size:0.78rem;cursor:pointer;">Reject</button>
                 </form>
             </div>
+            @else
+            <p style="font-size:0.72rem;color:#71717a;margin:0;">You can't decide this application. It needs review by someone other than the applicant{{ $fleet->isApproved() ? '' : ', and a platform operator while the fleet is pending' }}.</p>
+            @endcan
         </div>
     @empty
         <p style="font-size:0.8rem;color:#71717a;">No pending applications.</p>
     @endforelse
+
+    @if($vehicles !== null)
+    <h2 style="font-size:1rem;font-weight:700;color:#f4f4f5;margin:2rem 0 1rem;">Vehicle register ({{ $vehicles->count() }})</h2>
+    <div class="dot-card" style="overflow:hidden;">
+        @forelse($vehicles as $vehicle)
+        <div style="padding:0.85rem 1.25rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;{{ $loop->last ? '' : 'border-bottom:1px solid rgba(255,255,255,0.06);' }}">
+            <div>
+                <span class="metric-val" style="font-size:0.9rem;color:#f4f4f5;">{{ $vehicle->plate_number }}</span>
+                <span style="font-size:0.78rem;color:#a1a1aa;margin-left:0.5rem;">{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} · {{ $vehicle->color }} · {{ $vehicle->seats }} seats · {{ $vehicle->type === 'suv' ? 'SUV' : ucfirst($vehicle->type) }}</span>
+                <div style="font-size:0.72rem;color:#71717a;">Driven by {{ $vehicle->driverProfile?->user?->name ?? 'unknown' }} ({{ $vehicle->driverProfile?->status }})</div>
+            </div>
+            @if($vehicle->is_active)
+            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:rgba(74,222,128,0.1);color:#4ade80;">Active</span>
+            @else
+            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:rgba(161,161,170,0.12);color:#a1a1aa;">Inactive</span>
+            @endif
+        </div>
+        @empty
+        <p style="padding:1.25rem;font-size:0.8rem;color:#71717a;margin:0;">No vehicles registered in this fleet yet.</p>
+        @endforelse
+    </div>
+    @endif
 
     <h2 style="font-size:1rem;font-weight:700;color:#f4f4f5;margin:2rem 0 1rem;">Reviewed</h2>
     @forelse ($reviewed as $profile)
         <div class="dot-card" style="padding:1rem 1.25rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;">
             <div>
                 <p style="font-size:0.9rem;color:#f4f4f5;margin:0;">{{ $profile->user?->name }}</p>
-                <p style="font-size:0.75rem;color:#71717a;margin:0;">{{ $profile->license_number }}</p>
+                <p style="font-size:0.75rem;color:#71717a;margin:0;">{{ \App\Support\DriverIdentifiers::mask($profile->license_number) }}</p>
             </div>
             <span style="font-size:11px;font-weight:600;padding:4px 12px;border-radius:100px;{{ $profile->status === 'approved' ? 'background:rgba(34,197,94,0.1);color:#4ade80;' : ($profile->status === 'rejected' ? 'background:rgba(239,68,68,0.1);color:#f87171;' : 'background:rgba(245,158,11,0.1);color:#f59e0b;') }}">
                 {{ ucfirst($profile->status) }}

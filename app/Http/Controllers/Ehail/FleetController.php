@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Ehail;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
+use App\Models\Vehicle;
+use App\Services\Notify\EhailNotifyEvents;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -25,12 +27,20 @@ class FleetController extends Controller
 
         $driverProfiles = DriverProfile::withoutGlobalScope('user')
             ->where('fleet_id', $fleet->id)
-            ->with(['user', 'vehicles'])
+            ->with(['user', 'vehicles', 'documents'])
             ->latest()
             ->get();
 
+        $vehicles = Gate::allows('viewVehicles', $fleet)
+            ? Vehicle::whereIn('driver_profile_id', $driverProfiles->pluck('id'))
+                ->with(['driverProfile' => fn ($q) => $q->withoutGlobalScope('user')->with('user')])
+                ->orderBy('plate_number')
+                ->get()
+            : null;
+
         return view('fleets.show', [
             'fleet' => $fleet,
+            'vehicles' => $vehicles,
             'pending' => $driverProfiles->where('status', 'pending'),
             'reviewed' => $driverProfiles->whereIn('status', ['approved', 'suspended', 'rejected']),
         ]);
@@ -53,6 +63,8 @@ class FleetController extends Controller
             ->where('fleet_id', $fleet->id)
             ->findOrFail($driverProfileId);
 
+        Gate::authorize('reviewDriver', [$fleet, $driverProfile]);
+
         if ($driverProfile->status !== 'pending') {
             return back()->withErrors(['status' => 'Only a pending application can be approved.']);
         }
@@ -62,6 +74,8 @@ class FleetController extends Controller
             'reviewed_by' => $request->user()->id,
             'reviewed_at' => now(),
         ]);
+
+        app(EhailNotifyEvents::class)->driverApplicationDecided($driverProfile, 'approved');
 
         return back()->with('status', 'Driver approved.');
     }
@@ -73,6 +87,8 @@ class FleetController extends Controller
         $driverProfile = DriverProfile::withoutGlobalScope('user')
             ->where('fleet_id', $fleet->id)
             ->findOrFail($driverProfileId);
+
+        Gate::authorize('reviewDriver', [$fleet, $driverProfile]);
 
         if ($driverProfile->status !== 'pending') {
             return back()->withErrors(['status' => 'Only a pending application can be rejected.']);
@@ -86,6 +102,8 @@ class FleetController extends Controller
             'reviewed_by' => $request->user()->id,
             'reviewed_at' => now(),
         ]);
+
+        app(EhailNotifyEvents::class)->driverApplicationDecided($driverProfile, 'rejected');
 
         return back()->with('status', 'Driver rejected.');
     }

@@ -1,0 +1,20 @@
+[Unit]
+Description=Dot.Ehail Laravel Reverb WebSocket Server
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+Restart=always
+# Binds to REVERB_SERVER_HOST/PORT from .env (loopback-only by default --
+# see .env.production.example) -- Nginx/Apache terminates TLS and proxies
+# wss:// traffic down to this process. See README.md's "WebSocket Reverse
+# Proxy" section.
+ExecStart=/usr/bin/php /var/www/html/artisan reverb:start
+# `reverb:restart` broadcasts a graceful-restart signal via the cache
+# rather than killing the process directly (used by deploys after config
+# changes); ExecReload lets `systemctl reload` do the same.
+ExecReload=/usr/bin/php /var/www/html/artisan reverb:restart
+
+[Install]
+WantedBy=multi-user.target

@@ -73,7 +73,8 @@
 
     </div>
 
-    {{-- KPI Cards — row 2 --}}
+    @if($showFleetStats)
+    {{-- KPI Cards — row 2 (drivers + revenue: operators and fleet owners only) --}}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;">
 
         {{-- Total Drivers --}}
@@ -103,21 +104,23 @@
         {{-- Total Revenue --}}
         <div style="background:#141416;border:1px solid rgba(34,197,94,0.15);border-radius:12px;padding:1.25rem 1.5rem;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
-                <span style="font-size:0.7rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Total Revenue</span>
+                <span style="font-size:0.7rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Estimated fare total, not collected</span>
                 <div style="width:32px;height:32px;border-radius:8px;background:rgba(34,197,94,0.12);display:flex;align-items:center;justify-content:center;">
                     <span class="material-symbols-rounded" style="font-size:16px;color:#4ade80;">payments</span>
                 </div>
             </div>
             <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#4ade80;line-height:1;">
-                R {{ number_format((float) $totalRevenue, 2) }}
+                {{ \App\Services\Ehail\FareCalculator::format($totalRevenue) }}
             </div>
-            <div style="font-size:0.7rem;color:#71717a;margin-top:0.35rem;">From completed rides</div>
+            <div style="font-size:0.7rem;color:#71717a;margin-top:0.35rem;">Recorded fares on completed rides. No payments are processed here.</div>
         </div>
 
     </div>
 
+    @endif
+
     {{-- Middle row: Status breakdown + Driver availability --}}
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem;margin-bottom:2rem;align-items:start;">
+    <div style="display:grid;grid-template-columns:{{ $showFleetStats ? '1fr 340px' : '1fr' }};gap:1.5rem;margin-bottom:2rem;align-items:start;">
 
         {{-- Ride status breakdown --}}
         <div style="background:#141416;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.5rem;">
@@ -131,6 +134,8 @@
                     'in_progress' => ['label' => 'In Progress', 'color' => '#67e8f9', 'bg' => 'rgba(103,232,249,0.12)'],
                     'completed'   => ['label' => 'Completed',   'color' => '#4ade80', 'bg' => 'rgba(74,222,128,0.12)'],
                     'cancelled'   => ['label' => 'Cancelled',   'color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)'],
+                    'expired'     => ['label' => 'Expired',     'color' => '#a1a1aa', 'bg' => 'rgba(161,161,170,0.12)'],
+                    'needs_review' => ['label' => 'Needs review', 'color' => '#fb7185', 'bg' => 'rgba(251,113,133,0.12)'],
                 ];
             @endphp
             <div style="display:flex;flex-wrap:wrap;gap:0.6rem;">
@@ -165,6 +170,7 @@
             @endif
         </div>
 
+        @if($showFleetStats)
         {{-- Driver availability card --}}
         <div style="background:#141416;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.5rem;">
             <h3 style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:#f4f4f5;margin:0 0 1.25rem;text-transform:uppercase;letter-spacing:0.08em;">Driver Fleet</h3>
@@ -216,6 +222,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
     </div>
 
@@ -256,6 +263,8 @@
                             'in_progress' => ['color' => '#67e8f9', 'bg' => 'rgba(103,232,249,0.12)', 'label' => 'In Progress'],
                             'completed'   => ['color' => '#4ade80', 'bg' => 'rgba(74,222,128,0.12)',  'label' => 'Completed'],
                             'cancelled'   => ['color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)', 'label' => 'Cancelled'],
+                            'expired'     => ['color' => '#a1a1aa', 'bg' => 'rgba(161,161,170,0.12)', 'label' => 'Expired'],
+                            'needs_review' => ['color' => '#fb7185', 'bg' => 'rgba(251,113,133,0.12)', 'label' => 'Needs review'],
                         ];
                         $ss = $statusStyles[$ride->status] ?? ['color' => '#8d90a2', 'bg' => 'rgba(141,144,162,0.1)', 'label' => ucfirst($ride->status)];
                         $pickup   = strlen($ride->pickup_address)   > 28 ? substr($ride->pickup_address, 0, 28).'…'   : $ride->pickup_address;

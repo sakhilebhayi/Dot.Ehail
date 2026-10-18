@@ -62,9 +62,7 @@
                         </td>
                         <td style="padding:0.85rem 1rem;font-size:0.75rem;color:#f4f4f5;">{{ $ride->driver->name ?? 'Unassigned' }}</td>
                         <td style="padding:0.85rem 1rem;">
-                            <span style="display:inline-flex;align-items:center;padding:0.25rem 0.6rem;background:rgba(56,189,248,0.1);border-radius:9999px;font-size:0.65rem;font-weight:700;color:#38bdf8;font-family:'Syne',sans-serif;">
-                                {{ ucfirst(str_replace('_', ' ', $ride->status)) }}
-                            </span>
+                            <x-ride-status :status="$ride->status" />
                         </td>
                         <td style="padding:0.85rem 1.5rem;text-align:right;font-size:0.7rem;color:#71717a;white-space:nowrap;">{{ $ride->created_at->diffForHumans() }}</td>
                     </tr>
