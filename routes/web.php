@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Laravel\Jetstream\Jetstream;
 
-Route::get('/auth/ecosystem', [EcosystemAuthController::class, 'handle'])->name('ecosystem.auth');
+Route::get('/auth/ecosystem', [EcosystemAuthController::class, 'handle'])
+    ->middleware('throttle:10,1')
+    ->name('ecosystem.auth');
 
 // Real-time infrastructure health check -- unauthenticated like Laravel's
 // own /up, for uptime monitors/load balancers.
