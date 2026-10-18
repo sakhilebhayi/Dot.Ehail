@@ -155,9 +155,15 @@ class RideLifecycle
             ->pluck('id');
 
         foreach ($ids as $id) {
+            $ride = Ride::find($id);
+
+            if ($ride === null) {
+                continue;
+            }
+
             try {
                 $expired = $this->transition(
-                    Ride::findOrFail($id), RideStatus::Expired, RideActor::System,
+                    $ride, RideStatus::Expired, RideActor::System,
                     fn (Ride $locked) => ['expired_at' => now()],
                     after: function (Ride $locked) {
                         $minutes = (int) config('ehail.ride_expiry_minutes');
@@ -194,9 +200,15 @@ class RideLifecycle
             ->pluck('id');
 
         foreach ($ids as $id) {
+            $ride = Ride::find($id);
+
+            if ($ride === null) {
+                continue;
+            }
+
             try {
                 $flagged = $this->transition(
-                    Ride::findOrFail($id), RideStatus::NeedsReview, RideActor::System,
+                    $ride, RideStatus::NeedsReview, RideActor::System,
                     fn (Ride $locked) => ['needs_review_at' => now()],
                     guard: fn (Ride $locked) => ($locked->started_at ?? $locked->updated_at)->lt($cutoff),
                 );

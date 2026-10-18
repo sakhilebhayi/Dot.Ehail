@@ -16,7 +16,7 @@
         @if($active)
             Driving {{ $active->year }} {{ $active->make }} {{ $active->model }}, {{ $classLabel($active->type) }}. You see requests for {{ collect($active->servableTiers())->map($classLabel)->join(', ', ' and ') }} rides.
         @else
-            No active vehicle. You cannot go online or accept rides until you activate one.
+            No active vehicle. You cannot accept rides until you activate one.
         @endif
     </p>
     <p style="font-size:0.78rem;color:#71717a;margin:0 0 2rem;">One vehicle is active at a time. The ride queue only shows requests your active vehicle's class can serve.</p>

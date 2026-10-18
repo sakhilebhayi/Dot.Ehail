@@ -19,6 +19,9 @@
                 {{ $driverProfile->user?->name ?? 'Driver' }}
             </h1>
             <p style="font-size:0.78rem;color:#71717a;margin:0;">License {{ $driverProfile->license_number }} · ID {{ $driverProfile->id_number }}</p>
+            @if(auth()->id() !== $driverProfile->user_id)
+            <p style="font-size:0.72rem;color:#52525b;margin:0.2rem 0 0;">Opening this profile shows the full numbers and is recorded in the audit log.</p>
+            @endif
         </div>
         <div style="display:flex;align-items:center;gap:0.6rem;">
             @can('update', $driverProfile)

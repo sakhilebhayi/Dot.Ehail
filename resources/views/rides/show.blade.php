@@ -76,7 +76,7 @@
 
     @if($ride->status === 'expired')
     <div class="dot-card" style="padding:1rem 1.5rem;margin-bottom:1.25rem;">
-        <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">No driver took this request in time. You can request the ride again.</p>
+        <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">No driver took this request in time. <a href="{{ route('rides.create') }}" style="color:#38bdf8;text-decoration:none;">Request the ride again</a>.</p>
     </div>
     @endif
 

@@ -250,7 +250,7 @@ class VehicleManagementTest extends TestCase
             ->assertRedirect(route('drivers.vehicles.index'));
 
         $this->assertNull($profile->fresh()->activeVehicle());
-        $this->assertFalse($profile->fresh()->is_online, 'a driver with no active vehicle cannot be online');
+        $this->assertFalse($profile->fresh()->is_online, 'a driver with no active vehicle is taken offline');
     }
 
     public function test_the_active_vehicle_on_a_live_ride_cannot_be_deactivated(): void

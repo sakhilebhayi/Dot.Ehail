@@ -29,26 +29,49 @@ actually implemented vs. still scaffolding/intent.
 
 ## Core Features (implemented today)
 
-- Real ride-hailing schema: driver profiles, vehicles, rides, and ride ratings
-- Live operations dashboard — ride counts by status, driver availability, revenue, recent rides
-- Ride search & detail pages (`/rides`, `/rides/{ride}`)
-- Driver profile page with ride history, restricted to the driver themselves (`/drivers/{driver}`)
-- In-app notification bell (Laravel's `database` notification channel) for ride/driver events
-- Dark / light mode toggle (Tailwind class-based strategy, persisted per browser)
-- Ecosystem SSO from the Dot hub
+- Passengers request rides (addresses, optional coordinates) and drivers claim them from an
+  open queue; a ride moves requested → accepted → en_route → arrived → in_progress → completed,
+  one stage at a time (`App\Enums\RideStatus` is the only transition table)
+- Cancellation with a reason and note; a driver backing out after accepting returns the ride to
+  the queue (up to `EHAIL_MAX_REASSIGNMENTS`), a passenger cancelling tells the driver
+- `php artisan ehail:expire-rides` (scheduled every minute): requests nobody accepts within
+  `EHAIL_RIDE_EXPIRY_MINUTES` (default 10) expire and the passenger is told; trips still in
+  progress after `EHAIL_STUCK_RIDE_HOURS` (default 6) are flagged `needs_review`, never
+  completed automatically
+- Ratings: after completion the passenger rates the driver and the driver rates the passenger,
+  once each (1–5, optional comment); the driver's average and ride count are recomputed from rows
+- Vehicle management for drivers (`/drive/vehicles`): add, edit, activate, deactivate; one active
+  vehicle at a time; a ride is only accepted by an active vehicle whose class serves the ride's
+  class (`config/ehail.php`); fleet owners of approved fleets see their drivers' vehicles
+- Fleets and an approval gate: a fleet is vetted by a platform operator, drivers by their fleet
+  owner or an operator (never by themselves)
+- Operator desk (`/operator/rides`): trips needing review, expired requests, pending fleet and
+  application counts, and a manual final fare with a mandatory reason for rides that have none
+  (audited)
+- Fare estimate from `config/ehail.php` (base fare, per-km rate, class multipliers). Without
+  coordinates the estimate is honestly "not available"
+- Driver licence and ID numbers are encrypted at rest, masked in lists, and every open of a
+  full profile by someone other than the driver is written to an append-only audit log
+- Live operations dashboard, ride search/detail pages, in-app notification bell, ecosystem SSO,
+  real-time ride status broadcasts over Reverb (sent after the database commit)
 
-> **Not yet built:** dispatch/nearest-driver matching, fare estimation, realtime driver tracking
-> (Reverb is configured but unused), fleet-as-a-first-class-entity (currently only Jetstream
-> `Team`), and Knowledge Pack publishing to Dot.Brain. See `wiki.md` §6 and §8 for the full
-> scaffolding-vs-real breakdown and roadmap. Earlier drafts of this README described that target
-> state as if it already shipped — it doesn't yet.
+> **Not built:**
+> - **Payments.** No payment provider is chosen or integrated. Every amount in the app is an
+>   estimate or a recorded fare; the figures labelled "Estimated fare total, not collected" are
+>   sums of those, not money received.
+> - Nearest-driver dispatch (there is no driver location data; the queue is first-to-accept),
+>   geocoding / map pickers (coordinates are typed in), live driver tracking, and Knowledge Pack
+>   publishing to Dot.Brain. See `wiki.md` §6 and §8.
 
 ## Domain Models
 
-- **DriverProfile** — a platform `User` who has applied/been approved to drive
-- **Vehicle** — registered vehicle linked to a driver profile
-- **Ride** — trip record from request through to completion, with a passenger and driver `User`
-- **RideRating** — one rating per ride, from either the passenger or the driver
+- **DriverProfile** — a platform `User` who has applied/been approved to drive; licence and ID
+  numbers are encrypted, with `rating` and `total_rides` derived from ratings and completed rides
+- **Vehicle** — a driver's vehicle (class, make/model, plate, colour, seats); at most one active
+- **Ride** — trip record from request to a final state (completed, cancelled, expired,
+  needs_review), with a passenger and a driver `User`
+- **RideRating** — one rating per (ride, rater): passenger → driver, driver → passenger
+- **AuditLog** — append-only record of operator fare entries, driver cancellations and profile opens
 
 ## Tech Stack
 
@@ -59,7 +82,7 @@ actually implemented vs. still scaffolding/intent.
 | Auth & teams | Jetstream 5 (Livewire stack) + Sanctum |
 | Frontend | Livewire 3 · Alpine.js 3 · Tailwind CSS |
 | Database | PostgreSQL 16 (shared `infodot` database across the ecosystem) |
-| Realtime | Laravel Reverb (configured in `.env.example`, not yet wired to any broadcast) |
+| Realtime | Laravel Reverb: `RideStatusUpdated` is broadcast to a ride's passenger and driver after the database commit |
 | AI | Anthropic Claude (`ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`) — config only, no fare/dispatch logic calls it yet |
 | Queue/cache/session | Redis queue; database cache & session |
 
@@ -79,6 +102,13 @@ php artisan serve
 > **Ecosystem SSO:** Set `DB_*` env vars to the shared Dot PostgreSQL instance and
 > `APP_URL=https://ehail.infodot.app`. Users authenticated elsewhere in the ecosystem gain access
 > automatically via the Sanctum handoff at `/auth/ecosystem`.
+
+### Configuration
+
+Tariff, currency, vehicle-class mapping and the ride expiry windows live in `config/ehail.php`
+(overridable with `EHAIL_*` env vars). Ride expiry and the stuck-trip sweep need the scheduler,
+so production must run the standard Laravel cron entry (`* * * * * cd /path/to/app && php
+artisan schedule:run >> /dev/null 2>&1`); without it requests never expire.
 
 ### Running Tests
 
@@ -122,6 +152,14 @@ Feature tests use an in-memory SQLite connection (see `phpunit.xml`) and Laravel
    ```bash
    php artisan migrate --force
    ```
+   Back up the database first. This release changes `rides.status` (now a string), tightens
+   `ride_ratings` and `vehicles` (one active vehicle per driver — drivers with several active
+   vehicles keep only their newest), and **encrypts `driver_profiles.license_number` and
+   `id_number`**. The encrypted values can only be read with the `APP_KEY` of the environment
+   that wrote them: never rotate `APP_KEY` without decrypting first, and keep the key in the same
+   backup regime as the database.
+
+   Add the scheduler cron entry (see Configuration above).
 
 6. **Start the queue worker** (use `deploy/queue-worker.service` for systemd or `deploy/queue-worker.supervisord.conf` for Supervisor). Requires `QUEUE_CONNECTION=redis`, matching `.env.production.example`.
    ```bash

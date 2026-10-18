@@ -56,6 +56,7 @@
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-top:1.1rem;padding-top:1.1rem;border-top:1px solid rgba(255,255,255,0.06);">
                 <form method="POST" action="{{ route('operator.rides.complete', $ride) }}" style="display:flex;flex-direction:column;gap:0.6rem;">
                     @csrf
+                    <div style="font-size:0.8rem;font-weight:600;color:#d4d4d8;">Enter the fare and complete</div>
                     <div>
                         <label for="fare-{{ $ride->id }}" style="{{ $labelStyle }}">Final fare ({{ config('ehail.currency.code') }})</label>
                         <input id="fare-{{ $ride->id }}" class="dot-input" type="number" name="final_fare" step="0.01" min="0" required style="{{ $inputStyle }}">
@@ -68,6 +69,7 @@
                 </form>
                 <form method="POST" action="{{ route('operator.rides.cancel', $ride) }}" style="display:flex;flex-direction:column;gap:0.6rem;" onsubmit="return confirm('Cancel this trip? Both parties are notified.');">
                     @csrf
+                    <div style="font-size:0.8rem;font-weight:600;color:#d4d4d8;">Or cancel the trip</div>
                     <div>
                         <label for="cancel-{{ $ride->id }}" style="{{ $labelStyle }}">Reason for cancelling</label>
                         <input id="cancel-{{ $ride->id }}" class="dot-input" type="text" name="reason" maxlength="500" required placeholder="Recorded on the ride and sent to both parties" style="{{ $inputStyle }}">
