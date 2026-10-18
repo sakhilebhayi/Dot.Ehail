@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\PaymentStatus;
 use App\Enums\RideActor;
 use App\Models\DriverProfile;
 use App\Models\Ride;
@@ -117,5 +118,25 @@ class RidePolicy
     {
         return $user->isPlatformOperator()
             && in_array($ride->status, ['in_progress', 'needs_review'], true);
+    }
+
+    /**
+     * Only the ride's passenger may pay its fare: not the driver, not the driver's fleet owner and
+     * not an operator, whatever else they may see. Whether a payment is possible right now (completed,
+     * unpaid, Paystack enabled) is RidePayments' job and is reported as a message, not a 403.
+     */
+    public function pay(User $user, Ride $ride): bool
+    {
+        return $user->id === $ride->passenger_id;
+    }
+
+    /**
+     * An operator may write off a completed ride's fare while it is still owed.
+     */
+    public function waive(User $user, Ride $ride): bool
+    {
+        return $user->isPlatformOperator()
+            && $ride->status === 'completed'
+            && in_array($ride->paymentStatusEnum(), PaymentStatus::collectable(), true);
     }
 }

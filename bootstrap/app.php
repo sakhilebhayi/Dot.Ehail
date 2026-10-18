@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'operator' => EnsurePlatformOperator::class,
         ]);
+
+        // Paystack's webhook is server to server and signed; it carries no CSRF token.
+        $middleware->preventRequestForgery(except: ['webhooks/paystack']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

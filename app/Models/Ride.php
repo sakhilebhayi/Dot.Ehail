@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentStatus;
 use App\Enums\RideActor;
 use App\Enums\RideStatus;
 use Illuminate\Database\Eloquent\Builder;
@@ -32,6 +33,7 @@ class Ride extends Model
         'needs_review_at' => 'datetime',
         'estimated_fare' => 'decimal:2',
         'final_fare' => 'decimal:2',
+        'fare_waived_at' => 'datetime',
         'reassignment_count' => 'integer',
     ];
 
@@ -47,6 +49,15 @@ class Ride extends Model
     public function statusEnum(): RideStatus
     {
         return RideStatus::from($this->status);
+    }
+
+    /**
+     * payment_status is deliberately not fillable: it only changes through App\Services\Ehail\RidePayments
+     * and RideLifecycle, never from request input.
+     */
+    public function paymentStatusEnum(): PaymentStatus
+    {
+        return PaymentStatus::tryFrom((string) $this->payment_status) ?? PaymentStatus::NotDue;
     }
 
     /**
@@ -115,6 +126,16 @@ class Ride extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(RidePayment::class);
+    }
+
+    public function waivedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'fare_waived_by');
     }
 
     public function ratings(): HasMany

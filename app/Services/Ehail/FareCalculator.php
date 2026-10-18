@@ -55,4 +55,12 @@ class FareCalculator
     {
         return config('ehail.currency.symbol').' '.number_format((float) $amount, 2);
     }
+
+    /**
+     * Same as format() for an integer amount of cents (payments are stored in cents).
+     */
+    public static function formatCents(int $cents): string
+    {
+        return self::format($cents / 100);
+    }
 }

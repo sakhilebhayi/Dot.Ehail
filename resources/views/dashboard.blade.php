@@ -112,7 +112,7 @@
             <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#4ade80;line-height:1;">
                 {{ \App\Services\Ehail\FareCalculator::format($totalRevenue) }}
             </div>
-            <div style="font-size:0.7rem;color:#71717a;margin-top:0.35rem;">Recorded fares on completed rides. No payments are processed here.</div>
+            <div style="font-size:0.7rem;color:#71717a;margin-top:0.35rem;">Recorded fares on completed rides, not money received. Fares actually collected are on the operator desk.</div>
         </div>
 
     </div>

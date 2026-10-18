@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Ehail;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Ride;
+use App\Models\RidePayment;
 use App\Models\RideRating;
+use App\Services\Payments\Paystack\PaystackConfig;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -46,7 +48,7 @@ class RideController extends Controller
     /**
      * Show a single ride. Authorization is delegated to RidePolicy.
      */
-    public function show(Ride $ride): View
+    public function show(Ride $ride, PaystackConfig $paystack): View
     {
         Gate::authorize('view', $ride);
 
@@ -64,6 +66,11 @@ class RideController extends Controller
         return view('rides.show', [
             'ride' => $ride,
             'driverRating' => $driverRating,
+            'paidPayment' => $ride->payment_status === 'paid'
+                ? RidePayment::where('ride_id', $ride->id)->where('status', RidePayment::STATUS_PAID)->latest('paid_at')->first()
+                : null,
+            'paymentsEnabled' => $paystack->canTakePayments(),
+            'testMode' => $paystack->isTestMode(),
         ]);
     }
 }
