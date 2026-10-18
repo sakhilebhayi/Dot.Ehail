@@ -57,4 +57,42 @@ class FareCalculatorTest extends TestCase
 
         $this->assertSame($calculator->estimate(10, 'economy'), $calculator->estimate(10, 'not-a-real-type'));
     }
+
+    public function test_the_tariff_is_read_from_config_not_hardcoded(): void
+    {
+        config([
+            'ehail.tariff.base_fare' => 40.0,
+            'ehail.tariff.per_km' => 10.0,
+            'ehail.tariff.multipliers' => ['standard' => 1.5],
+        ]);
+
+        // 40 + 10 km * 10 * 1.5
+        $this->assertSame(190.0, (new FareCalculator)->estimate(10, 'standard'));
+    }
+
+    public function test_the_shipped_defaults_match_the_previous_hardcoded_tariff(): void
+    {
+        $this->assertSame(25.0, config('ehail.tariff.base_fare'));
+        $this->assertSame(8.5, config('ehail.tariff.per_km'));
+        $this->assertSame(
+            ['economy' => 1.0, 'standard' => 1.2, 'premium' => 1.6, 'suv' => 1.8],
+            config('ehail.tariff.multipliers'),
+        );
+    }
+
+    public function test_money_is_formatted_with_the_configured_currency(): void
+    {
+        $this->assertSame('R 1,234.50', FareCalculator::format(1234.5));
+
+        config(['ehail.currency.symbol' => '$']);
+        $this->assertSame('$ 9.00', FareCalculator::format(9));
+    }
+
+    public function test_every_vehicle_type_has_a_multiplier_and_a_tier_mapping(): void
+    {
+        foreach (['economy', 'standard', 'premium', 'suv'] as $type) {
+            $this->assertArrayHasKey($type, config('ehail.tariff.multipliers'));
+            $this->assertContains($type, config("ehail.vehicle_tiers.{$type}"));
+        }
+    }
 }

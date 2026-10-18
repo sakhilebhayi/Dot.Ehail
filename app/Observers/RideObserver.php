@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Events\RideStatusUpdated;
 use App\Models\Ride;
 use App\Notifications\RideCompletedNotification;
+use App\Services\Ehail\DriverStats;
 
 /**
  * Fires the in-app notifications that already existed as dead code:
@@ -34,6 +35,23 @@ class RideObserver
             return;
         }
 
+        $this->publishStatusChange($ride);
+
+        // total_rides is derived from completed rides, and the update that
+        // completed this one is still inside its transaction.
+        if ($ride->status === 'completed' && $ride->driver_id !== null) {
+            app(DriverStats::class)->refresh($ride->driver_id);
+        }
+    }
+
+    /**
+     * The side effects of a ride's status changing. Public so that a code
+     * path which has to write with a guarded query-builder update (and so
+     * never triggers model events -- RideLifecycleController::accept) can
+     * run exactly the same broadcast/notification the observer would.
+     */
+    public function publishStatusChange(Ride $ride): void
+    {
         broadcast(new RideStatusUpdated($ride))->toOthers();
 
         if ($ride->status !== 'completed') {

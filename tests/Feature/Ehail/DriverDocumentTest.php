@@ -27,7 +27,7 @@ class DriverDocumentTest extends TestCase
     private function makeProfile(?User $owner = null): DriverProfile
     {
         $owner ??= User::factory()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => User::factory()->create()->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => User::factory()->create()->id]);
 
         return DriverProfile::create([
             'user_id' => $owner->id,
@@ -102,7 +102,7 @@ class DriverDocumentTest extends TestCase
     public function test_the_fleet_owner_can_view_an_applicants_document(): void
     {
         $fleetOwner = User::factory()->withPersonalTeam()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $fleetOwner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $fleetOwner->id]);
         $applicant = User::factory()->create();
         $profile = DriverProfile::create([
             'user_id' => $applicant->id, 'fleet_id' => $fleet->id,
@@ -150,7 +150,7 @@ class DriverDocumentTest extends TestCase
     public function test_a_fleet_owner_cannot_delete_an_applicants_document(): void
     {
         $fleetOwner = User::factory()->withPersonalTeam()->create();
-        $fleet = Fleet::create(['name' => 'Test Fleet', 'owner_user_id' => $fleetOwner->id]);
+        $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $fleetOwner->id]);
         $applicant = User::factory()->create();
         $profile = DriverProfile::create([
             'user_id' => $applicant->id, 'fleet_id' => $fleet->id,

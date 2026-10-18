@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 /**
@@ -19,6 +20,10 @@ use Illuminate\Support\Facades\Redis;
  * probe; BroadcastChannelAuthorizationTest covers authorization, and manual
  * browser verification covers the frontend listener/UI-update links.
  *
+ * The route is unauthenticated (for uptime monitors), so the response is
+ * only ok/degraded. Which link failed, and the host/port/config behind it,
+ * is written to the application log instead of being returned.
+ *
  * Same shape as Dot.Mines' RealtimeHealthController (the ecosystem
  * reference implementation, see docs/DOT_REALTIME_STANDARD.md there).
  */
@@ -34,10 +39,13 @@ class RealtimeHealthController extends Controller
 
         $healthy = collect($checks)->every(fn (array $check) => $check['status'] === 'ok');
 
-        return response()->json([
-            'status' => $healthy ? 'ok' : 'degraded',
-            'checks' => $checks,
-        ], $healthy ? 200 : 503);
+        if (! $healthy) {
+            Log::warning('Realtime health check degraded.', [
+                'checks' => collect($checks)->reject(fn (array $check) => $check['status'] === 'ok')->all(),
+            ]);
+        }
+
+        return response()->json(['status' => $healthy ? 'ok' : 'degraded'], $healthy ? 200 : 503);
     }
 
     private function checkBroadcastingConfig(): array

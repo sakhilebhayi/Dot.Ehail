@@ -12,24 +12,7 @@ namespace App\Services\Ehail;
  */
 class FareCalculator
 {
-    private const BASE_FARE = 25.0;
-
-    private const PER_KM_RATE = 8.5;
-
     private const EARTH_RADIUS_KM = 6371.0;
-
-    /**
-     * Vehicle tiers multiply the metered portion of the fare, not the base
-     * fare -- matches how real ride-hailing pricing tiers work (the
-     * pickup fee is flat, the per-km rate is what scales with vehicle
-     * class).
-     */
-    private const VEHICLE_TYPE_MULTIPLIERS = [
-        'economy' => 1.0,
-        'standard' => 1.2,
-        'premium' => 1.6,
-        'suv' => 1.8,
-    ];
 
     /**
      * Great-circle distance between two coordinates in kilometers.
@@ -49,16 +32,27 @@ class FareCalculator
     }
 
     /**
-     * Base fare plus a per-km rate scaled by vehicle tier. Distance-only
-     * (no time-of-day/surge modeling -- no data source for that exists in
-     * this app), applied to whatever distance is passed in, so the same
-     * method serves both the pre-trip estimate (haversine) and, in the
-     * future, a real trip distance if one is ever tracked.
+     * Base fare plus a per-km rate scaled by vehicle tier, all from
+     * config/ehail.php (tariff.base_fare, tariff.per_km, tariff.multipliers).
+     * The tier multiplies the metered portion only -- the pickup fee is flat.
+     * Distance-only (no time-of-day/surge modeling -- no data source for that
+     * exists in this app). An unknown tier uses a neutral multiplier.
      */
     public function estimate(float $distanceKm, string $vehicleType): float
     {
-        $multiplier = self::VEHICLE_TYPE_MULTIPLIERS[$vehicleType] ?? 1.0;
+        $multiplier = (float) (config('ehail.tariff.multipliers')[$vehicleType] ?? 1.0);
 
-        return round(self::BASE_FARE + ($distanceKm * self::PER_KM_RATE * $multiplier), 2);
+        return round(
+            (float) config('ehail.tariff.base_fare') + ($distanceKm * (float) config('ehail.tariff.per_km') * $multiplier),
+            2,
+        );
+    }
+
+    /**
+     * "R 1,234.50" -- the configured currency symbol, display only.
+     */
+    public static function format(float|int|string $amount): string
+    {
+        return config('ehail.currency.symbol').' '.number_format((float) $amount, 2);
     }
 }

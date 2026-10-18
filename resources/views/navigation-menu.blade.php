@@ -28,9 +28,20 @@
                     <x-nav-link href="{{ route('rides.create') }}" :active="request()->routeIs('rides.create')">
                         {{ __('Request a Ride') }}
                     </x-nav-link>
+                    @if(Auth::user()->isPlatformOperator())
+                    <x-nav-link href="{{ route('operator.fleets.index') }}" :active="request()->routeIs('operator.fleets.*')">
+                        {{ __('Fleet Review') }}
+                    </x-nav-link>
+                    <x-nav-link href="{{ route('operator.rides.index') }}" :active="request()->routeIs('operator.rides.*')">
+                        {{ __('Ride Operations') }}
+                    </x-nav-link>
+                    @endif
                     @if($ownedDriverProfile)
                     <x-nav-link href="{{ route('rides.available') }}" :active="request()->routeIs('rides.available')">
                         {{ __('Available Rides') }}
+                    </x-nav-link>
+                    <x-nav-link href="{{ route('drivers.vehicles.index') }}" :active="request()->routeIs('drivers.vehicles.*')">
+                        {{ __('My Vehicles') }}
                     </x-nav-link>
                     <x-nav-link href="{{ route('drivers.show', $ownedDriverProfile) }}" :active="request()->routeIs('drivers.show')">
                         {{ __('My Driver Profile') }}
@@ -178,9 +189,17 @@
             <x-responsive-nav-link href="{{ route('rides.create') }}" :active="request()->routeIs('rides.create')">
                 {{ __('Request a Ride') }}
             </x-responsive-nav-link>
+            @if(Auth::user()->isPlatformOperator())
+            <x-responsive-nav-link href="{{ route('operator.rides.index') }}" :active="request()->routeIs('operator.rides.*')">
+                {{ __('Ride Operations') }}
+            </x-responsive-nav-link>
+            @endif
             @if($ownedDriverProfile)
             <x-responsive-nav-link href="{{ route('rides.available') }}" :active="request()->routeIs('rides.available')">
                 {{ __('Available Rides') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('drivers.vehicles.index') }}" :active="request()->routeIs('drivers.vehicles.*')">
+                {{ __('My Vehicles') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link href="{{ route('drivers.show', $ownedDriverProfile) }}" :active="request()->routeIs('drivers.show')">
                 {{ __('My Driver Profile') }}

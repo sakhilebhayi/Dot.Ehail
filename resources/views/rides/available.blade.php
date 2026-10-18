@@ -34,11 +34,15 @@
         @endif
     </div>
     @else
+    <p style="font-size:0.75rem;color:#71717a;margin:-0.75rem 0 1rem;">
+        Showing requests your active vehicle can serve ({{ $vehicle->plate_number }}, {{ $vehicle->type === 'suv' ? 'SUV' : ucfirst($vehicle->type) }}).
+        <a href="{{ route('drivers.vehicles.index') }}" style="color:#38bdf8;text-decoration:none;">Change vehicle</a>
+    </p>
     <div class="dot-card" style="overflow:hidden;">
         @if($rides->isEmpty())
         <div style="padding:3.5rem 1rem;text-align:center;color:#71717a;">
             <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:0.75rem;opacity:0.3;">local_taxi</span>
-            <p style="font-size:0.85rem;margin:0;">No open ride requests right now.</p>
+            <p style="font-size:0.85rem;margin:0;">No open ride requests for your vehicle right now.</p>
         </div>
         @else
         @foreach($rides as $ride)
@@ -48,7 +52,7 @@
                 <div style="font-size:0.75rem;color:#71717a;">→ {{ $ride->dropoff_address }}</div>
                 <div style="font-size:0.68rem;color:#52525b;margin-top:0.25rem;">
                     {{ ucfirst($ride->vehicle_type) }} · Requested {{ $ride->created_at->diffForHumans() }}
-                    @if($ride->estimated_fare) · ~R{{ number_format((float) $ride->estimated_fare, 2) }} @endif
+                    @if($ride->estimated_fare !== null) · ~{{ \App\Services\Ehail\FareCalculator::format($ride->estimated_fare) }} @else · fare estimate not available @endif
                 </div>
             </div>
             <form method="POST" action="{{ route('rides.accept', $ride) }}">

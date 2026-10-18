@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Ehail;
 
+use App\Events\RideStatusUpdated;
 use App\Models\DriverProfile;
 use App\Models\Ride;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 /**
@@ -95,6 +97,71 @@ class RideLifecycleTest extends TestCase
         $this->assertSame($driver->id, $ride->driver_id);
         $this->assertNotNull($ride->vehicle_id);
         $this->assertNotNull($ride->accepted_at);
+    }
+
+    public function test_accepting_a_ride_broadcasts_the_status_update_the_observer_would_have_sent(): void
+    {
+        Event::fake([RideStatusUpdated::class]);
+        $driver = $this->makeAvailableDriver();
+        $ride = $this->makeRequestedRide();
+
+        $this->actingAs($driver)->post(route('rides.accept', $ride))->assertRedirect();
+
+        Event::assertDispatchedTimes(RideStatusUpdated::class, 1);
+        Event::assertDispatched(
+            RideStatusUpdated::class,
+            fn (RideStatusUpdated $event) => $event->ride->id === $ride->id
+                && $event->ride->status === 'accepted'
+                && $event->ride->driver_id === $driver->id
+                && $event->broadcastWith()['status'] === 'accepted'
+        );
+    }
+
+    public function test_a_lost_accept_race_broadcasts_nothing(): void
+    {
+        $driverA = $this->makeAvailableDriver();
+        $driverB = $this->makeAvailableDriver();
+        $ride = $this->makeRequestedRide();
+
+        // A claims first; B's later attempt is refused and must not broadcast.
+        $this->actingAs($driverA)->post(route('rides.accept', $ride));
+        Event::fake([RideStatusUpdated::class]);
+
+        $this->actingAs($driverB)->post(route('rides.accept', $ride))->assertForbidden();
+
+        Event::assertNotDispatched(RideStatusUpdated::class);
+        $this->assertSame($driverA->id, $ride->fresh()->driver_id);
+    }
+
+    public function test_completing_a_ride_without_a_fare_estimate_is_refused_and_leaves_final_fare_untouched(): void
+    {
+        $driver = $this->makeAvailableDriver();
+        $ride = $this->makeRequestedRide();
+        $ride->update(['estimated_fare' => null, 'driver_id' => $driver->id, 'status' => 'in_progress']);
+
+        $this->actingAs($driver)
+            ->patch(route('rides.advance', $ride), ['status' => 'completed'])
+            ->assertSessionHasErrors('status');
+
+        $ride->refresh();
+        $this->assertSame('in_progress', $ride->status);
+        $this->assertNull($ride->final_fare);
+        $this->assertNull($ride->completed_at);
+    }
+
+    public function test_completing_a_ride_with_an_estimate_copies_it_into_final_fare(): void
+    {
+        $driver = $this->makeAvailableDriver();
+        $ride = $this->makeRequestedRide();
+        $ride->update(['driver_id' => $driver->id, 'status' => 'in_progress']);
+
+        $this->actingAs($driver)
+            ->patch(route('rides.advance', $ride), ['status' => 'completed'])
+            ->assertSessionDoesntHaveErrors();
+
+        $ride->refresh();
+        $this->assertSame('completed', $ride->status);
+        $this->assertSame('80.00', $ride->final_fare);
     }
 
     public function test_a_driver_without_an_active_vehicle_cannot_accept(): void
@@ -220,7 +287,7 @@ class RideLifecycleTest extends TestCase
         $ride = $this->makeRequestedRide($passenger);
 
         $this->actingAs($passenger)
-            ->post(route('rides.cancel', $ride))
+            ->post(route('rides.cancel', $ride), ['reason' => 'changed_plans'])
             ->assertRedirect(route('rides.show', $ride));
 
         $this->assertSame('cancelled', $ride->fresh()->status);
@@ -236,7 +303,7 @@ class RideLifecycleTest extends TestCase
         $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => 'in_progress']);
 
         $this->actingAs($driver)
-            ->post(route('rides.cancel', $ride))
+            ->post(route('rides.cancel', $ride), ['reason' => 'other'])
             ->assertForbidden();
 
         $this->assertSame('in_progress', $ride->fresh()->status);
@@ -248,7 +315,7 @@ class RideLifecycleTest extends TestCase
         $ride = $this->makeRequestedRide();
 
         $this->actingAs($stranger)
-            ->post(route('rides.cancel', $ride))
+            ->post(route('rides.cancel', $ride), ['reason' => 'other'])
             ->assertForbidden();
     }
 }
