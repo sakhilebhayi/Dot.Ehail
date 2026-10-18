@@ -324,7 +324,17 @@ class RideLifecycle
                 return null;
             }
 
-            $locked->update(array_merge($attributes($locked), ['status' => $to->value]));
+            $changes = array_merge($attributes($locked), ['status' => $to->value]);
+
+            if ($to === RideStatus::Completed) {
+                // Completing is the moment a fare becomes due: unpaid when Paystack is usable and the
+                // fare is above zero, otherwise not_due, exactly as before online payment existed.
+                $changes['payment_status'] = app(RidePayments::class)
+                    ->statusOnCompletion($changes['final_fare'] ?? $locked->final_fare)->value;
+            }
+
+            // payment_status is not mass-assignable, so it is written explicitly.
+            $locked->forceFill($changes)->save();
 
             if ($after !== null) {
                 $after($locked, $from);

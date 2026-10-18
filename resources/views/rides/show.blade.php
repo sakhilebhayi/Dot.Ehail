@@ -130,6 +130,93 @@
         </div>
     </div>
 
+    @if($ride->status === 'completed')
+    @php
+        $payState = $ride->paymentStatusEnum();
+        $isPassenger = $viewerRole === \App\Enums\RideActor::Passenger;
+        $isOperator = auth()->user()->isPlatformOperator();
+        $owed = in_array($payState, \App\Enums\PaymentStatus::collectable(), true);
+        $stateColors = ['paid' => '#4ade80', 'waived' => '#a1a1aa', 'failed' => '#fb7185', 'pending' => '#f59e0b', 'unpaid' => '#f59e0b', 'not_due' => '#a1a1aa'];
+    @endphp
+    <div class="dot-card" style="padding:1.5rem;margin-bottom:1.25rem;" data-payment-state="{{ $payState->value }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+            <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0;">Fare payment</h3>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                @if($testMode && ($owed || $payState === \App\Enums\PaymentStatus::Paid))
+                <span title="Paystack is in test mode: no real money moves" style="font-size:10px;font-weight:700;letter-spacing:0.09em;padding:3px 9px;border-radius:4px;border:1px solid rgba(245,158,11,0.45);color:#f59e0b;">TEST MODE</span>
+                @endif
+                <span style="font-size:11px;font-weight:600;padding:4px 12px;border-radius:100px;white-space:nowrap;background:{{ $stateColors[$payState->value] }}1a;color:{{ $stateColors[$payState->value] }};">{{ $payState->label() }}</span>
+            </div>
+        </div>
+
+        @if($payState === \App\Enums\PaymentStatus::NotDue)
+            <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">
+                @if(! $paymentsEnabled)
+                    Payment is not enabled on this platform, so no payment is due for this ride.
+                @else
+                    No payment is due for this ride.
+                @endif
+            </p>
+        @elseif($payState === \App\Enums\PaymentStatus::Paid)
+            <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">
+                Fare paid @if($paidPayment)(<span class="metric-val" style="color:#4ade80;">{{ \App\Services\Ehail\FareCalculator::formatCents($paidPayment->amount_cents) }}</span> on {{ $paidPayment->paid_at?->format('j F Y \a\t g:i A') }})@endif.
+            </p>
+        @elseif($payState === \App\Enums\PaymentStatus::Waived)
+            <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">This fare was waived by a platform operator. Nothing is due.</p>
+            @if($isOperator && $ride->fare_waived_reason)
+            <p style="font-size:0.75rem;color:#71717a;margin:0.4rem 0 0;">Reason: {{ $ride->fare_waived_reason }}</p>
+            @endif
+        @elseif($isPassenger)
+            <p style="font-size:0.8rem;color:#a1a1aa;margin:0 0 1rem;">
+                @if($payState === \App\Enums\PaymentStatus::Pending)
+                    You started a payment that is not confirmed yet. Open it again, or check it if you have already paid.
+                @elseif($payState === \App\Enums\PaymentStatus::Failed)
+                    Your last payment did not go through. You can try again.
+                @else
+                    Your driver finished this ride. Pay the fare by card through Paystack.
+                @endif
+            </p>
+            @if($paymentsEnabled)
+            <div style="display:flex;align-items:center;gap:0.9rem;flex-wrap:wrap;">
+                <form method="POST" action="{{ route('rides.pay', $ride) }}">
+                    @csrf
+                    <button type="submit" class="dot-btn dot-btn-primary">Pay fare <span class="metric-val" style="margin-left:0.35rem;">{{ \App\Services\Ehail\FareCalculator::format($ride->final_fare) }}</span></button>
+                </form>
+                @if($payState === \App\Enums\PaymentStatus::Pending)
+                <a href="{{ route('rides.pay.callback', $ride) }}" style="font-size:0.78rem;color:#38bdf8;text-decoration:none;">I have paid: check now</a>
+                @endif
+            </div>
+            @else
+            <p style="font-size:0.78rem;color:#71717a;margin:0;">Online payment is switched off right now. Try again later.</p>
+            @endif
+        @else
+            <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">
+                @if($payState === \App\Enums\PaymentStatus::Pending)
+                    The passenger has started paying; it is not confirmed yet.
+                @else
+                    The passenger has not paid this fare yet.
+                @endif
+            </p>
+        @endif
+
+        @can('waive', $ride)
+        <form method="POST" action="{{ route('operator.rides.waive', $ride) }}" style="display:flex;flex-direction:column;gap:0.6rem;max-width:460px;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.06);" onsubmit="return confirm('Waive this fare? The passenger will owe nothing.');">
+            @csrf
+            <div style="font-size:0.8rem;font-weight:600;color:#d4d4d8;">Waive this fare (operators)</div>
+            <div>
+                <label for="waive-reason" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Why (recorded and audited)</label>
+                <input id="waive-reason" type="text" name="reason" maxlength="500" required class="dot-input">
+            </div>
+            <button type="submit" class="dot-btn dot-btn-ghost" style="align-self:flex-start;">Waive fare</button>
+        </form>
+        @endcan
+
+        @if(! $isPassenger)
+        <p style="font-size:0.72rem;color:#71717a;margin:1rem 0 0;">Payout is not available yet &mdash; fares paid are recorded, settlement to drivers is manual.</p>
+        @endif
+    </div>
+    @endif
+
     @can('cancel', $ride)
     <div class="dot-card" style="padding:1.5rem;margin-bottom:1.25rem;">
         <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 0.35rem;">

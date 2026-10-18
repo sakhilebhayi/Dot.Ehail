@@ -8,8 +8,10 @@ use App\Http\Controllers\Ehail\DriverDocumentController;
 use App\Http\Controllers\Ehail\FleetController;
 use App\Http\Controllers\Ehail\OperatorFleetController;
 use App\Http\Controllers\Ehail\OperatorRideController;
+use App\Http\Controllers\Ehail\PaystackWebhookController;
 use App\Http\Controllers\Ehail\RideController;
 use App\Http\Controllers\Ehail\RideLifecycleController;
+use App\Http\Controllers\Ehail\RidePaymentController;
 use App\Http\Controllers\Ehail\RideRatingController;
 use App\Http\Controllers\Ehail\RideRequestController;
 use App\Http\Controllers\Ehail\VehicleController;
@@ -25,6 +27,12 @@ Route::get('/auth/ecosystem', [EcosystemAuthController::class, 'handle'])
 // Real-time infrastructure health check -- unauthenticated like Laravel's
 // own /up, for uptime monitors/load balancers.
 Route::get('/up/realtime', [RealtimeHealthController::class, 'check'])->name('health.realtime');
+
+// Paystack calls this server to server: no session, no CSRF token (excluded in bootstrap/app.php),
+// authenticated by the signature header alone. Throttled so a flood of forgeries stays cheap.
+Route::post('/webhooks/paystack', PaystackWebhookController::class)
+    ->middleware('throttle:60,1')
+    ->name('paystack.webhook');
 
 Route::get('/', function () {
     return view('welcome');
@@ -57,6 +65,8 @@ Route::middleware([
     Route::post('/rides/{ride}/accept', [RideLifecycleController::class, 'accept'])->name('rides.accept');
     Route::patch('/rides/{ride}/advance', [RideLifecycleController::class, 'advance'])->name('rides.advance');
     Route::post('/rides/{ride}/cancel', [RideLifecycleController::class, 'cancel'])->name('rides.cancel');
+    Route::post('/rides/{ride}/pay', [RidePaymentController::class, 'store'])->name('rides.pay');
+    Route::get('/rides/{ride}/pay/callback', [RidePaymentController::class, 'callback'])->name('rides.pay.callback');
     Route::post('/rides/{ride}/ratings', [RideRatingController::class, 'store'])->name('rides.ratings.store');
     Route::get('/drivers/{driverProfile}', [DriverController::class, 'show'])->name('drivers.show');
     Route::patch('/drivers/{driverProfile}/toggle-online', [DriverController::class, 'toggleOnline'])->name('drivers.toggle-online');
@@ -81,6 +91,8 @@ Route::middleware([
         Route::get('/rides', [OperatorRideController::class, 'index'])->name('rides.index');
         Route::post('/rides/{ride}/complete', [OperatorRideController::class, 'complete'])->name('rides.complete');
         Route::post('/rides/{ride}/cancel', [OperatorRideController::class, 'cancel'])->name('rides.cancel');
+        Route::post('/rides/{ride}/waive', [OperatorRideController::class, 'waive'])->name('rides.waive');
+        Route::post('/payments/{payment}/review', [OperatorRideController::class, 'reviewPayment'])->name('payments.review');
     });
 
     Route::get('/fleets/{fleet}', [FleetController::class, 'show'])->name('fleets.show');

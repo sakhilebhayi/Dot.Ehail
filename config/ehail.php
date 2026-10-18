@@ -6,8 +6,10 @@ return [
     |--------------------------------------------------------------------------
     | Currency
     |--------------------------------------------------------------------------
-    | Display only. No payment provider is integrated: every amount in this
-    | application is an estimate or a recorded fare, never a collected one.
+    | The code is also the currency a Paystack charge is made in (config/paystack.php), so it must be
+    | one your Paystack account can settle (ZAR for a South African account). Amounts are stored as
+    | decimal(8,2) and charged as integer cents. A fare is only "collected" once a verified Paystack
+    | payment is recorded against it; every other figure is an estimate or a recorded fare.
     */
     'currency' => [
         'code' => env('EHAIL_CURRENCY_CODE', 'ZAR'),
@@ -62,5 +64,14 @@ return [
     'ride_expiry_minutes' => (int) env('EHAIL_RIDE_EXPIRY_MINUTES', 10),
     'stuck_ride_hours' => (int) env('EHAIL_STUCK_RIDE_HOURS', 6),
     'max_reassignments' => (int) env('EHAIL_MAX_REASSIGNMENTS', 3),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Unpaid fares
+    |--------------------------------------------------------------------------
+    | unpaid_fare_alert_hours: a completed ride whose fare is still unpaid this long after it
+    |   completed is listed on the operator desk. Nothing happens to the ride automatically.
+    */
+    'unpaid_fare_alert_hours' => (int) env('EHAIL_UNPAID_FARE_ALERT_HOURS', 24),
 
 ];

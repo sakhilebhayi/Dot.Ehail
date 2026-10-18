@@ -91,6 +91,7 @@
                 ['key' => 'pending-applications', 'label' => 'Driver applications pending', 'value' => number_format($pendingApplications), 'note' => null, 'href' => route('operator.fleets.index')],
                 ['key' => 'expired-week', 'label' => 'Requests expired in the last 7 days', 'value' => number_format($expiredLastWeek), 'note' => null, 'href' => null],
                 ['key' => 'fare-total', 'label' => 'Estimated fare total, not collected', 'value' => \App\Services\Ehail\FareCalculator::format($completedFareTotal), 'note' => 'over '.number_format($completedCount).' completed '.\Illuminate\Support\Str::plural('ride', $completedCount).' with a recorded fare', 'href' => null],
+                ['key' => 'fares-collected', 'label' => 'Fares collected through Paystack', 'value' => \App\Services\Ehail\FareCalculator::formatCents($collectedCents), 'note' => 'over '.number_format($collectedCount).' confirmed '.\Illuminate\Support\Str::plural('payment', $collectedCount).($testMode ? ' (TEST MODE, not real money)' : ''), 'href' => null],
             ];
         @endphp
         @foreach ($rows as $row)
@@ -106,6 +107,84 @@
                 <span class="metric-val" style="font-size:1rem;color:#f4f4f5;" data-figure="{{ $row['key'] }}">{{ $row['value'] }}</span>
             </div>
         @endforeach
+    </div>
+
+    {{-- Payments --}}
+    <h2 style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:#f4f4f5;margin:0 0 0.75rem;text-transform:uppercase;letter-spacing:0.08em;">Fare payments</h2>
+    @if (! $paymentsEnabled)
+        <div class="dot-card" style="padding:1rem 1.5rem;margin-bottom:1rem;">
+            <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">{{ $paymentNotice }} Rides completed now owe nothing, and the sections below only show what was recorded earlier.</p>
+        </div>
+    @endif
+    <p style="font-size:0.75rem;color:#71717a;margin:0 0 1rem;">
+        Passengers pay the platform's Paystack account. Payout to drivers is not available yet: fares paid are recorded, settlement to drivers is manual.
+    </p>
+
+    <h3 style="font-size:0.8rem;font-weight:600;color:#d4d4d8;margin:0 0 0.5rem;">Unpaid fares <span style="font-weight:400;color:#71717a;">completed more than {{ $alertHours }} {{ \Illuminate\Support\Str::plural('hour', $alertHours) }} ago</span></h3>
+    <div class="dot-card" style="overflow:hidden;margin-bottom:1.5rem;" data-section="unpaid-fares">
+        @forelse ($unpaidFares as $ride)
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;padding:0.85rem 1.5rem;{{ $loop->last ? '' : 'border-bottom:1px solid rgba(255,255,255,0.06);' }}flex-wrap:wrap;">
+                <div style="min-width:240px;flex:1;">
+                    <a href="{{ route('rides.show', $ride) }}" style="font-size:0.82rem;color:#f4f4f5;text-decoration:none;">#{{ $ride->id }} · {{ $ride->pickup_address }} → {{ $ride->dropoff_address }}</a>
+                    <div style="font-size:0.72rem;color:#71717a;">
+                        {{ $ride->passenger?->name ?? '—' }} · <span class="metric-val">{{ \App\Services\Ehail\FareCalculator::format($ride->final_fare) }}</span>
+                        · {{ $ride->paymentStatusEnum()->label() }} · completed {{ $ride->completed_at?->diffForHumans() ?? 'earlier' }}
+                    </div>
+                </div>
+                <form method="POST" action="{{ route('operator.rides.waive', $ride) }}" style="display:flex;gap:0.5rem;align-items:flex-end;flex-wrap:wrap;" onsubmit="return confirm('Waive this fare? The passenger will owe nothing.');">
+                    @csrf
+                    <div>
+                        <label for="waive-{{ $ride->id }}" style="{{ $labelStyle }}">Waive: why</label>
+                        <input id="waive-{{ $ride->id }}" class="dot-input" type="text" name="reason" maxlength="500" required style="{{ $inputStyle }}width:220px;">
+                    </div>
+                    <button type="submit" class="dot-btn dot-btn-ghost">Waive fare</button>
+                </form>
+            </div>
+        @empty
+            <p style="padding:1.25rem 1.5rem;font-size:0.8rem;color:#71717a;margin:0;">No fare has been unpaid for that long.</p>
+        @endforelse
+    </div>
+
+    <h3 style="font-size:0.8rem;font-weight:600;color:#d4d4d8;margin:0 0 0.5rem;">Unmatched payments</h3>
+    <div class="dot-card" style="overflow:hidden;margin-bottom:1.5rem;" data-section="unmatched-payments">
+        @forelse ($unmatchedPayments as $payment)
+            <div style="padding:0.85rem 1.5rem;{{ $loop->last ? '' : 'border-bottom:1px solid rgba(255,255,255,0.06);' }}">
+                <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+                    <div style="min-width:240px;flex:1;">
+                        <span style="font-size:0.82rem;color:#fb7185;">{{ $payment->reasonLabel() }}</span>
+                        <div style="font-size:0.72rem;color:#71717a;">
+                            <span class="metric-val">{{ \App\Services\Ehail\FareCalculator::formatCents($payment->amount_cents) }}</span> {{ $payment->currency }}
+                            · reference {{ $payment->reference }}
+                            @if ($payment->ride) · <a href="{{ route('rides.show', $payment->ride) }}" style="color:#38bdf8;text-decoration:none;">ride #{{ $payment->ride->id }}</a>@endif
+                            · {{ $payment->updated_at?->diffForHumans() }}
+                        </div>
+                        <div style="font-size:0.72rem;color:#71717a;margin-top:0.2rem;">The payer may have been charged. Check it on the Paystack dashboard, refund or reconcile there, then record what you did.</div>
+                    </div>
+                    <form method="POST" action="{{ route('operator.payments.review', $payment) }}" style="display:flex;gap:0.5rem;align-items:flex-end;flex-wrap:wrap;">
+                        @csrf
+                        <div>
+                            <label for="review-{{ $payment->id }}" style="{{ $labelStyle }}">What you did</label>
+                            <input id="review-{{ $payment->id }}" class="dot-input" type="text" name="note" maxlength="500" required style="{{ $inputStyle }}width:220px;">
+                        </div>
+                        <button type="submit" class="dot-btn dot-btn-ghost">Mark reviewed</button>
+                    </form>
+                </div>
+            </div>
+        @empty
+            <p style="padding:1.25rem 1.5rem;font-size:0.8rem;color:#71717a;margin:0;">No payment is waiting for review.</p>
+        @endforelse
+    </div>
+
+    <h3 style="font-size:0.8rem;font-weight:600;color:#d4d4d8;margin:0 0 0.5rem;">Waived fares <span style="font-weight:400;color:#71717a;">latest {{ $waivedFares->count() }}</span></h3>
+    <div class="dot-card" style="overflow:hidden;margin-bottom:2rem;" data-section="waived-fares">
+        @forelse ($waivedFares as $ride)
+            <div style="padding:0.85rem 1.5rem;{{ $loop->last ? '' : 'border-bottom:1px solid rgba(255,255,255,0.06);' }}">
+                <a href="{{ route('rides.show', $ride) }}" style="font-size:0.82rem;color:#f4f4f5;text-decoration:none;">#{{ $ride->id }} · <span class="metric-val">{{ \App\Services\Ehail\FareCalculator::format($ride->final_fare) }}</span></a>
+                <div style="font-size:0.72rem;color:#71717a;">{{ $ride->fare_waived_reason }} · by {{ $ride->waivedBy?->name ?? 'an operator' }} {{ $ride->fare_waived_at?->diffForHumans() }}</div>
+            </div>
+        @empty
+            <p style="padding:1.25rem 1.5rem;font-size:0.8rem;color:#71717a;margin:0;">No fare has been waived.</p>
+        @endforelse
     </div>
 
     {{-- Expired requests --}}

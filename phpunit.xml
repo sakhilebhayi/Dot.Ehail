@@ -30,6 +30,9 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
         <env name="ANTHROPIC_API_KEY" value=""/>
+        <env name="PAYSTACK_SECRET_KEY" value="" force="true"/>
+        <env name="PAYSTACK_PUBLIC_KEY" value="" force="true"/>
+        <env name="PAYSTACK_ALLOW_LIVE" value="false" force="true"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
