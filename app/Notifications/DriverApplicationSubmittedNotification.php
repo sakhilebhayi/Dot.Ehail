@@ -31,7 +31,8 @@ class DriverApplicationSubmittedNotification extends Notification
         return [
             'type' => 'driver_application_submitted',
             'title' => 'New driver application',
-            'message' => "{$this->driverProfile->user?->name} applied to drive (license {$this->driverProfile->license_number}).",
+            // No identifying numbers here: notifications are stored in plaintext.
+            'message' => "{$this->driverProfile->user?->name} applied to drive.",
             'driver_profile_id' => $this->driverProfile->id,
             'url' => route('drivers.show', $this->driverProfile),
         ];

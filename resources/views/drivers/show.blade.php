@@ -18,7 +18,7 @@
             <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.2rem;letter-spacing:-0.01em;">
                 {{ $driverProfile->user?->name ?? 'Driver' }}
             </h1>
-            <p style="font-size:0.78rem;color:#52525b;margin:0;">License {{ $driverProfile->license_number }}</p>
+            <p style="font-size:0.78rem;color:#71717a;margin:0;">License {{ $driverProfile->license_number }} · ID {{ $driverProfile->id_number }}</p>
         </div>
         <div style="display:flex;align-items:center;gap:0.6rem;">
             @can('update', $driverProfile)

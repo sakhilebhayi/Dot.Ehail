@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasUserScope;
+use App\Support\DriverIdentifiers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,11 +27,54 @@ class DriverProfile extends Model
         'reviewed_at',
     ];
 
+    /**
+     * The identifiers are encrypted at rest (the `encrypted` casts below) and
+     * must never leave through serialisation; their blind indexes stay in the
+     * database.
+     */
+    protected $hidden = ['license_number', 'id_number', 'license_number_hash', 'id_number_hash'];
+
     protected $casts = [
+        'license_number' => 'encrypted',
+        'id_number' => 'encrypted',
         'is_online' => 'boolean',
         'rating' => 'decimal:2',
         'reviewed_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // Keep the blind indexes in step with the encrypted numbers: set on
+        // create, refreshed only when a number actually changes.
+        static::saving(function (DriverProfile $profile): void {
+            foreach (['license_number', 'id_number'] as $column) {
+                if (! $profile->exists || $profile->isDirty($column)) {
+                    $profile->{$column.'_hash'} = DriverIdentifiers::blindIndex($profile->{$column});
+                }
+            }
+        });
+    }
+
+    /**
+     * Whether another profile already holds this licence number (ignoring
+     * case and surrounding whitespace). Bypasses HasUserScope on purpose.
+     */
+    public static function licenseNumberTaken(string $value): bool
+    {
+        return static::indexTaken('license_number_hash', $value);
+    }
+
+    public static function idNumberTaken(string $value): bool
+    {
+        return static::indexTaken('id_number_hash', $value);
+    }
+
+    private static function indexTaken(string $column, string $value): bool
+    {
+        $hash = DriverIdentifiers::blindIndex($value);
+
+        return $hash !== null && static::withoutGlobalScope('user')->where($column, $hash)->exists();
+    }
 
     public function user(): BelongsTo
     {

@@ -36,8 +36,18 @@ class DriverApplicationController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'license_number' => 'required|string|unique:driver_profiles,license_number',
-            'id_number' => 'required|string|unique:driver_profiles,id_number',
+            // Unique through the blind index: the stored values are encrypted,
+            // so a plain `unique:` rule could never match.
+            'license_number' => ['required', 'string', 'max:100', function (string $attribute, mixed $value, \Closure $fail) {
+                if (DriverProfile::licenseNumberTaken((string) $value)) {
+                    $fail('The license number has already been taken.');
+                }
+            }],
+            'id_number' => ['required', 'string', 'max:100', function (string $attribute, mixed $value, \Closure $fail) {
+                if (DriverProfile::idNumberTaken((string) $value)) {
+                    $fail('The id number has already been taken.');
+                }
+            }],
             'existing_fleet_id' => [
                 'nullable',
                 'required_without:new_fleet_name',

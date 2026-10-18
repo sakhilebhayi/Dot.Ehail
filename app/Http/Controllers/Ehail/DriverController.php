@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ehail;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\DriverProfile;
 use App\Models\Ride;
 use App\Models\RideRating;
@@ -40,6 +41,16 @@ class DriverController extends Controller
             ->where('rated_role', RideRating::ROLE_DRIVER);
 
         $viewer = request()->user();
+
+        // The full licence and ID numbers are on this page. Their own owner
+        // reading them is not an event; anyone else opening it is, and every
+        // open is written to the append-only audit log.
+        if ($viewer->id !== $driverProfile->user_id) {
+            AuditLog::record('driver_profile.opened', $viewer, $driverProfile, [
+                'fields' => ['license_number', 'id_number'],
+                'as' => $viewer->isPlatformOperator() ? 'operator' : 'fleet_owner',
+            ]);
+        }
 
         return view('drivers.show', [
             'driverProfile' => $driverProfile,

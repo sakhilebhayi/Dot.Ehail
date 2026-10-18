@@ -21,7 +21,7 @@
     @forelse ($pending as $profile)
         <div class="dot-card" style="padding:1.25rem;margin-bottom:1rem;">
             <p style="font-size:0.95rem;font-weight:600;color:#f4f4f5;margin:0 0 0.25rem;">{{ $profile->user?->name }}</p>
-            <p style="font-size:0.78rem;color:#71717a;margin:0 0 0.75rem;">License {{ $profile->license_number }} · ID {{ $profile->id_number }}</p>
+            <p style="font-size:0.78rem;color:#71717a;margin:0 0 0.75rem;">License {{ \App\Support\DriverIdentifiers::mask($profile->license_number) }} · ID {{ \App\Support\DriverIdentifiers::mask($profile->id_number) }} · <a href="{{ route('drivers.show', $profile) }}" style="color:#38bdf8;text-decoration:none;">Open profile</a> (logged)</p>
             @foreach ($profile->vehicles as $vehicle)
                 <p style="font-size:0.78rem;color:#a1a1aa;margin:0 0 0.75rem;">{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} ({{ $vehicle->color }}) — {{ $vehicle->plate_number }}</p>
             @endforeach
@@ -85,7 +85,7 @@
         <div class="dot-card" style="padding:1rem 1.25rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;">
             <div>
                 <p style="font-size:0.9rem;color:#f4f4f5;margin:0;">{{ $profile->user?->name }}</p>
-                <p style="font-size:0.75rem;color:#71717a;margin:0;">{{ $profile->license_number }}</p>
+                <p style="font-size:0.75rem;color:#71717a;margin:0;">{{ \App\Support\DriverIdentifiers::mask($profile->license_number) }}</p>
             </div>
             <span style="font-size:11px;font-weight:600;padding:4px 12px;border-radius:100px;{{ $profile->status === 'approved' ? 'background:rgba(34,197,94,0.1);color:#4ade80;' : ($profile->status === 'rejected' ? 'background:rgba(239,68,68,0.1);color:#f87171;' : 'background:rgba(245,158,11,0.1);color:#f59e0b;') }}">
                 {{ ucfirst($profile->status) }}

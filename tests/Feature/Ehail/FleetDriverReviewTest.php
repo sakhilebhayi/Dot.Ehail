@@ -6,6 +6,7 @@ use App\Models\DriverProfile;
 use App\Models\Fleet;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Support\DriverIdentifiers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,8 +20,8 @@ class FleetDriverReviewTest extends TestCase
         $profile = DriverProfile::create([
             'user_id' => $applicant->id,
             'fleet_id' => $fleet->id,
-            'license_number' => 'LIC-'.$applicant->id,
-            'id_number' => 'ID-'.$applicant->id,
+            'license_number' => 'ZA-LICENCE-'.str_pad((string) $applicant->id, 6, '0', STR_PAD_LEFT),
+            'id_number' => '800101'.str_pad((string) $applicant->id, 7, '0', STR_PAD_LEFT),
             'status' => 'pending',
         ]);
         Vehicle::create([
@@ -41,7 +42,8 @@ class FleetDriverReviewTest extends TestCase
         $this->actingAs($owner)
             ->get(route('fleets.show', $fleet))
             ->assertOk()
-            ->assertSee($profile->license_number);
+            ->assertDontSee($profile->license_number)
+            ->assertSee(DriverIdentifiers::mask($profile->license_number));
     }
 
     public function test_fleet_owner_can_approve_a_pending_driver(): void
