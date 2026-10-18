@@ -21,18 +21,10 @@
     @endif
 
     @php
-        $statusColors = [
-            'requested' => '#f59e0b', 'accepted' => '#38bdf8', 'en_route' => '#38bdf8',
-            'arrived' => '#a78bfa', 'in_progress' => '#a78bfa', 'completed' => '#4ade80', 'cancelled' => '#71717a',
-        ];
-        $statusColor = $statusColors[$ride->status] ?? '#38bdf8';
-        $nextStage = match ($ride->status) {
-            'accepted' => 'en_route',
-            'en_route' => 'arrived',
-            'arrived' => 'in_progress',
-            'in_progress' => 'completed',
-            default => null,
-        };
+        $nextStage = $ride->statusEnum()->nextStage();
+        $viewerRole = $ride->actorFor(auth()->user());
+        $cancelReasons = $viewerRole ? \App\Enums\CancelReason::forActor($viewerRole) : [];
+        $fare = \App\Services\Ehail\FareCalculator::class;
     @endphp
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
@@ -43,9 +35,7 @@
             <p style="font-size:0.78rem;color:#52525b;margin:0;">Requested {{ $ride->created_at->format('l, F j, Y \a\t g:i A') }}</p>
         </div>
         <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-            <span style="font-size:11px;font-weight:600;padding:4px 12px;border-radius:100px;background:{{ $statusColor }}1a;color:{{ $statusColor }};">
-                {{ ucfirst(str_replace('_', ' ', $ride->status)) }}
-            </span>
+            <x-ride-status :status="$ride->status" />
 
             @can('accept', $ride)
             <form method="POST" action="{{ route('rides.accept', $ride) }}">
@@ -59,20 +49,36 @@
             <form method="POST" action="{{ route('rides.advance', $ride) }}">
                 @csrf
                 @method('PATCH')
-                <input type="hidden" name="status" value="{{ $nextStage }}">
-                <button type="submit" class="dot-btn dot-btn-primary">Mark {{ ucfirst(str_replace('_', ' ', $nextStage)) }}</button>
+                <input type="hidden" name="status" value="{{ $nextStage->value }}">
+                <button type="submit" class="dot-btn dot-btn-primary">Mark {{ strtolower($nextStage->label()) }}</button>
             </form>
             @endcan
             @endif
-
-            @can('cancel', $ride)
-            <form method="POST" action="{{ route('rides.cancel', $ride) }}" onsubmit="return confirm('Cancel this ride?');">
-                @csrf
-                <button type="submit" class="dot-btn dot-btn-ghost" style="color:#f87171;">Cancel</button>
-            </form>
-            @endcan
         </div>
     </div>
+
+    @if($ride->status === 'needs_review')
+    <div class="dot-card" style="padding:1rem 1.5rem;margin-bottom:1.25rem;border:1px solid rgba(251,113,133,0.35);">
+        <p style="font-size:0.82rem;color:#fb7185;margin:0;">
+            This trip has been in progress for over {{ config('ehail.stuck_ride_hours') }} hours and is waiting for a platform operator to decide how it ended.
+        </p>
+    </div>
+    @endif
+
+    @if($ride->status === 'cancelled' && $ride->cancel_reason)
+    <div class="dot-card" style="padding:1rem 1.5rem;margin-bottom:1.25rem;">
+        <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">
+            Cancelled{{ $ride->cancelled_at ? ' '.$ride->cancelled_at->diffForHumans() : '' }}:
+            {{ \App\Enums\CancelReason::tryFrom($ride->cancel_reason)?->label() ?? $ride->cancel_reason }}@if($ride->cancel_note) — {{ $ride->cancel_note }}@endif
+        </p>
+    </div>
+    @endif
+
+    @if($ride->status === 'expired')
+    <div class="dot-card" style="padding:1rem 1.5rem;margin-bottom:1.25rem;">
+        <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">No driver took this request in time. You can request the ride again.</p>
+    </div>
+    @endif
 
     <div class="dot-card" style="padding:1.5rem;margin-bottom:1.25rem;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
@@ -101,17 +107,55 @@
             <div>
                 <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.35rem;">Fare</div>
                 <div class="metric-val" style="font-size:12px;color:#4ade80;font-weight:600;">
-                    @if($ride->final_fare)
-                        R {{ number_format((float) $ride->final_fare, 2) }}
-                    @elseif($ride->estimated_fare)
-                        ~R {{ number_format((float) $ride->estimated_fare, 2) }} (estimated)
+                    @if($ride->final_fare !== null)
+                        {{ \App\Services\Ehail\FareCalculator::format($ride->final_fare) }}
+                    @elseif($ride->estimated_fare !== null)
+                        ~{{ \App\Services\Ehail\FareCalculator::format($ride->estimated_fare) }} (estimated)
                     @else
-                        —
+                        <span style="color:#a1a1aa;font-weight:500;">Fare estimate not available</span>
                     @endif
                 </div>
+                @if($ride->final_fare === null && $ride->estimated_fare === null)
+                <div style="font-size:11px;color:#71717a;margin-top:2px;max-width:220px;">No coordinates were given, so the distance and fare could not be worked out.</div>
+                @endif
+                @if($ride->final_fare_reason)
+                <div style="font-size:11px;color:#71717a;margin-top:2px;max-width:260px;">Entered by an operator: {{ $ride->final_fare_reason }}</div>
+                @endif
             </div>
         </div>
     </div>
+
+    @can('cancel', $ride)
+    <div class="dot-card" style="padding:1.5rem;margin-bottom:1.25rem;">
+        <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 0.35rem;">
+            {{ $viewerRole === \App\Enums\RideActor::Driver ? 'Leave this ride' : 'Cancel this ride' }}
+        </h3>
+        @if($viewerRole === \App\Enums\RideActor::Driver)
+        <p style="font-size:0.75rem;color:#71717a;margin:0 0 1rem;">The ride goes back to the queue for another driver and the passenger is told.</p>
+        @else
+        <p style="font-size:0.75rem;color:#71717a;margin:0 0 1rem;">{{ $ride->driver_id ? 'Your driver is told straight away.' : 'Nobody has accepted yet.' }}</p>
+        @endif
+        <form method="POST" action="{{ route('rides.cancel', $ride) }}" style="display:flex;flex-direction:column;gap:0.75rem;max-width:460px;" onsubmit="return confirm('Are you sure?');">
+            @csrf
+            <div>
+                <label for="cancel-reason" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Reason</label>
+                <select id="cancel-reason" name="reason" required class="dot-input">
+                    <option value="" disabled selected>Choose a reason</option>
+                    @foreach($cancelReasons as $reason)
+                    <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label for="cancel-note" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Anything to add (optional)</label>
+                <input id="cancel-note" type="text" name="note" maxlength="500" class="dot-input">
+            </div>
+            <button type="submit" class="dot-btn dot-btn-ghost" style="align-self:flex-start;color:#f87171;">
+                {{ $viewerRole === \App\Enums\RideActor::Driver ? 'Leave ride' : 'Cancel ride' }}
+            </button>
+        </form>
+    </div>
+    @endcan
 
     <div class="dot-card" style="padding:1.5rem;">
         <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 1.25rem;">Rating</h3>

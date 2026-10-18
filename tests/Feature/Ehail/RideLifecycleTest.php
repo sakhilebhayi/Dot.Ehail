@@ -287,7 +287,7 @@ class RideLifecycleTest extends TestCase
         $ride = $this->makeRequestedRide($passenger);
 
         $this->actingAs($passenger)
-            ->post(route('rides.cancel', $ride))
+            ->post(route('rides.cancel', $ride), ['reason' => 'changed_plans'])
             ->assertRedirect(route('rides.show', $ride));
 
         $this->assertSame('cancelled', $ride->fresh()->status);
@@ -303,7 +303,7 @@ class RideLifecycleTest extends TestCase
         $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => 'in_progress']);
 
         $this->actingAs($driver)
-            ->post(route('rides.cancel', $ride))
+            ->post(route('rides.cancel', $ride), ['reason' => 'other'])
             ->assertForbidden();
 
         $this->assertSame('in_progress', $ride->fresh()->status);
@@ -315,7 +315,7 @@ class RideLifecycleTest extends TestCase
         $ride = $this->makeRequestedRide();
 
         $this->actingAs($stranger)
-            ->post(route('rides.cancel', $ride))
+            ->post(route('rides.cancel', $ride), ['reason' => 'other'])
             ->assertForbidden();
     }
 }

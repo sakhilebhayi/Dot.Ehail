@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\RideActor;
+use App\Enums\RideStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,15 +17,52 @@ class Ride extends Model
         'dropoff_address', 'dropoff_lat', 'dropoff_lng',
         'status', 'vehicle_type', 'estimated_fare', 'final_fare',
         'distance_km', 'requested_at', 'accepted_at', 'completed_at',
+        'started_at', 'cancelled_at', 'expired_at', 'needs_review_at',
+        'cancelled_by', 'cancel_reason', 'cancel_note', 'reassignment_count',
+        'final_fare_reason', 'final_fare_set_by',
     ];
 
     protected $casts = [
         'requested_at' => 'datetime',
         'accepted_at' => 'datetime',
+        'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'expired_at' => 'datetime',
+        'needs_review_at' => 'datetime',
         'estimated_fare' => 'decimal:2',
         'final_fare' => 'decimal:2',
+        'reassignment_count' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        // The waiting window (ehail.ride_expiry_minutes) is measured from
+        // requested_at, so a ride never exists without one.
+        static::creating(function (Ride $ride): void {
+            $ride->requested_at ??= now();
+        });
+    }
+
+    public function statusEnum(): RideStatus
+    {
+        return RideStatus::from($this->status);
+    }
+
+    /**
+     * The part $user plays on this ride, or null if they are not a party to
+     * it. A platform operator who is neither passenger nor driver acts as the
+     * operator.
+     */
+    public function actorFor(User $user): ?RideActor
+    {
+        return match (true) {
+            $user->id === $this->passenger_id => RideActor::Passenger,
+            $this->driver_id !== null && $user->id === $this->driver_id => RideActor::Driver,
+            $user->isPlatformOperator() => RideActor::Operator,
+            default => null,
+        };
+    }
 
     /**
      * Rides a user is entitled to see: their own (as passenger or as the

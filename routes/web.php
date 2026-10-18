@@ -7,6 +7,7 @@ use App\Http\Controllers\Ehail\DriverController;
 use App\Http\Controllers\Ehail\DriverDocumentController;
 use App\Http\Controllers\Ehail\FleetController;
 use App\Http\Controllers\Ehail\OperatorFleetController;
+use App\Http\Controllers\Ehail\OperatorRideController;
 use App\Http\Controllers\Ehail\RideController;
 use App\Http\Controllers\Ehail\RideLifecycleController;
 use App\Http\Controllers\Ehail\RideRequestController;
@@ -67,6 +68,9 @@ Route::middleware([
     Route::middleware('operator')->prefix('operator')->name('operator.')->group(function () {
         Route::get('/fleets', [OperatorFleetController::class, 'index'])->name('fleets.index');
         Route::post('/fleets/{fleet}/approve', [OperatorFleetController::class, 'approve'])->name('fleets.approve');
+        Route::get('/rides', [OperatorRideController::class, 'index'])->name('rides.index');
+        Route::post('/rides/{ride}/complete', [OperatorRideController::class, 'complete'])->name('rides.complete');
+        Route::post('/rides/{ride}/cancel', [OperatorRideController::class, 'cancel'])->name('rides.cancel');
     });
 
     Route::get('/fleets/{fleet}', [FleetController::class, 'show'])->name('fleets.show');

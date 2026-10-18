@@ -6,6 +6,7 @@ use App\Models\Ride;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -22,8 +23,12 @@ use Illuminate\Queue\SerializesModels;
  * authorization (see BroadcastServiceProvider) already restricts who
  * receives this, but there's no reason to broadcast more than the UI
  * actually needs to react (a status badge + "reload" prompt).
+ *
+ * ShouldDispatchAfterCommit: RideLifecycle changes a ride inside a database
+ * transaction; clients are only told once that transaction has committed, so
+ * a rolled-back change is never announced.
  */
-class RideStatusUpdated implements ShouldBroadcast
+class RideStatusUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

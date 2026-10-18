@@ -8,6 +8,7 @@ use App\Services\Ehail\FareCalculator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -33,12 +34,13 @@ class RideRequestController extends Controller
 
         $validated = $request->validate([
             'pickup_address' => ['required', 'string', 'max:255'],
-            'pickup_lat' => ['nullable', 'numeric', 'between:-90,90'],
-            'pickup_lng' => ['nullable', 'numeric', 'between:-180,180'],
+            // A coordinate is only meaningful as a pair.
+            'pickup_lat' => ['nullable', 'required_with:pickup_lng', 'numeric', 'between:-90,90'],
+            'pickup_lng' => ['nullable', 'required_with:pickup_lat', 'numeric', 'between:-180,180'],
             'dropoff_address' => ['required', 'string', 'max:255'],
-            'dropoff_lat' => ['nullable', 'numeric', 'between:-90,90'],
-            'dropoff_lng' => ['nullable', 'numeric', 'between:-180,180'],
-            'vehicle_type' => ['required', 'string', 'in:economy,standard,premium,suv'],
+            'dropoff_lat' => ['nullable', 'required_with:dropoff_lng', 'numeric', 'between:-90,90'],
+            'dropoff_lng' => ['nullable', 'required_with:dropoff_lat', 'numeric', 'between:-180,180'],
+            'vehicle_type' => ['required', 'string', Rule::in(array_keys(config('ehail.tariff.multipliers')))],
         ]);
 
         // A field genuinely absent from the request (as opposed to present

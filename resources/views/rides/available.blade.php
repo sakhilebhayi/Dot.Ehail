@@ -48,7 +48,7 @@
                 <div style="font-size:0.75rem;color:#71717a;">→ {{ $ride->dropoff_address }}</div>
                 <div style="font-size:0.68rem;color:#52525b;margin-top:0.25rem;">
                     {{ ucfirst($ride->vehicle_type) }} · Requested {{ $ride->created_at->diffForHumans() }}
-                    @if($ride->estimated_fare) · ~R{{ number_format((float) $ride->estimated_fare, 2) }} @endif
+                    @if($ride->estimated_fare !== null) · ~{{ \App\Services\Ehail\FareCalculator::format($ride->estimated_fare) }} @else · fare estimate not available @endif
                 </div>
             </div>
             <form method="POST" action="{{ route('rides.accept', $ride) }}">

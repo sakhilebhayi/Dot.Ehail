@@ -3,7 +3,7 @@
     <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.3rem;letter-spacing:-0.01em;">
         Request a Ride
     </h1>
-    <p style="font-size:0.78rem;color:#71717a;margin:0 0 1.5rem;">Coordinates are optional but give you a real fare estimate instead of none at all.</p>
+    <p style="font-size:0.78rem;color:#71717a;margin:0 0 1.5rem;">Coordinates are optional. Without coordinates the fare estimate is not available; the ride is still requested and a driver can still take it.</p>
 
     @if ($errors->any())
         <div class="dot-card" style="padding:1rem;margin-bottom:1.5rem;border:1px solid rgba(239,68,68,0.3);">

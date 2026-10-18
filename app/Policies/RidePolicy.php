@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\RideActor;
 use App\Models\DriverProfile;
 use App\Models\Ride;
 use App\Models\User;
@@ -55,6 +56,11 @@ class RidePolicy
             return false;
         }
 
+        // Nobody drives their own request.
+        if ($user->id === $ride->passenger_id) {
+            return false;
+        }
+
         $profile = DriverProfile::withoutGlobalScope('user')
             ->where('user_id', $user->id)
             ->first();
@@ -67,7 +73,8 @@ class RidePolicy
 
     /**
      * Only the ride's assigned driver may progress it through its
-     * lifecycle (en_route -> arrived -> in_progress -> completed).
+     * lifecycle (en_route -> arrived -> in_progress -> completed). Which
+     * stage may follow which is RideStatus's job, not this policy's.
      */
     public function advance(User $user, Ride $ride): bool
     {
@@ -75,14 +82,28 @@ class RidePolicy
     }
 
     /**
-     * Either party may cancel, but only before the trip is actually
-     * underway -- once in_progress, cancelling would leave a passenger
-     * mid-trip with no driver, so completion is the only path forward
-     * from there.
+     * The passenger may cancel until the trip starts. The assigned driver
+     * may back out of an accepted ride until the trip starts (which sends
+     * the ride back to the queue -- see RideLifecycle::cancel). Once
+     * in_progress nobody on the ride may cancel: completion, or an operator's
+     * review, is the only way out.
      */
     public function cancel(User $user, Ride $ride): bool
     {
-        return in_array($ride->status, ['requested', 'accepted', 'en_route', 'arrived'], true)
-            && ($user->id === $ride->passenger_id || $user->id === $ride->driver_id);
+        return match ($ride->actorFor($user)) {
+            RideActor::Passenger => in_array($ride->status, ['requested', 'accepted', 'en_route', 'arrived'], true),
+            RideActor::Driver => in_array($ride->status, ['accepted', 'en_route', 'arrived'], true),
+            default => false,
+        };
+    }
+
+    /**
+     * Resolving a stuck trip (entering the fare by hand, or cancelling it) is
+     * an operator action, and only on a trip that is under way.
+     */
+    public function resolve(User $user, Ride $ride): bool
+    {
+        return $user->isPlatformOperator()
+            && in_array($ride->status, ['in_progress', 'needs_review'], true);
     }
 }

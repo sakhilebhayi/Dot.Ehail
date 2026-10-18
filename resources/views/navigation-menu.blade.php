@@ -32,6 +32,9 @@
                     <x-nav-link href="{{ route('operator.fleets.index') }}" :active="request()->routeIs('operator.fleets.*')">
                         {{ __('Fleet Review') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('operator.rides.index') }}" :active="request()->routeIs('operator.rides.*')">
+                        {{ __('Ride Operations') }}
+                    </x-nav-link>
                     @endif
                     @if($ownedDriverProfile)
                     <x-nav-link href="{{ route('rides.available') }}" :active="request()->routeIs('rides.available')">
@@ -183,6 +186,11 @@
             <x-responsive-nav-link href="{{ route('rides.create') }}" :active="request()->routeIs('rides.create')">
                 {{ __('Request a Ride') }}
             </x-responsive-nav-link>
+            @if(Auth::user()->isPlatformOperator())
+            <x-responsive-nav-link href="{{ route('operator.rides.index') }}" :active="request()->routeIs('operator.rides.*')">
+                {{ __('Ride Operations') }}
+            </x-responsive-nav-link>
+            @endif
             @if($ownedDriverProfile)
             <x-responsive-nav-link href="{{ route('rides.available') }}" :active="request()->routeIs('rides.available')">
                 {{ __('Available Rides') }}

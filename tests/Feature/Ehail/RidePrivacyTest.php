@@ -170,7 +170,7 @@ class RidePrivacyTest extends TestCase
 
         $response = $this->actingAs($user)->get('/dashboard')->assertOk();
 
-        $response->assertDontSee('Total Revenue');
+        $response->assertDontSee('Estimated fare total, not collected');
         $response->assertDontSee('1,234.56');
         $response->assertDontSee('Total Drivers');
         $response->assertDontSee('Driver Fleet');
@@ -186,7 +186,7 @@ class RidePrivacyTest extends TestCase
 
         $response = $this->actingAs($this->operator())->get('/dashboard')->assertOk();
 
-        $response->assertSee('Total Revenue');
+        $response->assertSee('Estimated fare total, not collected');
         $response->assertSee('1,234.56');
         $response->assertViewHas('totalDrivers', 1);
         $response->assertViewHas('totalRides', 1);
