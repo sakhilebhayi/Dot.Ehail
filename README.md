@@ -119,6 +119,50 @@ php artisan test
 Feature tests use an in-memory SQLite connection (see `phpunit.xml`) and Laravel's
 `RefreshDatabase` trait — no shared Postgres instance required to run them.
 
+## Email via Dot.Notify
+
+Rides and driver applications also reach Dot.Notify (`POST {NOTIFY_INGEST_URL}`, signed with HMAC-SHA256
+over `"{timestamp}.{raw body}"` using `NOTIFY_INGEST_SECRET`, headers `X-InfoDot-Timestamp` and
+`X-InfoDot-Signature`), so a company can turn them into emails. `ride.cancelled` and `ride.expired` go
+out with the existing in-app ride notices (same trigger, same recipient). `ride.accepted` and
+`driver.application_decided` have **no in-app notification** in this app; they are sent from the
+accept action and the fleet owner's approve/reject action, and no in-app notification was added for them.
+
+| Event | Sent to | `data` keys |
+|---|---|---|
+| `ride.accepted` | the passenger, when a driver accepts | `driver_name`, `vehicle` (colour make model), `url` |
+| `ride.cancelled` | the other party: the driver when the passenger cancels, the passenger when the driver backs out, both when an operator cancels | `cancelled_by_role` (`passenger`/`driver`/`operator`), `reason`, `url` |
+| `ride.expired` | the passenger (request timed out, or drivers kept cancelling) | `url` |
+| `driver.application_decided` | the applicant, when a fleet owner approves or rejects | `decision` (`approved`/`rejected`), `fleet_name`, `note`, `url` |
+
+A driver backing out of an accepted ride re-queues it (the in-app notice is `ride_requeued`); that is
+sent as `ride.cancelled` with `cancelled_by_role: driver`, since from the passenger's side the driver
+cancelled. `reason` is a fixed human-readable label, never the free-text cancel note.
+`note` is the reviewer's rejection reason, cut to 300 characters (empty on approval). `url` is an
+absolute `https` link to the ride or driver page in this app.
+
+**Never sent:** phone numbers, ID or licence numbers, plate numbers, pickup/drop-off addresses,
+coordinates, free-text notes (other than the reviewer's rejection note above), or any other person's
+email address. The email is only ever in `recipient.email`.
+
+**What it takes for an email to go out:** nothing is sent until `NOTIFY_INGEST_URL` **and**
+`NOTIFY_INGEST_SECRET` are both set, **and** the recipient's company has enabled the event in Dot.Notify
+(otherwise Notify answers `no_rule` and sends nothing). A **queue worker is required**
+(`php artisan queue:work`): events are queued after the surrounding database transaction commits, so a
+ride action that rolls back sends nothing, and nothing is ever posted inside the user's request.
+
+**Who is skipped:** Notify routes by company, so the recipient's company is their current team's
+`infodot_team_uuid`, or their personal team's if the current team has none. A recipient with no
+`infodot_team_uuid` (not provisioned from InfoDot) or no email is skipped, with only an info log line
+(event name and user id, never an address). The in-app notification is unaffected.
+
+**Safety:** a Notify outage or misconfiguration cannot break or slow a ride action. The job has a
+5 second HTTP timeout, 3 tries with backoff, never throws, logs without secrets or email addresses, and
+a small cache-based circuit breaker pauses calls for 60 seconds after 5 consecutive failures (jobs wait
+and retry; if Notify stays down they are dropped after their third try). Retries and double dispatches
+share an idempotency key, `"{event}:{ride id | driver profile id}:{sha1(recipient email)}:{bucket}"`
+(bucket: ride status plus how many times the driver changed, or the decision), so Notify collapses them.
+
 ## 🚢 Deployment
 
 ### Production Checklist

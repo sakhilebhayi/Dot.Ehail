@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
 use App\Models\Vehicle;
+use App\Services\Notify\EhailNotifyEvents;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -74,6 +75,8 @@ class FleetController extends Controller
             'reviewed_at' => now(),
         ]);
 
+        app(EhailNotifyEvents::class)->driverApplicationDecided($driverProfile, 'approved');
+
         return back()->with('status', 'Driver approved.');
     }
 
@@ -99,6 +102,8 @@ class FleetController extends Controller
             'reviewed_by' => $request->user()->id,
             'reviewed_at' => now(),
         ]);
+
+        app(EhailNotifyEvents::class)->driverApplicationDecided($driverProfile, 'rejected');
 
         return back()->with('status', 'Driver rejected.');
     }

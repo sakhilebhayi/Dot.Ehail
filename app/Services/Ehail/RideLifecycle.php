@@ -10,6 +10,7 @@ use App\Models\DriverProfile;
 use App\Models\Ride;
 use App\Models\User;
 use App\Notifications\RideNoticeNotification;
+use App\Services\Notify\EhailNotifyEvents;
 use Closure;
 use Illuminate\Support\Facades\DB;
 
@@ -40,6 +41,8 @@ class RideLifecycle
 
                 return ['driver_id' => $driver->id, 'vehicle_id' => $vehicle->id, 'accepted_at' => now()];
             },
+            // Queued for Dot.Notify only once this transaction commits.
+            after: fn (Ride $locked) => app(EhailNotifyEvents::class)->rideAccepted($locked->load(['passenger', 'driver'])),
             guard: fn (Ride $locked) => $locked->driver_id === null,
         );
 
@@ -134,7 +137,8 @@ class RideLifecycle
 
                 foreach (array_filter([$locked->passenger, $locked->driver]) as $party) {
                     $this->notify($party, $locked, 'ride_cancelled', 'Ride cancelled by an operator',
-                        "Ride #{$locked->id} was cancelled by a platform operator after review.");
+                        "Ride #{$locked->id} was cancelled by a platform operator after review.",
+                        'operator', 'Cancelled by a platform operator after review');
                 }
             },
         );
@@ -233,10 +237,11 @@ class RideLifecycle
                 'cancel_note' => $note,
                 'cancelled_at' => now(),
             ],
-            after: function (Ride $locked) {
+            after: function (Ride $locked) use ($reason) {
                 if ($locked->driver) {
                     $this->notify($locked->driver, $locked, 'ride_cancelled', 'Passenger cancelled',
-                        "Ride #{$locked->id} was cancelled by the passenger.");
+                        "Ride #{$locked->id} was cancelled by the passenger.",
+                        'passenger', $reason->label());
                 }
             },
             guard: fn (Ride $locked) => $locked->passenger_id === $passenger->id,
@@ -279,7 +284,8 @@ class RideLifecycle
                         ? $this->notify($r->passenger, $r, 'ride_expired', 'No driver found',
                             "Ride #{$r->id} ended: your drivers kept cancelling and no other driver was assigned. You can request again.")
                         : $this->notify($r->passenger, $r, 'ride_requeued', 'Your driver cancelled',
-                            "Your driver for ride #{$r->id} cancelled. We are looking for another driver.");
+                            "Your driver for ride #{$r->id} cancelled. We are looking for another driver.",
+                            'driver', $reason->label());
                 },
                 guard: fn (Ride $r) => $r->driver_id === $driver->id,
             );
@@ -328,8 +334,8 @@ class RideLifecycle
         });
     }
 
-    private function notify(?User $user, Ride $ride, string $type, string $title, string $message): void
+    private function notify(?User $user, Ride $ride, string $type, string $title, string $message, ?string $cancelledByRole = null, ?string $reason = null): void
     {
-        $user?->notify(new RideNoticeNotification($ride, $type, $title, $message));
+        $user?->notify(new RideNoticeNotification($ride, $type, $title, $message, $cancelledByRole, $reason));
     }
 }
