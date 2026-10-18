@@ -7,7 +7,7 @@ on:
   # Called by deploy.yml as the release gate.
   workflow_call: {}
   push:
-    branches: [feat/reverb-realtime-core]
+    branches: [main]
   pull_request:
 
 concurrency:
