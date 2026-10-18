@@ -141,7 +141,7 @@
             <p style="font-size:0.85rem;margin:0;">No rides recorded for this driver yet.</p>
         </div>
         @else
-        <div style="overflow-x:auto;">
+        <div class="table-scroll" style="overflow-x:auto;" role="region" aria-label="Ride history" tabindex="0">
             <table style="width:100%;border-collapse:collapse;">
                 <tbody>
                     @foreach($rides as $ride)

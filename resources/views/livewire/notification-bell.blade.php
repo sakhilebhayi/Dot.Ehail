@@ -1,6 +1,6 @@
-<div style="position:relative;" x-data @click.outside="$wire.open = false">
-    <button wire:click="toggle" class="topbar-btn" title="Notifications" style="position:relative;">
-        <span class="material-symbols-rounded">notifications</span>
+<div class="topbar-bell" x-data @click.outside="$wire.open = false" @keydown.escape.window="$wire.open = false">
+    <button wire:click="toggle" type="button" class="topbar-btn" title="Notifications" aria-label="Notifications" aria-haspopup="true" aria-expanded="{{ $open ? 'true' : 'false' }}" style="position:relative;">
+        <span class="material-symbols-rounded" aria-hidden="true">notifications</span>
         @if($this->unreadCount > 0)
             <span style="position:absolute;top:-2px;right:-2px;min-width:15px;height:15px;padding:0 3px;border-radius:100px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;">
                 {{ $this->unreadCount > 9 ? '9+' : $this->unreadCount }}
@@ -9,7 +9,7 @@
     </button>
 
     @if($open)
-    <div style="position:absolute;top:calc(100% + 8px);right:0;width:320px;max-height:420px;overflow-y:auto;background:#141416;border:1px solid rgba(255,255,255,0.09);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,0.45);z-index:50;">
+    <div class="notif-panel">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.85rem 1rem;border-bottom:1px solid rgba(255,255,255,0.06);">
             <span style="font-family:'Syne',sans-serif;font-size:12.5px;font-weight:700;color:#f4f4f5;">Notifications</span>
             @if($this->unreadCount > 0)

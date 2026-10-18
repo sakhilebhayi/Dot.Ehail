@@ -81,6 +81,15 @@ actually implemented vs. still scaffolding/intent.
 - **AuditLog** — append-only record of operator fare entries, fare waivers, payment reviews, driver
   cancellations and profile opens
 
+## Responsive app shell
+
+Signed-in pages render inside `resources/views/layouts/app.blade.php`. From 860px up it is the fixed 260px sidebar and top bar, as before. Below 860px the sidebar becomes an off-canvas drawer that the **Menu** button in the top bar opens (`#app-sidebar`, `[data-shell-open]`, `[data-shell-close]`). `layouts/partials/shell-script.blade.php` moves focus into the drawer, closes it on Escape or a backdrop click, locks page scroll, makes the page behind it inert and returns focus to the button. It is plain JavaScript, no Alpine or build step.
+
+- Wide tables go in a `<div class="table-scroll" role="region" aria-label="..." tabindex="0">` so only the table scrolls sideways.
+- Page markup is mostly inline styles, so the layout carries a few phone-only attribute-selector rules (page padding, grids collapse to one column under 640px, 44px controls, 16px field text so iOS does not zoom). New pages should prefer classes and `minmax()` grids over fixed widths.
+- The Jetstream `navigation-menu` bar that sits under the fixed top bar is wrapped in `.shell-legacy-nav` and hidden on phones. Its team switcher and sign-out now live in the drawer footer. The ride links (request a ride, available rides, my vehicles, driver profile, fleet review) were only in that hidden bar; they are in the sidebar now.
+- `tests/Feature/ResponsiveShellTest.php` asserts the markup hooks above. It checks the rendered HTML, not pixels, so layout still needs a look in a browser at 360, 375, 768 and 1280px.
+
 ## Tech Stack
 
 | Layer | Technology |
