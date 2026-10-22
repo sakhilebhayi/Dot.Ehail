@@ -18,6 +18,7 @@ use App\Http\Controllers\Ehail\VehicleController;
 use App\Http\Controllers\RealtimeHealthController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use Laravel\Fortify\Features;
 use Laravel\Jetstream\Jetstream;
 
 Route::post('/auth/ecosystem', [EcosystemAuthController::class, 'handle'])
@@ -104,3 +105,9 @@ Route::middleware([
     Route::post('/fleets/{fleet}/drivers/{driverProfileId}/approve', [FleetController::class, 'approveDriver'])->name('fleets.drivers.approve');
     Route::post('/fleets/{fleet}/drivers/{driverProfileId}/reject', [FleetController::class, 'rejectDriver'])->name('fleets.drivers.reject');
 });
+
+// Public sign-up is closed (accounts are created by InfoDot at first sign-in). Keep the named route so any link or
+// invitation email that points at it lands on the login page instead of failing.
+if (! Features::enabled(Features::registration())) {
+    Route::redirect('/register', '/login')->name('register');
+}
