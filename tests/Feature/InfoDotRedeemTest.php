@@ -20,6 +20,20 @@ class InfoDotRedeemTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** InfoDot's launch page, as the browser reports it. */
+    private function fromInfodot(): array
+    {
+        $infodot = parse_url((string) config('ecosystem.infodot.redeem_url', ''), PHP_URL_HOST);
+
+        if (is_string($infodot) && $infodot !== '') {
+            return ['Origin' => 'https://'.$infodot];
+        }
+
+        $host = (string) parse_url((string) config('app.url'), PHP_URL_HOST);
+
+        return ['Origin' => 'https://'.(str_contains($host, '.') ? substr($host, strpos($host, '.') + 1) : $host)];
+    }
+
     private const URL = 'https://infodot.test/api/ecosystem/redeem';
 
     protected function setUp(): void
@@ -49,7 +63,7 @@ class InfoDotRedeemTest extends TestCase
     {
         Http::fake([self::URL => Http::response($this->identity())]);
 
-        $this->get(route('ecosystem.auth', ['token' => 'one-time-token']))->assertRedirect(route('dashboard'));
+        $this->post(route('ecosystem.auth'), ['token' => 'one-time-token'], $this->fromInfodot())->assertRedirect(route('dashboard'));
 
         $this->assertAuthenticated();
         $user = User::where('email', 'amara@example.test')->firstOrFail();
@@ -64,7 +78,7 @@ class InfoDotRedeemTest extends TestCase
     {
         Http::fake([self::URL => Http::response($this->identity())]);
 
-        $this->get(route('ecosystem.auth', ['token' => 't']));
+        $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot());
 
         $user = User::where('email', 'amara@example.test')->firstOrFail();
         $this->assertFalse(Hash::check('', $user->password));
@@ -76,7 +90,7 @@ class InfoDotRedeemTest extends TestCase
     {
         Http::fake([self::URL => Http::response($this->identity())]);
 
-        $this->get(route('ecosystem.auth', ['token' => 'one-time-token']));
+        $this->post(route('ecosystem.auth'), ['token' => 'one-time-token'], $this->fromInfodot());
 
         Http::assertSent(function (Request $request) {
             return $request->url() === self::URL
@@ -91,7 +105,7 @@ class InfoDotRedeemTest extends TestCase
         $existing = User::factory()->withPersonalTeam()->create(['email' => 'amara@example.test', 'name' => 'Local Name']);
         Http::fake([self::URL => Http::response($this->identity())]);
 
-        $this->get(route('ecosystem.auth', ['token' => 't']));
+        $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot());
 
         $this->assertAuthenticatedAs($existing);
         $this->assertSame(1, User::where('email', 'amara@example.test')->count());
@@ -107,7 +121,7 @@ class InfoDotRedeemTest extends TestCase
         ]);
         Http::fake([self::URL => Http::response($this->identity())]);
 
-        $this->get(route('ecosystem.auth', ['token' => 't']));
+        $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot());
 
         $this->assertAuthenticatedAs($squatter);
         $this->assertFalse(Hash::check('attacker-knows-this', $squatter->fresh()->password));
@@ -117,10 +131,10 @@ class InfoDotRedeemTest extends TestCase
     public function test_a_token_infodot_refuses_signs_nobody_in(): void
     {
         Http::fake([self::URL => Http::response(['error' => 'invalid_request'], 403)]);
-        $this->get(route('ecosystem.auth', ['token' => 'bad']))->assertStatus(303)->assertRedirect('/login');
+        $this->post(route('ecosystem.auth'), ['token' => 'bad'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
 
         Http::fake([self::URL => Http::response(['error' => 'unauthorized'], 401)]);
-        $this->get(route('ecosystem.auth', ['token' => 'bad']))->assertStatus(303)->assertRedirect('/login');
+        $this->post(route('ecosystem.auth'), ['token' => 'bad'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
 
         $this->assertGuest();
         $this->assertSame(0, User::count());
@@ -130,7 +144,7 @@ class InfoDotRedeemTest extends TestCase
     {
         Http::fake([self::URL => Http::response($this->identity(['email_verified' => false]))]);
 
-        $this->get(route('ecosystem.auth', ['token' => 't']))->assertStatus(303)->assertRedirect('/login');
+        $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
 
         $this->assertGuest();
         $this->assertSame(0, User::count());
@@ -141,7 +155,7 @@ class InfoDotRedeemTest extends TestCase
         foreach (['yes', 1, 'true', null] as $flag) {
             Http::fake([self::URL => Http::response($this->identity(['email_verified' => $flag]))]);
 
-            $this->get(route('ecosystem.auth', ['token' => 't']))->assertStatus(303)->assertRedirect('/login');
+            $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
         }
 
         $this->assertGuest();
@@ -153,7 +167,7 @@ class InfoDotRedeemTest extends TestCase
         $existing = User::factory()->withPersonalTeam()->create(['email' => 'amara@example.test']);
         Http::fake([self::URL => Http::response($this->identity(['email_verified' => false]))]);
 
-        $this->get(route('ecosystem.auth', ['token' => 't']))->assertStatus(303)->assertRedirect('/login');
+        $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
 
         $this->assertGuest();
         $this->assertSame($existing->password, $existing->fresh()->password);
@@ -164,7 +178,7 @@ class InfoDotRedeemTest extends TestCase
         foreach (['', 'not-an-email'] as $email) {
             Http::fake([self::URL => Http::response($this->identity(['email' => $email]))]);
 
-            $this->get(route('ecosystem.auth', ['token' => 't']))->assertStatus(303)->assertRedirect('/login');
+            $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
         }
 
         $this->assertGuest();
@@ -174,13 +188,13 @@ class InfoDotRedeemTest extends TestCase
     public function test_when_infodot_is_down_the_person_is_told_to_retry_not_that_they_are_forbidden(): void
     {
         Http::fake([self::URL => Http::response('boom', 500)]);
-        $this->get(route('ecosystem.auth', ['token' => 't']))->assertStatus(303)->assertRedirect('/login')->assertSessionHas('status', fn (string $m) => str_contains($m, 'unavailable'));
+        $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login')->assertSessionHas('status', fn (string $m) => str_contains($m, 'unavailable'));
 
         Http::fake([self::URL => Http::response('slow down', 429)]);
-        $this->get(route('ecosystem.auth', ['token' => 't']))->assertStatus(303)->assertRedirect('/login')->assertSessionHas('status', fn (string $m) => str_contains($m, 'unavailable'));
+        $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login')->assertSessionHas('status', fn (string $m) => str_contains($m, 'unavailable'));
 
         Http::fake(fn () => throw new ConnectionException('timeout'));
-        $this->get(route('ecosystem.auth', ['token' => 't']))->assertStatus(303)->assertRedirect('/login')->assertSessionHas('status', fn (string $m) => str_contains($m, 'unavailable'));
+        $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login')->assertSessionHas('status', fn (string $m) => str_contains($m, 'unavailable'));
 
         $this->assertGuest();
         $this->assertSame(0, User::count());
@@ -191,7 +205,7 @@ class InfoDotRedeemTest extends TestCase
         config(['ecosystem.infodot.secret' => null]);
         Http::fake();
 
-        $this->get(route('ecosystem.auth', ['token' => 'unknown']))->assertStatus(303)->assertRedirect('/login');
+        $this->post(route('ecosystem.auth'), ['token' => 'unknown'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
 
         Http::assertNothingSent();
     }
@@ -212,14 +226,14 @@ class InfoDotRedeemTest extends TestCase
         $token = $record->id.'|'.$plain;
         Http::fake();
 
-        $this->get(route('ecosystem.auth', ['token' => $token]))->assertRedirect(route('dashboard'));
+        $this->post(route('ecosystem.auth'), ['token' => $token], $this->fromInfodot())->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($user);
         Http::assertNothingSent();
 
         auth()->logout();
         // The token is spent, so the second attempt falls through to InfoDot (faked: refuses).
         Http::fake([self::URL => Http::response([], 403)]);
-        $this->get(route('ecosystem.auth', ['token' => $token]))->assertStatus(303)->assertRedirect('/login');
+        $this->post(route('ecosystem.auth'), ['token' => $token], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
     }
 
     public function test_provisioning_can_be_switched_off(): void
@@ -227,7 +241,7 @@ class InfoDotRedeemTest extends TestCase
         config(['ecosystem.infodot.provision' => false]);
         Http::fake([self::URL => Http::response($this->identity())]);
 
-        $this->get(route('ecosystem.auth', ['token' => 't']))->assertStatus(303)->assertRedirect('/login');
+        $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
 
         $this->assertSame(0, User::count());
     }
@@ -236,9 +250,9 @@ class InfoDotRedeemTest extends TestCase
     {
         Http::fake();
 
-        $this->get(route('ecosystem.auth'))->assertStatus(303)->assertRedirect('/login');
-        $this->get('/auth/ecosystem?token=')->assertStatus(303)->assertRedirect('/login');
-        $this->get('/auth/ecosystem?token[]=x')->assertStatus(303)->assertRedirect('/login');
+        $this->post(route('ecosystem.auth'), [], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
+        $this->post(route('ecosystem.auth'), ['token' => ''], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
+        $this->post(route('ecosystem.auth'), ['token' => ['x']], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
 
         Http::assertNothingSent();
     }
@@ -250,7 +264,7 @@ class InfoDotRedeemTest extends TestCase
         $this->startSession();
         $before = session()->getId();
 
-        $this->get(route('ecosystem.auth', ['token' => 't']))->assertRedirect();
+        $this->post(route('ecosystem.auth'), ['token' => 't'], $this->fromInfodot())->assertRedirect();
 
         $this->assertNotSame($before, session()->getId());
     }
@@ -259,7 +273,7 @@ class InfoDotRedeemTest extends TestCase
     {
         Http::fake([self::URL => Http::response($this->identity())]);
 
-        $this->get(route('ecosystem.auth', ['token' => 't', 'redirect' => '/profile/settings?tab=1']))
+        $this->post(route('ecosystem.auth'), ['token' => 't', 'redirect' => '/profile/settings?tab=1'], $this->fromInfodot())
             ->assertRedirect(url('/profile/settings?tab=1'));
     }
 
@@ -287,14 +301,14 @@ class InfoDotRedeemTest extends TestCase
             Http::fake([self::URL => Http::response($this->identity())]);
             auth()->logout();
 
-            $this->get(route('ecosystem.auth', ['token' => 't', 'redirect' => $attempt]))
+            $this->post(route('ecosystem.auth'), ['token' => 't', 'redirect' => $attempt], $this->fromInfodot())
                 ->assertRedirect(route('dashboard'));
         }
 
         // A non-string redirect is ignored rather than causing an error.
         Http::fake([self::URL => Http::response($this->identity())]);
         auth()->logout();
-        $this->get('/auth/ecosystem?token=t&redirect[]=/x')->assertRedirect(route('dashboard'));
+        $this->post(route('ecosystem.auth'), ['token' => 't', 'redirect' => ['/x']], $this->fromInfodot())->assertRedirect(route('dashboard'));
     }
 
     public function test_the_endpoint_is_throttled(): void
@@ -302,9 +316,9 @@ class InfoDotRedeemTest extends TestCase
         Http::fake([self::URL => Http::response([], 403)]);
 
         for ($i = 0; $i < 10; $i++) {
-            $this->get(route('ecosystem.auth', ['token' => 'bogus']))->assertStatus(303)->assertRedirect('/login');
+            $this->post(route('ecosystem.auth'), ['token' => 'bogus'], $this->fromInfodot())->assertStatus(303)->assertRedirect('/login');
         }
 
-        $this->get(route('ecosystem.auth', ['token' => 'bogus']))->assertStatus(429);
+        $this->post(route('ecosystem.auth'), ['token' => 'bogus'], $this->fromInfodot())->assertStatus(429);
     }
 }
