@@ -160,6 +160,7 @@
         }
         .table-scroll { overflow-x:auto; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; }
         .table-scroll:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+        .notif-row:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
         @media (min-width: 640px) and (max-width: 859.98px) {
             .topbar-team { display:block; max-width:160px; overflow:hidden; text-overflow:ellipsis; }
         }

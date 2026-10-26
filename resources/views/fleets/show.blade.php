@@ -46,7 +46,7 @@
                 </form>
                 <form method="POST" action="{{ route('fleets.drivers.reject', [$fleet, $profile]) }}" style="display:flex;gap:0.4rem;align-items:center;">
                     @csrf
-                    <input type="text" name="reason" placeholder="Reason for rejecting" required style="padding:0.4rem;border-radius:6px;font-size:0.78rem;">
+                    <input aria-label="Reason for rejecting" type="text" name="reason" placeholder="Reason for rejecting" required style="padding:0.4rem;border-radius:6px;font-size:0.78rem;">
                     <button type="submit" style="padding:0.4rem 1rem;border-radius:6px;background:#ef4444;color:#3f0d0d;font-weight:700;border:none;font-size:0.78rem;cursor:pointer;">Reject</button>
                 </form>
             </div>
