@@ -15,7 +15,7 @@
     <form method="GET" action="{{ route('rides.index') }}" style="margin-bottom:1.5rem;display:flex;gap:0.6rem;max-width:480px;">
         <div style="position:relative;flex:1;">
             <span class="material-symbols-rounded" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:17px;color:#52525b;">search</span>
-            <input
+            <input aria-label="Search rides"
                 type="text"
                 name="q"
                 value="{{ $search }}"

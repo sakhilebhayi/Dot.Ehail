@@ -270,7 +270,7 @@
                         $pickup   = strlen($ride->pickup_address)   > 28 ? substr($ride->pickup_address, 0, 28).'…'   : $ride->pickup_address;
                         $dropoff  = strlen($ride->dropoff_address)  > 28 ? substr($ride->dropoff_address, 0, 28).'…'  : $ride->dropoff_address;
                     @endphp
-                    <tr onclick="window.location='{{ route('rides.show', $ride) }}'" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;" onmouseover="this.style.background='rgba(26,36,56,0.6)'" onmouseout="this.style.background='transparent'">
+                    <tr tabindex="0" onclick="window.location='{{ route('rides.show', $ride) }}'" onkeydown="if(event.key==='Enter'){window.location='{{ route('rides.show', $ride) }}'}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;" onmouseover="this.style.background='rgba(26,36,56,0.6)'" onmouseout="this.style.background='transparent'">
                         <td style="padding:0.85rem 1.5rem;font-size:0.75rem;font-weight:600;color:#71717a;font-family:'Syne',sans-serif;">#{{ $ride->id }}</td>
                         <td style="padding:0.85rem 1rem;max-width:220px;">
                             <div style="font-size:0.75rem;color:#f4f4f5;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $pickup }}</div>
