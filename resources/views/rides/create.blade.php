@@ -17,40 +17,40 @@
         @csrf
 
         <div>
-            <label style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Pickup Address</label>
-            <input type="text" name="pickup_address" value="{{ old('pickup_address') }}" required style="width:100%;padding:0.5rem;border-radius:6px;">
+            <label for="rides-create-pickup-address" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Pickup Address</label>
+            <input id="rides-create-pickup-address" type="text" name="pickup_address" value="{{ old('pickup_address') }}" required style="width:100%;padding:0.5rem;border-radius:6px;">
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
             <div>
-                <label style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Pickup Latitude (optional)</label>
-                <input type="number" step="any" name="pickup_lat" value="{{ old('pickup_lat') }}" style="width:100%;padding:0.5rem;border-radius:6px;">
+                <label for="rides-create-pickup-lat" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Pickup Latitude (optional)</label>
+                <input id="rides-create-pickup-lat" type="number" step="any" name="pickup_lat" value="{{ old('pickup_lat') }}" style="width:100%;padding:0.5rem;border-radius:6px;">
             </div>
             <div>
-                <label style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Pickup Longitude (optional)</label>
-                <input type="number" step="any" name="pickup_lng" value="{{ old('pickup_lng') }}" style="width:100%;padding:0.5rem;border-radius:6px;">
+                <label for="rides-create-pickup-lng" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Pickup Longitude (optional)</label>
+                <input id="rides-create-pickup-lng" type="number" step="any" name="pickup_lng" value="{{ old('pickup_lng') }}" style="width:100%;padding:0.5rem;border-radius:6px;">
             </div>
         </div>
 
         <hr style="border-color:rgba(255,255,255,0.08);">
 
         <div>
-            <label style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Dropoff Address</label>
-            <input type="text" name="dropoff_address" value="{{ old('dropoff_address') }}" required style="width:100%;padding:0.5rem;border-radius:6px;">
+            <label for="rides-create-dropoff-address" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Dropoff Address</label>
+            <input id="rides-create-dropoff-address" type="text" name="dropoff_address" value="{{ old('dropoff_address') }}" required style="width:100%;padding:0.5rem;border-radius:6px;">
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
             <div>
-                <label style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Dropoff Latitude (optional)</label>
-                <input type="number" step="any" name="dropoff_lat" value="{{ old('dropoff_lat') }}" style="width:100%;padding:0.5rem;border-radius:6px;">
+                <label for="rides-create-dropoff-lat" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Dropoff Latitude (optional)</label>
+                <input id="rides-create-dropoff-lat" type="number" step="any" name="dropoff_lat" value="{{ old('dropoff_lat') }}" style="width:100%;padding:0.5rem;border-radius:6px;">
             </div>
             <div>
-                <label style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Dropoff Longitude (optional)</label>
-                <input type="number" step="any" name="dropoff_lng" value="{{ old('dropoff_lng') }}" style="width:100%;padding:0.5rem;border-radius:6px;">
+                <label for="rides-create-dropoff-lng" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Dropoff Longitude (optional)</label>
+                <input id="rides-create-dropoff-lng" type="number" step="any" name="dropoff_lng" value="{{ old('dropoff_lng') }}" style="width:100%;padding:0.5rem;border-radius:6px;">
             </div>
         </div>
 
         <div>
-            <label style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Vehicle Type</label>
-            <select name="vehicle_type" required style="width:100%;padding:0.5rem;border-radius:6px;">
+            <label for="rides-create-vehicle-type" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Vehicle Type</label>
+            <select id="rides-create-vehicle-type" name="vehicle_type" required style="width:100%;padding:0.5rem;border-radius:6px;">
                 <option value="economy" @selected(old('vehicle_type') === 'economy')>Economy</option>
                 <option value="standard" @selected(old('vehicle_type', 'standard') === 'standard')>Standard</option>
                 <option value="premium" @selected(old('vehicle_type') === 'premium')>Premium</option>

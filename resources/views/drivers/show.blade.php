@@ -85,12 +85,12 @@
         @if(auth()->id() === $driverProfile->user_id)
         <form method="POST" action="{{ route('drivers.documents.store') }}" enctype="multipart/form-data" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
             @csrf
-            <select name="type" required style="padding:0.4rem;border-radius:6px;font-size:0.75rem;">
+            <select aria-label="Type" name="type" required style="padding:0.4rem;border-radius:6px;font-size:0.75rem;">
                 <option value="license">Driver's License</option>
                 <option value="id">ID Document</option>
                 <option value="vehicle_inspection">Vehicle Inspection Record</option>
             </select>
-            <input type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" required style="font-size:0.78rem;color:#a1a1aa;">
+            <input aria-label="Document" type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" required style="font-size:0.78rem;color:#a1a1aa;">
             <button type="submit" class="dot-btn dot-btn-primary">Upload</button>
         </form>
         @endif
@@ -145,7 +145,7 @@
             <table style="width:100%;border-collapse:collapse;">
                 <tbody>
                     @foreach($rides as $ride)
-                    <tr onclick="window.location='{{ route('rides.show', $ride) }}'" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);">
+                    <tr tabindex="0" onclick="window.location='{{ route('rides.show', $ride) }}'" onkeydown="if(event.key==='Enter'){window.location='{{ route('rides.show', $ride) }}'}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);">
                         <td style="padding:0.85rem 1.5rem;font-size:0.75rem;color:#71717a;">#{{ $ride->id }}</td>
                         <td style="padding:0.85rem 1rem;font-size:0.75rem;color:#f4f4f5;">{{ $ride->pickup_address }} → {{ $ride->dropoff_address }}</td>
                         <td style="padding:0.85rem 1rem;font-size:0.72rem;color:#38bdf8;">{{ ucfirst(str_replace('_', ' ', $ride->status)) }}</td>
