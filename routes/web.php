@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\EcosystemAuthController;
+use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\Ehail\DashboardController;
 use App\Http\Controllers\Ehail\DriverApplicationController;
 use App\Http\Controllers\Ehail\DriverController;
@@ -16,8 +17,13 @@ use App\Http\Controllers\Ehail\RideRatingController;
 use App\Http\Controllers\Ehail\RideRequestController;
 use App\Http\Controllers\Ehail\VehicleController;
 use App\Http\Controllers\RealtimeHealthController;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Laravel\Fortify\Features;
 use Laravel\Jetstream\Jetstream;
 
@@ -29,6 +35,19 @@ Route::post('/auth/ecosystem', [EcosystemAuthController::class, 'handle'])
 // Links minted before the token moved into a POST body carried it in the URL. They are no longer honoured:
 // the visitor is sent to the normal sign-in page and the token in the URL is never read.
 Route::get('/auth/ecosystem', [EcosystemAuthController::class, 'legacy']);
+
+// Content-Security-Policy violation reports (the policy is report-only). The browser posts these by itself, so there is
+// no session, no cookie, no CSRF token and no user; the controller keeps only the directive and the blocked host.
+Route::post('/csp-report', CspReportController::class)
+    ->middleware('throttle:60,1,csp-report')
+    ->withoutMiddleware([
+        EncryptCookies::class,
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        PreventRequestForgery::class,
+    ])
+    ->name('csp.report');
 
 // Real-time infrastructure health check -- unauthenticated like Laravel's
 // own /up, for uptime monitors/load balancers.

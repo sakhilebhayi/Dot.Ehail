@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsurePlatformOperator;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,8 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'operator' => EnsurePlatformOperator::class,
         ]);
 
-        // Paystack's webhook is server to server and signed; it carries no CSRF token.
-        $middleware->preventRequestForgery(except: ['webhooks/paystack']);
+        // Baseline browser protections (enforced headers plus a report-only CSP) on every response.
+        $middleware->append(SecurityHeaders::class);
+
+        // Paystack's webhook is server to server and signed; it carries no CSRF token. The browser
+        // posts CSP violation reports to /csp-report on its own, also without a token.
+        $middleware->preventRequestForgery(except: ['webhooks/paystack', 'csp-report']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
