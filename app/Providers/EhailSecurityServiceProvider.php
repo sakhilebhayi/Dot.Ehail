@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Domain\Security\Console\PrivacyPurge;
 use App\Domain\Security\KnownDevices;
 use App\Http\Middleware\RequireRecentSignIn;
 use App\Models\User;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Event;
@@ -23,6 +25,15 @@ class EhailSecurityServiceProvider extends ServiceProvider
     public function boot(Router $router): void
     {
         $router->aliasMiddleware('ehail.recent-auth', RequireRecentSignIn::class);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([PrivacyPurge::class]);
+        }
+
+        // The retention schedule (docs/R46_PRIVACY.md section 5); the host's one-minute cron runs schedule:run.
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            $schedule->command('ehail:privacy-purge')->dailyAt('03:10')->withoutOverlapping();
+        });
 
         Event::listen(Login::class, function (Login $event) {
             $request = request();

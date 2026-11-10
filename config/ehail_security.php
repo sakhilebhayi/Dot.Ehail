@@ -35,6 +35,7 @@ return [
         'ride_route_polylines' => (int) env('EHAIL_RETAIN_ROUTE_POLYLINES_DAYS', 90),
         'ride_event_coordinates' => (int) env('EHAIL_RETAIN_EVENT_COORDS_DAYS', 90),
         'incidents' => (int) env('EHAIL_RETAIN_INCIDENT_DAYS', 1825),
+        'incident_trail' => (int) env('EHAIL_RETAIN_INCIDENT_TRAIL_DAYS', 365),
         'support_closed' => (int) env('EHAIL_RETAIN_SUPPORT_DAYS', 730),
         'verification_files_superseded' => (int) env('EHAIL_RETAIN_SUPERSEDED_DOCS_DAYS', 90),
         'trusted_contacts_declined' => (int) env('EHAIL_RETAIN_DECLINED_CONTACTS_DAYS', 30),

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Ehail;
 
+use App\Domain\Verification\Files\SecureFileStore;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
@@ -127,7 +128,8 @@ class DriverApplicationController extends Controller
             $file = $request->file($field);
             $profile->documents()->create([
                 'type' => $type,
-                'file_path' => $file->store('', 'driver-documents'),
+                // EXIF/GPS stripped and re-encoded (R-46 security S-24).
+                'file_path' => app(SecureFileStore::class)->store($file, 'driver-documents', 'legacy', ['image', 'pdf'], $field)->path,
                 'original_filename' => $file->getClientOriginalName(),
             ]);
         }

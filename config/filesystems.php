@@ -33,7 +33,9 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Not served: identity documents and safety files live under this root (R-46 security S-25), so no
+            // signed /storage URL may ever reach them. Private files stream through their own authorised routes.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

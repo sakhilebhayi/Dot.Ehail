@@ -32,7 +32,7 @@ class RequireRecentSignIn
             return response()->json(['error' => 'reauthentication_required', 'message' => $message, 'confirm_url' => route('password.confirm')], 423);
         }
 
-        $session?->put('url.intended', url()->previous());
+        $session?->put('url.intended', $request->isMethod('GET') ? $request->fullUrl() : url()->previous());
 
         return redirect()->route('password.confirm')->with('status', $message);
     }

@@ -10,6 +10,7 @@ use App\Domain\Geo\Locations\LocationStore;
 use App\Domain\Geo\Locations\RideTracking;
 use App\Domain\Geo\Locations\SampleOutcome;
 use App\Domain\Geo\LocationSample;
+use App\Domain\Ops\Audit\OpsAudit;
 use App\Http\Controllers\Controller;
 use App\Models\Ride;
 use Illuminate\Http\JsonResponse;
@@ -79,6 +80,17 @@ class DriverLocationController extends Controller
                 'reason' => 'not_tracking',
                 'message' => 'The driver\'s position is shared only while a driver is assigned and the ride is active.',
             ], 403);
+        }
+
+        // An operator who is not a party sees the position only while this ride holds the driver (afterwards it is
+        // the driver's private whereabouts), and every look is written to the operations audit (S-22).
+        $party = in_array($viewer->id, [(int) $ride->passenger_id, (int) $ride->driver_id], true);
+        if (! $party && $viewer->isPlatformOperator()) {
+            if (! RideTracking::isTracking($ride)) {
+                return response()->json(['reason' => 'not_tracking', 'message' => 'This ride no longer holds its driver, so the driver\'s position is not shown.'], 403);
+            }
+
+            app(OpsAudit::class)->viewed('driver_position', $viewer, $ride);
         }
 
         $row = $store->latest([(int) $ride->driver_id])->get((int) $ride->driver_id);
