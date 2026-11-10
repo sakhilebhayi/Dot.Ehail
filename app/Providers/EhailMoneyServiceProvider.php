@@ -6,6 +6,7 @@ use App\Domain\Payments\Console\DraftPayoutBatch;
 use App\Domain\Payments\Console\EvaluateIncentives;
 use App\Domain\Payments\Console\MoneySweep;
 use App\Domain\Payments\Console\ReconcileLedger;
+use App\Domain\Payments\Console\SettlementSweep;
 use App\Domain\Payments\Http\EnsureNoPaymentDue;
 use App\Domain\Payments\Listeners\MoneyRideListener;
 use App\Domain\Payments\Policies\MoneyPolicies;
@@ -76,11 +77,12 @@ class EhailMoneyServiceProvider extends ServiceProvider
         $router->aliasMiddleware('ehail.payment-clear', EnsureNoPaymentDue::class);
 
         if ($this->app->runningInConsole()) {
-            $this->commands([MoneySweep::class, EvaluateIncentives::class, DraftPayoutBatch::class, ReconcileLedger::class]);
+            $this->commands([MoneySweep::class, EvaluateIncentives::class, DraftPayoutBatch::class, ReconcileLedger::class, SettlementSweep::class]);
         }
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
             $schedule->command('money:sweep')->everyMinute()->withoutOverlapping();
+            $schedule->command('ehail:settlement-sweep')->everyFiveMinutes()->withoutOverlapping();
             $schedule->command('money:evaluate-incentives')->hourly()->withoutOverlapping();
             $schedule->command('money:draft-payouts')->dailyAt((string) config('money.payouts.schedule_time', '06:00'))->withoutOverlapping();
             $schedule->command('money:reconcile')->dailyAt('03:30')->withoutOverlapping();

@@ -47,6 +47,17 @@ return [
     ],
 
     /*
+    | Settlement safety net (ehail:settlement-sweep, every five minutes). A completed ride with a fare
+    | whose settlement never ran (no ledger earning, no charge) after after_minutes is queued again and
+    | put on the finance exceptions list. Rides completed more than lookback_days ago are left to people.
+    | after_minutes must stay above the settlement job's unique-lock lifetime (10 minutes).
+    */
+    'settlement_sweep' => [
+        'after_minutes' => (int) env('EHAIL_SETTLEMENT_SWEEP_AFTER_MINUTES', 15),
+        'lookback_days' => (int) env('EHAIL_SETTLEMENT_SWEEP_LOOKBACK_DAYS', 7),
+    ],
+
+    /*
     | Adding a card: Paystack has no "tokenise without charging" call for cards. Its documented way to
     | get a reusable authorisation is a first successful card charge. We charge this small amount, keep
     | the authorisation if Paystack marks it reusable, and refund the charge at once.
