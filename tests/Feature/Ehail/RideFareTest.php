@@ -2,15 +2,17 @@
 
 namespace Tests\Feature\Ehail;
 
+use App\Domain\Pricing\Models\RideFare;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\CreatesEhailFixtures;
+use Tests\Concerns\PricingFixtures;
 use Tests\TestCase;
 
 class RideFareTest extends TestCase
 {
-    use CreatesEhailFixtures, RefreshDatabase;
+    use CreatesEhailFixtures, PricingFixtures, RefreshDatabase;
 
     private array $addressOnly = [
         'pickup_address' => '1 Adderley Street, Cape Town',
@@ -41,18 +43,39 @@ class RideFareTest extends TestCase
             ->assertSee('coordinates');
     }
 
-    public function test_coordinates_produce_an_estimate_from_the_configured_tariff(): void
+    /**
+     * Updated for R-46: the estimate now comes from the pricing engine on a road route under a published rule set
+     * (the old config tariff and straight-line distance were removed, decision D-4), and the ride gets a fare snapshot.
+     */
+    public function test_coordinates_produce_an_estimate_from_the_published_tariff_on_a_road_route(): void
     {
-        config(['ehail.tariff.base_fare' => 10.0, 'ehail.tariff.per_km' => 2.0]);
-        config(['ehail.tariff.multipliers.standard' => 1.0]);
+        $this->publishedRuleSet(['base_minor' => 1000, 'per_km_minor' => 200, 'per_minute_minor' => 0, 'minimum_minor' => 0]);
+        $this->fakeRoute(5_000, 600);
         $passenger = User::factory()->withPersonalTeam()->create();
 
         $this->actingAs($passenger)->post(route('rides.store'), $this->addressOnly + [
             'pickup_lat' => -33.9249, 'pickup_lng' => 18.4241,
-            'dropoff_lat' => -33.9249, 'dropoff_lng' => 18.4241,
+            'dropoff_lat' => -33.9150, 'dropoff_lng' => 18.3870,
         ])->assertRedirect();
 
-        $this->assertSame('10.00', Ride::firstOrFail()->estimated_fare);
+        $ride = Ride::firstOrFail();
+        $this->assertSame('20.00', $ride->estimated_fare);
+        $this->assertEquals(5.0, (float) $ride->distance_km, 'road distance from the route, in km');
+        $this->assertSame(2000, RideFare::where('ride_id', $ride->id)->value('estimated_total_minor'));
+    }
+
+    public function test_coordinates_without_a_routing_provider_give_no_estimate_rather_than_a_straight_line_one(): void
+    {
+        $this->publishedRuleSet();
+        $passenger = User::factory()->withPersonalTeam()->create();
+
+        $this->actingAs($passenger)->post(route('rides.store'), $this->addressOnly + [
+            'pickup_lat' => -33.9249, 'pickup_lng' => 18.4241,
+            'dropoff_lat' => -33.9150, 'dropoff_lng' => 18.3870,
+        ])->assertRedirect();
+
+        $this->assertNull(Ride::firstOrFail()->estimated_fare);
+        $this->assertSame(0, RideFare::count());
     }
 
     public function test_a_latitude_without_its_longitude_is_rejected(): void

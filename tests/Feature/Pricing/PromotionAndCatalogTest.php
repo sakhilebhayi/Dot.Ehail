@@ -7,6 +7,7 @@ use App\Domain\Catalog\Models\RideCategory;
 use App\Domain\Catalog\RideCategoryCatalogue;
 use App\Domain\Catalog\Services\CategoryAvailability;
 use App\Domain\Catalog\Services\CategoryEligibility;
+use App\Domain\Pricing\Data\GeoPoint;
 use App\Domain\Pricing\Data\ServiceAreaRef;
 use App\Domain\Pricing\Models\Promotion;
 use App\Domain\Pricing\Quotes\FareQuoter;
@@ -159,7 +160,7 @@ class PromotionAndCatalogTest extends TestCase
         $this->assertNotContains('airport', $keys);
         $this->assertContains('economy', $keys);
 
-        $this->assertSame([], $this->app->make(CategoryAvailability::class)->availableAt(new \App\Domain\Pricing\Data\GeoPoint(-26.2, 28.04)), 'outside every area');
+        $this->assertSame([], $this->app->make(CategoryAvailability::class)->availableAt(new GeoPoint(-26.2, 28.04)), 'outside every area');
     }
 
     public function test_vehicle_and_driver_eligibility(): void

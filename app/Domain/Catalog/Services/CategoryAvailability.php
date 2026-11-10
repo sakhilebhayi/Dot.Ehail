@@ -7,6 +7,7 @@ use App\Domain\Pricing\Contracts\EligibleSupplyCounter;
 use App\Domain\Pricing\Contracts\PricingZoneLookup;
 use App\Domain\Pricing\Data\GeoPoint;
 use App\Domain\Pricing\Data\Market;
+use App\Domain\Pricing\Data\ZoneRef;
 use App\Domain\Pricing\Engine\MarketResolver;
 use App\Domain\Pricing\Engine\RuleSetResolver;
 use Carbon\CarbonInterface;
@@ -59,7 +60,7 @@ final class CategoryAvailability
     }
 
     /**
-     * @param  list<\App\Domain\Pricing\Data\ZoneRef>  $zones
+     * @param  list<ZoneRef>  $zones
      */
     public function offered(RideCategory $category, Market $market, array $zones, CarbonInterface $at): bool
     {

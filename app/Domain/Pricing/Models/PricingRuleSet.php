@@ -6,6 +6,7 @@ use App\Domain\Catalog\Models\RideCategory;
 use App\Domain\Pricing\Models\Concerns\VersionedOnPublish;
 use App\Domain\Pricing\Money\Money;
 use App\Domain\Pricing\Money\RoundingMode;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -46,7 +47,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $distance_tolerance_bp
  * @property int $duration_tolerance_bp
  * @property int $overrun_cap_bp
- * @property ?\Carbon\CarbonInterface $published_at
+ * @property ?CarbonInterface $published_at
  * @property ?int $published_by
  * @property ?int $created_by
  */

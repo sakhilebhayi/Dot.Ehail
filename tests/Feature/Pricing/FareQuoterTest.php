@@ -3,17 +3,19 @@
 namespace Tests\Feature\Pricing;
 
 use App\Domain\Pricing\Contracts\DemandSignal;
+use App\Domain\Pricing\Contracts\PricingRoutePlanner;
 use App\Domain\Pricing\Contracts\TollEstimator;
 use App\Domain\Pricing\Data\GeoPoint;
 use App\Domain\Pricing\Data\ServiceAreaRef;
 use App\Domain\Pricing\Data\ZoneRef;
+use App\Domain\Pricing\Exceptions\ImmutablePricingRecord;
 use App\Domain\Pricing\Models\FareQuote;
 use App\Domain\Pricing\Quotes\FareQuoter;
 use App\Domain\Pricing\Quotes\PricedOption;
 use App\Domain\Pricing\Quotes\QuoteComparison;
 use App\Domain\Pricing\Quotes\QuoteRequest;
-use App\Domain\Pricing\Quotes\QuoteUnavailable;
 use App\Domain\Pricing\Quotes\QuoteSigner;
+use App\Domain\Pricing\Quotes\QuoteUnavailable;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\PricingFixtures;
@@ -54,7 +56,7 @@ class FareQuoterTest extends TestCase
     public function test_routing_failure_is_reported_honestly(): void
     {
         $this->publishedRuleSet();
-        $this->app->instance(\App\Domain\Pricing\Contracts\PricingRoutePlanner::class, FakeRoutePlanner::failing('timeout'));
+        $this->app->instance(PricingRoutePlanner::class, FakeRoutePlanner::failing('timeout'));
 
         $result = $this->quoter()->quote($this->request());
 
@@ -214,7 +216,7 @@ class FareQuoterTest extends TestCase
         $this->fakeRoute();
         $quote = $this->quoter()->quote($this->request('economy', User::factory()->create()))->quote;
 
-        $this->expectException(\App\Domain\Pricing\Exceptions\ImmutablePricingRecord::class);
+        $this->expectException(ImmutablePricingRecord::class);
         $quote->update(['total_minor' => 1]);
     }
 }

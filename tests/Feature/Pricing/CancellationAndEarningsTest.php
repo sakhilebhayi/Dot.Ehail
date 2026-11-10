@@ -82,6 +82,16 @@ class CancellationAndEarningsTest extends TestCase
         $this->assertSame('cancellation_fee', $this->policy()->decide($ride, 'passenger', now(), now()->subMinutes(3))->code);
     }
 
+    public function test_a_late_driver_waives_the_fee(): void
+    {
+        $driver = $this->makeApprovedDriver();
+        $ride = $this->ride(['status' => 'accepted', 'driver_id' => $driver->id, 'accepted_at' => now()->subMinutes(15)]);
+
+        $this->assertSame(2500, $this->policy()->feeFor($ride, RideActor::Passenger)?->amountMinor);
+        $this->assertSame('driver_late', $this->policy()->decide($ride, RideActor::Passenger, null, null, null, true)->code);
+        $this->assertNull($this->policy()->feeFor($ride, RideActor::Passenger, null, null, null, true));
+    }
+
     public function test_driver_and_operator_cancellations_never_charge_the_passenger(): void
     {
         $driver = $this->makeApprovedDriver();

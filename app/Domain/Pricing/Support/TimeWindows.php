@@ -62,7 +62,6 @@ final class TimeWindows
     }
 
     /**
-     * @param  mixed  $windows
      * @return list<string> validation errors (empty = valid)
      */
     public static function validate(mixed $windows): array

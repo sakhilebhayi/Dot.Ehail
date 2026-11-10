@@ -146,7 +146,12 @@ class RidePaymentStateTest extends TestCase
     public function test_migrating_legacy_rides_leaves_them_not_due(): void
     {
         $passenger = User::factory()->create();
-        $this->artisan('migrate:rollback', ['--step' => 2])->assertExitCode(0);
+        // Roll back to just before the payment migrations, however many later migrations exist (R-46 adds more).
+        $steps = collect(glob(database_path('migrations/*.php')))
+            ->map(fn (string $file) => basename($file, '.php'))
+            ->filter(fn (string $name) => strcmp($name, '2026_10_20_100000_add_payment_columns_to_rides_table') >= 0)
+            ->count();
+        $this->artisan('migrate:rollback', ['--step' => $steps])->assertExitCode(0);
 
         $this->assertFalse(Schema::hasColumn('rides', 'payment_status'));
         $this->assertFalse(Schema::hasTable('ride_payments'));

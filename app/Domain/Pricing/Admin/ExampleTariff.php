@@ -80,7 +80,8 @@ final class ExampleTariff
                     'cancel_free_minutes' => 2,
                     'cancel_fee_minor' => $cancelFee,
                     'no_show_fee_minor' => $noShowFee,
-                    'zone_fees' => ['airport' => ['pickup_minor' => 2000, 'dropoff_minor' => 0, 'label' => 'Airport pickup fee (example)']],
+                    // No airport fee: none is documented by ACSA for e-hailing today (docs/R46_RESEARCH.md, Pricing).
+                    'zone_fees' => null,
                     'toll_mode' => 'pass_through',
                     'demand_enabled' => false,
                     'demand_cap_bp' => 15000,

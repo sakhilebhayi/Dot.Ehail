@@ -5,7 +5,7 @@ namespace App\Domain\Pricing\Finalisation;
 use App\Domain\Pricing\Money\Money;
 
 /**
- * code: no_fee_not_passenger | no_snapshot | before_driver_assigned | within_free_window | trip_not_cancellable |
+ * code: no_fee_not_passenger | no_snapshot | before_driver_assigned | within_free_window | trip_not_cancellable | driver_late |
  * cancellation_fee | no_show_fee | no_fee_configured
  */
 final readonly class CancellationDecision

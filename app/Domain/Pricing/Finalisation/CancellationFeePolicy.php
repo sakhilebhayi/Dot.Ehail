@@ -29,14 +29,18 @@ final class CancellationFeePolicy
 {
     public function __construct(private PromotionRedeemer $promotions) {}
 
-    public function feeFor(Ride $ride, RideActor|string $actor, ?CarbonInterface $at = null, ?CarbonInterface $driverArrivedAt = null, ?CarbonInterface $driverAssignedAt = null): ?Money
+    public function feeFor(Ride $ride, RideActor|string $actor, ?CarbonInterface $at = null, ?CarbonInterface $driverArrivedAt = null, ?CarbonInterface $driverAssignedAt = null, bool $driverRunningLate = false): ?Money
     {
-        $decision = $this->decide($ride, $actor, $at, $driverArrivedAt, $driverAssignedAt);
+        $decision = $this->decide($ride, $actor, $at, $driverArrivedAt, $driverAssignedAt, $driverRunningLate);
 
         return $decision->charges() ? $decision->fee : null;
     }
 
-    public function decide(Ride $ride, RideActor|string $actor, ?CarbonInterface $at = null, ?CarbonInterface $driverArrivedAt = null, ?CarbonInterface $driverAssignedAt = null): CancellationDecision
+    /**
+     * $driverRunningLate: dispatch knows the ETA promised at assignment; when the driver is well past it or not
+     * moving toward the pickup, the passenger may cancel free (driver_late).
+     */
+    public function decide(Ride $ride, RideActor|string $actor, ?CarbonInterface $at = null, ?CarbonInterface $driverArrivedAt = null, ?CarbonInterface $driverAssignedAt = null, bool $driverRunningLate = false): CancellationDecision
     {
         $at ??= now();
         $actorValue = $actor instanceof RideActor ? $actor->value : $actor;
@@ -60,6 +64,10 @@ final class CancellationFeePolicy
 
         if ($ride->driver_id === null || $assignedAt === null) {
             return new CancellationDecision(null, 'before_driver_assigned', 'Free cancellation: no driver had been assigned yet.');
+        }
+
+        if ($driverRunningLate && $driverArrivedAt === null && $ride->getAttribute('driver_arrived_at') === null) {
+            return new CancellationDecision(null, 'driver_late', 'Free cancellation: your driver was running late or not heading to you.');
         }
 
         $arrivedAt = $driverArrivedAt ?? $ride->getAttribute('driver_arrived_at') ?? $ride->getAttribute('arrived_at');
