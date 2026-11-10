@@ -13,6 +13,7 @@ use App\Domain\Pricing\Models\Promotion;
 use App\Domain\Pricing\Quotes\FareQuoter;
 use App\Domain\Pricing\Quotes\QuoteRequest;
 use App\Models\DriverProfile;
+use App\Models\Fleet;
 use App\Models\User;
 use App\Models\Vehicle;
 use Carbon\CarbonImmutable;
@@ -185,6 +186,13 @@ class PromotionAndCatalogTest extends TestCase
         $this->assertSame([], $eligibility->driverFailures($this->category('economy'), $profile->fresh()));
         $profile->forceFill(['rating' => 0, 'total_rides' => 0])->save();
         $this->assertSame([], $eligibility->driverFailures($this->category('standard'), $profile->fresh()), 'unrated new drivers are not held to the floor');
+
+        $economy = $this->category('economy');
+        $economy->update(['fleet_only' => true]);
+        Fleet::query()->whereKey($profile->fleet_id)->update(['status' => 'pending']);
+        $this->assertContains('fleet_only', $eligibility->driverFailures($economy->fresh(), $profile->fresh()));
+        Fleet::query()->whereKey($profile->fleet_id)->update(['status' => 'approved']);
+        $this->assertNotContains('fleet_only', $eligibility->driverFailures($economy->fresh(), $profile->fresh()));
 
         $this->assertContains('xl', $eligibility->servableCategoryKeys($vehicle->fresh()->forceFill(['year' => (int) now()->year])));
         $this->assertNotNull(CategoryVehicleRule::query()->first());
