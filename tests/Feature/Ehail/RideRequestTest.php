@@ -5,6 +5,7 @@ namespace Tests\Feature\Ehail;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\PricingFixtures;
 use Tests\TestCase;
 
 /**
@@ -14,7 +15,7 @@ use Tests\TestCase;
  */
 class RideRequestTest extends TestCase
 {
-    use RefreshDatabase;
+    use PricingFixtures, RefreshDatabase;
 
     public function test_a_user_can_request_a_ride(): void
     {
@@ -32,8 +33,13 @@ class RideRequestTest extends TestCase
         $this->assertNull($ride->driver_id);
     }
 
+    /**
+     * Updated for R-46: needs a published tariff and a road route (test double), see RideFareTest.
+     */
     public function test_requesting_with_coordinates_computes_distance_and_a_fare_estimate(): void
     {
+        $this->publishedRuleSet();
+        $this->fakeRoute(21_000, 1_500);
         $passenger = User::factory()->withPersonalTeam()->create();
 
         $this->actingAs($passenger)->post(route('rides.store'), [

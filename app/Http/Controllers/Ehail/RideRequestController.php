@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Ehail;
 
+use App\Domain\Pricing\Legacy\LegacyRideFareAdapter;
 use App\Http\Controllers\Controller;
 use App\Models\Ride;
-use App\Services\Ehail\FareCalculator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -28,7 +29,7 @@ class RideRequestController extends Controller
         return view('rides.create');
     }
 
-    public function store(Request $request, FareCalculator $fareCalculator): RedirectResponse
+    public function store(Request $request, LegacyRideFareAdapter $legacyFares): RedirectResponse
     {
         Gate::authorize('create', Ride::class);
 
@@ -52,37 +53,32 @@ class RideRequestController extends Controller
         $dropoffLat = $validated['dropoff_lat'] ?? null;
         $dropoffLng = $validated['dropoff_lng'] ?? null;
 
-        // Distance/fare are only computable when both endpoints carry real
-        // coordinates -- an address-only request (no lat/lng) still gets
-        // created, just without an estimate rather than a fabricated one.
-        $distanceKm = null;
-        $estimatedFare = null;
+        // R-46: the estimate comes from the pricing engine on a ROAD route (LegacyRideFareAdapter). Without both
+        // coordinate pairs, a routing provider or a published tariff there is no estimate rather than a fabricated one.
+        $estimate = $legacyFares->estimate($request->user(), $pickupLat, $pickupLng, $dropoffLat, $dropoffLng, $validated['vehicle_type']);
 
-        $hasPickupCoords = $pickupLat !== null && $pickupLng !== null;
-        $hasDropoffCoords = $dropoffLat !== null && $dropoffLng !== null;
+        $ride = DB::transaction(function () use ($request, $validated, $pickupLat, $pickupLng, $dropoffLat, $dropoffLng, $estimate, $legacyFares) {
+            $ride = Ride::create([
+                'passenger_id' => $request->user()->id,
+                'pickup_address' => $validated['pickup_address'],
+                'pickup_lat' => $pickupLat,
+                'pickup_lng' => $pickupLng,
+                'dropoff_address' => $validated['dropoff_address'],
+                'dropoff_lat' => $dropoffLat,
+                'dropoff_lng' => $dropoffLng,
+                'status' => 'requested',
+                'vehicle_type' => $validated['vehicle_type'],
+                'distance_km' => $estimate->distanceKm,
+                'estimated_fare' => $estimate->estimatedFare,
+                'requested_at' => now(),
+            ]);
 
-        if ($hasPickupCoords && $hasDropoffCoords) {
-            $distanceKm = $fareCalculator->distanceKm(
-                (float) $pickupLat, (float) $pickupLng,
-                (float) $dropoffLat, (float) $dropoffLng,
-            );
-            $estimatedFare = $fareCalculator->estimate($distanceKm, $validated['vehicle_type']);
-        }
+            if ($estimate->quote !== null) {
+                $legacyFares->bind($estimate->quote, $ride, $request->user());
+            }
 
-        $ride = Ride::create([
-            'passenger_id' => $request->user()->id,
-            'pickup_address' => $validated['pickup_address'],
-            'pickup_lat' => $pickupLat,
-            'pickup_lng' => $pickupLng,
-            'dropoff_address' => $validated['dropoff_address'],
-            'dropoff_lat' => $dropoffLat,
-            'dropoff_lng' => $dropoffLng,
-            'status' => 'requested',
-            'vehicle_type' => $validated['vehicle_type'],
-            'distance_km' => $distanceKm,
-            'estimated_fare' => $estimatedFare,
-            'requested_at' => now(),
-        ]);
+            return $ride;
+        });
 
         return redirect()->route('rides.show', $ride)->with('status', 'Ride requested. Looking for a driver…');
     }

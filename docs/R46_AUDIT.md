@@ -101,3 +101,24 @@ Honest limits (not built, or built only as seams): no card pre-authorisation (Pa
 | Real-time | P | Reverb broadcast that the live host cannot run | F: versioned delta polling with ETag/304, Retry-After, stale flags, per-role payloads; broadcast variants kept for Reverb hosts |
 | Operations | P | Complete/cancel stuck trips from a page | F (API): live list, timeline with offer score terms, force-cancel, reassign (search or named driver), flag, resolve; all audited |
 | Not done here | | UI for any of it (wave 2), batched matching, PostgreSQL concurrency run (wave 3 perf), comms delivery of reminder/requote events (wave 2) | |
+### Pricing and ride categories (pricing agent, 2026-11-10)
+
+Method: read `App\Services\Ehail\FareCalculator`, `config/ehail.php`, `RideRequestController`, `RideLifecycle`, `RidePayments`, `Ride`, `RidePayment`, `Vehicle`, `DriverProfile`, the ride/payment migrations and every test touching fares; ran the suite.
+
+| Item | Class (before) | Finding | Done in R-46 (branch feat/r46-pricing) |
+|---|---|---|---|
+| Fare calculation | I/B | Base + haversine km x per-km x tier multiplier, floats, config-only; estimate copied to final fare | Integer `FareEngine` on road routes only, versioned published rule sets, itemised components (docs/R46_PRICING.md) |
+| Distance | B | Straight-line distance billed | Removed; road route from the geo seam or no price |
+| Currency arithmetic | I | `decimal(8,2)` columns, float maths, cents only for payments | `Money` (integer minor units, overflow-safe, rounding modes); decimals mirrored for history |
+| Ride categories | P | `vehicle_type` enum (economy/standard/premium/suv) + config tier map | `ride_categories` + `category_vehicle_rules`, availability by area/time, eligibility with reasons; 9 categories seeded (business, parcel inactive) |
+| Quotes | M | None: the estimate was recomputed per request and never bound | Signed, expiring, passenger- and route-bound quotes; tamper/expiry/foreign/route refusals |
+| Time/zone/fees | M | No minimum, booking fee, waiting, zones, tolls, tax, rounding | All configurable per rule set; time windows across midnight |
+| Demand pricing | M | None | Supported (off, capped, shown, never on tolls); no signal source exists, so no surge |
+| Promotions | M | None | Code/automatic, eligibility, budgets, per-user and total limits enforced at ride creation |
+| Final fare | I | Estimate copied on completion; operator enters a fare when none | Tolerance-based finalisation with reasons; audited operator adjustments |
+| Cancellation fees | M | None | Policy from the ride's tariff version, no-show fee, late-driver waiver |
+| Commission / earnings | M | None | Versioned commission plans (market/category/fleet), split shown to drivers before and after |
+| Pricing admin | M | Config file only | Operator API: drafts, versions, publish, retire, simulator, promotions, categories |
+| Tariff values | n/a | R25 + R8.50/km config defaults | Example tariff labelled "review before launch"; real prices are an owner decision |
+
+Open after this branch: geo bridges need a smoke test once geo merges; dispatch must call `QuoteBinder`, `FareFinaliser`, `CancellationFeePolicy` and bind `EligibleSupplyCounter`; ops UI (wave 2) consumes the admin API; VAT status and real tariffs are owner decisions.
