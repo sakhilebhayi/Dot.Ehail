@@ -169,6 +169,12 @@ final class FareQuoter
             return new QuoteUnavailable('no_tariff', 'No published tariff covers '.$category->name.' here yet.', $category->key);
         }
 
+        // A public estimate answers "what would this trip cost?": it does not depend on who is driving nearby this
+        // second, and it never tells an anonymous visitor where drivers are. Supply is checked when a quote is booked.
+        if ($request->purpose === 'estimate') {
+            return $this->priceWith($rules, $request, $category, $market, $route, $pickupZones, $dropoffZones, $at, 'not_checked');
+        }
+
         $count = $this->supply->count($category, $request->pickup, $market->serviceAreaId(), $at);
 
         if ($count === 0) {

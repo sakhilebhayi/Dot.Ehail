@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\CreatesEhailFixtures;
 use Tests\Concerns\PricingFixtures;
+use Tests\Doubles\Pricing\FakeSupplyCounter;
 use Tests\TestCase;
 
 class PricingHttpTest extends TestCase
@@ -36,7 +37,7 @@ class PricingHttpTest extends TestCase
             ->assertJsonPath('kind', 'estimate')
             ->assertJsonPath('fare.total.amount_minor', 10_500)
             ->assertJsonPath('quote_id', null)
-            ->assertJsonPath('wording', 'Estimate only. The price you book is confirmed when you request the ride.');
+            ->assertJsonPath('wording', 'Estimate only. The price you book is confirmed when you request the ride. A driver is not guaranteed: who is free nearby is checked when you book.');
 
         $this->assertSame(0, FareQuote::count());
     }
@@ -50,6 +51,26 @@ class PricingHttpTest extends TestCase
 
         $this->fakeRoute();
         $this->postJson(route('pricing.estimate'), $this->trip)->assertOk()->assertJsonPath('kind', 'estimate')->assertJsonCount(7, 'options');
+    }
+
+    public function test_public_estimate_does_not_depend_on_live_supply_and_promises_none(): void
+    {
+        // Regression (R-46 QA, D-1603): with no driver online the public calculator priced nothing ("no drivers
+        // nearby"); an estimate answers what the trip costs, and the booking quote checks supply.
+        $this->fakeRoute();
+        $this->useSupply(new FakeSupplyCounter(['economy' => 0, 'standard' => 0, 'premium' => 0, 'xl' => 0, 'airport' => 0, 'long_distance' => 0, 'accessible' => 0]));
+
+        $response = $this->postJson(route('pricing.estimate'), $this->trip)->assertOk()->assertJsonPath('kind', 'estimate');
+        $this->assertNotEmpty($response->json('options'));
+        $this->assertSame([], collect($response->json('unavailable'))->where('reason', 'no_supply')->values()->all());
+        $this->assertSame(['not_checked'], collect($response->json('options'))->pluck('supply')->unique()->values()->all());
+        $this->assertStringContainsString('A driver is not guaranteed', $response->json('options.0.wording'));
+
+        $this->postJson(route('pricing.estimate'), $this->trip + ['category' => 'economy'])->assertOk()->assertJsonPath('supply', 'not_checked');
+
+        // A signed-in passenger's bookable quote still refuses a category nobody can drive.
+        $this->actingAs(User::factory()->create())->postJson(route('pricing.quotes.store'), $this->trip + ['category' => 'economy'])
+            ->assertOk()->assertJsonPath('available', false)->assertJsonPath('reason', 'no_supply');
     }
 
     public function test_public_estimate_is_rate_limited_and_validated(): void
