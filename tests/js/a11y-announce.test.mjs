@@ -91,3 +91,12 @@ test('with reduced motion every map move lands at once, whoever calls it', async
         ['setView', { animate: false }],
     ]);
 });
+
+test('a driver error without server words still says what to do', async () => {
+    const { ApiError, fallbackMessage } = await import('../../resources/js/driver/api.js');
+    assert.equal(new ApiError(500, null).message, 'Something went wrong on our side. Try again in a moment.');
+    assert.equal(new ApiError(409, { message: 'The offer was taken.' }).message, 'The offer was taken.', 'the server words win');
+    assert.match(fallbackMessage(419), /Sign in again/);
+    assert.match(fallbackMessage(429), /Wait a moment/);
+    for (const status of [400, 401, 403, 404, 422, 429, 500, 503]) assert.doesNotMatch(fallbackMessage(status), /\(\d{3}\)|failed/i);
+});

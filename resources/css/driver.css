@@ -319,3 +319,15 @@ html[data-moving="true"] .eh-statebar__sub { display: none; }
 .eh-drive .eh-badge--go { color: var(--dr-sun-go, var(--eh-go)); }
 .eh-drive [data-dr-switch-state] { color: var(--dr-sun-quiet, var(--eh-ink-3)); }
 .eh-drive .dr-sos-btn { background: var(--dr-sun-sos, var(--eh-stop-fill)); }
+
+/* Thumb reach (R-46 a11y, D-1718). On a phone in a cradle the lower part of the screen is where the thumb lands:
+   offline and online, the console fills the screen and its one big control (Go online / Go offline) sits at the
+   bottom of the view, above today's figure, instead of under the vehicle row. Visual and focus order stay the DOM
+   order (reordering today's figure above it would make Tab jump backwards, WCAG 2.4.3). */
+@media (max-width: 767.98px) {
+    .eh-drive .eh-app__main:has(> .dr-console) { display: flex; flex-direction: column; }
+    .eh-drive .eh-app__main > .dr-console { flex: 1; display: flex; flex-direction: column; width: 100%; }
+    .dr-console > .dr-view:is([data-dr-view="offline"], [data-dr-view="online"]):not([hidden]) { flex: 1; display: flex; flex-direction: column; }
+    .dr-view[data-dr-view="offline"] > .dr-golive, .dr-view[data-dr-view="online"] > .dr-actions { margin-top: auto; }
+    .dr-view[data-dr-view="offline"] > .dr-golive + .dr-note { margin-top: calc(-1 * var(--eh-space-2)); }
+}
