@@ -8,6 +8,7 @@
         @vite(['resources/css/passenger.css', 'resources/js/passenger/booking.js'])
     </x-slot:head>
 
+    <h1 class="eh-sr-only">Book a ride</h1>
     <div class="pax-stage" data-pax-booking>
         <x-eh.map-frame id="pax-map" label="Map: your pickup and destination" :bleed="true" height="100%" message="The map loads after the booking panel. You can book without it.">
             <div class="pax-pin" data-pax-pin hidden aria-hidden="true">

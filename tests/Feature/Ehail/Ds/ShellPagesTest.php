@@ -47,21 +47,24 @@ class ShellPagesTest extends TestCase
     public function test_the_passenger_shell_shows_only_destinations_that_exist(): void
     {
         $passenger = User::factory()->withPersonalTeam()->create();
-        $response = $this->actingAs($passenger)->get(route('ride.home'))->assertOk()->assertSee('Booking opens here');
+        // The wave-2 passenger app replaced the shell placeholder (R-46 passenger, D-800); the shell contract holds.
+        $response = $this->actingAs($passenger)->get(route('ride.home'))->assertOk()->assertSee('Where to?');
         $xpath = $this->xpath($response);
         $this->assertShellLandmarks($xpath, 'passenger');
 
         $tabs = $xpath->query('//nav[contains(@class, "eh-tabbar")]//a');
         $labels = array_map(fn ($node) => trim(preg_replace('/\s+/', ' ', $node->textContent)), iterator_to_array($tabs));
-        $this->assertSame(['Ride', 'Trips', 'Account'], $labels, 'Safety stays hidden until its route exists');
-        $this->assertSame(route('rides.index'), $tabs->item(1)->getAttribute('href'), 'Trips falls back to the working ride list');
+        $this->assertSame(['Ride', 'Trips', 'Safety', 'Account'], $labels, 'every passenger destination exists now');
+        $this->assertSame(route('ride.trips'), $tabs->item(1)->getAttribute('href'));
         $this->assertSame('page', $tabs->item(0)->getAttribute('aria-current'));
 
-        // The honest empty state points at the request form that works today.
-        $this->assertSame(1, $xpath->query('//main//a[@href="'.route('rides.create').'"]')->length);
-        // The default safety control offers South Africa's emergency numbers as calls.
+        // Without script the booking sheet points at the request form that works without it.
+        $this->assertSame(1, $xpath->query('//noscript//a[@href="'.route('rides.create').'"]')->length);
+        // The safety control is the safety centre link, which carries the emergency numbers as calls.
+        $this->assertSame(1, $xpath->query('//header//a[contains(@class, "eh-safety-btn")][@href="'.route('ride.safety').'"]')->length);
+        $safety = $this->xpath($this->actingAs($passenger)->get(route('ride.safety'))->assertOk());
         foreach (['10111', '10177', '112'] as $number) {
-            $this->assertSame(1, $xpath->query('//dialog[@id="eh-safety-dialog"]//a[@href="tel:'.$number.'"]')->length, $number);
+            $this->assertSame(1, $safety->query('//main//a[@href="tel:'.$number.'"]')->length, $number);
         }
     }
 

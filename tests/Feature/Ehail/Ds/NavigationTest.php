@@ -21,17 +21,11 @@ class NavigationTest extends TestCase
         $user = User::factory()->create();
         $navigation = app(Navigation::class);
 
-        $before = collect($navigation->items('passenger', $user, Request::create('/ride')))->keyBy('key');
-        $this->assertSame('rides.index', $before['trips']['route']);
-        $this->assertArrayNotHasKey('safety', $before->all());
-
-        Route::get('/ride/trips', fn () => 'trips')->name('ride.trips');
-        Route::get('/ride/safety', fn () => 'safety')->name('ride.safety');
-        app('router')->getRoutes()->refreshNameLookups();
-
-        $after = collect($navigation->items('passenger', $user, Request::create('/ride')))->keyBy('key');
-        $this->assertSame('ride.trips', $after['trips']['route']);
-        $this->assertSame('ride.safety', $after['safety']['route']);
+        // The passenger app (R-46 passenger, D-800) registered the wave-2 names, which replaced their fallbacks.
+        $passenger = collect($navigation->items('passenger', $user, Request::create('/ride')))->keyBy('key');
+        $this->assertSame('ride.trips', $passenger['trips']['route']);
+        $this->assertSame('ride.safety', $passenger['safety']['route']);
+        $this->assertSame('ride.account', $passenger['account']['route']);
     }
 
     public function test_role_requirements_hide_destinations(): void

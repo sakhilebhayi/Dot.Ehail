@@ -37,7 +37,7 @@ class CardSetupAndRefundTest extends TestCase
         $this->assertSame(['card'], $init['channels']);
         $this->assertSame(100, $init['amount']);
 
-        $this->actingAs($this->passenger)->get(route('money.cards.callback', ['reference' => $init['reference']]))->assertRedirect('/dashboard');
+        $this->actingAs($this->passenger)->get(route('money.cards.callback', ['reference' => $init['reference']]))->assertRedirect('/ride/account'); // R-46 passenger (D-807): cards are managed from the passenger account page.
 
         $card = PaymentMethod::where('user_id', $this->passenger->id)->sole();
         $this->assertSame('AUTH_fixture_8dfhjjdt', $card->authorization_code);
