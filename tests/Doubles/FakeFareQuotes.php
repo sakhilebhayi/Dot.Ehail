@@ -65,4 +65,6 @@ class FakeFareQuotes implements FareQuoteGateway
 
         return $this->issue($passenger, ['totalMinor' => $this->nextRequoteTotal, 'category' => $ride->category_code ?? 'standard']);
     }
+
+    public function bind(LockedQuote $quote, User $passenger, Ride $ride): void {}
 }

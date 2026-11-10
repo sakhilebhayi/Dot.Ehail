@@ -9,6 +9,7 @@ use App\Domain\Rides\RideRequestService;
 use App\Domain\Rides\RideStateMachine;
 use App\Domain\Rides\ScheduledRides;
 use App\Domain\Rides\TransitionOptions;
+use App\Domain\Rides\TripChanges;
 use App\Enums\CancelReason;
 use App\Enums\RideActor;
 use App\Enums\RideStatus;
@@ -35,6 +36,8 @@ class PassengerRideController extends Controller
             'payment_method' => ['nullable', 'string', 'max:24'],
             'payment_ref' => ['nullable', 'string', 'max:64'],
             'scheduled_for' => ['nullable', 'date'],
+            'pickup_address' => ['nullable', 'string', 'max:255'],
+            'dropoff_address' => ['nullable', 'string', 'max:255'],
         ]);
 
         $user = $request->user();
@@ -47,6 +50,7 @@ class PassengerRideController extends Controller
                     $validated['payment_method'] ?? null,
                     $validated['payment_ref'] ?? null,
                     isset($validated['scheduled_for']) ? Carbon::parse($validated['scheduled_for']) : null,
+                    ['pickup' => $validated['pickup_address'] ?? null, 'dropoff' => $validated['dropoff_address'] ?? null],
                 );
 
                 return [201, $feed->forPassenger($ride->fresh())['body'], $ride->id];
@@ -73,6 +77,27 @@ class PassengerRideController extends Controller
         $ride->refresh();
 
         return $this->feedResponse($feed->forPassenger($ride, $this->sinceVersion($request)), $feed->passengerPollSeconds($ride->statusEnum()));
+    }
+
+    /**
+     * POST a change to the trip at the passenger's request (new destination or an extra stop), D-712.
+     */
+    public function changeTrip(Request $request, Ride $ride, TripChanges $changes, RideFeed $feed): JsonResponse
+    {
+        $this->authorizePassenger($request, $ride);
+
+        $validated = $request->validate([
+            'kind' => ['required', 'string', Rule::in(array_keys(TripChanges::KINDS))],
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
+            'address' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        return $this->attempt(function () use ($ride, $request, $changes, $validated, $feed) {
+            $ride = $changes->record($ride, $request->user(), $validated['kind'], (float) $validated['lat'], (float) $validated['lng'], $validated['address'] ?? null);
+
+            return response()->json($feed->forPassenger($ride)['body']);
+        });
     }
 
     public function cancel(Request $request, Ride $ride, RideStateMachine $machine, RideFeed $feed): JsonResponse

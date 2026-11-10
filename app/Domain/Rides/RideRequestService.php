@@ -36,7 +36,10 @@ class RideRequestService
         private readonly TripPin $pin,
     ) {}
 
-    public function request(User $passenger, string $quoteId, ?string $paymentKind = null, ?string $paymentRef = null, ?CarbonInterface $scheduledFor = null): Ride
+    /**
+     * @param  array{pickup?: ?string, dropoff?: ?string}  $addresses  display labels the passenger chose (geocoded in the app); the quote holds only coordinates
+     */
+    public function request(User $passenger, string $quoteId, ?string $paymentKind = null, ?string $paymentRef = null, ?CarbonInterface $scheduledFor = null, array $addresses = []): Ride
     {
         if (! $this->quotes->available()) {
             throw new DispatchRefused('pricing_unavailable', 'Fares are not available right now, so rides cannot be requested. Please try again later.', 503);
@@ -65,13 +68,22 @@ class RideRequestService
         }
 
         try {
-            $ride = DB::transaction(function () use ($passenger, $quote, $payment, $scheduledFor) {
-                $ride = Ride::create($this->attributes($passenger, $quote, $scheduledFor) + [
+            $ride = DB::transaction(function () use ($passenger, $quote, $payment, $scheduledFor, $addresses) {
+                $ride = Ride::create($this->attributes($passenger, $quote, $scheduledFor, $addresses) + [
                     'payment_method_kind' => $payment->kind,
                     'payment_method_ref' => $payment->reference,
                 ]);
 
                 $ride->forceFill($this->pin->attributesFor($ride))->save();
+
+                // Inside the same transaction: a refused binding or payment choice rolls the ride back (D-701).
+                $this->quotes->bind($quote, $passenger, $ride);
+
+                try {
+                    $this->payments->attach($ride, $passenger, $payment);
+                } catch (PaymentMethodUnavailable $e) {
+                    throw new DispatchRefused('payment_method_unavailable', $e->getMessage(), 422);
+                }
 
                 $this->timeline->append($ride, 'created', RideActor::Passenger, $passenger->id,
                     $scheduledFor ? 'scheduled_booking' : 'on_demand_request',
@@ -96,8 +108,10 @@ class RideRequestService
     /**
      * @return array<string, mixed>
      */
-    private function attributes(User $passenger, LockedQuote $quote, ?CarbonInterface $scheduledFor): array
+    private function attributes(User $passenger, LockedQuote $quote, ?CarbonInterface $scheduledFor, array $addresses = []): array
     {
+        $label = fn (?string $value, string $fallback) => is_string($value) && trim($value) !== '' ? mb_substr(trim($value), 0, 255) : $fallback;
+
         // rides.vehicle_type is still the pre-R-46 enum column; a pricing category that
         // is not one of its values keeps 'standard' there and is matched by category_code.
         $tiers = array_keys(config('ehail.vehicle_tiers'));
@@ -107,10 +121,10 @@ class RideRequestService
             'status' => $scheduledFor ? RideStatus::Scheduled->value : RideStatus::Requested->value,
             'scheduled_for' => $scheduledFor,
             'requested_at' => $scheduledFor ? null : now(),
-            'pickup_address' => $quote->pickupAddress,
+            'pickup_address' => $label($addresses['pickup'] ?? null, $quote->pickupAddress),
             'pickup_lat' => $quote->pickupLat,
             'pickup_lng' => $quote->pickupLng,
-            'dropoff_address' => $quote->dropoffAddress,
+            'dropoff_address' => $label($addresses['dropoff'] ?? null, $quote->dropoffAddress),
             'dropoff_lat' => $quote->dropoffLat,
             'dropoff_lng' => $quote->dropoffLng,
             'vehicle_type' => in_array($quote->category, $tiers, true) ? $quote->category : 'standard',

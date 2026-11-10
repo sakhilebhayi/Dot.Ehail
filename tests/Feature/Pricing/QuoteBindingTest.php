@@ -45,7 +45,9 @@ class QuoteBindingTest extends TestCase
         $passenger ??= $this->passenger;
 
         return DB::transaction(function () use ($quote, $passenger, $pickup, $dropoff, $category) {
-            $ride = $this->makeRide(['estimated_fare' => null], $passenger);
+            // A scheduled ride does not hold the passenger's one active-ride slot (dispatch D-402), so one
+            // passenger can bind several quotes in a test; the binder treats every ride the same.
+            $ride = $this->makeRide(['estimated_fare' => null, 'status' => 'scheduled', 'scheduled_for' => now()->addDay()], $passenger);
 
             return $this->app->make(QuoteBinder::class)->bind($quote->id, $passenger, $pickup ?? $this->capeTown(), $dropoff ?? $this->seaPoint(), $ride, $category);
         });

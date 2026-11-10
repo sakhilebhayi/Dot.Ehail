@@ -3,6 +3,7 @@
 namespace Tests\Concerns;
 
 use App\Domain\Catalog\Models\RideCategory;
+use App\Domain\Pricing\Adapters\UnknownSupplyCounter;
 use App\Domain\Pricing\Contracts\EligibleSupplyCounter;
 use App\Domain\Pricing\Contracts\PricingRoutePlanner;
 use App\Domain\Pricing\Contracts\PricingZoneLookup;
@@ -18,6 +19,16 @@ use Tests\Doubles\Pricing\FakeRoutePlanner;
  */
 trait PricingFixtures
 {
+    /**
+     * Pricing tests price trips without modelling the driver supply (runs automatically: Laravel calls
+     * setUp<TraitName>). Since integration, EligibleSupplyCounter counts real online drivers (D-710), which a
+     * pricing test does not create; supply-aware tests still pass their own counter through useSupply().
+     */
+    protected function setUpPricingFixtures(): void
+    {
+        $this->app->instance(EligibleSupplyCounter::class, new UnknownSupplyCounter);
+    }
+
     protected function category(string $key = 'economy'): RideCategory
     {
         return RideCategory::query()->where('key', $key)->firstOrFail();
