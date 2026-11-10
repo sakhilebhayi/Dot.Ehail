@@ -28,7 +28,7 @@ class ResponsiveShellTest extends TestCase
             [$passenger, route('rides.show', $ride)],
             [$passenger, route('profile.show')],
             [$driver, route('rides.available')],
-            [$this->makeOperator(), route('operator.rides.index')],
+            [$this->makeOperator(), route('rides.index')],
         ] as [$user, $url]) {
             $this->assertResponsiveShell($this->actingAs($user)->get($url));
         }
@@ -73,7 +73,9 @@ class ResponsiveShellTest extends TestCase
 
     public function test_an_operator_sees_the_operator_links_in_the_drawer(): void
     {
-        $xpath = $this->assertResponsiveShell($this->actingAs($this->makeOperator())->get(route('operator.rides.index')));
+        // The operator desk moved into the operations centre (R-46 ops); the legacy drawer still links to its old
+        // addresses, which redirect there.
+        $xpath = $this->assertResponsiveShell($this->actingAs($this->makeOperator())->get(route('rides.index')));
 
         foreach (['operator.rides.index', 'operator.fleets.index'] as $name) {
             $this->assertSame(1, $xpath->query('//aside[@id="app-sidebar"]//a[@href="'.route($name).'"]')->length, $name);
