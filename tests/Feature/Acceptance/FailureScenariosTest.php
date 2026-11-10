@@ -70,8 +70,15 @@ class FailureScenariosTest extends TestCase
         $passenger = $this->passenger();
         $quote = $this->quoteFor($passenger);
 
-        // The only driver goes offline after the quote.
+        // The only driver goes offline after the quote. A request for now is refused while nobody is nearby (D-1902):
+        // nothing is created and the price stays as quoted.
         $this->actingAs($driver)->postJson(route('ehail.dispatch.driver.offline'))->assertOk();
+        $this->requestRide($passenger, $quote['quote_id'])->assertStatus(409)->assertJsonPath('error', 'no_supply');
+        $this->assertSame(0, Ride::count());
+
+        // The counter saw a driver at the moment of the request, who was gone by the time dispatch looked (the race
+        // the request gate cannot close): the ride searches and expires.
+        $this->app->instance(\App\Domain\Pricing\Contracts\EligibleSupplyCounter::class, new \Tests\Doubles\Pricing\FakeSupplyCounter(['economy' => 1, 'standard' => 1]));
         $rideId = $this->requestRide($passenger, $quote['quote_id'])->assertCreated()->assertJsonPath('ride.status', 'searching')->json('ride.id');
         $this->assertSame(0, RideOffer::count());
 

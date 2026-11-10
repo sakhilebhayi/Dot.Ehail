@@ -2,8 +2,11 @@
 
 namespace App\Domain\Pricing\Money;
 
+use App\Support\Ui\MoneyFormatter as UiMoneyFormatter;
+
 /**
- * "R 1,234.50": symbol, a space, grouped digits, the currency's minor digits. Display only; built from integers.
+ * "R1 234.50": the platform's one money text (App\Support\Ui\MoneyFormatter, D-1903): symbol, digits grouped with a
+ * narrow no-break space, a point before the cents, U+2212 for minus. Display only; built from integers.
  */
 final class MoneyFormatter
 {
@@ -16,12 +19,7 @@ final class MoneyFormatter
 
     public static function formatMinor(int $amountMinor, string $symbol, int $exponent = 2): string
     {
-        $sign = $amountMinor < 0 ? '-' : '';
-        $decimal = self::decimal(abs($amountMinor), $exponent);
-        [$whole, $fraction] = array_pad(explode('.', $decimal), 2, '');
-        $grouped = ltrim(strrev(implode(',', str_split(strrev($whole), 3))), ',');
-
-        return $sign.$symbol.' '.$grouped.($exponent > 0 ? '.'.$fraction : '');
+        return UiMoneyFormatter::withSymbol($amountMinor, $symbol, $exponent);
     }
 
     /**

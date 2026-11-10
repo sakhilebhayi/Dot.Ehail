@@ -62,7 +62,7 @@ class ComponentsTest extends TestCase
         $this->assertStringContainsString('aria-label="minus R40.00"', $html);
         $this->assertStringContainsString('eh-money--negative', $html);
 
-        $html = $this->render('<x-eh.eta :seconds="240" at="2026-11-10 14:32:00" />');
+        $html = $this->render('<x-eh.eta :seconds="240" at="2026-11-10T12:32:00Z" />');
         $this->assertStringContainsString('aria-label="4 minutes, arriving at 14:32"', $html);
 
         $html = $this->render('<x-eh.rating-stars :value="4.6" :count="12" />');

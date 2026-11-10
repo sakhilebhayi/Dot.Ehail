@@ -31,7 +31,7 @@
                                 <td>{{ $p->provider }}{{ $p->channel ? ' · '.$p->channel : '' }}</td>
                                 <td class="num"><x-eh.money :minor="$p->amountMinor()" :currency="$p->currency ?? 'ZAR'" /></td>
                                 <td class="num">@if($p->refunded_minor)<x-eh.money :minor="(int) $p->refunded_minor" :currency="$p->currency ?? 'ZAR'" />@else<span class="ops-dash">-</span>@endif</td>
-                                <td class="num">{{ $p->created_at?->format('d M H:i') }}</td>
+                                <td class="num">{{ $p->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i') }}</td>
                             </tr>
                         @endforeach
                     </tbody>

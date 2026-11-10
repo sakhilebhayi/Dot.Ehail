@@ -6,7 +6,7 @@
 @endphp
 <x-fleet.page :fleet="$fleet" :fleets="$fleets" title="Driver" :heading="$driver->user?->name ?? 'Driver'"
     :line="match (true) {
-        $driver->status === 'pending' => 'Applied to join this fleet on '.$driver->created_at->format('j M Y').'.',
+        $driver->status === 'pending' => 'Applied to join this fleet on '.$driver->created_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y').'.',
         $driver->status === 'suspended' => 'Suspended by operations.',
         $blocking->isNotEmpty() => 'Cannot go online: '.$blocking->count().' '.\Illuminate\Support\Str::plural('document', $blocking->count()).' to sort out.',
         default => 'Documents in order.',
@@ -30,7 +30,7 @@
                                 <tr>
                                     <td>{{ $item['label'] }}</td>
                                     <td><x-eh.badge :tone="$item['satisfied'] ? ($item['expiring_soon'] ? 'caution' : 'go') : 'stop'">{{ ucfirst($docState($item['state'])) }}</x-eh.badge>@if ($item['renewal_pending'])<span class="fl-sub">Renewal waiting for review</span>@endif</td>
-                                    <td class="num" @if($item['expires_on']) data-label="Expires" @endif>{!! $item['expires_on'] ? e(\Illuminate\Support\Carbon::parse($item['expires_on'])->format('j M Y')) : ($item['satisfied'] ? '<span class="fl-dash">No expiry</span>' : '<span class="fl-dash">&#8212;</span>') !!}</td>
+                                    <td class="num" @if($item['expires_on']) data-label="Expires" @endif>{!! $item['expires_on'] ? e(\Illuminate\Support\Carbon::parse($item['expires_on'])->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y')) : ($item['satisfied'] ? '<span class="fl-dash">No expiry</span>' : '<span class="fl-dash">&#8212;</span>') !!}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -61,7 +61,7 @@
                         @foreach ($assignments as $a)
                             <li style="grid-template-columns: auto minmax(0,1fr)">
                                 <span class="fl-plate">{{ $a->vehicle?->plate_number }}</span>
-                                <p class="fl-items__detail" style="margin:0">{{ $a->started_at->format('j M Y H:i') }} to {{ $a->ended_at?->format('j M Y H:i') ?? 'now' }}{{ $a->end_reason ? ' ('.str_replace('_', ' ', $a->end_reason).')' : '' }}</p>
+                                <p class="fl-items__detail" style="margin:0">{{ $a->started_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y H:i') }} to {{ $a->ended_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y H:i') ?? 'now' }}{{ $a->end_reason ? ' ('.str_replace('_', ' ', $a->end_reason).')' : '' }}</p>
                             </li>
                         @endforeach
                     </ul>
@@ -74,7 +74,7 @@
                 <dl class="fl-kv">
                     <dt>Status</dt><dd><x-eh.badge :tone="['approved' => 'go', 'pending' => 'caution', 'suspended' => 'stop', 'rejected' => 'neutral'][$driver->status] ?? 'neutral'">{{ ucfirst($driver->status) }}</x-eh.badge></dd>
                     <dt>Now</dt><dd>{{ $stateLabel[$availability?->state ?? 'offline'] ?? 'Offline' }}</dd>
-                    <dt>On Dot.Ehail since</dt><dd>{{ $driver->user?->created_at?->format('M Y') }}</dd>
+                    <dt>On Dot.Ehail since</dt><dd>{{ $driver->user?->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('M Y') }}</dd>
                     @if ($masked)
                         <dt>Licence</dt><dd>{{ \App\Support\DriverIdentifiers::mask($driver->license_number) }}</dd>
                         <dt>ID</dt><dd>{{ \App\Support\DriverIdentifiers::mask($driver->id_number) }}</dd>

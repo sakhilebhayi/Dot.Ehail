@@ -21,7 +21,7 @@
                         @if ($masked)
                             License {{ \App\Support\DriverIdentifiers::mask($profile->license_number) }} · ID {{ \App\Support\DriverIdentifiers::mask($profile->id_number) }} · <a class="eh-link" href="{{ route('drivers.show', $profile) }}">Open profile</a> (logged)
                         @else
-                            Applied {{ $profile->created_at->format('j M Y') }}. Identity documents are checked by operations.
+                            Applied {{ $profile->created_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}. Identity documents are checked by operations.
                         @endif
                     </p>
                     @foreach ($profile->vehicles as $vehicle)

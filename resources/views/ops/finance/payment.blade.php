@@ -6,7 +6,7 @@
         <header class="ops-head">
             <div class="ops-head__text">
                 <h1><x-eh.money :minor="$payment->amountMinor()" :currency="$cur" size="lg" /> <x-eh.badge :tone="match($payment->status){'paid'=>'go','failed','unmatched'=>'stop',default=>'caution'}">{{ str_replace('_', ' ', $payment->status) }}</x-eh.badge></h1>
-                <p class="ops-head__finding">{{ str_replace('_', ' ', (string) ($payment->purpose ?? 'ride fare')) }} from {{ $payment->payer?->name }} · {{ $payment->provider }} · attempt {{ $payment->attempt ?? 1 }}{{ $payment->paid_at ? ' · paid '.$payment->paid_at->format('d M Y H:i') : '' }}{{ $payment->verified_at ? ', verified '.$payment->verified_at->format('H:i') : '' }}</p>
+                <p class="ops-head__finding">{{ str_replace('_', ' ', (string) ($payment->purpose ?? 'ride fare')) }} from {{ $payment->payer?->name }} · {{ $payment->provider }} · attempt {{ $payment->attempt ?? 1 }}{{ $payment->paid_at ? ' · paid '.$payment->paid_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') : '' }}{{ $payment->verified_at ? ', verified '.$payment->verified_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i') : '' }}</p>
             </div>
         </header>
         <div class="ops-split">
@@ -18,7 +18,7 @@
                         @if ($payment->ride)<dt>Ride</dt><dd>@can('ops.rides.view')<a class="eh-link" href="{{ route('ops.rides.show', $payment->ride_id) }}">Ride {{ $payment->ride_id }}</a>@else Ride {{ $payment->ride_id }} @endcan · {{ $payment->ride->pickup_address }} to {{ $payment->ride->dropoff_address }}</dd>@endif
                         <dt>Channel</dt><dd>{{ $payment->channel ?? '-' }}</dd>
                         @if ($payment->failure_code || $payment->failure_message)<dt>Failure</dt><dd>{{ $payment->failure_code }} {{ $payment->failure_message }}</dd>@endif
-                        @if ($payment->next_retry_at)<dt>Next retry</dt><dd class="num">{{ $payment->next_retry_at->format('d M Y H:i') }}</dd>@endif
+                        @if ($payment->next_retry_at)<dt>Next retry</dt><dd class="num">{{ $payment->next_retry_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') }}</dd>@endif
                         @if ($payment->unmatched_reason)<dt>Unmatched</dt><dd>{{ $payment->unmatched_reason }}</dd>@endif
                         <dt>Refunded so far</dt><dd class="num"><x-eh.money :minor="(int) $payment->refunded_minor" :currency="$cur" /></dd>
                     </dl>
@@ -32,7 +32,7 @@
                             <thead><tr><th>Reason</th><th>Status</th><th>Method</th><th class="num">Amount</th><th class="num">Requested</th></tr></thead>
                             <tbody>
                                 @foreach ($payment->refunds as $r)
-                                    <tr><td>{{ \App\Domain\Payments\Models\Refund::REASONS[$r->reason] ?? $r->reason }}@if($r->note)<span class="sub">{{ $r->note }}</span>@endif</td><td>{{ $r->status }}@if($r->failure_message)<span class="sub">{{ $r->failure_message }}</span>@endif</td><td>{{ $r->method }}</td><td class="num"><x-eh.money :minor="(int) $r->amount_minor" :currency="$r->currency" /></td><td class="num">{{ $r->created_at?->format('d M H:i') }}</td></tr>
+                                    <tr><td>{{ \App\Domain\Payments\Models\Refund::REASONS[$r->reason] ?? $r->reason }}@if($r->note)<span class="sub">{{ $r->note }}</span>@endif</td><td>{{ $r->status }}@if($r->failure_message)<span class="sub">{{ $r->failure_message }}</span>@endif</td><td>{{ $r->method }}</td><td class="num"><x-eh.money :minor="(int) $r->amount_minor" :currency="$r->currency" /></td><td class="num">{{ $r->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i') }}</td></tr>
                                 @endforeach
                             </tbody>
                         </table>

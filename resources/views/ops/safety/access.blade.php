@@ -20,7 +20,7 @@
                                 <td>{{ $row->actor?->name ?? 'unknown' }}<span class="sub">user {{ $row->actor_user_id }}</span></td>
                                 <td>{{ str_replace(['ops.viewed.', '.viewed', '.opened', '_'], ['', ' opened', ' opened', ' '], $row->action) }}</td>
                                 <td>{{ class_basename($row->subject_type) }} {{ $row->subject_id }}</td>
-                                <td class="num">{{ $row->created_at?->format('d M Y H:i:s') }}</td>
+                                <td class="num">{{ $row->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i:s') }}</td>
                             </tr>
                         @endforeach
                     </tbody>

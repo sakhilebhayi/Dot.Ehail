@@ -2,6 +2,7 @@
 
 namespace App\Domain\Business\Notifications;
 
+use App\Domain\Business\BusinessClock;
 use App\Domain\Business\Models\BusinessApproval;
 use App\Support\Ui\MoneyFormatter;
 use Illuminate\Bus\Queueable;
@@ -30,7 +31,7 @@ class ApprovalRequestedNotification extends Notification
             ->line($a->riderLabel().' asks to ride on the company account: '.MoneyFormatter::format($a->estimate_minor, $a->currency).'.')
             ->line('From '.($a->pickup_address ?? 'the pickup').' to '.($a->dropoff_address ?? 'the drop-off').'.')
             ->line($a->purpose ? 'Purpose: '.$a->purpose : 'No purpose given.')
-            ->line('Decide before '.$a->decide_by->setTimezone(config('ehail_business.timezone'))->format('H:i').'; after that the request expires.')
+            ->line('Decide before '.$a->decide_by->setTimezone(BusinessClock::timezone())->format('H:i').'; after that the request expires.')
             ->action('Open the approvals queue', route('business.approvals'));
     }
 }

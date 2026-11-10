@@ -8,6 +8,7 @@ import { el, watchConnection } from './dom.js';
 import { FeedClient } from './feed.js';
 import { formatMinor } from './money.js';
 import { bindCheckIns, bindShare, bindSos } from './safety.js';
+import { formatLocal } from '../eh/time.js';
 import { createAnnouncer, etaCue } from '../eh/announce.js';
 import { announcement, mapSummary, holdsDriver, isPreTrip, isSearching, isTerminal, rideText, stageIndex } from './status.js';
 
@@ -139,7 +140,7 @@ function render() {
 function renderScheduled(ride) {
     if (ride.status !== 'scheduled') return;
     const at = ride.scheduled_for ? new Date(ride.scheduled_for) : null;
-    if (at) $('[data-pax-scheduled-at]').textContent = at.toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    if (at) $('[data-pax-scheduled-at]').textContent = formatLocal(at, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     const phase = $('[data-pax-phase]');
     const confirmed = ride.schedule_phase === 'driver_confirmed';
     phase.textContent = confirmed ? 'Driver confirmed' : 'Awaiting driver';

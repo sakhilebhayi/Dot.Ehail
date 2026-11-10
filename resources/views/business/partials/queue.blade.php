@@ -1,6 +1,6 @@
 {{-- Approval requests to decide: rider, amount, route, purpose, time left, approve or decline with an optional note. --}}
 @php
-    $tz = config('ehail_business.timezone');
+    $tz = \App\Domain\Business\BusinessClock::timezone();
 @endphp
 <ul class="bz-queue">
     @foreach ($items as $approval)

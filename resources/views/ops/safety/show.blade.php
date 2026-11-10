@@ -3,7 +3,7 @@
     $active = in_array($st, ['open', 'acknowledged', 'escalated'], true);
     $ctx = is_array($incident->context) ? $incident->context : [];
     $finding = match ($st) {
-        'open' => ['Not acknowledged. '.($incident->next_escalation_at ? ($incident->next_escalation_at->isPast() ? 'Past the escalation time.' : 'Escalates at '.$incident->next_escalation_at->format('H:i').'.') : ''), 'stop'],
+        'open' => ['Not acknowledged. '.($incident->next_escalation_at ? ($incident->next_escalation_at->isPast() ? 'Past the escalation time.' : 'Escalates at '.$incident->next_escalation_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i').'.') : ''), 'stop'],
         'escalated' => ['Escalated to level '.$incident->escalation_level.'. Someone must own it.', 'stop'],
         'acknowledged' => ['Acknowledged by '.($incident->owner?->name ?? 'an operator').'. Resolve it when the person is safe.', 'caution'],
         default => [ucfirst($st).($incident->resolution_code ? ': '.str_replace('_', ' ', $incident->resolution_code) : '').'.', null],
@@ -68,7 +68,7 @@
                                 <p class="ops-where__place"><x-eh.icon name="pin" />{{ $where['words'] }}</p>
                                 @if ($where['relative'] && $where['relative'] !== $where['words'])<p class="ops-where__rel">{{ $where['relative'] }}</p>@endif
                                 @if ($where['source'] === 'reported position')
-                                    <p class="ops-where__meta">Sent {{ $incident->location_captured_at?->setTimezone(\App\Domain\Ops\Live\IncidentPresenter::TIMEZONE)->format('H:i:s') }} SAST, accurate to about {{ $incident->location_accuracy_m ?? '?' }} m</p>
+                                    <p class="ops-where__meta">Sent {{ \App\Support\Ui\LocalTime::time($incident->location_captured_at, true) }} {{ \App\Support\Ui\LocalTime::label() }}, accurate to about {{ $incident->location_accuracy_m ?? '?' }} m</p>
                                 @else
                                     <p class="ops-where__meta">The {{ $incident->reporter_role ?? 'reporter' }}'s phone sent no position; this is the {{ $where['source'] }}.</p>
                                 @endif
@@ -97,7 +97,7 @@
                 </section>
 
                 <section class="ops-panel" aria-labelledby="ctx-h">
-                    <div class="ops-panel__head"><h2 id="ctx-h">What was reported</h2><span class="ops-panel__meta">{{ $incident->created_at->setTimezone(\App\Domain\Ops\Live\IncidentPresenter::TIMEZONE)->format('d M Y H:i:s') }} SAST · source {{ str_replace('_', ' ', (string) $incident->source) }}</span></div>
+                    <div class="ops-panel__head"><h2 id="ctx-h">What was reported</h2><span class="ops-panel__meta">{{ \App\Support\Ui\LocalTime::format($incident->created_at, 'd M Y H:i:s') }} {{ \App\Support\Ui\LocalTime::label() }} · source {{ str_replace('_', ' ', (string) $incident->source) }}</span></div>
                     <dl class="ops-facts">
                         <dt>Raised by</dt><dd>{{ $incident->reporter?->name ?? 'System' }} ({{ $incident->reporter_role ?? 'system' }})</dd>
                         @if ($incident->description)<dt>Their words</dt><dd>{{ $incident->description }}</dd>@endif
@@ -127,7 +127,7 @@
                                         <td>{{ strtoupper((string) $n->channel) === 'SMS' ? 'SMS' : ucfirst(str_replace('_', ' ', (string) $n->channel)) }}</td>
                                         <td>{{ str_replace('_', ' ', (string) $n->purpose) }}</td>
                                         <td><x-eh.badge :tone="match($n->status){'sent'=>'go','failed'=>'stop','not_delivered'=>'caution','skipped'=>'neutral',default=>'info'}">{{ str_replace('_', ' ', (string) $n->status) }}</x-eh.badge>@if($n->error)<span class="sub">{{ $n->error }}</span>@endif</td>
-                                        <td class="num">{{ ($n->sent_at ?? $n->attempted_at ?? $n->created_at)?->format('H:i:s') }}</td>
+                                        <td class="num">{{ ($n->sent_at ?? $n->attempted_at ?? $n->created_at)?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i:s') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -136,15 +136,15 @@
                 </section>
 
                 <section class="ops-panel" aria-labelledby="tl-h">
-                    <div class="ops-panel__head"><h2 id="tl-h">Timeline</h2></div>
+                    <div class="ops-panel__head"><h2 id="tl-h">Timeline</h2><span class="ops-panel__meta">times in {{ \App\Support\Ui\LocalTime::label() }}</span></div>
                     <ol class="ops-route">
                         @foreach ($incident->events->sortBy('id') as $event)
                             @php($data = is_array($event->data) ? $event->data : [])
                             <li data-kind="{{ in_array($event->type, ['escalated', 'opened'], true) ? 'stop' : ($event->type === 'note' ? 'side' : 'main') }}" @if($loop->last) data-current @endif>
                                 <span class="ops-route__stop" aria-hidden="true"></span>
                                 <span class="ops-route__what">{{ ucfirst(str_replace('_', ' ', (string) $event->type)) }}</span>
-                                <time class="ops-route__when">{{ $event->created_at?->format('d M H:i:s') }}</time>
-                                <span class="ops-route__detail">{{ $event->actor_id ? 'by user '.$event->actor_id : 'system' }}{{ isset($data['note']) && is_string($data['note']) ? ' · "'.$data['note'].'"' : '' }}{{ isset($data['reason']) && is_string($data['reason']) ? ' · '.str_replace('_', ' ', $data['reason']) : '' }}{{ isset($data['level']) ? ' · level '.$data['level'] : '' }}</span>
+                                <time class="ops-route__when">{{ $event->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i:s') }}</time>
+                                <span class="ops-route__detail">{{ $event->actor_id ? 'by '.\App\Support\Ui\PersonNames::of($event->actor_id) : 'system' }}{{ isset($data['note']) && is_string($data['note']) ? ' · "'.$data['note'].'"' : '' }}{{ isset($data['reason']) && is_string($data['reason']) ? ' · '.str_replace('_', ' ', $data['reason']) : '' }}{{ isset($data['level']) ? ' · level '.$data['level'] : '' }}</span>
                             </li>
                         @endforeach
                     </ol>
@@ -154,7 +154,7 @@
                     <section class="ops-panel ops-panel--flush" aria-labelledby="related-h">
                         <div class="ops-panel__head"><h2 id="related-h">On the same ride</h2></div>
                         <ul class="ops-queue">
-                            @foreach ($checkIns as $c)<li><span class="ops-queue__title">Check-in ({{ str_replace('_', ' ', $c->trigger) }}) to the {{ $c->role }}</span><span class="ops-queue__meta">{{ str_replace('_', ' ', $c->status) }} · prompted {{ $c->prompted_at?->format('H:i') }}</span></li>@endforeach
+                            @foreach ($checkIns as $c)<li><span class="ops-queue__title">Check-in ({{ str_replace('_', ' ', $c->trigger) }}) to the {{ $c->role }}</span><span class="ops-queue__meta">{{ str_replace('_', ' ', $c->status) }} · prompted {{ $c->prompted_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i') }}</span></li>@endforeach
                             @foreach ($reports as $r)<li><span class="ops-queue__title">Report: {{ str_replace('_', ' ', $r->category) }}</span><span class="ops-queue__meta">by the {{ $r->reporter_role }} · {{ $r->status }}</span></li>@endforeach
                         </ul>
                     </section>
@@ -201,7 +201,7 @@
                     <section class="ops-panel" aria-labelledby="close-h">
                         <div class="ops-panel__head"><h2 id="close-h">Close</h2></div>
                         <form class="ops-act" data-ops-action method="post" action="{{ route('safety.ops.incidents.close', $incident->id) }}" data-ops-done="Incident closed.">
-                            <p class="ops-note ops-note--small">Resolved {{ $incident->resolved_at?->format('d M Y H:i') }}{{ $incident->resolution_note ? ': '.$incident->resolution_note : '' }}.</p>
+                            <p class="ops-note ops-note--small">Resolved {{ $incident->resolved_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') }}{{ $incident->resolution_note ? ': '.$incident->resolution_note : '' }}.</p>
                             <div class="ops-act__row"><x-eh.button type="submit" size="sm" variant="secondary">Close the incident</x-eh.button></div>
                         </form>
                     </section>
@@ -215,7 +215,7 @@
                         @else
                             <table class="ops-table ops-table--compact">
                                 <tbody>
-                                    @foreach ($viewers as $row)<tr><td>{{ $row->actor?->name ?? 'System' }}<span class="sub">{{ str_replace(['ops.viewed.', '_'], ['viewed ', ' '], $row->action) }}</span></td><td class="num">{{ $row->created_at?->format('d M H:i') }}</td></tr>@endforeach
+                                    @foreach ($viewers as $row)<tr><td>{{ $row->actor?->name ?? 'System' }}<span class="sub">{{ str_replace(['ops.viewed.', '_'], ['viewed ', ' '], $row->action) }}</span></td><td class="num">{{ $row->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i') }}</td></tr>@endforeach
                                 </tbody>
                             </table>
                         @endif

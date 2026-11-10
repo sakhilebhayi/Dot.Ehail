@@ -1,7 +1,7 @@
 {{-- Trips: the ride going now, scheduled rides, and history with fares and receipts. --}}
 @php
     $fmt = fn ($minor, $cur) => \App\Support\Ui\MoneyFormatter::format((int) $minor, $cur ?: 'ZAR');
-    $tz = config('app.timezone');
+    $tz = \App\Support\Ui\LocalTime::timezone();
 @endphp
 <x-passenger-layout title="Trips">
     <x-slot:head>@vite(['resources/css/passenger.css'])</x-slot:head>

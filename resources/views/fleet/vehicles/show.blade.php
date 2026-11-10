@@ -14,8 +14,8 @@
         default => str_replace('_', ' ', $code),
     };
     $line = match (true) {
-        $vehicle->retired_at !== null => 'Retired on '.$vehicle->retired_at->format('j M Y').'.',
-        $vehicle->out_of_service_at !== null => 'Out of service since '.$vehicle->out_of_service_at->format('j M Y').': '.($vehicle->out_of_service_reason ?: 'no reason recorded').'.',
+        $vehicle->retired_at !== null => 'Retired on '.$vehicle->retired_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y').'.',
+        $vehicle->out_of_service_at !== null => 'Out of service since '.$vehicle->out_of_service_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y').': '.($vehicle->out_of_service_reason ?: 'no reason recorded').'.',
         $holder === null => 'Nobody has this vehicle. Give it to a driver you allow to drive it.',
         $missingDocs->isNotEmpty() => 'With '.($holder->user?->name ?? 'a driver').'. Cannot go online: '.$missingDocs->count().' '.\Illuminate\Support\Str::plural('document', $missingDocs->count()).' to sort out.',
         default => 'With '.($holder->user?->name ?? 'a driver').'. Documents in order.',
@@ -40,7 +40,7 @@
                         <dd>
                             @if ($holder)
                                 <a class="fl-name" href="{{ route('fleet.drivers.show', $holder->id) }}">{{ $holder->user?->name }}</a>
-                                since {{ $assignment?->started_at?->format('j M Y H:i') ?? 'before assignments were recorded' }}{{ $inUse ? ', working in it now' : '' }}
+                                since {{ $assignment?->started_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y H:i') ?? 'before assignments were recorded' }}{{ $inUse ? ', working in it now' : '' }}
                             @else
                                 <span class="fl-dash">Nobody</span>
                             @endif
@@ -128,7 +128,7 @@
                             <tr>
                                 <td>{{ $item['label'] }}</td>
                                 <td><x-eh.badge :tone="$item['satisfied'] ? ($item['expiring_soon'] ? 'caution' : 'go') : 'stop'">{{ ucfirst($docState($item['state'])) }}</x-eh.badge>@if ($item['renewal_pending'])<span class="fl-sub">Renewal waiting for review</span>@endif</td>
-                                <td class="num" @if($item['expires_on']) data-label="Expires" @endif>{!! $item['expires_on'] ? e(\Illuminate\Support\Carbon::parse($item['expires_on'])->format('j M Y')) : ($item['satisfied'] ? '<span class="fl-dash">No expiry</span>' : '<span class="fl-dash">&#8212;</span>') !!}</td>
+                                <td class="num" @if($item['expires_on']) data-label="Expires" @endif>{!! $item['expires_on'] ? e(\Illuminate\Support\Carbon::parse($item['expires_on'])->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y')) : ($item['satisfied'] ? '<span class="fl-dash">No expiry</span>' : '<span class="fl-dash">&#8212;</span>') !!}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -142,7 +142,7 @@
                     <span class="fl-panel__meta">
                         Next service:
                         @if ($nextService['on'] || $nextService['km'])
-                            <span class="{{ $nextService['overdue'] ? 'fl-sev--stop' : ($nextService['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $nextService['on']?->format('j M Y') }}{{ $nextService['on'] && $nextService['km'] ? ' or ' : '' }}{{ $nextService['km'] ? number_format($nextService['km'], 0, '.', ' ').' km' : '' }}{{ $nextService['overdue'] ? ', overdue' : ($nextService['due_soon'] ? ', due soon' : '') }}</span>
+                            <span class="{{ $nextService['overdue'] ? 'fl-sev--stop' : ($nextService['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $nextService['on']?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}{{ $nextService['on'] && $nextService['km'] ? ' or ' : '' }}{{ $nextService['km'] ? number_format($nextService['km'], 0, '.', ' ').' km' : '' }}{{ $nextService['overdue'] ? ', overdue' : ($nextService['due_soon'] ? ', due soon' : '') }}</span>
                         @else
                             not recorded
                         @endif
@@ -192,7 +192,7 @@
                     <ul class="fl-items" style="margin-top: var(--eh-space-3)">
                         @foreach ($maintenance as $record)
                             <li style="grid-template-columns: 6.5rem minmax(0,1fr) auto">
-                                <p class="fl-items__who" style="margin:0">{{ $record->performed_on->format('j M Y') }}</p>
+                                <p class="fl-items__who" style="margin:0">{{ $record->performed_on->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}</p>
                                 <div>
                                     <p class="fl-items__title">{{ $kinds[$record->kind] ?? ucfirst($record->kind) }}</p>
                                     <p class="fl-items__detail">{{ $record->description }}</p>
@@ -277,7 +277,7 @@
                         <ul class="fl-items">
                             @foreach ($history as $a)
                                 <li style="grid-template-columns: minmax(0,1fr)">
-                                    <div><p class="fl-items__title">{{ $a->driverProfile?->user?->name }}</p><p class="fl-items__who">{{ $a->started_at->format('j M Y') }} to {{ $a->ended_at?->format('j M Y') ?? 'now' }}</p></div>
+                                    <div><p class="fl-items__title">{{ $a->driverProfile?->user?->name }}</p><p class="fl-items__who">{{ $a->started_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }} to {{ $a->ended_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') ?? 'now' }}</p></div>
                                 </li>
                             @endforeach
                         </ul>

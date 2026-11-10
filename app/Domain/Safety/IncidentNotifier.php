@@ -11,6 +11,7 @@ use App\Domain\Safety\Notifications\SafetyIncidentAlertNotification;
 use App\Domain\Safety\Sms\SmsGateway;
 use App\Models\User;
 use App\Services\Notify\NotifyClient;
+use App\Support\Ui\LocalTime;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -57,7 +58,7 @@ class IncidentNotifier
                 (string) $contact->name,
                 $firstName,
                 $incident->reference,
-                $incident->created_at->timezone(config('app.timezone'))->format('Y-m-d H:i'),
+                $incident->created_at->copy()->timezone(LocalTime::timezone())->format('j M Y, H:i').' '.LocalTime::label(),
                 $shareUrl,
                 $vehicle,
                 $location,

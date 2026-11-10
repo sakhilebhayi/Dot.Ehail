@@ -111,3 +111,10 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | `dataviz` | not used | | No chart was added or changed; insights labels are pmoney's payload fix. |
 | `hallmark`, `gsap-*`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `open-design`, `design-md`, `awesome-design-md` | not used | | Refinement of existing surfaces; no new world, motion library or brand system. |
 | `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Not in the installed list this session; not claimed. |
+
+## Polish: data and money (pmoney, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | the few view edits this branch made (receipt, statement, bell badge, status badge, fleet strip, incident timeline) | Loaded the product context; kept to the existing Route Line components and tokens, tabular figures for money, no new patterns. The work is data and wording, so the craft rule applied was "the numbers on screen must agree with each other". |
+| other design skills | not used | | No new page, motion or brand system; UI edits were kept minimal by brief. |

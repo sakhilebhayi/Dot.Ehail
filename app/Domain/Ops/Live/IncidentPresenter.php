@@ -7,6 +7,7 @@ use App\Domain\Safety\IncidentKind;
 use App\Domain\Safety\IncidentSeverity;
 use App\Domain\Safety\IncidentStatus;
 use App\Domain\Safety\Models\SafetyIncident;
+use App\Support\Ui\LocalTime;
 use App\Support\Ui\PlaceNames;
 use Illuminate\Support\Collection;
 
@@ -16,8 +17,6 @@ use Illuminate\Support\Collection;
  */
 class IncidentPresenter
 {
-    public const TIMEZONE = 'Africa/Johannesburg';
-
     public function __construct(private readonly PlaceNames $places) {}
 
     /**
@@ -62,7 +61,7 @@ class IncidentPresenter
             'vehicle' => is_array($ctx['vehicle'] ?? null) ? ($ctx['vehicle']['registration'] ?? null) : null,
             'place' => $point ? $point['words'] : 'No position sent',
             'opened_at' => $incident->created_at->toIso8601String(),
-            'opened_text' => 'Raised '.$incident->created_at->setTimezone(self::TIMEZONE)->format('H:i').' SAST, '.Durations::short($age).' ago',
+            'opened_text' => 'Raised '.LocalTime::time($incident->created_at).' '.LocalTime::label().', '.Durations::short($age).' ago',
             'lat' => $point['lat'] ?? null,
             'lng' => $point['lng'] ?? null,
             'href' => route('ops.safety.show', $incident->id),
@@ -106,7 +105,7 @@ class IncidentPresenter
         $last = max(array_keys((array) config('ehail_safety.escalation.levels', [])) ?: [0]);
         $what = (int) $incident->escalation_level >= $last ? 'reminder to every operator' : 'escalation';
 
-        return 'next '.$what.' '.($incident->next_escalation_at->isPast() ? 'due now' : 'at '.$incident->next_escalation_at->setTimezone(self::TIMEZONE)->format('H:i').' SAST');
+        return 'next '.$what.' '.($incident->next_escalation_at->isPast() ? 'due now' : 'at '.LocalTime::time($incident->next_escalation_at).' '.LocalTime::label());
     }
 
     public function reporterText(SafetyIncident $incident): string

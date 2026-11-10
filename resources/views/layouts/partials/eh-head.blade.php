@@ -2,6 +2,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="eh-tz" content="{{ \App\Support\Ui\LocalTime::timezone() }}">
 <title>{{ isset($title) && $title ? $title.' | Dot.Ehail' : 'Dot.Ehail' }}</title>
 @isset($description)<meta name="description" content="{{ $description }}">@endisset
 <meta name="theme-color" content="#f1f4f0" media="(prefers-color-scheme: light)">

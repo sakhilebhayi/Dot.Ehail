@@ -2,6 +2,7 @@
 // online, shows offers with their earnings, and walks the driver through the trip. Every decision is the server's:
 // this script only asks and shows the answer. See docs/R46_UI_DRIVER.md.
 
+import { timeLocal } from '../eh/time.js';
 import { api, ApiError, fill } from './api.js';
 import { clockOffset, startCountdown } from './countdown.js';
 import { countdownCue, createAnnouncer } from '../eh/announce.js';
@@ -95,7 +96,8 @@ function toggleAddress(el) {
 }
 
 function clockTime(d) {
-    return [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
+    // Service-area time (D-1906), whatever zone the phone is set to.
+    return timeLocal(d, { seconds: true });
 }
 
 function online() {

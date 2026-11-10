@@ -1,6 +1,6 @@
 {{-- One ledger journal: its lines, debits and credits, which always balance. --}}
 <div style="padding:var(--eh-space-2) 0 var(--eh-space-3)">
-    <p class="ops-note ops-note--small" style="padding:0 var(--eh-space-5)"><strong style="color:var(--eh-ink)">{{ str_replace('_', ' ', $j->kind) }}</strong> · {{ $j->posted_at?->format('d M Y H:i') }} · {{ $j->reason }}</p>
+    <p class="ops-note ops-note--small" style="padding:0 var(--eh-space-5)"><strong style="color:var(--eh-ink)">{{ str_replace('_', ' ', $j->kind) }}</strong> · {{ $j->posted_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') }} · {{ $j->reason }}</p>
     <table class="ops-table ops-table--compact">
         <thead><tr><th>Account</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
         <tbody>

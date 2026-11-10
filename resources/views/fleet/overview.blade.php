@@ -23,7 +23,7 @@
     @endunless
 
     <dl class="fl-strip" style="--fl-cells: {{ $week ? 5 : 4 }}" aria-label="This fleet now">
-        <div class="fl-strip__cell"><dt>Drivers</dt><dd>{{ $drivers->where('status', 'approved')->count() }}</dd><dd class="fl-strip__note">{{ $drivers->where('status', 'suspended')->count() }} suspended, {{ $applications->count() }} applying</dd></div>
+        <div class="fl-strip__cell"><dt>Drivers</dt><dd>{{ $drivers->where('status', 'approved')->count() }}</dd><dd class="fl-strip__note">{{ $drivers->where('status', 'suspended')->count() }} suspended, {{ $applicationsCount ?? $applications->count() }} applying</dd></div>
         <div class="fl-strip__cell"><dt>Vehicles</dt><dd>{{ $yard->count() }}</dd><dd class="fl-strip__note">{{ $yard->where('vehicle.owned_by', 'fleet')->count() }} held by the fleet</dd></div>
         <div class="fl-strip__cell"><dt>Online now</dt><dd>{{ $onlineNow }}</dd><dd class="fl-strip__note">online, paused or on a trip</dd></div>
         <div class="fl-strip__cell"><dt>Trips this week</dt><dd>{{ $tripsThisWeek }}</dd><dd class="fl-strip__note">completed since Monday</dd></div>
@@ -59,7 +59,7 @@
                                     <td class="fl-span"><x-eh.badge :tone="$row['state']['tone']">{{ $row['state']['label'] }}</x-eh.badge><span class="fl-sub">{{ $row['state']['note'] }}</span></td>
                                     <td data-label="Service">
                                         @if ($row['service']['on'] || $row['service']['km'])
-                                            <span class="fl-nowrap {{ $row['service']['overdue'] ? 'fl-sev--stop' : ($row['service']['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $row['service']['on']?->format('j M Y') }}{{ $row['service']['on'] && $row['service']['km'] ? ', ' : '' }}{{ $row['service']['km'] ? number_format($row['service']['km'], 0, '.', ' ').' km' : '' }}</span>
+                                            <span class="fl-nowrap {{ $row['service']['overdue'] ? 'fl-sev--stop' : ($row['service']['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $row['service']['on']?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}{{ $row['service']['on'] && $row['service']['km'] ? ', ' : '' }}{{ $row['service']['km'] ? number_format($row['service']['km'], 0, '.', ' ').' km' : '' }}</span>
                                             @if ($row['service']['overdue'])<span class="fl-sub">Overdue</span>@elseif ($row['service']['due_soon'])<span class="fl-sub">Due soon</span>@endif
                                         @else
                                             <span class="fl-dash">Not recorded</span>

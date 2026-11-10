@@ -1,6 +1,6 @@
 <x-business-layout title="Approvals" :scope="$account->displayName()">
     <x-slot:head>@include('business.partials.head')</x-slot:head>
-    @php($tz = config('ehail_business.timezone'))
+    @php($tz = \App\Domain\Business\BusinessClock::timezone())
     <div class="bz">
         <div class="bz-title">
             <div class="bz-title__text">

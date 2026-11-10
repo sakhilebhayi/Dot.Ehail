@@ -1,6 +1,7 @@
 // Words the passenger app shows, computed from API data. Pure (tested in node): no DOM here.
 
 import { formatMinor } from './money.js';
+import { displayTimezone, formatLocal, wallTimeToIso } from '../eh/time.js';
 
 const ICONS = { car: 'car', 'car-comfort': 'car-sedan', 'car-premium': 'car-sedan', 'car-xl': 'car-xl', accessible: 'accessibility', plane: 'luggage', road: 'route' };
 
@@ -81,7 +82,8 @@ export function requestLabel(option, laterAt = null) {
     if (!option) return 'Choose a ride';
     const total = formatMinor(option.fare.total.amount_minor, option.fare.total.currency || option.fare.currency);
     if (laterAt) {
-        const when = new Date(laterAt).toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        // The picked wall time is a time in the service area (D-1906), shown back exactly as picked.
+        const when = formatLocal(wallTimeToIso(laterAt) ?? laterAt, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
         return `Book ${option.category.name} for ${when}, ${total}`;
     }
     return `Request ${option.category.name}, ${total}`;
@@ -103,17 +105,20 @@ export function unavailableText(result, routingMessage = null) {
     }
 }
 
-/** datetime-local bounds for "Later", from dispatch's rules, in local time. */
+/** datetime-local bounds for "Later", from dispatch's rules, as wall times in the service area (D-1906). */
 export function laterBounds(rules, now = new Date()) {
     const min = new Date(now.getTime() + (rules.min_lead_minutes + 1) * 60000);
     const max = new Date(now.getTime() + rules.max_lead_days * 86400000);
-    const local = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    const local = (d) => {
+        const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: displayTimezone(), hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(d).map((x) => [x.type, x.value]));
+        return `${p.year}-${p.month}-${p.day}T${String(Number(p.hour) % 24).padStart(2, '0')}:${p.minute}`;
+    };
     return { min: local(min), max: local(max), minDate: min, maxDate: max };
 }
 
 export function laterError(value, rules, now = new Date()) {
     if (!value) return 'Choose a pickup date and time.';
-    const at = new Date(value);
+    const at = new Date(wallTimeToIso(value) ?? value);
     if (Number.isNaN(at.getTime())) return 'Choose a pickup date and time.';
     const { minDate, maxDate } = laterBounds(rules, now);
     if (at < new Date(minDate.getTime() - 60000)) return `Pick a time at least ${rules.min_lead_minutes} minutes from now.`;

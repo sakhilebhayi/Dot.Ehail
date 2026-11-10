@@ -56,6 +56,15 @@ final class TripSummary
             default => null,
         };
 
+        if ($split !== null) {
+            // The itemised walk from the pricing snapshot (D-1901): what the platform keeps, line by line, and the
+            // commission with the amount it is a percentage of. Shown only when it reconciles with the figures above.
+            $walk = array_values(array_filter((array) ($snapshot['lines'] ?? []), fn ($l) => is_array($l) && ($l['code'] ?? '') !== 'commission'));
+            $walkSum = array_sum(array_map(fn (array $l) => (int) $l['amount_minor'], $walk));
+            $split['fee_lines'] = $walkSum === -$split['deductions_minor'] ? $walk : null;
+            $split['commission_detail'] = collect((array) ($snapshot['deductions'] ?? []))->firstWhere('code', 'commission')['detail'] ?? null;
+        }
+
         $status = $ride->statusEnum();
 
         return [

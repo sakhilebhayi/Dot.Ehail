@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Driver\Support;
 
+use App\Support\Ui\LocalTime;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
@@ -16,6 +17,7 @@ final class Local
             return null;
         }
 
-        return Carbon::parse($value)->timezone((string) config('ehail_driver.timezone', 'Africa/Johannesburg'));
+        // One display zone for the platform (D-1906): the driver setting only narrows it, and an unknown zone falls back.
+        return Carbon::parse($value)->timezone(LocalTime::timezone((string) config('ehail_driver.timezone') ?: null));
     }
 }

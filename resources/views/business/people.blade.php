@@ -42,7 +42,7 @@
                                 </span>
                             </summary>
                             <div class="bz-rows__body">
-                                <p class="bz-hint" style="margin-bottom:var(--eh-space-4)">{{ $person->user?->email ?? $person->email }} · joined {{ $person->joined_at?->format('j M Y') }}</p>
+                                <p class="bz-hint" style="margin-bottom:var(--eh-space-4)">{{ $person->user?->email ?? $person->email }} · joined {{ $person->joined_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}</p>
                                 @if ($can['manage_people'] && ($member->role === 'account_admin' || $person->role === 'traveller'))
                                     <form class="bz-form" method="POST" action="{{ route('business.people.update', $person->id) }}">
                                         @csrf @method('PATCH')
@@ -102,7 +102,7 @@
                     <ul class="bz-queue">
                         @foreach ($invited as $person)
                             <li><div class="bz-queue__top">
-                                <div class="bz-queue__who"><p class="bz-queue__name">{{ $person->email }}</p><p class="bz-queue__meta">{{ $person->roleLabel() }} · expires {{ $person->invite_expires_at?->format('j M') }}</p></div>
+                                <div class="bz-queue__who"><p class="bz-queue__name">{{ $person->email }}</p><p class="bz-queue__meta">{{ $person->roleLabel() }} · expires {{ $person->invite_expires_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M') }}</p></div>
                                 @if ($can['manage_people'])<form method="POST" action="{{ route('business.people.destroy', $person->id) }}" style="margin:0">@csrf @method('DELETE')<x-eh.button type="submit" size="sm" variant="ghost">Withdraw</x-eh.button></form>@endif
                             </div></li>
                         @endforeach

@@ -46,6 +46,8 @@ Columns: lineage key + version, name, notes, `is_example`, status (draft | publi
 
 ```
 trip      = base + per_km x km + per_minute x minutes + waiting (each started minute after the free minutes)
+            km and minutes are billed in tenths (rounded half up) and each metered line carries its quantity
+            and rate, so a line is rate x quantity to the cent (D-1900)
 subtotal  = trip + booking_fee + zone fees (pickup and drop-off, once per fee code) + tolls (pass_through only)
 minimum   = max(0, minimum - subtotal)                          -> "Minimum fare" line
 demand    = (subtotal + minimum - tolls) x (multiplier - 1)      -> only when enabled; capped; shown; never on tolls

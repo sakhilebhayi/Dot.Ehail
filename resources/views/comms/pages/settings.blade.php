@@ -7,7 +7,7 @@
         'sms' => ['SMS', 'phone', $channels['sms']['available'] ? 'Available' : 'Not available', $channels['sms']['available'] ? 'go' : 'neutral'],
     ];
     $channelNames = ['push' => 'Push', 'email' => 'Email', 'sms' => 'SMS'];
-    $tz = config('ehail_pricing.default_timezone', 'Africa/Johannesburg');
+    $tz = \App\Support\Ui\LocalTime::timezone();
 @endphp
 <x-comms::shell :surface="$surface" title="Notification settings">
     <x-slot:header>

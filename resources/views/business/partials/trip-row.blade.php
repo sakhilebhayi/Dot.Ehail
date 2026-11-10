@@ -2,7 +2,7 @@
 @php
     $ride = $trip->ride;
     $when = $ride?->scheduled_for ?? $trip->booked_at ?? $trip->created_at;
-    $tz = config('ehail_business.timezone');
+    $tz = \App\Domain\Business\BusinessClock::timezone();
 @endphp
 <tr>
     <td class="bz-when" data-label="When">

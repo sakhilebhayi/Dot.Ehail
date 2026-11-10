@@ -96,7 +96,7 @@ class OperatorRidesTest extends TestCase
         $this->actingAs($operator)->get(route('ops.rides'))
             ->assertOk()
             ->assertSee('Estimated fare total, not collected')
-            ->assertSee('R 200.00')
+            ->assertSee('R200.00')
             ->assertDontSee('Revenue')
             ->assertDontSee('5,123.45')
             ->assertDontSee('7,234.56');

@@ -12,6 +12,7 @@ use App\Domain\Ops\Drivers\DriverFacts;
 use App\Domain\Ops\Drivers\DriverSuspension;
 use App\Domain\Ops\Drivers\SuspensionService;
 use App\Domain\Verification\Models\VerificationDocument;
+use App\Domain\Verification\VerificationService;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Ride;
@@ -60,7 +61,12 @@ class DriverController extends Controller
 
         $counts = DriverProfile::withoutGlobalScope('user')->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status');
 
-        return view('ops.drivers.index', compact('profiles', 'availability', 'completed', 'counts') + ['filters' => $validated]);
+        // The account badge derives from verification (D-1910): "Approved" only when every required document is
+        // approved and current; otherwise it says documents are pending or needed.
+        $verification = app(VerificationService::class);
+        $documents = $profiles->getCollection()->mapWithKeys(fn (DriverProfile $p) => [$p->user_id => $verification->driverStatus($p)['status']]);
+
+        return view('ops.drivers.index', compact('profiles', 'availability', 'completed', 'counts', 'documents') + ['filters' => $validated]);
     }
 
     public function show(Request $request, int $driver, OpsAccess $access, OpsAudit $audit, DriverFacts $facts, SuspensionService $suspensions): View
