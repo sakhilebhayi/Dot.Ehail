@@ -4,7 +4,7 @@
     <div class="ops">
         <header class="ops-head">
             <div class="ops-head__text">
-                <h1>Pricing</h1>
+                <h1>Service areas</h1>
                 <p class="ops-head__finding" @if($approx > 0) data-tone="caution" @endif>{{ $areas->where('is_active', true)->count() }} active service {{ \Illuminate\Support\Str::plural('area', $areas->where('is_active', true)->count()) }}, {{ $zones->where('is_active', true)->count() }} active {{ \Illuminate\Support\Str::plural('zone', $zones->where('is_active', true)->count()) }}.@if($approx > 0) {{ $approx }} {{ \Illuminate\Support\Str::plural('area', $approx) }} still use the approximate reference outline: review before launch.@endif Pickups outside every active area cannot be quoted.</p>
             </div>
         </header>

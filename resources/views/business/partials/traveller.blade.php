@@ -38,7 +38,7 @@
             @else
                 <ul class="bz-queue">
                     @foreach ($myApprovals as $a)
-                        <li><div class="bz-queue__top"><div class="bz-queue__who"><p class="bz-queue__name">{{ $a->dropoff_address ?? 'Ride' }}</p><p class="bz-queue__meta">{{ $a->created_at->setTimezone(config('ehail_business.timezone'))->format('j M H:i') }}</p></div><div class="bz-queue__amount"><x-eh.money :minor="$a->estimate_minor" :currency="$a->currency" /><br><x-eh.badge :tone="$a->statusTone()">{{ $a->statusLabel() }}</x-eh.badge></div></div></li>
+                        <li><div class="bz-queue__top"><div class="bz-queue__who"><p class="bz-queue__name">To {{ \App\Support\Ui\PlaceNames::for($a->dropoff_address, $a->dropoff_lat, $a->dropoff_lng) }}</p><p class="bz-queue__meta">{{ $a->created_at->setTimezone(config('ehail_business.timezone'))->format('j M H:i') }}</p></div><div class="bz-queue__amount"><x-eh.money :minor="$a->estimate_minor" :currency="$a->currency" /><br><x-eh.badge :tone="$a->statusTone()">{{ $a->statusLabel() }}</x-eh.badge></div></div></li>
                     @endforeach
                 </ul>
             @endif

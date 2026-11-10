@@ -206,3 +206,4 @@ initSheets({ reducedMotion });
 initFlashes();
 initScrollRegions();
 initServiceWorker();
+if (doc.querySelector('[data-eh-stopmap]')) import('./stop-map.js').then(({ initStopMaps }) => initStopMaps());

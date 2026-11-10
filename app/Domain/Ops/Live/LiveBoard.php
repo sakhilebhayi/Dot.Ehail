@@ -18,7 +18,7 @@ use Illuminate\Support\Collection;
  */
 class LiveBoard
 {
-    public function __construct(private readonly StuckRides $stuck, private readonly OpsAccess $access) {}
+    public function __construct(private readonly StuckRides $stuck, private readonly OpsAccess $access, private readonly IncidentPresenter $incidents) {}
 
     /** @return array<string, mixed> */
     public function payload(User $viewer): array
@@ -64,6 +64,8 @@ class LiveBoard
                 'drivers_stale' => $availability->filter(fn ($row) => $row->state !== DriverAvailability::ON_TRIP && $isStale($row))->count(),
                 'incidents' => $activeIncidents,
             ], fn ($value) => $value !== null),
+            // SOS and critical incidents take over the top of the board (R-46 polish, D-2202); safety readers only.
+            'takeover' => $showIncidents ? $this->incidents->takeover()->map(fn (SafetyIncident $i) => $this->incidents->rail($i))->values()->all() : [],
             'drivers' => $positionsAllowed ? $availability->map(fn (DriverAvailability $row) => [
                 'id' => $row->user_id,
                 'label' => $row->user?->name ?? 'Driver '.$row->user_id,

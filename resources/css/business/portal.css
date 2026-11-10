@@ -223,3 +223,9 @@
 @media (max-width: 767.98px), (pointer: coarse) {
     .bz-check { min-height: var(--eh-target); }
 }
+
+/* Approval cards carry a small map of the two stops beside their names (R-46 polish, D-2203) */
+.bz-queue > li { container-type: inline-size; }
+.bz-queue__place { display: grid; gap: var(--eh-space-3); grid-template-columns: minmax(0, 1fr); }
+.bz-queue__map { height: 8.5rem; }
+@container (min-width: 34rem) { .bz-queue__place { grid-template-columns: minmax(0, 1fr) minmax(0, 15rem); align-items: start; } }

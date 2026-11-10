@@ -1,0 +1,95 @@
+/*
+ * Route Line on the work surfaces (R-46 polish, D-2205): operations, business and fleet carry the same signage as the
+ * public and driver apps, with restraint. Four marks only, all from DESIGN.md:
+ *   1. the page title set in Barlow Condensed (highway lettering) over a route line: a hollow sign-green stop, the
+ *      line, and the yellow stop where you are;
+ *   2. the scope at the top of the side navigation as a direction sign: white lettering on sign green;
+ *   3. number plates as plate chips wherever a vehicle is named;
+ *   4. quiet empty states marked with a short line between two stops (the eh-empty motif at text size).
+ * Density stays: no new padding on tables, panels or queues.
+ */
+
+/* 1. Page titles */
+.ops-head, .bz-title, .fl-head { position: relative; padding-bottom: calc(var(--eh-space-4) + 4px); margin-bottom: var(--eh-space-5); }
+.ops-head::after, .bz-title::after, .fl-head::after {
+    content: ""; position: absolute; left: 7px; right: 7px; bottom: 5px; height: 4px;
+    border-radius: var(--eh-radius-pill); background: var(--eh-accent);
+}
+.ops-head::before, .bz-title::before, .fl-head::before {
+    content: ""; position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; z-index: 1;
+    border-radius: 50%; background: var(--eh-signal); box-shadow: inset 0 0 0 3px var(--eh-ink);
+}
+.ops-head > :first-child::after, .bz-title > :first-child::after, .fl-head > :first-child::after {
+    content: ""; position: absolute; left: 0; bottom: 0; width: 14px; height: 14px; z-index: 1;
+    border-radius: 50%; background: var(--eh-ground); box-shadow: inset 0 0 0 3px var(--eh-accent);
+}
+.ops-head h1, .bz-title h1, .fl-head h1 {
+    font-family: var(--eh-font-display); font-size: var(--eh-text-3xl); font-weight: 700; line-height: 1.02;
+    letter-spacing: -0.005em; text-wrap: balance;
+}
+.eh-pagehead > .fl-head { margin-bottom: 0; }
+/* Titles get the width of the header (a tariff name wrapped at 72 characters of 14px text, jury 55b); the finding
+   sentence under it keeps a reading measure. */
+.ops-head__text { max-width: none; flex: 1 1 30rem; }
+.ops-head__finding { max-width: 90ch; }
+/* Long titles (a tariff, an incident) keep their badges on the title's own line and wrap as a block */
+.ops-head h1 .eh-badge { font-family: var(--eh-font-ui); vertical-align: 0.3em; margin-left: var(--eh-space-1); letter-spacing: 0; }
+@media (max-width: 599px) {
+    .ops-head h1, .bz-title h1, .fl-head h1 { font-size: var(--eh-text-2xl); }
+}
+
+/* 2. The scope as a direction sign */
+.eh-side__scope { margin: var(--eh-space-1) 0 var(--eh-space-2) !important; padding: var(--eh-space-2) var(--eh-space-3); border-radius: var(--eh-radius-sm); background: var(--eh-accent); color: var(--eh-accent-ink); }
+.eh-side__scope strong { color: inherit; font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-weight: 700; line-height: 1.05; letter-spacing: 0.005em; }
+.eh-side__scope { font-size: var(--eh-text-xs); }
+/* The rule between the side navigation and the page runs the whole page, not just the first screen */
+@media (min-width: 1024px) {
+    .eh-side__nav, .js .eh-side__nav { border-right: 0; }
+    .eh-side__main { border-left: 1px solid var(--eh-rule); min-height: 100dvh; }
+}
+
+/* 3. Number plates: white plate, ink lettering and edge in both themes, like the real thing */
+.eh-plate {
+    display: inline-flex; align-items: center; min-height: 22px; padding: 0 6px; vertical-align: middle;
+    background: #ffffff; color: #0f1f19; border: 1.5px solid #0f1f19; border-radius: var(--eh-radius-sm);
+    font-family: var(--eh-font-display); font-weight: 700; font-size: var(--eh-text-md); line-height: 1; letter-spacing: 0.04em;
+    white-space: nowrap; font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* 4. Quiet empty states inside panels */
+.ops-none, .bz-empty-line, .fl-empty-line { display: flex; align-items: center; gap: var(--eh-space-3); }
+.ops-none::before, .bz-empty-line::before, .fl-empty-line::before {
+    content: ""; flex: none; width: 34px; height: 10px; background: var(--eh-rule-strong);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='10'%3E%3Ccircle cx='5' cy='5' r='3.5' fill='none' stroke='%23000' stroke-width='2'/%3E%3Cpath d='M10 5h14' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='29' cy='5' r='3.5' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E") no-repeat center / contain;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='10'%3E%3Ccircle cx='5' cy='5' r='3.5' fill='none' stroke='%23000' stroke-width='2'/%3E%3Cpath d='M10 5h14' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='29' cy='5' r='3.5' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E") no-repeat center / contain;
+}
+
+/* Small maps of a trip (business approvals, incidents): a frame the geo map mounts in, lazily */
+.eh-stopmap { position: relative; height: 9.5rem; border-radius: var(--eh-radius-sm); overflow: hidden; background: var(--eh-map-land); }
+.eh-stopmap [data-eh-map-canvas] { position: absolute; inset: 0; }
+.eh-stopmap--tall { height: 20rem; }
+.eh-stopmap__status { position: absolute; left: var(--eh-space-2); bottom: var(--eh-space-2); z-index: 500; margin: 0; padding: 2px 8px; border-radius: var(--eh-radius-sm); background: var(--eh-surface); color: var(--eh-ink-2); font-size: var(--eh-text-xs); }
+.eh-stopmap__status:empty { display: none; }
+
+/* Date and time fields (R-46 polish, D-2207): the browser's own picker stays (keyboard entry, screen readers, the
+   phone's wheel), dressed in the system: tabular figures, the Route Line calendar icon in place of the browser's
+   glyph, empty segments in the quiet ink. Lucide calendar, stroke from the ink token per theme. */
+:root { --eh-cal-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%233a4a43' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2v3'/%3E%3Cpath d='M16 2v3'/%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18'/%3E%3C/svg%3E"); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --eh-cal-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23b8c6be' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2v3'/%3E%3Cpath d='M16 2v3'/%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18'/%3E%3C/svg%3E"); } }
+:root[data-theme="dark"] { --eh-cal-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23b8c6be' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2v3'/%3E%3Cpath d='M16 2v3'/%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18'/%3E%3C/svg%3E"); }
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"]) {
+    font-variant-numeric: tabular-nums lining-nums; padding-right: var(--eh-space-3);
+    background-image: var(--eh-cal-icon); background-repeat: no-repeat; background-position: right 12px center; background-size: 18px;
+}
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-calendar-picker-indicator {
+    width: 22px; height: 22px; margin-right: -2px; opacity: 0; cursor: pointer;
+}
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-datetime-edit-fields-wrapper { padding: 0; }
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"]):invalid::-webkit-datetime-edit,
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"]):placeholder-shown::-webkit-datetime-edit { color: var(--eh-ink-3); }
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-datetime-edit-text { color: var(--eh-ink-3); padding: 0 1px; }
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-datetime-edit-day-field:focus,
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-datetime-edit-month-field:focus,
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-datetime-edit-year-field:focus,
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-datetime-edit-hour-field:focus,
+.eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-datetime-edit-minute-field:focus { background: var(--eh-signal); color: var(--eh-signal-ink); border-radius: 3px; }
