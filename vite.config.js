@@ -14,6 +14,8 @@ export default defineConfig({
                 'resources/css/driver.css',
                 'resources/js/driver/drive.js',
                 'resources/js/driver/pages.js',
+                'resources/css/comms/comms.css',
+                'resources/js/comms/comms.js',
             ],
             refresh: true,
         }),
