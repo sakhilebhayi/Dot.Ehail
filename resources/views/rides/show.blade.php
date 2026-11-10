@@ -69,7 +69,7 @@
     <div class="dot-card" style="padding:1rem 1.5rem;margin-bottom:1.25rem;">
         <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">
             Cancelled{{ $ride->cancelled_at ? ' '.$ride->cancelled_at->diffForHumans() : '' }}:
-            {{ \App\Enums\CancelReason::tryFrom($ride->cancel_reason)?->label() ?? $ride->cancel_reason }}@if($ride->cancel_note) — {{ $ride->cancel_note }}@endif
+            {{ \App\Enums\CancelReason::tryFrom($ride->cancel_reason)?->label() ?? $ride->cancel_reason }}@if($ride->cancel_note): {{ $ride->cancel_note }}@endif
         </p>
     </div>
     @endif
@@ -94,7 +94,7 @@
         <div style="display:flex;gap:2rem;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;">
             <div>
                 <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.35rem;">Passenger</div>
-                <div style="font-size:12px;color:#d4d4d8;">{{ $ride->passenger?->name ?? '—' }}</div>
+                <div style="font-size:12px;color:#d4d4d8;">{{ $ride->passenger?->name ?? 'Not given' }}</div>
             </div>
             <div>
                 <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.35rem;">Driver</div>
@@ -107,7 +107,7 @@
             </div>
             <div>
                 <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.35rem;">Vehicle</div>
-                <div style="font-size:12px;color:#d4d4d8;">{{ $ride->vehicle ? "{$ride->vehicle->make} {$ride->vehicle->model} ({$ride->vehicle->plate_number})" : '—' }}</div>
+                <div style="font-size:12px;color:#d4d4d8;">{{ $ride->vehicle ? "{$ride->vehicle->make} {$ride->vehicle->model} ({$ride->vehicle->plate_number})" : 'None' }}</div>
             </div>
             <div>
                 <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.35rem;">Fare</div>
@@ -294,7 +294,7 @@
             <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.5rem;">All ratings on this ride (operators only)</div>
             @foreach($ride->ratings as $entry)
             <div style="font-size:0.78rem;color:#a1a1aa;padding:0.2rem 0;">
-                {{ $entry->rater?->name ?? 'A user' }} rated the {{ $entry->rated_role }} <span class="metric-val" style="color:#f59e0b;">{{ $entry->rating }}/5</span>@if($entry->comment) — {{ $entry->comment }}@endif
+                {{ $entry->rater?->name ?? 'A user' }} rated the {{ $entry->rated_role }} <span class="metric-val" style="color:#f59e0b;">{{ $entry->rating }}/5</span>@if($entry->comment): {{ $entry->comment }}@endif
             </div>
             @endforeach
         </div>

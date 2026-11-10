@@ -1,6 +1,9 @@
 // What the live ride page says for each state of the ride (docs/R46_DISPATCH.md section 1). Pure; the server
 // renders the same words for the first paint (App\Domain\Passenger\RideText), the feed keeps them current.
 
+import { distanceWords } from '../eh/announce.js';
+import { haversine } from '../geo/geometry.js';
+
 export const STAGES = ['Finding a driver', 'Driver on the way', 'At pickup', 'On the trip', 'Arrived'];
 
 const HOLDS = ['driver_assigned', 'driver_arriving', 'driver_arrived', 'in_progress'];
@@ -89,6 +92,29 @@ export function announcement(previous, ride, position) {
     const { title, sub } = rideText(ride, position);
     const urgent = ['driver_arrived', 'cancelled_by_driver', 'expired', 'failed'].includes(ride.status);
     return { text: `${title}. ${sub}`.trim(), assertive: urgent };
+}
+
+/**
+ * The map in words (D-1704): what a sighted person reads off the map, for screen readers and anyone who cannot use
+ * it. Pickup, drop-off, and where the driver is relative to the next stop, with the arrival time when known.
+ */
+export function mapSummary(ride, position = null) {
+    if (!ride) return '';
+    const parts = [];
+    if (ride.pickup?.address) parts.push(`Pickup: ${shortPlace(ride.pickup.address)}.`);
+    if (ride.dropoff?.address) parts.push(`Drop-off: ${shortPlace(ride.dropoff.address)}.`);
+    const onTrip = ride.status === 'in_progress';
+    const target = onTrip ? ride.dropoff : ride.pickup;
+    if (holdsDriver(ride.status) && position && Number.isFinite(position.lat) && Number.isFinite(target?.lat)) {
+        const far = distanceWords(haversine(position, target));
+        const eta = Number.isFinite(position.eta_s) ? ` Arriving in ${position.eta_method && position.eta_method !== 'road' ? 'about ' : ''}${minutes(position.eta_s)} min.` : '';
+        parts.push(onTrip ? `You are ${far} from the drop-off in a straight line.${eta}` : `Your driver is ${far} from the pickup in a straight line.${eta}`);
+        if (position.stale) parts.push('The driver position is not current.');
+    } else if (holdsDriver(ride.status)) {
+        parts.push('The driver position is not available yet.');
+    }
+
+    return parts.join(' ');
 }
 
 /** The driver's rating as a band, never a decimal (docs/R46_SAFETY.md "Ratings"). */

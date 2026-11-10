@@ -114,7 +114,9 @@
     font-size: 0.75rem;
     line-height: 1.5;
     color: var(--eh-geo-ink-2);
-    background: color-mix(in srgb, var(--eh-geo-surface) 88%, transparent);
+    /* Solid (R-46 a11y, D-1708): a see-through panel over map tiles cannot promise contrast, and older Android
+       browsers without color-mix() drew no panel at all (light night text straight on the map). */
+    background: var(--eh-geo-surface);
     border-top-left-radius: var(--eh-radius-sm, 6px);
 }
 
@@ -236,7 +238,8 @@
 
 .eh-search__field:focus-within {
     border-color: var(--eh-geo-focus);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--eh-geo-focus) 25%, transparent);
+    /* A solid ring like every other focus in the kit (a 25% tint did not reach 3:1 against the surface). */
+    box-shadow: 0 0 0 2px var(--eh-geo-focus);
 }
 
 .eh-search__marker {

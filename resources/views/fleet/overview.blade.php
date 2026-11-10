@@ -23,12 +23,12 @@
     @endunless
 
     <dl class="fl-strip" style="--fl-cells: {{ $week ? 5 : 4 }}" aria-label="This fleet now">
-        <div class="fl-strip__cell"><dt>Drivers</dt><dd>{{ $drivers->where('status', 'approved')->count() }}</dd><span class="fl-strip__note">{{ $drivers->where('status', 'suspended')->count() }} suspended, {{ $applications->count() }} applying</span></div>
-        <div class="fl-strip__cell"><dt>Vehicles</dt><dd>{{ $yard->count() }}</dd><span class="fl-strip__note">{{ $yard->where('vehicle.owned_by', 'fleet')->count() }} held by the fleet</span></div>
-        <div class="fl-strip__cell"><dt>Online now</dt><dd>{{ $onlineNow }}</dd><span class="fl-strip__note">online, paused or on a trip</span></div>
-        <div class="fl-strip__cell"><dt>Trips this week</dt><dd>{{ $tripsThisWeek }}</dd><span class="fl-strip__note">completed since Monday</span></div>
+        <div class="fl-strip__cell"><dt>Drivers</dt><dd>{{ $drivers->where('status', 'approved')->count() }}</dd><dd class="fl-strip__note">{{ $drivers->where('status', 'suspended')->count() }} suspended, {{ $applications->count() }} applying</dd></div>
+        <div class="fl-strip__cell"><dt>Vehicles</dt><dd>{{ $yard->count() }}</dd><dd class="fl-strip__note">{{ $yard->where('vehicle.owned_by', 'fleet')->count() }} held by the fleet</dd></div>
+        <div class="fl-strip__cell"><dt>Online now</dt><dd>{{ $onlineNow }}</dd><dd class="fl-strip__note">online, paused or on a trip</dd></div>
+        <div class="fl-strip__cell"><dt>Trips this week</dt><dd>{{ $tripsThisWeek }}</dd><dd class="fl-strip__note">completed since Monday</dd></div>
         @if ($week)
-            <div class="fl-strip__cell"><dt>Earned this week</dt><dd><a href="{{ route('fleet.earnings') }}"><x-eh.money :minor="$week['totals']['net_minor']" :currency="$week['currency']" /></a></dd><span class="fl-strip__note">drivers' net after commission</span></div>
+            <div class="fl-strip__cell"><dt>Earned this week</dt><dd><a href="{{ route('fleet.earnings') }}"><x-eh.money :minor="$week['totals']['net_minor']" :currency="$week['currency']" /></a></dd><dd class="fl-strip__note">drivers' net after commission</dd></div>
         @endif
     </dl>
 

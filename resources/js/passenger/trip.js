@@ -8,7 +8,8 @@ import { el, watchConnection } from './dom.js';
 import { FeedClient } from './feed.js';
 import { formatMinor } from './money.js';
 import { bindCheckIns, bindShare, bindSos } from './safety.js';
-import { announcement, holdsDriver, isPreTrip, isSearching, isTerminal, rideText, stageIndex } from './status.js';
+import { createAnnouncer, etaCue } from '../eh/announce.js';
+import { announcement, mapSummary, holdsDriver, isPreTrip, isSearching, isTerminal, rideText, stageIndex } from './status.js';
 
 const data = island('pax-trip-data');
 const sheet = document.getElementById('pax-ride');
@@ -25,6 +26,8 @@ let clockTimer = null;
 let checkIns = null;
 let feed = null;
 let finalLoaded = false;
+let lastEta = null;
+const voice = createAnnouncer(doc, { polite: doc.getElementById('pax-live'), assertive: doc.getElementById('pax-live-assertive') });
 
 const currency = () => snapshot?.ride?.fare?.currency || 'ZAR';
 const money = (minor) => formatMinor(minor, currency());
@@ -108,6 +111,19 @@ function render() {
         if (holdsDriver(status) && !holdsDriver(lastStatus)) loadSafety();
         if (map) fitRide();
     }
+    // The arrival time, spoken when the minute changes but at most once a minute (sooner when two minutes or less).
+    if (holdsDriver(status) && status !== 'driver_arrived' && Number.isFinite(position?.eta_s)) {
+        const cue = etaCue(said ? null : lastEta, position.eta_s, Date.now(), { prefix: status === 'in_progress' ? 'Arriving at the drop-off in' : 'Your driver arrives in' });
+        if (cue) {
+            if (!said) voice.say(cue.text, { topic: 'eta' });
+            lastEta = cue;
+        }
+    } else {
+        lastEta = null;
+    }
+    const summary = doc.getElementById('pax-map-summary');
+    const words = mapSummary(ride, position);
+    if (summary && summary.textContent !== words) summary.textContent = words;
     lastStatus = status;
 
     // Check-ins only while a trip is on.

@@ -24,7 +24,10 @@
     </x-slot:safety>
 
     <div class="pax-stage" data-pax-trip>
-        <x-eh.map-frame id="pax-map" label="Map: your ride" :bleed="true" height="100%" message="The map loads after the ride details." />
+        <x-eh.map-frame id="pax-map" label="Map: your ride" :bleed="true" height="100%" message="The map loads after the ride details." aria-describedby="pax-map-summary">
+            {{-- The map in words for screen readers (D-1704); the sheet also shows the stops and the arrival time. --}}
+            <p class="eh-sr-only" id="pax-map-summary"></p>
+        </x-eh.map-frame>
 
         <x-eh.sheet id="pax-ride" snap="half" class="pax-sheet">
             <p class="pax-net" data-pax-net hidden><x-eh.icon name="wifi-off" /><span data-pax-net-text>Connection lost. Showing the last update; we keep trying.</span></p>
@@ -78,7 +81,7 @@
             {{-- Trip PIN --}}
             <section class="pax-pincode" data-panel="pin" @if(empty($r['pin'])) hidden @endif aria-labelledby="pax-pin-label">
                 <p class="pax-pincode__label" id="pax-pin-label">Your trip PIN</p>
-                <p class="pax-pincode__digits" data-pax-pin aria-label="Trip PIN {{ implode(' ', str_split((string) ($r['pin'] ?? ''))) }}">
+                <p class="pax-pincode__digits" data-pax-pin role="img" aria-label="Trip PIN {{ implode(' ', str_split((string) ($r['pin'] ?? ''))) }}">
                     @foreach (str_split((string) ($r['pin'] ?? '')) as $digit)<span class="pax-pincode__digit" aria-hidden="true">{{ $digit }}</span>@endforeach
                 </p>
                 <p class="pax-pincode__help">Say this PIN to the driver when you get in. The trip cannot start without it.</p>

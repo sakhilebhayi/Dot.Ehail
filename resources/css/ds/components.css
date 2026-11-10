@@ -306,6 +306,7 @@ button.eh-row { width: 100%; border: 0; background: none; text-align: left; curs
     font-weight: 700; font-size: calc(var(--eh-avatar) * 0.38); line-height: 1; overflow: hidden; user-select: none;
 }
 .eh-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.eh-avatar[data-initials]::before { content: attr(data-initials); }
 :root[data-theme="dark"] .eh-avatar { background: hsl(var(--eh-avatar-hue, 150) 30% 24%); color: hsl(var(--eh-avatar-hue, 150) 55% 86%); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .eh-avatar { background: hsl(var(--eh-avatar-hue, 150) 30% 24%); color: hsl(var(--eh-avatar-hue, 150) 55% 86%); } }
 

@@ -7,12 +7,12 @@
 /* ------------------------------------------------------------------ stage: map behind, sheet in front */
 .pax-stage {
     position: relative;
-    height: calc(100dvh - var(--eh-topbar));
+    height: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px));
     overflow: hidden;
     background: var(--eh-map-land);
 }
 @media (max-width: 767.98px) {
-    .pax-stage { height: calc(100dvh - var(--eh-topbar) - var(--eh-tabbar) - env(safe-area-inset-bottom, 0px)); }
+    .pax-stage { height: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-tabbar) - env(safe-area-inset-bottom, 0px)); }
 }
 .pax-stage > .eh-mapframe { position: absolute; inset: 0; min-height: 0; }
 .pax-stage .eh-mapframe__canvas.eh-map { position: absolute; inset: 0; height: auto; min-height: 0; }
@@ -30,13 +30,13 @@
 /* At half height the lower half of the sheet hangs below the screen; end the scrolling body at the visible edge so
    everything in it can be scrolled into view without expanding the sheet. */
 @media (max-width: 1023.98px) {
-    .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - var(--eh-space-4)); }
-    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - var(--eh-tabbar) - var(--eh-space-4)); }
+    .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-space-4)); }
+    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-tabbar) - var(--eh-space-4)); }
     .pax-stage .eh-sheet[data-snap="half"] .eh-sheet__body { margin-bottom: calc(var(--pax-sheet-h) / 2); }
     .pax-stage .eh-sheet[data-snap="peek"] .eh-sheet__body { margin-bottom: calc(var(--pax-sheet-h) - var(--eh-sheet-peek)); }
 }
 @media (min-width: 768px) and (max-width: 1023.98px) {
-    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - var(--eh-space-4)); }
+    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-space-4)); }
 }
 
 /* The pin people move the map under to set the pickup exactly. */

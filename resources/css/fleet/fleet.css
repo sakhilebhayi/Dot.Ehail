@@ -31,7 +31,7 @@
 .fl-strip dt { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
 .fl-strip dd { margin: 0; font-family: var(--eh-font-display); font-weight: 700; font-size: var(--eh-text-2xl); line-height: 1.05; font-variant-numeric: tabular-nums lining-nums; color: var(--eh-ink); }
 .fl-strip dd .eh-money { font-size: inherit; font-family: inherit; }
-.fl-strip__note { font-size: var(--eh-text-xs); color: var(--eh-ink-3); }
+.fl-strip dd.fl-strip__note { font-family: inherit; font-weight: 400; font-size: var(--eh-text-xs); line-height: 1.4; color: var(--eh-ink-3); }
 .fl-strip__cell a { color: inherit; text-decoration: none; }
 .fl-strip__cell a:hover { text-decoration: underline; text-underline-offset: 3px; }
 

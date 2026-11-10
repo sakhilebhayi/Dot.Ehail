@@ -17,7 +17,7 @@
         @vite(['resources/css/driver.css'])
     </x-slot:head>
     <x-slot:state>
-        <section class="eh-statebar" data-state="offline" aria-labelledby="drive-state-title">
+        <section class="eh-statebar" data-state="offline" aria-label="Driver status">
             <x-eh.icon name="document-check" class="eh-statebar__mark" />
             <div class="eh-statebar__text">
                 <h1 class="eh-statebar__title" id="drive-state-title">{{ $approved ? 'Almost ready' : 'Application in review' }}</h1>

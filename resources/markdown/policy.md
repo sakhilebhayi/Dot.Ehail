@@ -8,11 +8,11 @@ BluePin Inc is the responsible party for the personal information Dot.Ehail proc
 
 ## 2. What we collect
 
-- **Account information** — your name, email address, and password (stored as a salted hash, never in plain text), via your Dot Ecosystem account.
-- **Operator and driver information** — if you run or drive for an e-hailing business on Dot.Ehail, your driver profile, vehicle registration, and onboarding details.
-- **Trip data** — ride requests, dispatch assignments, real-time trip tracking, fares, and ratings for trips taken on an operator's Dot.Ehail-powered service.
-- **Location data** — trip origin, destination, and route while a ride is in progress, needed to dispatch drivers and track trips.
-- **Technical information** — IP address, browser and device information, and session activity, collected automatically for security and to keep you signed in.
+- **Account information**: your name, email address, and password (stored as a salted hash, never in plain text), via your Dot Ecosystem account.
+- **Operator and driver information**: if you run or drive for an e-hailing business on Dot.Ehail, your driver profile, vehicle registration, and onboarding details.
+- **Trip data**: ride requests, dispatch assignments, real-time trip tracking, fares, and ratings for trips taken on an operator's Dot.Ehail-powered service.
+- **Location data**: trip origin, destination, and route while a ride is in progress, needed to dispatch drivers and track trips.
+- **Technical information**: IP address, browser and device information, and session activity, collected automatically for security and to keep you signed in.
 
 ## 3. Why we process your information
 
@@ -30,7 +30,7 @@ When you use another Dot Ecosystem platform to sign in to Dot.Ehail (or vice ver
 
 ## 5. Sharing between riders and drivers
 
-Taking a trip necessarily shares limited information between rider and driver — for example, a driver's name, vehicle, and location during an active trip, and a rider's pickup location. This is shared only for the duration needed to complete the trip.
+Taking a trip necessarily shares limited information between rider and driver, for example, a driver's name, vehicle, and location during an active trip, and a rider's pickup location. This is shared only for the duration needed to complete the trip.
 
 ## 6. Cookies
 

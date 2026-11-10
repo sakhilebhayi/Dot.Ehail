@@ -1,6 +1,6 @@
 _Last updated: 6 August 2026_
 
-This page explains the cookies Dot.Ehail actually sets. There aren't many — Dot.Ehail doesn't run advertising or analytics trackers, so every cookie below exists to make the platform work, not to profile you or serve you ads.
+This page explains the cookies Dot.Ehail actually sets. There aren't many. Dot.Ehail doesn't run advertising or analytics trackers, so every cookie below exists to make the platform work, not to profile you or serve you ads.
 
 ## Cookies we set
 
@@ -16,7 +16,7 @@ Dot.Ehail does not use advertising cookies, third-party analytics or tracking pi
 
 ## Cookies set by connected platforms
 
-If you use single sign-on to move between Dot.Ehail and another Dot Ecosystem platform, that platform may set its own cookies once you land on it — those are covered by that platform's own Cookie Policy, not this one.
+If you use single sign-on to move between Dot.Ehail and another Dot Ecosystem platform, that platform may set its own cookies once you land on it. Those are covered by that platform's own Cookie Policy, not this one.
 
 ## Managing cookies
 

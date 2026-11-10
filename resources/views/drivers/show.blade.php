@@ -69,7 +69,7 @@
             @foreach($driverProfile->documents as $document)
             <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
                 <a href="{{ route('drivers.documents.show', $document) }}" style="font-size:12px;color:#38bdf8;text-decoration:none;">
-                    {{ ucfirst(str_replace('_', ' ', $document->type)) }} — {{ $document->original_filename }}
+                    {{ ucfirst(str_replace('_', ' ', $document->type)) }}: {{ $document->original_filename }}
                 </a>
                 @if(auth()->id() === $driverProfile->user_id)
                 <form method="POST" action="{{ route('drivers.documents.destroy', $document) }}" onsubmit="return confirm('Delete this document?');">

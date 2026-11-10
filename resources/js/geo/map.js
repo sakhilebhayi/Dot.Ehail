@@ -33,6 +33,27 @@ function driverIcon() {
  * Mounts a map in el. config is the /geo/config payload. Returns a controller; every method is safe to call in
  * any order. Throws only if el is missing.
  */
+/**
+ * Reduced motion for every caller (R-46 a11y, D-1705): Leaflet animates panTo, setView and fitBounds unless each
+ * call says otherwise, and callers outside geo (booking, trip, fares, ops) do not all say it. On this map every
+ * move lands at once instead.
+ */
+export function stillMap(map) {
+    for (const name of ['setView', 'panTo', 'fitBounds', 'panBy', 'setZoom']) {
+        const original = map[name].bind(map);
+        const at = name === 'setView' ? 2 : 1;
+        map[name] = (...args) => {
+            args[at] = { ...(args[at] || {}), animate: false };
+
+            return original(...args);
+        };
+    }
+    map.flyTo = (center, zoom) => map.setView(center, zoom);
+    map.flyToBounds = (bounds, options) => map.fitBounds(bounds, options);
+
+    return map;
+}
+
 export function createMap(el, config, { center, zoom, onMapClick } = {}) {
     if (!el) {
         throw new Error('mountMap needs an element');
@@ -59,6 +80,7 @@ export function createMap(el, config, { center, zoom, onMapClick } = {}) {
     });
 
     map.attributionControl.setPrefix(false);
+    if (!motion) stillMap(map);
 
     const tiles = L.tileLayer(config.tiles.url, {
         maxZoom: config.tiles.maxZoom,
