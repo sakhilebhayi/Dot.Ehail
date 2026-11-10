@@ -20,8 +20,8 @@
     @if ($showRoute ?? true)
     <td data-label="Route">
         <div class="bz-route">
-            <span><i class="bz-stop bz-stop--pickup" aria-hidden="true"></i><span class="eh-sr-only">From </span>{{ \Illuminate\Support\Str::limit($ride?->pickup_address ?? 'Pickup', 48) }}</span>
-            <span><i class="bz-stop bz-stop--dropoff" aria-hidden="true"></i><span class="eh-sr-only">To </span>{{ \Illuminate\Support\Str::limit($ride?->dropoff_address ?? 'Drop-off', 48) }}</span>
+            <span><i class="bz-stop bz-stop--pickup" aria-hidden="true"></i><span class="eh-sr-only">From </span>{{ \Illuminate\Support\Str::limit(\App\Support\Ui\PlaceNames::for($ride?->pickup_address, $ride?->pickup_lat, $ride?->pickup_lng), 48) }}</span>
+            <span><i class="bz-stop bz-stop--dropoff" aria-hidden="true"></i><span class="eh-sr-only">To </span>{{ \Illuminate\Support\Str::limit(\App\Support\Ui\PlaceNames::for($ride?->dropoff_address, $ride?->dropoff_lat, $ride?->dropoff_lng), 48) }}</span>
         </div>
     </td>
     @endif

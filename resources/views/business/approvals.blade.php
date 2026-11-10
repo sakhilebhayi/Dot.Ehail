@@ -41,7 +41,7 @@
                                     <tr>
                                         <td data-label="Asked">{{ $a->created_at->setTimezone($tz)->format('j M, H:i') }}</td>
                                         <td data-label="Rider"><span>{{ $a->riderLabel() }}<span class="bz-table__sub">{{ $a->purpose ?: 'No purpose given' }}</span></span></td>
-                                        <td data-label="Trip"><div class="bz-route"><span><i class="bz-stop bz-stop--pickup" aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit($a->pickup_address ?? 'Pickup', 40) }}</span><span><i class="bz-stop bz-stop--dropoff" aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit($a->dropoff_address ?? 'Drop-off', 40) }}</span></div></td>
+                                        <td data-label="Trip"><div class="bz-route"><span><i class="bz-stop bz-stop--pickup" aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit(\App\Support\Ui\PlaceNames::for($a->pickup_address, $a->pickup_lat, $a->pickup_lng), 48) }}</span><span><i class="bz-stop bz-stop--dropoff" aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit(\App\Support\Ui\PlaceNames::for($a->dropoff_address, $a->dropoff_lat, $a->dropoff_lng), 48) }}</span></div></td>
                                         <td data-label="Outcome"><span><x-eh.badge :tone="$a->statusTone()">{{ $a->statusLabel() }}</x-eh.badge>@if ($a->decision_note)<span class="bz-table__sub">{{ $a->decision_note }}</span>@endif</span></td>
                                         <td class="num" data-label="Fare asked"><x-eh.money :minor="$a->estimate_minor" :currency="$a->currency" /></td>
                                     </tr>
@@ -61,7 +61,7 @@
                         @foreach ($mine as $a)
                             <li>
                                 <div class="bz-queue__top">
-                                    <div class="bz-queue__who"><p class="bz-queue__name">{{ $a->dropoff_address ?? 'Ride' }}</p><p class="bz-queue__meta">Asked {{ $a->created_at->setTimezone($tz)->format('H:i') }}</p></div>
+                                    <div class="bz-queue__who"><p class="bz-queue__name">To {{ \App\Support\Ui\PlaceNames::for($a->dropoff_address, $a->dropoff_lat, $a->dropoff_lng) }}</p><p class="bz-queue__meta">Asked {{ $a->created_at->setTimezone($tz)->format('H:i') }}</p></div>
                                     <div class="bz-queue__amount"><x-eh.money :minor="$a->estimate_minor" :currency="$a->currency" /><span class="bz-queue__lapse">Lapses at {{ $a->decide_by->setTimezone($tz)->format('H:i') }}</span></div>
                                 </div>
                                 <form method="POST" action="{{ route('business.approvals.withdraw', $a->id) }}" style="margin:0">@csrf<x-eh.button type="submit" size="sm" variant="ghost">Withdraw</x-eh.button></form>

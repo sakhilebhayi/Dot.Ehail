@@ -29,7 +29,7 @@
                         <p class="ops-note" style="padding:var(--eh-space-6);text-align:center">PDF files open in a separate tab, in the browser's own viewer.<br><x-eh.button size="sm" :href="$fileUrl" target="_blank" rel="noopener" icon="external" style="margin-top:var(--eh-space-3)">Open the PDF</x-eh.button></p>
                     @endif
                 </div>
-                <p class="ops-note ops-note--small" style="margin-top:var(--eh-space-2)">Images were re-encoded at upload (location and camera metadata removed). Files are not virus-scanned (no scanner on the host).</p>
+                <p class="ops-note ops-note--small" style="margin-top:var(--eh-space-2)">Open files with care: uploads are checked for type and size but not scanned for viruses. Photos were re-saved at upload, which removed their location and camera details.</p>
             </section>
 
             <div class="ops-stack">

@@ -8,6 +8,7 @@ use App\Domain\Business\Models\BusinessMember;
 use App\Domain\Business\Notifications\ApprovalDecidedNotification;
 use App\Domain\Business\Notifications\ApprovalRequestedNotification;
 use App\Support\Ui\MoneyFormatter;
+use App\Support\Ui\PlaceNames;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
@@ -35,10 +36,10 @@ class Approvals
             'category_code' => $trip->category,
             'pickup_lat' => $trip->pickupLat,
             'pickup_lng' => $trip->pickupLng,
-            'pickup_address' => $trip->pickupAddress,
+            'pickup_address' => $this->label($trip->pickupAddress, $trip->pickupLat, $trip->pickupLng),
             'dropoff_lat' => $trip->dropoffLat,
             'dropoff_lng' => $trip->dropoffLng,
-            'dropoff_address' => $trip->dropoffAddress,
+            'dropoff_address' => $this->label($trip->dropoffAddress, $trip->dropoffLat, $trip->dropoffLng),
             'estimate_minor' => $trip->fareMinor,
             'currency' => $trip->currency,
             'purpose' => $trip->purpose,
@@ -189,5 +190,14 @@ class Approvals
         $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
 
         return 2 * $r * asin(min(1, sqrt($a)));
+    }
+
+    /**
+     * The words an approver reads: the address the booker chose, or for a point pinned on the map a name looked up
+     * once now (cached by the geocoder), else the zone it lies in. Never the bare coordinates (R-46 polish, D-2201).
+     */
+    private function label(?string $address, float $lat, float $lng): string
+    {
+        return PlaceNames::isPinned($address) ? app(PlaceNames::class)->name($address, $lat, $lng, lookup: true) : (string) $address;
     }
 }

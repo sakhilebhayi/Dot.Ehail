@@ -273,7 +273,7 @@ class IncidentService
                 ['what' => 'Safety incident '.$incident->reference.' recorded', 'status' => 'done'],
                 ['what' => $incident->context ? 'Trip, driver, vehicle and last known locations saved with the incident' : 'Report saved (no trip attached)', 'status' => 'done'],
                 ...$rows->map(fn (IncidentNotification $n) => [
-                    'what' => $n->recipient_label,
+                    'what' => $n->displayLabel(),
                     'channel' => $n->channel,
                     'status' => $n->status,
                     'status_text' => $statusText[$n->status] ?? $n->status,

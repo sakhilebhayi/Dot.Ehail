@@ -214,3 +214,4 @@ document.addEventListener('change', (event) => {
     const out = input.closest('[data-eh-file]')?.querySelector('[data-eh-file-name]');
     if (out) out.textContent = input.files?.length ? [...input.files].map((f) => f.name).join(', ') : 'No file chosen';
 });
+if (doc.querySelector('[data-eh-stopmap]')) import('./stop-map.js').then(({ initStopMaps }) => initStopMaps());

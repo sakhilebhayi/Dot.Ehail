@@ -11,6 +11,7 @@ use App\Domain\Ledger\Account;
 use App\Domain\Ledger\Ledger;
 use App\Domain\Ledger\Models\LedgerEntry;
 use App\Models\Ride;
+use App\Support\Ui\PlaceNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
@@ -69,8 +70,9 @@ class Statements
                 'cost_centre' => $trip?->cost_centre,
                 'purpose' => $trip?->purpose,
                 'category' => $trip?->category_code,
-                'pickup' => $ride?->pickup_address,
-                'dropoff' => $ride?->dropoff_address,
+                // Words, never "Pinned location (lat, lng)" (R-46 polish, D-2201).
+                'pickup' => $ride ? PlaceNames::for($ride->pickup_address, $ride->pickup_lat, $ride->pickup_lng) : null,
+                'dropoff' => $ride ? PlaceNames::for($ride->dropoff_address, $ride->dropoff_lat, $ride->dropoff_lng) : null,
                 'description' => $charge === null ? (string) $entry->journal?->reason : null,
                 'amount_minor' => (int) $entry->debit_minor,
                 'tax_minor' => (int) ($charge?->tax_minor ?? 0),

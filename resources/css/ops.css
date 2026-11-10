@@ -231,3 +231,73 @@ a.ops-queue__title:hover { text-decoration: underline; text-underline-offset: 3p
 
 /* Phones: tables keep their columns and scroll sideways inside their panel instead of squeezing every cell */
 @media (max-width: 599px) { .ops-tablewrap .ops-table { min-width: 34rem; } }
+
+/* Emergencies take over the live board (R-46 polish, D-2202): a rail of incident cards above the figures. Stop red on
+   a pale stop tint; the beacon pulses only for people who allow motion; the cards stay readable in both themes. */
+.ops-sos { margin: 0 0 var(--ops-gap); padding: var(--eh-space-4) var(--eh-space-5); border-radius: var(--eh-radius); background: var(--eh-stop-bg); color: var(--eh-ink); box-shadow: inset 0 0 0 2px var(--eh-stop); }
+.ops-sos[hidden] { display: none; }
+.ops-sos__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--eh-space-2) var(--eh-space-4); margin-bottom: var(--eh-space-3); }
+.ops-sos__title { margin: 0; display: flex; align-items: center; gap: var(--eh-space-2); font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-weight: 700; line-height: 1.1; color: var(--eh-stop); --eh-icon: 24px; }
+.ops-sos__sound { display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-2) var(--eh-space-3); }
+.ops-sos__hint { max-width: 36ch; color: var(--eh-ink-2); font-size: var(--eh-text-xs); }
+.ops-sos [data-sos-sound][aria-pressed="true"] { background: var(--eh-ink); color: var(--eh-ground); border-color: var(--eh-ink); }
+.ops-sos__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--eh-space-2); }
+.ops-sos__card { display: grid; grid-template-columns: 14px minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: var(--eh-space-2) var(--eh-space-4); align-items: center; padding: var(--eh-space-3) var(--eh-space-4); border-radius: var(--eh-radius-sm); background: var(--eh-surface); }
+.ops-sos__card p { margin: 0; }
+.ops-sos__beacon { width: 14px; height: 14px; border-radius: 50%; background: var(--eh-stop-fill); align-self: start; margin-top: 4px; }
+.ops-sos__card:not([data-unowned]) .ops-sos__beacon { background: var(--eh-surface); box-shadow: inset 0 0 0 3px var(--eh-stop); }
+.ops-sos__what a { color: var(--eh-ink); font-weight: 700; font-size: var(--eh-text-md); text-decoration: none; }
+.ops-sos__what a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ops-sos__who { color: var(--eh-ink-2); font-size: var(--eh-text-sm); display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--eh-space-2); margin-top: 2px !important; }
+.ops-sos__where { display: flex; align-items: flex-start; gap: var(--eh-space-1); font-weight: 600; margin-top: var(--eh-space-1) !important; --eh-icon: 16px; }
+.ops-sos__where .eh-icon { color: var(--eh-stop); margin-top: 2px; flex: none; }
+.ops-sos__owner { font-weight: 700; }
+.ops-sos__card[data-unowned] .ops-sos__owner { color: var(--eh-stop); }
+.ops-sos__level, .ops-sos__time { color: var(--eh-ink-2); font-size: var(--eh-text-xs); }
+@media (prefers-reduced-motion: no-preference) {
+    .ops-sos__card[data-unowned] .ops-sos__beacon { animation: ops-beacon 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+    .ops-marker--sos { animation: ops-beacon 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+}
+@keyframes ops-beacon {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--eh-stop) 55%, transparent); }
+    70% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--eh-stop) 0%, transparent); }
+    100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--eh-stop) 0%, transparent); }
+}
+@media (max-width: 899px) {
+    .ops-sos__card { grid-template-columns: 14px minmax(0, 1fr); }
+    .ops-sos__state, .ops-sos__card > .eh-btn { grid-column: 2; }
+    .ops-sos__card > .eh-btn { justify-self: start; }
+}
+.ops-marker--sos { width: 22px; height: 22px; background: var(--eh-stop-fill); border: 3px solid #ffffff; box-shadow: 0 0 0 1px rgb(15 31 25 / 0.5); }
+.ops-dot--sos { background: var(--eh-stop-fill); }
+.ops-dot--dropoff { background: var(--eh-map-dropoff); }
+.ops-dot--trail { width: 16px; height: 0; border: 0; border-top: 3px dotted var(--eh-ink-2); border-radius: 0; box-shadow: none; }
+
+/* Incident ownership: who owns it, the escalation level, and the action that ends "nobody" */
+.ops-own { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--eh-space-3) var(--eh-space-6); margin: 0 0 var(--eh-space-4); padding: var(--eh-space-4) var(--eh-space-5); border-radius: var(--eh-radius); background: var(--eh-surface); }
+.ops-own[data-tone="stop"] { background: var(--eh-stop-bg); box-shadow: inset 0 0 0 2px var(--eh-stop); }
+.ops-own[data-tone="caution"] { background: var(--eh-caution-bg); }
+.ops-own[data-tone="go"] { background: var(--eh-go-bg); }
+.ops-own__text { display: grid; gap: var(--eh-space-1); min-width: 0; }
+.ops-own__who { margin: 0; display: flex; align-items: center; gap: var(--eh-space-2); font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-weight: 700; line-height: 1.1; --eh-icon: 22px; }
+.ops-own[data-tone="stop"] .ops-own__who { color: var(--eh-stop); }
+.ops-own__level { margin: 0; color: var(--eh-ink-2); font-size: var(--eh-text-sm); }
+.ops-own__actions { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); align-items: center; }
+.ops-own__actions form { margin: 0; }
+@media (prefers-reduced-motion: no-preference) {
+    .ops-own[data-tone="stop"] .ops-own__who .eh-icon { animation: ops-blink 1.6s steps(2, jump-none) infinite; }
+}
+@keyframes ops-blink { 50% { opacity: 0.35; } }
+
+/* Where an incident is: words first, the map beside them, GPS last for the emergency services */
+.ops-where { display: grid; gap: var(--eh-space-4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .ops-where { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: start; } }
+.ops-where__words { display: grid; gap: var(--eh-space-2); align-content: start; }
+.ops-where__words p { margin: 0; }
+.ops-where__place { display: flex; align-items: flex-start; gap: var(--eh-space-2); font-size: var(--eh-text-lg); font-weight: 700; line-height: 1.3; --eh-icon: 20px; }
+.ops-where__place .eh-icon { color: var(--eh-stop); flex: none; margin-top: 2px; }
+.ops-where__rel { color: var(--eh-ink); }
+.ops-where__meta { color: var(--eh-ink-2); font-size: var(--eh-text-sm); }
+.ops-where__gps { color: var(--eh-ink-2); font-size: var(--eh-text-xs); }
+.ops-where__gps .num { font-variant-numeric: tabular-nums; color: var(--eh-ink); font-weight: 600; user-select: all; }
+.ops-where + .ops-legend, .ops-where ~ .ops-legend { margin-top: var(--eh-space-3); }

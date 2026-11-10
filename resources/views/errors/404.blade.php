@@ -5,11 +5,7 @@
 
 @section('actions')
     <x-eh.button :href="url('/')" icon="home">Go home</x-eh.button>
-    @auth
-    <x-eh.button variant="secondary" :href="Route::has('home') ? route('home') : route('dashboard')">Open the app</x-eh.button>
-    @else
-        @if (Route::has('login'))
-    <x-eh.button variant="secondary" :href="route('login')">Sign in</x-eh.button>
-        @endif
-    @endauth
+    @if (Route::has('fares.calculator'))
+    <x-eh.button variant="secondary" :href="route('fares.calculator')" icon="receipt">Check a fare</x-eh.button>
+    @endif
 @endsection
