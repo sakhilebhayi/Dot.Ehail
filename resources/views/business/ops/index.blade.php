@@ -23,7 +23,7 @@
                             <tr>
                                 <td><a class="eh-link" href="{{ route('ops.business.show', $a->id) }}">{{ $a->displayName() }}</a>@if ($a->trading_name)<span class="bz-table__sub">{{ $a->legal_name }}</span>@endif</td>
                                 <td>{{ $a->registration_number }}</td>
-                                <td>{{ $a->created_at->format('j M Y') }}</td>
+                                <td>{{ $a->created_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}</td>
                                 <td><x-eh.badge :tone="$a->statusTone()">{{ $a->statusLabel() }}</x-eh.badge></td>
                                 <td class="num">{{ $a->members_count }}</td>
                                 <td class="num"><x-eh.money :minor="(int) $a->credit_limit_minor" :currency="$a->currency" /></td>

@@ -16,7 +16,7 @@
         $stuck => ['No change for '.Durations::short($elapsed).' in this state. It is past the limit.', 'stop'],
         $status->isAwaitingDriver() && $ride->search_started_at => ['Looking for a driver for '.Durations::short($elapsed).'; '.$ride->offers_sent.' '.\Illuminate\Support\Str::plural('offer', $ride->offers_sent).' sent.', 'caution'],
         $holdsDriver => [$status->label().' for '.Durations::short($elapsed).'.', null],
-        default => [$status->label().($ride->updated_at ? ', last changed '.$ride->updated_at->format('d M Y H:i') : '').'.', null],
+        default => [$status->label().($ride->updated_at ? ', last changed '.$ride->updated_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') : '').'.', null],
     };
     $fmtComponents = fn ($components) => collect(is_array($components) ? $components : [])->filter(fn ($c) => is_array($c) && isset($c['amount_minor']));
 @endphp
@@ -62,7 +62,7 @@
                                 <li data-kind="{{ $words['kind'] }}" @if($event->sequence === $lastStatusSeq) data-current aria-current="step" @endif>
                                     <span class="ops-route__stop" aria-hidden="true"></span>
                                     <span class="ops-route__what">{{ $words['what'] }}</span>
-                                    <time class="ops-route__when" datetime="{{ $event->occurred_at->toIso8601String() }}">{{ $event->occurred_at->format('d M H:i:s') }}</time>
+                                    <time class="ops-route__when" datetime="{{ $event->occurred_at->toIso8601String() }}">{{ $event->occurred_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i:s') }}</time>
                                     @if ($words['detail'])<span class="ops-route__detail">{{ $words['detail'] }}</span>@endif
                                 </li>
                             @endforeach
@@ -84,8 +84,8 @@
                                         <td class="num">{{ $offer->pickup_distance_m !== null ? number_format($offer->pickup_distance_m / 1000, 1).' km' : '-' }}</td>
                                         <td class="num">{{ $offer->pickup_eta_s !== null ? Durations::short($offer->pickup_eta_s) : '-' }}<span class="sub">{{ str_replace('_', ' ', (string) $offer->eta_method) }}</span></td>
                                         <td class="num">{{ $offer->score !== null ? number_format((float) $offer->score, 1) : '-' }}</td>
-                                        <td class="num">{{ $offer->sent_at?->format('H:i:s') ?? '-' }}</td>
-                                        <td class="num">{{ $offer->responded_at?->format('H:i:s') ?? '-' }}</td>
+                                        <td class="num">{{ $offer->sent_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i:s') ?? '-' }}</td>
+                                        <td class="num">{{ $offer->responded_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i:s') ?? '-' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -149,8 +149,8 @@
                         <dt>Driver</dt><dd>@if($ride->driver_id)@can('ops.drivers.view')<a class="eh-link" href="{{ route('ops.drivers.show', $ride->driver_id) }}">{{ $ride->driver?->name }}</a>@else{{ $ride->driver?->name }}@endcan @else<span class="ops-dash">none assigned</span>@endif</dd>
                         <dt>Vehicle</dt><dd>{{ $ride->vehicle ? trim($ride->vehicle->color.' '.$ride->vehicle->make.' '.$ride->vehicle->model).' · '.$ride->vehicle->plate_number : '-' }}</dd>
                         <dt>Category</dt><dd>{{ \App\Domain\Business\CategoryNames::for($ride->category_code ?? $ride->vehicle_type) }}</dd>
-                        <dt>Requested</dt><dd class="num">{{ ($ride->requested_at ?? $ride->created_at)?->format('d M Y H:i') }}</dd>
-                        @if ($ride->scheduled_for)<dt>Scheduled for</dt><dd class="num">{{ $ride->scheduled_for->format('d M Y H:i') }}</dd>@endif
+                        <dt>Requested</dt><dd class="num">{{ ($ride->requested_at ?? $ride->created_at)?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') }}</dd>
+                        @if ($ride->scheduled_for)<dt>Scheduled for</dt><dd class="num">{{ $ride->scheduled_for->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') }}</dd>@endif
                         @if ($ride->route_distance_m)<dt>Quoted route</dt><dd class="num">{{ number_format($ride->route_distance_m / 1000, 1) }} km · {{ Durations::short((int) $ride->route_duration_s) }}</dd>@endif
                         @if ($route?->travelled_m)<dt>Travelled</dt><dd class="num">{{ number_format($route->travelled_m / 1000, 1) }} km <span class="ops-stamp">{{ str_replace('_', ' ', (string) $route->distance_method) }}, {{ $route->distance_quality }}</span></dd>@endif
                         <dt>Search</dt><dd class="num">{{ $ride->offers_sent }} {{ \Illuminate\Support\Str::plural('offer', $ride->offers_sent) }}, round {{ $ride->search_round ?? 0 }}, handed back {{ $ride->reassignment_count }}x</dd>

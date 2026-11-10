@@ -5,13 +5,13 @@
 --}}
 @props(['items' => [], 'routePrefix' => 'ride'])
 @php
-    $tz = config('ehail_pricing.default_timezone', 'Africa/Johannesburg');
+    $tz = \App\Support\Ui\LocalTime::timezone();
     $groups = collect($items)->groupBy(function ($item) use ($tz) {
         $at = \Illuminate\Support\Carbon::parse($item['created_at'])->setTimezone($tz);
         return match (true) {
             $at->isToday() => 'Today',
             $at->isYesterday() => 'Yesterday',
-            default => $at->format('l j F'),
+            default => $at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('l j F'),
         };
     });
 @endphp
@@ -29,7 +29,7 @@
                         <span class="comms-stop__dot" aria-hidden="true"></span>
                         <div class="comms-stop__body">
                             <p class="comms-stop__meta">
-                                <time datetime="{{ $item['created_at'] }}">{{ $at->format('H:i') }}</time>
+                                <time datetime="{{ $item['created_at'] }}">{{ $at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i') }}</time>
                                 <span>{{ $item['category_label'] }}</span>
                                 @if (! $item['read'])<span class="eh-sr-only">, unread</span>@endif
                             </p>

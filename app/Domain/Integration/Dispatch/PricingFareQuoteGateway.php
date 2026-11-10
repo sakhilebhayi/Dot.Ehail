@@ -7,6 +7,8 @@ use App\Domain\Dispatch\Data\LockedQuote;
 use App\Domain\Dispatch\Exceptions\DispatchRefused;
 use App\Domain\Geo\Routing\RideRoutePlanner;
 use App\Domain\Geo\Routing\RouteResult;
+use App\Domain\Catalog\Models\RideCategory;
+use App\Domain\Pricing\Contracts\EligibleSupplyCounter;
 use App\Domain\Pricing\Contracts\PricingRoutePlanner;
 use App\Domain\Pricing\Data\GeoPoint;
 use App\Domain\Pricing\Exceptions\QuoteRejected;
@@ -40,6 +42,7 @@ class PricingFareQuoteGateway implements FareQuoteGateway
         private readonly PricingRoutePlanner $routes,
         private readonly RideRoutePlanner $rideRoutes,
         private readonly PromotionRedeemer $promotions,
+        private readonly EligibleSupplyCounter $supply,
     ) {}
 
     public function available(): bool
@@ -60,6 +63,7 @@ class PricingFareQuoteGateway implements FareQuoteGateway
 
     public function bind(LockedQuote $quote, User $passenger, Ride $ride): void
     {
+        $this->assertSupplyForRideNow($quote, $ride);
         $this->releasePreviousSnapshot($ride);
 
         try {
@@ -76,6 +80,24 @@ class PricingFareQuoteGateway implements FareQuoteGateway
         }
 
         $this->attachQuotedRoute($quote, $ride);
+    }
+
+    /**
+     * Quotes price without current supply (D-1902); a ride for NOW is refused when the counter saw no eligible
+     * driver near the pickup this moment (inside the ride-creation transaction, so nothing is kept). Scheduled
+     * rides are not gated: they are matched closer to their time. An unknown count (null) does not block.
+     */
+    private function assertSupplyForRideNow(LockedQuote $quote, Ride $ride): void
+    {
+        if ($ride->scheduled_for !== null) {
+            return;
+        }
+
+        $category = RideCategory::query()->where('key', $quote->category)->first();
+
+        if ($category !== null && $this->supply->count($category, GeoPoint::from($quote->pickupLat, $quote->pickupLng), null, now()) === 0) {
+            throw new DispatchRefused('no_supply', 'No '.$category->name.' drivers are nearby right now, so this ride cannot be requested yet. The price shown stays the same: try again in a few minutes, choose another ride type, or schedule the ride.', 409);
+        }
     }
 
     /**

@@ -8,7 +8,7 @@
         <form class="eh-panel pax-form" data-pax-case-form enctype="multipart/form-data">
             <x-eh.select label="What is it about?" name="category" id="case-category" :value="$selectedCategory" :options="collect($categories)->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()" />
             <div data-pax-case-ride>
-                <x-eh.select label="Which trip?" name="ride_id" id="case-ride" :value="$selectedRide?->id" placeholder="Choose a trip" :options="$rides->mapWithKeys(fn ($r) => [$r->id => ($r->completed_at ?? $r->created_at)?->timezone(config('app.timezone'))->format('j M, H:i').': '.\Illuminate\Support\Str::before((string) $r->pickup_address, ',').' to '.\Illuminate\Support\Str::before((string) $r->dropoff_address, ',')])->all()" hint="Lost property, fare disputes and driver conduct need the trip." />
+                <x-eh.select label="Which trip?" name="ride_id" id="case-ride" :value="$selectedRide?->id" placeholder="Choose a trip" :options="$rides->mapWithKeys(fn ($r) => [$r->id => ($r->completed_at ?? $r->created_at)?->timezone(\App\Support\Ui\LocalTime::timezone())->format('j M, H:i').': '.\Illuminate\Support\Str::before((string) $r->pickup_address, ',').' to '.\Illuminate\Support\Str::before((string) $r->dropoff_address, ',')])->all()" hint="Lost property, fare disputes and driver conduct need the trip." />
             </div>
             <x-eh.field label="Subject" name="subject" id="case-subject" />
             <x-eh.field label="What happened?" name="body" type="textarea" id="case-body" hint="For lost property: what the item is, where in the car, and how to reach you. Your contact details are never shown to the driver." />

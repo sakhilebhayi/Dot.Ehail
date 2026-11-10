@@ -19,8 +19,8 @@
                                 <td>@can('ops.rides.view')<a href="{{ route('ops.rides.show', $c->ride_id) }}">Ride {{ $c->ride_id }}</a>@else Ride {{ $c->ride_id }} @endcan</td>
                                 <td>{{ $c->user?->name }} <span class="sub">{{ $c->role }}</span></td>
                                 <td>{{ str_replace('_', ' ', $c->trigger) }}</td>
-                                <td>{{ str_replace('_', ' ', $c->status) }}@if($c->responded_at)<span class="sub">{{ $c->responded_at->format('H:i:s') }}</span>@endif</td>
-                                <td class="num">@if($c->status === 'pending' && $c->respond_by)<span class="ops-timer" data-ops-due="{{ $c->respond_by->toIso8601String() }}" data-ops-warn="60">{{ $c->respond_by->format('H:i:s') }}</span>@else{{ $c->respond_by?->format('d M H:i') ?? '-' }}@endif</td>
+                                <td>{{ str_replace('_', ' ', $c->status) }}@if($c->responded_at)<span class="sub">{{ $c->responded_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i:s') }}</span>@endif</td>
+                                <td class="num">@if($c->status === 'pending' && $c->respond_by)<span class="ops-timer" data-ops-due="{{ $c->respond_by->toIso8601String() }}" data-ops-warn="60">{{ $c->respond_by->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i:s') }}</span>@else{{ $c->respond_by?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i') ?? '-' }}@endif</td>
                                 <td>@if($c->safety_incident_id)<a href="{{ route('ops.safety.show', $c->safety_incident_id) }}">Open</a>@else<span class="ops-dash">-</span>@endif</td>
                             </tr>
                         @endforeach

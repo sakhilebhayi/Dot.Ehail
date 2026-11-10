@@ -23,7 +23,7 @@
                     <tbody>
                         @foreach ($trips as $trip)
                             <tr>
-                                <td>{{ $trip['at']?->format('j M Y H:i') }}<span class="fl-sub">Trip {{ $trip['id'] }}</span></td>
+                                <td>{{ $trip['at']?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y H:i') }}<span class="fl-sub">Trip {{ $trip['id'] }}</span></td>
                                 <td><x-eh.status :status="$trip['status']" /></td>
                                 <td data-label="Driver">{{ $trip['driver'] }}</td>
                                 <td data-label="Vehicle">{!! $trip['vehicle'] ? '<span class="fl-plate">'.e($trip['vehicle']).'</span>' : '<span class="fl-dash">&#8212;</span>' !!}</td>

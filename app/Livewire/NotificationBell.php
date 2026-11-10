@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Domain\Comms\Inbox;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -20,7 +21,7 @@ class NotificationBell extends Component
     #[Computed]
     public function unreadCount(): int
     {
-        return auth()->user()->unreadNotifications()->count();
+        return Inbox::countFor(auth()->user());
     }
 
     public function toggle(): void

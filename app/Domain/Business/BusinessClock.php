@@ -2,6 +2,7 @@
 
 namespace App\Domain\Business;
 
+use App\Support\Ui\LocalTime;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
@@ -13,7 +14,8 @@ final class BusinessClock
 {
     public static function timezone(): string
     {
-        return (string) config('ehail_business.timezone', 'Africa/Johannesburg');
+        // One display zone for the platform (D-1906): the business setting only narrows it, and an unknown zone falls back.
+        return LocalTime::timezone((string) config('ehail_business.timezone') ?: null);
     }
 
     public static function local(?CarbonInterface $at = null): CarbonImmutable

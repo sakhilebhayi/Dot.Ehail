@@ -51,11 +51,14 @@ class PassengerJourneyTest extends TestCase
         $options = collect($compare['options'])->keyBy('category.key');
         $this->assertTrue($options->has('standard'));
         $this->assertTrue($options->has('economy'));
+        $this->assertSame('available', $options['standard']['supply']);
 
         foreach ($options as $option) {
             $sum = array_sum(array_column($option['fare']['components'], 'amount_minor'));
             $this->assertSame($option['fare']['total']['amount_minor'], $sum, 'components sum to the total for '.$option['category']['key']);
-            $this->assertSame('available', $option['supply']);
+            // Every category is priced (D-1902); the ones with a nearby driver say so, the rest say none.
+            $this->assertContains($option['supply'], ['available', 'none']);
+            $this->assertSame($option['supply'] !== 'none', $option['requestable_now']);
         }
 
         // Quote one category and request it with an idempotency key, paying by the saved card.

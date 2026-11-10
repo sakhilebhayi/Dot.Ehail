@@ -3,6 +3,7 @@
 // may see them; otherwise the map shows rides alone and says so.
 import { mountMap } from '../geo/index.js';
 import { formatDuration } from './helpers.js';
+import { timeLocal } from '../eh/time.js';
 import { createAnnouncer, risesSentence } from '../eh/announce.js';
 import { renderTakeover, createAlarm } from './takeover.js';
 
@@ -128,7 +129,7 @@ export async function startLive(root) {
         if (rise) voice.say(rise, { topic: 'ops-rises', minGapMs: 15000 });
         lastCounts = payload.counts || lastCounts;
         Object.entries(payload.counts || {}).forEach(([key, value]) => setText(root, `[data-live-count="${key}"]`, String(value)));
-        setText(root, '[data-live-stamp]', `Updated ${new Date(payload.generated_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
+        setText(root, '[data-live-stamp]', `Updated ${timeLocal(payload.generated_at, { seconds: true })}`);
         Object.entries(payload.queues || {}).forEach(([key, items]) => {
             const list = root.querySelector(`[data-live-queue="${key}"]`);
             renderQueue(list, items, list?.dataset.empty || 'Nothing here.');

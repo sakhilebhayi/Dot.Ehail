@@ -107,7 +107,7 @@ class VerificationService
             }
 
             $locked->forceFill(['assigned_reviewer_id' => $reviewer->id])->save();
-            $this->history($locked, $actor, 'assigned', $locked->status, $locked->status, null, 'Assigned to user #'.$reviewer->id);
+            $this->history($locked, $actor, 'assigned', $locked->status, $locked->status, null, 'Assigned to '.($reviewer->name ?: 'user #'.$reviewer->id));
 
             return $locked;
         });

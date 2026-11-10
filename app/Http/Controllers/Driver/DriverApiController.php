@@ -72,6 +72,11 @@ class DriverApiController extends Controller
                 'code' => $d['code'], 'label' => $d['label'], 'amount_minor' => (int) $d['amount_minor'], 'detail' => $d['detail'] ?? null,
             ], $split->deductions)),
             'net_minor' => $split->driverNetMinor,
+            // The walk from fare to net (D-1901): fare_minor + sum(lines.amount_minor) = net_minor, fees included.
+            'lines' => array_values(array_map(fn (array $l) => [
+                'code' => $l['code'], 'label' => $l['label'], 'amount_minor' => (int) $l['amount_minor'], 'detail' => $l['detail'] ?? null,
+            ], $split->lines)),
+            'commission_base' => $split->commissionBase,
             'plan' => $split->plan === null ? null : ['name' => $split->plan->name, 'is_example' => (bool) $split->plan->is_example],
             'note' => $split->plan === null ? 'No commission plan is configured for this market yet, so your net earnings cannot be shown.' : null,
         ]);

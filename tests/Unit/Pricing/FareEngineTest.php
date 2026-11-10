@@ -51,16 +51,21 @@ class FareEngineTest extends TestCase
 
         $this->assertSame(['base' => 1000, 'distance' => 8000, 'time' => 1500], $this->amounts($b));
         $this->assertSame(10_500, $b->totalMinor());
-        $this->assertSame('10.0 km x R 8.00/km', $b->components[1]->detail);
+        $this->assertSame('10 km x R8.00/km', $b->components[1]->detail);
+        $this->assertSame('15 min x R1.00/min', $b->components[2]->detail);
     }
 
     public function test_distance_is_per_1000_metres_with_rounding_of_partial_kilometres(): void
     {
-        // 1 234 m x R8/km = 987.2 cents -> 987 (half up)
-        $this->assertSame(987, $this->compute([], distanceM: 1234, durationS: 0)->amountFor('distance'));
-        // 5 m x 100 / 1000 = 0.5 cent -> 1 (half up); 4 m -> 0.4 cent -> 0
-        $this->assertSame(1, $this->compute(['per_km_minor' => 100], distanceM: 5, durationS: 0)->amountFor('distance'));
-        $this->assertSame(0, $this->compute(['per_km_minor' => 100], distanceM: 4, durationS: 0)->amountFor('distance'));
+        // D-1900: distance is billed in tenths of a km (half up) and the line is rate x that quantity.
+        // 1 234 m -> 1.2 km x R8/km = 960 cents; 1 250 m -> 1.3 km -> 1 040
+        $this->assertSame(960, $this->compute([], distanceM: 1234, durationS: 0)->amountFor('distance'));
+        $this->assertSame(1040, $this->compute([], distanceM: 1250, durationS: 0)->amountFor('distance'));
+        // 1.2 km x R7.55/km = 906 cents exactly; 1.3 km x R7.55 = 981.5 -> 982 (half up)
+        $this->assertSame(906, $this->compute(['per_km_minor' => 755], distanceM: 1200, durationS: 0)->amountFor('distance'));
+        $this->assertSame(982, $this->compute(['per_km_minor' => 755], distanceM: 1300, durationS: 0)->amountFor('distance'));
+        // under 50 m bills nothing
+        $this->assertSame(0, $this->compute(['per_km_minor' => 100], distanceM: 49, durationS: 0)->amountFor('distance'));
     }
 
     public function test_minimum_fare_is_a_visible_line(): void
@@ -157,7 +162,7 @@ class FareEngineTest extends TestCase
         $this->assertSame(10_500, $inclusive->totalMinor());
         // 10 500 x 15 / 115 = 1 369.56 -> 1 370
         $this->assertSame(1370, $inclusive->taxIncludedMinor);
-        $this->assertSame('Includes VAT of R 13.70.', $inclusive->notes[0]);
+        $this->assertSame('Includes VAT of R13.70.', $inclusive->notes[0]);
 
         $none = $this->compute(['tax_mode' => 'none', 'tax_rate_bp' => 1500], distanceM: 10_000, durationS: 900);
         $this->assertSame(0, $none->amountFor('tax'));
@@ -167,9 +172,9 @@ class FareEngineTest extends TestCase
     public function test_rounding_to_whole_rand_is_a_visible_line(): void
     {
         $b = $this->compute(['rounding_unit_minor' => 100], distanceM: 1234, durationS: 650);
-        // 1000 + 987 + 1083 = 3070 -> 3100
-        $this->assertSame(30, $b->amountFor('rounding'));
-        $this->assertSame(3100, $b->totalMinor());
+        // 1000 + 1.2 km x 800 (960) + 10.8 min x 100 (1080) = 3040 -> 3000
+        $this->assertSame(-40, $b->amountFor('rounding'));
+        $this->assertSame(3000, $b->totalMinor());
 
         $down = $this->compute(['rounding_unit_minor' => 100, 'rounding_mode' => 'down'], distanceM: 1234, durationS: 650);
         $this->assertSame(3000, $down->totalMinor());

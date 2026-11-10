@@ -17,6 +17,7 @@ final readonly class Split
 {
     /**
      * @param  list<array{code: string, label: string, amount_minor: int, detail: ?string}>  $deductions
+     * @param  list<array{code: string, label: string, amount_minor: int, detail: ?string}>  $lines  the walk from fare to net
      */
     public function __construct(
         public string $currency,
@@ -30,7 +31,19 @@ final readonly class Split
         public ?int $platformMinor,
         public ?CommissionPlan $plan,
         public bool $isEstimate,
+        public array $lines = [],
+        public ?string $commissionBase = null,
     ) {}
+
+    /**
+     * The fare-to-net walk: fare + sum(lines) = driver net (when a plan exists). Each line is signed.
+     *
+     * @return list<array{code: string, label: string, amount_minor: int, detail: ?string}>
+     */
+    public function walk(): array
+    {
+        return $this->lines;
+    }
 
     /**
      * What the driver sees (before accepting: estimate; after completion: actual).
@@ -49,6 +62,8 @@ final readonly class Split
             'deductions' => array_map(fn (array $d) => $d + ['amount' => $m($d['amount_minor'])], $this->deductions),
             'tolls_reimbursed' => $m($this->passThroughMinor),
             'driver_net' => $m($this->driverNetMinor),
+            'commission_base' => $this->commissionBase,
+            'lines' => array_map(fn (array $l) => $l + ['amount' => $m($l['amount_minor'])], $this->lines),
             'commission_plan' => $this->plan === null ? null : ['id' => $this->plan->id, 'version' => $this->plan->version, 'name' => $this->plan->name, 'is_example' => $this->plan->is_example],
             'note' => $this->plan === null ? 'No commission plan is configured for this market yet, so your net earnings cannot be shown.' : null,
         ];
@@ -69,6 +84,7 @@ final readonly class Split
             'deductions' => $this->deductions,
             'driver_net_minor' => $this->driverNetMinor,
             'platform_minor' => $this->platformMinor,
+            'lines' => $this->lines,
             'commission_plan_id' => $this->plan?->id,
             'commission_plan_version' => $this->plan?->version,
             'is_estimate' => $this->isEstimate,

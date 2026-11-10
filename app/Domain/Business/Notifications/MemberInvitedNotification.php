@@ -27,7 +27,7 @@ class MemberInvitedNotification extends Notification
         return (new MailMessage)
             ->subject('Join '.$account->displayName().' on Dot.Ehail')
             ->line($account->displayName().' added you to its Dot.Ehail business account as '.strtolower($this->member->roleLabel()).'.')
-            ->line('Sign in with this email address ('.$this->member->email.') and accept the invitation. It expires on '.$this->member->invite_expires_at?->format('j F Y').'.')
+            ->line('Sign in with this email address ('.$this->member->email.') and accept the invitation. It expires on '.$this->member->invite_expires_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j F Y').'.')
             ->action('Accept the invitation', route('business.invitations.show', $this->token));
     }
 }

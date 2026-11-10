@@ -10,7 +10,7 @@
 
         @foreach ($invitations as $invitation)
             <x-eh.banner tone="info" title="{{ $invitation->account->displayName() }} invited you">
-                Join as {{ strtolower($invitation->roleLabel()) }}. The invitation expires on {{ $invitation->invite_expires_at->format('j F Y') }}.
+                Join as {{ strtolower($invitation->roleLabel()) }}. The invitation expires on {{ $invitation->invite_expires_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j F Y') }}.
                 <x-slot:actions>
                     <form method="POST" action="{{ route('business.invitations.accept-listed', $invitation->id) }}" style="margin:0">@csrf<x-eh.button type="submit" size="sm">Accept and join</x-eh.button></form>
                 </x-slot:actions>

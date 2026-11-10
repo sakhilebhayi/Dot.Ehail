@@ -1,4 +1,4 @@
-<x-fleet.page :fleet="$fleet" :fleets="$fleets" title="Settings" :line="'Status: '.($fleet->isApproved() ? 'approved'.($fleet->approved_at ? ' on '.$fleet->approved_at->format('j M Y') : '') : 'waiting for review by operations').'.'">
+<x-fleet.page :fleet="$fleet" :fleets="$fleets" title="Settings" :line="'Status: '.($fleet->isApproved() ? 'approved'.($fleet->approved_at ? ' on '.$fleet->approved_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') : '') : 'waiting for review by operations').'.'">
     <div class="fl-grid">
         <div class="fl-stack">
             <section class="fl-panel" aria-labelledby="profile-title">
@@ -70,7 +70,7 @@
             <section class="fl-panel">
                 <dl class="fl-kv">
                     <dt>Identity review</dt>
-                    <dd>{{ $fleet->identityReviewGranted() ? 'Granted by operations on '.$fleet->identity_review_granted_at->format('j M Y').': you see masked licence and ID numbers on applications.' : 'Not granted: you see applicants\' names and verification status only. Operations check identity documents.' }}</dd>
+                    <dd>{{ $fleet->identityReviewGranted() ? 'Granted by operations on '.$fleet->identity_review_granted_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y').': you see masked licence and ID numbers on applications.' : 'Not granted: you see applicants\' names and verification status only. Operations check identity documents.' }}</dd>
                 </dl>
             </section>
         </aside>

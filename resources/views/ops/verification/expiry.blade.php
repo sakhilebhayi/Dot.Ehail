@@ -27,7 +27,7 @@
                                 <tr>
                                     <td><a href="{{ route('ops.verification.show', $doc->id) }}">{{ $types[$doc->type]['label'] ?? $doc->type }}</a>@if($doc->vehicle)<span class="sub">{{ $doc->vehicle->plate_number }}</span>@endif</td>
                                     <td>{{ $doc->owner?->name }}</td>
-                                    <td class="num"><span class="ops-timer" data-tone="{{ $days <= 7 ? 'stop' : ($days <= 30 ? 'caution' : 'calm') }}">{{ $doc->expires_on->format('d M Y') }} · {{ $days < 0 ? abs($days).' d ago' : 'in '.$days.' d' }}</span></td>
+                                    <td class="num"><span class="ops-timer" data-tone="{{ $days <= 7 ? 'stop' : ($days <= 30 ? 'caution' : 'calm') }}">{{ $doc->expires_on->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }} · {{ $days < 0 ? abs($days).' d ago' : 'in '.$days.' d' }}</span></td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -43,7 +43,7 @@
                         <thead><tr><th>Document</th><th>Driver</th><th class="num">Expired</th></tr></thead>
                         <tbody>
                             @foreach ($expiredRecently as $doc)
-                                <tr><td><a href="{{ route('ops.verification.show', $doc->id) }}">{{ $types[$doc->type]['label'] ?? $doc->type }}</a></td><td>{{ $doc->owner?->name }}</td><td class="num">{{ $doc->expired_at?->format('d M Y') }}</td></tr>
+                                <tr><td><a href="{{ route('ops.verification.show', $doc->id) }}">{{ $types[$doc->type]['label'] ?? $doc->type }}</a></td><td>{{ $doc->owner?->name }}</td><td class="num">{{ $doc->expired_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }}</td></tr>
                             @endforeach
                         </tbody>
                     </table>

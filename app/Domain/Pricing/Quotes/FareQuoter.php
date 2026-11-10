@@ -207,13 +207,16 @@ final class FareQuoter
             return new QuoteUnavailable('no_tariff', 'No published tariff covers '.$category->name.' here yet.', $category->key);
         }
 
+        // A price never depends on who is online this minute (D-1902): the calculator, scheduled rides and the compare
+        // sheet all price; supply is reported beside the price, and an on-demand REQUEST is refused at booking time
+        // when nobody eligible is nearby (RideRequestService).
         $count = $this->supply->count($category, $request->pickup, $market->serviceAreaId(), $at);
 
-        if ($count === 0) {
-            return new QuoteUnavailable('no_supply', 'No '.$category->name.' drivers are available nearby right now.', $category->key);
-        }
-
-        return $this->priceWith($rules, $request, $category, $market, $route, $pickupZones, $dropoffZones, $at, $count === null ? 'unknown' : 'available');
+        return $this->priceWith($rules, $request, $category, $market, $route, $pickupZones, $dropoffZones, $at, match (true) {
+            $count === null => 'unknown',
+            $count === 0 => 'none',
+            default => 'available',
+        }, $count);
     }
 
     /**
@@ -222,7 +225,7 @@ final class FareQuoter
      * @param  list<ZoneRef>  $pickupZones
      * @param  list<ZoneRef>  $dropoffZones
      */
-    public function priceWith(PricingRuleSet $rules, QuoteRequest $request, RideCategory $category, Market $market, PricedRoute $route, array $pickupZones, array $dropoffZones, CarbonInterface $at, string $supply = 'unknown'): PricedOption
+    public function priceWith(PricingRuleSet $rules, QuoteRequest $request, RideCategory $category, Market $market, PricedRoute $route, array $pickupZones, array $dropoffZones, CarbonInterface $at, string $supply = 'unknown', ?int $driversNearby = null): PricedOption
     {
         $demandBp = $this->engine->effectiveDemandBp($rules, $this->demand->multiplierBp($market->serviceAreaId(), $category, $at) ?? 10_000);
         $tolls = $rules->toll_mode === 'pass_through' ? $this->tolls->estimateMinor($route, $rules->currency) : null;
@@ -246,7 +249,7 @@ final class FareQuoter
         $breakdown = $decision->terms === null ? $undiscounted : $this->engine->compute($rules, $inputs($decision->terms));
         $promotion = $breakdown->amountFor('promotion') < 0 ? $decision->promotion : null;
 
-        return new PricedOption($category, $rules, $market, $route, $breakdown, $pickupZones, $dropoffZones, $promotion, $decision->note, $supply, $at);
+        return new PricedOption($category, $rules, $market, $route, $breakdown, $pickupZones, $dropoffZones, $promotion, $decision->note, $supply, $at, null, $driversNearby);
     }
 
     private function persist(QuoteRequest $request, PricedOption $option): FareQuote

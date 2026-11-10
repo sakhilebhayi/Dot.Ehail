@@ -82,7 +82,7 @@
             {{-- Scheduled ride --}}
             <section class="pax-section" data-panel="scheduled" @if($status !== 'scheduled') hidden @endif aria-label="Scheduled ride">
                 <p style="margin:0" class="pax-trip">
-                    <span class="pax-trip__figure" data-pax-scheduled-at>{{ isset($r['scheduled_for']) ? \Illuminate\Support\Carbon::parse($r['scheduled_for'])->timezone(config('app.timezone'))->format('D j M, H:i') : '' }}</span>
+                    <span class="pax-trip__figure" data-pax-scheduled-at>{{ isset($r['scheduled_for']) ? \Illuminate\Support\Carbon::parse($r['scheduled_for'])->timezone(\App\Support\Ui\LocalTime::timezone())->format('D j M, H:i') : '' }}</span>
                     <span class="eh-badge {{ ($r['schedule_phase'] ?? '') === 'driver_confirmed' ? 'eh-badge--go' : 'eh-badge--caution' }}" data-pax-phase>{{ ($r['schedule_phase'] ?? '') === 'driver_confirmed' ? 'Driver confirmed' : 'Awaiting driver' }}</span>
                 </p>
                 <p class="pax-rule">We start finding your driver {{ $schedule['allocation_lead_minutes'] }} minutes before pickup. Your booked fare is kept if a fresh price then is within {{ $schedule['price_tolerance_percent'] }}%; if it is higher we ask you first. Change or cancel free of charge until {{ $schedule['free_change_until_minutes'] }} minutes before pickup.</p>

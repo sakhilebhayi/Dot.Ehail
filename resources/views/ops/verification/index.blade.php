@@ -52,7 +52,7 @@
                                     <td>{{ $doc->owner?->name }}</td>
                                     @if($subject === 'vehicle')<td>{{ $doc->vehicle ? $doc->vehicle->plate_number.' · '.trim($doc->vehicle->make.' '.$doc->vehicle->model) : '-' }}</td>@endif
                                     <td>{{ $doc->assignedReviewer?->name ?? 'Nobody' }}</td>
-                                    <td class="num">{{ $doc->expires_on?->format('d M Y') ?? '-' }}</td>
+                                    <td class="num">{{ $doc->expires_on?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') ?? '-' }}</td>
                                     <td class="num"><span class="ops-timer" data-ops-since="{{ ($doc->submitted_at ?? $doc->created_at)?->toIso8601String() }}" data-ops-warn="86400">{{ \App\Domain\Ops\Support\Durations::short((int) ($doc->submitted_at ?? $doc->created_at)?->diffInSeconds(now(), true)) }}</span></td>
                                 </tr>
                             @endforeach

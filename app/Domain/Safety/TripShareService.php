@@ -72,7 +72,7 @@ class TripShareService
                 (string) $contact->name,
                 RideSafety::firstName($creator->name, 'Someone'),
                 $url,
-                $share->expires_at->timezone(config('app.timezone'))->format('Y-m-d H:i'),
+                $share->expires_at->copy()->timezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y, H:i').' '.\App\Support\Ui\LocalTime::label(),
                 $this->contacts->optOutUrl($contact),
             ));
         }

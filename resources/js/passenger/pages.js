@@ -6,6 +6,7 @@ import { announce, api, island } from './api.js';
 import { el, icon } from './dom.js';
 import { formatMinor, parseAmountToMinor } from './money.js';
 import { bindShare, bindSos, whatsappUrl } from './safety.js';
+import { formatLocal } from '../eh/time.js';
 
 const page = document.querySelector('[data-pax-page]')?.dataset.paxPage;
 const data = island('pax-page-data') || {};
@@ -16,7 +17,7 @@ const busy = (button, on) => {
     button.disabled = on;
     on ? button.setAttribute('aria-busy', 'true') : button.removeAttribute('aria-busy');
 };
-const when = (iso) => (iso ? new Date(iso).toLocaleString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
+const when = (iso) => formatLocal(iso, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 const row = (title, meta, trail = null, lead = null) =>
     el('li', { class: 'eh-row' }, [lead ? el('span', { class: 'eh-row__icon' }, lead) : null, el('span', { class: 'eh-row__main' }, [el('span', { class: 'eh-row__title' }, title), meta ? el('span', { class: 'eh-row__meta' }, meta) : null]), trail ? el('span', { class: 'eh-row__trail' }, trail) : null]);
 const textButton = (label, onclick, variant = 'ghost') => el('button', { type: 'button', class: `eh-btn eh-btn--${variant} eh-btn--sm`, onclick }, el('span', { class: 'eh-btn__label' }, label));

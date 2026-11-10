@@ -43,8 +43,10 @@
             </dl>
             @if ($e)
                 <dl class="dr-ledger">
-                    <div><dt>Commission</dt><dd>@if($e['commission_minor'] !== null)<x-eh.money :minor="-$e['commission_minor']" :currency="$cur" />@else not configured @endif</dd></div>
-                    @if ($e['deductions_minor'])<div><dt>Platform fees, tax and other</dt><dd><x-eh.money :minor="-$e['deductions_minor']" :currency="$cur" /></dd></div>@endif
+                    @if (! empty($e['fee_lines']))
+                        @foreach ($e['fee_lines'] as $line)<div><dt>{{ $line['label'] }}</dt><dd><x-eh.money :minor="(int) $line['amount_minor']" :currency="$cur" /></dd></div>@endforeach
+                    @elseif ($e['deductions_minor'])<div><dt>Platform fees, tax and other</dt><dd><x-eh.money :minor="-$e['deductions_minor']" :currency="$cur" /></dd></div>@endif
+                    <div><dt>Commission @if(! empty($e['commission_detail']))<span class="dr-note">({{ $e['commission_detail'] }})</span>@endif</dt><dd>@if($e['commission_minor'] !== null)<x-eh.money :minor="-$e['commission_minor']" :currency="$cur" />@else not configured @endif</dd></div>
                     <div class="is-total"><dt>You earn</dt><dd>@if($e['net_minor'] !== null)<x-eh.money :minor="$e['net_minor']" :currency="$cur" />@else not configured @endif</dd></div>
                     @if ($e['cash_collected_minor'] !== null)<div><dt>Cash you collected</dt><dd><x-eh.money :minor="$e['cash_collected_minor']" :currency="$cur" /></dd></div>@endif
                 </dl>

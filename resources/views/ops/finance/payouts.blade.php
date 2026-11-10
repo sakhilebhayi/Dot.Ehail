@@ -18,12 +18,12 @@
                         <tbody>
                             @foreach ($batches as $b)
                                 <tr>
-                                    <td><a href="{{ route('ops.finance.batch', $b->id) }}">Earnings to {{ $b->period_end?->format('d M Y') }}</a><span class="sub">{{ $b->method }}</span></td>
+                                    <td><a href="{{ route('ops.finance.batch', $b->id) }}">Earnings to {{ $b->period_end?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }}</a><span class="sub">{{ $b->method }}</span></td>
                                     <td><x-eh.badge :tone="match($b->status){'completed','paid'=>'go','failed'=>'stop','draft'=>'info',default=>'caution'}">{{ str_replace('_', ' ', $b->status) }}</x-eh.badge></td>
                                     <td class="num">{{ $b->payout_count }}</td>
                                     <td class="num"><x-eh.money :minor="(int) $b->total_minor" :currency="$b->currency" /></td>
-                                    <td class="num">{{ $b->exported_at?->format('d M H:i') ?? '-' }}</td>
-                                    <td class="num">{{ $b->completed_at?->format('d M H:i') ?? '-' }}</td>
+                                    <td class="num">{{ $b->exported_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i') ?? '-' }}</td>
+                                    <td class="num">{{ $b->completed_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i') ?? '-' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

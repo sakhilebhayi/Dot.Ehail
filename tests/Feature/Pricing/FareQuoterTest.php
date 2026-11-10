@@ -74,8 +74,8 @@ class FareQuoterTest extends TestCase
         $option = $this->quoter()->quote($this->request('economy', $passenger));
 
         $this->assertInstanceOf(PricedOption::class, $option);
-        // 1000 + 12.345 km x 800 (9 876) + 21 min x 100 (2 100) = 12 976
-        $this->assertSame(12_976, $option->breakdown->totalMinor());
+        // 1000 + 12.3 km x 800 (9 840, billed on the tenth of a km shown, D-1900) + 21 min x 100 (2 100) = 12 940
+        $this->assertSame(12_940, $option->breakdown->totalMinor());
         $quote = $option->quote;
         $this->assertNotNull($quote);
         $this->assertSame($passenger->id, $quote->passenger_id);
@@ -195,13 +195,18 @@ class FareQuoterTest extends TestCase
         $comparison = $this->quoter()->compare(new QuoteRequest($this->capeTown(), $this->seaPoint(), null, $passenger));
 
         $this->assertInstanceOf(QuoteComparison::class, $comparison);
-        $this->assertSame(['economy'], array_map(fn ($o) => $o->category->key, $comparison->options));
+        // D-1902: a category with nobody online is still priced; its supply says so and it cannot be requested now.
+        $this->assertSame(['economy', 'premium'], array_map(fn ($o) => $o->category->key, $comparison->options));
         $this->assertSame('unknown', $comparison->options[0]->supply);
+        $this->assertSame('none', $comparison->options[1]->supply);
+        $this->assertFalse($comparison->options[1]->requestableNow());
+        $this->assertSame(0, $comparison->options[1]->driversNearby);
+        $this->assertStringContainsString('not guaranteed', $comparison->options[1]->toArray()['supply_note']);
         $reasons = collect($comparison->unavailable)->mapWithKeys(fn ($u) => [$u->categoryKey => $u->reason])->all();
-        $this->assertSame('no_supply', $reasons['premium']);
+        $this->assertArrayNotHasKey('premium', $reasons);
         $this->assertSame('no_tariff', $reasons['standard']);
         $this->assertArrayNotHasKey('parcel', $reasons, 'inactive categories are simply not offered');
-        $this->assertSame(1, FareQuote::count());
+        $this->assertSame(2, FareQuote::count());
     }
 
     public function test_compare_only_offers_categories_that_fit_the_trip(): void

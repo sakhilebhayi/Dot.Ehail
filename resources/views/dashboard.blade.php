@@ -22,7 +22,7 @@
                 Ehail Operations Dashboard
             </h1>
             <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">
-                {{ now()->format('l, F j, Y \a\t g:i A') }}
+                {{ now()->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('l, F j, Y \a\t g:i A') }}
             </p>
         </div>
         <div style="display:flex;align-items:center;gap:0.5rem;padding:0.45rem 1rem;background:rgba(8,145,178,0.12);border:1px solid rgba(8,145,178,0.3);border-radius:9999px;">

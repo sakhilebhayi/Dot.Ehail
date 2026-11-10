@@ -4,6 +4,7 @@ namespace App\Domain\Payments\Receipts;
 
 use App\Domain\Payments\Models\Payment;
 use App\Domain\Payments\Models\Receipt;
+use App\Domain\Payments\OperatorIdentity;
 use App\Domain\Payments\Money;
 use App\Domain\Payments\Seams\FareSource;
 use App\Models\Ride;
@@ -71,6 +72,22 @@ class ReceiptIssuer
     }
 
     /**
+     * @param  array<int, array<string, mixed>>  $components
+     * @return array{distance: ?string, time: ?string}
+     */
+    public static function billed(array $components): array
+    {
+        $find = fn (string $code) => collect($components)->first(fn ($c) => ($c['code'] ?? null) === $code && isset($c['quantity'], $c['unit']));
+        $distance = $find('distance');
+        $time = $find('time');
+
+        return [
+            'distance' => $distance ? $distance['quantity'].' '.$distance['unit'] : null,
+            'time' => $time ? $time['quantity'].' '.$time['unit'] : null,
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function snapshot(Ride $ride, Payment $payment, string $kind): array
@@ -78,7 +95,8 @@ class ReceiptIssuer
         $ride->loadMissing(['driver', 'vehicle']);
         $fare = $kind === 'ride' ? $this->fares->finalFareFor($ride) : null;
         $method = $payment->method;
-        $vatRegistered = (bool) config('money.vat.registered') && filled(config('money.vat.number'));
+        $operator = OperatorIdentity::forDocument();
+        $vatRegistered = $operator['vat_status'] === OperatorIdentity::VAT_REGISTERED;
         $tax = $fare?->taxMinor ?? 0;
 
         $components = $kind === 'ride'
@@ -88,8 +106,11 @@ class ReceiptIssuer
         return [
             'kind' => $kind,
             'ride_id' => $ride->id,
-            'operator_name' => config('money.receipts.operator_name'),
-            'vat_number' => $vatRegistered ? config('money.vat.number') : null,
+            // The operating company as configured (D-1905), frozen with the receipt.
+            'operator' => $operator,
+            'operator_name' => $operator['legal_name'] ?? $operator['brand'],
+            'vat_number' => $operator['vat_number'],
+            'vat_sentence' => OperatorIdentity::vatSentence($operator, $vatRegistered ? $tax : 0),
             'pickup_address' => $ride->pickup_address,
             'dropoff_address' => $ride->dropoff_address,
             'requested_at' => $ride->requested_at?->toIso8601String(),
@@ -98,6 +119,10 @@ class ReceiptIssuer
             'cancelled_at' => $ride->cancelled_at?->toIso8601String(),
             'distance_m' => $fare?->distanceM,
             'duration_s' => $fare?->durationS,
+            'fare_basis' => $fare?->basis,
+            // What the time and distance lines were billed on (D-1904): the metered quantities of the fare itself,
+            // which differ from the measured trip when the quoted fare stood.
+            'billed' => self::billed($components),
             'components' => $components,
             'promotion_minor' => $fare?->promotionMinor ?? 0,
             'tax_minor' => $vatRegistered ? $tax : 0,
@@ -112,8 +137,9 @@ class ReceiptIssuer
             'paid_at' => ($payment->paid_at ?? now())->toIso8601String(),
             'driver_first_name' => $ride->driver === null ? null : strtok(trim((string) $ride->driver->name), ' '),
             'vehicle' => $ride->vehicle === null ? null : trim($ride->vehicle->color.' '.$ride->vehicle->make.' '.$ride->vehicle->model).' ('.$ride->vehicle->plate_number.')',
-            'support_url' => config('money.receipts.support_url'),
-            'support_email' => config('money.receipts.support_email'),
+            'support_url' => $operator['support_url'],
+            'support_email' => $operator['support_email'],
+            'support_phone' => $operator['support_phone'],
             'formatted_total' => Money::format($payment->amountMinor(), $payment->currency),
         ];
     }

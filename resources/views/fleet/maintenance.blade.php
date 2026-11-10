@@ -25,11 +25,11 @@
                                 <td class="num" data-label="Odometer">{!! $v->odometer_km !== null ? e(number_format($v->odometer_km, 0, '.', ' ')).' km' : '<span class="fl-dash">&#8212;</span>' !!}</td>
                                 <td data-label="Next">
                                     @if ($n['on'] || $n['km'])
-                                        <span class="fl-nowrap {{ $n['overdue'] ? 'fl-sev--stop' : ($n['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $n['on']?->format('j M Y') }}{{ $n['on'] && $n['km'] ? ' or ' : '' }}{{ $n['km'] ? number_format($n['km'], 0, '.', ' ').' km' : '' }}</span>
+                                        <span class="fl-nowrap {{ $n['overdue'] ? 'fl-sev--stop' : ($n['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $n['on']?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}{{ $n['on'] && $n['km'] ? ' or ' : '' }}{{ $n['km'] ? number_format($n['km'], 0, '.', ' ').' km' : '' }}</span>
                                         <span class="fl-sub">{{ $n['overdue'] ? 'Overdue' : ($n['due_soon'] ? 'Due soon' : '') }}{{ $n['km_left'] !== null ? ($n['overdue'] || $n['due_soon'] ? ', ' : '').number_format(abs($n['km_left']), 0, '.', ' ').' km '.($n['km_left'] < 0 ? 'over' : 'to go') : '' }}</span>
                                     @else<span class="fl-dash">Not recorded</span>@endif
                                 </td>
-                                <td data-label="Last">{!! $n['last'] ? e($n['last']->performed_on->format('j M Y')).'<span class="fl-sub">'.e(\App\Domain\Fleet\Models\VehicleMaintenanceRecord::KINDS[$n['last']->kind] ?? $n['last']->kind).'</span>' : '<span class="fl-dash">&#8212;</span>' !!}</td>
+                                <td data-label="Last">{!! $n['last'] ? e($n['last']->performed_on->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y')).'<span class="fl-sub">'.e(\App\Domain\Fleet\Models\VehicleMaintenanceRecord::KINDS[$n['last']->kind] ?? $n['last']->kind).'</span>' : '<span class="fl-dash">&#8212;</span>' !!}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -46,7 +46,7 @@
             <ul class="fl-items">
                 @foreach ($log as $record)
                     <li style="grid-template-columns: 6.5rem auto minmax(0,1fr) auto">
-                        <p class="fl-items__who" style="margin:0">{{ $record->performed_on->format('j M Y') }}</p>
+                        <p class="fl-items__who" style="margin:0">{{ $record->performed_on->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}</p>
                         <span class="fl-plate">{{ $record->vehicle?->plate_number }}</span>
                         <div><p class="fl-items__title">{{ $kinds[$record->kind] ?? ucfirst($record->kind) }}</p><p class="fl-items__detail">{{ $record->description }}</p></div>
                         <p class="fl-items__who" style="text-align:right">{{ $record->odometer_km !== null ? number_format($record->odometer_km, 0, '.', ' ').' km' : '' }}@if ($record->cost_minor !== null)<br><x-eh.money :minor="$record->cost_minor" :currency="$record->currency" />@endif</p>

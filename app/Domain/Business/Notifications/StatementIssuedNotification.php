@@ -28,10 +28,10 @@ class StatementIssuedNotification extends Notification
         $message = (new MailMessage)->subject(($this->overdue ? 'Overdue: ' : '').'Dot.Ehail statement '.$s->number);
 
         if ($this->overdue) {
-            $message->line("Statement {$s->number} ({$amount}) was due on ".$s->due_at->format('j F Y').' and is not paid yet. New rides on the account pause '.($s->account->grace_days).' days after the due date; trips already booked are not affected.');
+            $message->line("Statement {$s->number} ({$amount}) was due on ".$s->due_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j F Y').' and is not paid yet. New rides on the account pause '.($s->account->grace_days).' days after the due date; trips already booked are not affected.');
         } else {
             $message->line("Your statement for {$s->snapshot['period_label']} is ready: {$amount}.")
-                ->line($s->billing_mode === 'card' ? 'It is charged to the company card on file.' : 'Please pay by EFT by '.$s->due_at->format('j F Y').', quoting '.$s->number.'.');
+                ->line($s->billing_mode === 'card' ? 'It is charged to the company card on file.' : 'Please pay by EFT by '.$s->due_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j F Y').', quoting '.$s->number.'.');
         }
 
         return $message->action('View the statement', route('business.statements.show', $s));
