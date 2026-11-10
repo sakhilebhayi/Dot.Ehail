@@ -61,7 +61,7 @@ function render() {
     panel('pin', Boolean(ride.pin));
     panel('wait', status === 'driver_arrived');
     panel('trip', status === 'in_progress');
-    panel('price', status !== 'completed');
+    panel('price', !isTerminal(status) && status !== 'needs_review');
     panel('done', status === 'completed');
     panel('ended', isTerminal(status) && status !== 'completed' || status === 'needs_review');
 
@@ -134,7 +134,10 @@ function renderScheduled(ride) {
 function renderDriver(ride, position) {
     const driver = ride.driver;
     if (!driver) return;
-    $('[data-pax-driver-name]').textContent = safetyInfo?.driver?.first_name || driver.first_name || 'Your driver';
+    const name = safetyInfo?.driver?.first_name || driver.first_name || 'Your driver';
+    $('[data-pax-driver-name]').textContent = name;
+    const face = $('[data-pax-face]');
+    if (face && face.tagName === 'SPAN') face.textContent = name.charAt(0).toUpperCase();
     const vehicle = driver.vehicle;
     if (vehicle) {
         $('[data-pax-car]').textContent = [vehicle.color, vehicle.make, vehicle.model].filter(Boolean).join(' ');

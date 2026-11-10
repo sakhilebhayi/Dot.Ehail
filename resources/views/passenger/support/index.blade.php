@@ -15,5 +15,6 @@
             <p class="pax-lead">During a ride, use SOS in the top bar. If you are in danger, call 10111 (police) or 112 from a mobile.</p>
         </section>
     </div>
-    <script type="application/json" id="pax-page-data">@json(['urls' => ['cases' => route('support.cases.index'), 'case' => route('ride.support.show', ['case' => '__ID__'])]])</script>
+    @php $paxIsland = ['urls' => ['cases' => route('support.cases.index'), 'case' => route('ride.support.show', ['case' => '__ID__'])]]; @endphp
+    <script type="application/json" id="pax-page-data">@json($paxIsland)</script>
 </x-passenger-layout>

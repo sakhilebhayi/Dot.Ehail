@@ -23,5 +23,6 @@
             </form>
         </section>
     </div>
-    <script type="application/json" id="pax-page-data">@json(['urls' => ['show' => route('support.cases.show', $case), 'reply' => route('support.cases.reply', $case)], 'me' => auth()->id()])</script>
+    @php $paxIsland = ['urls' => ['show' => route('support.cases.show', $case), 'reply' => route('support.cases.reply', $case)], 'me' => auth()->id()]; @endphp
+    <script type="application/json" id="pax-page-data">@json($paxIsland)</script>
 </x-passenger-layout>

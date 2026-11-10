@@ -75,6 +75,22 @@
                 <p class="pax-rule" data-pax-search-left>We keep looking for up to {{ (int) config('ehail.ride_expiry_minutes', 10) }} minutes.</p>
             </section>
 
+            {{-- Trip PIN --}}
+            <section class="pax-pincode" data-panel="pin" @if(empty($r['pin'])) hidden @endif aria-labelledby="pax-pin-label">
+                <p class="pax-pincode__label" id="pax-pin-label">Your trip PIN</p>
+                <p class="pax-pincode__digits" data-pax-pin aria-label="Trip PIN {{ implode(' ', str_split((string) ($r['pin'] ?? ''))) }}">
+                    @foreach (str_split((string) ($r['pin'] ?? '')) as $digit)<span class="pax-pincode__digit" aria-hidden="true">{{ $digit }}</span>@endforeach
+                </p>
+                <p class="pax-pincode__help">Say this PIN to the driver when you get in. The trip cannot start without it.</p>
+            </section>
+
+            {{-- Waiting at pickup --}}
+            <section class="pax-wait" data-panel="wait" @if($status !== 'driver_arrived') hidden @endif aria-label="Waiting time">
+                <span class="pax-rule">Driver waiting for</span>
+                <span class="pax-wait__clock" data-pax-wait-clock>0:00</span>
+                <p class="pax-rule" data-pax-wait-rule></p>
+            </section>
+
             {{-- Driver and car --}}
             <section class="pax-section" data-panel="driver" @if(! $holds && $status !== 'completed') hidden @endif aria-label="Your driver">
                 <div class="pax-driver">
@@ -90,22 +106,6 @@
                     <p class="pax-driver__check" data-pax-check>Check the registration and the driver's face before you get in. Never get into a car that does not match.</p>
                 </div>
                 <p class="pax-state__sub" style="margin-top: var(--eh-space-2)"><span class="pax-stale" data-pax-stale hidden><x-eh.icon name="clock" /><span data-pax-stale-text>Last position unknown</span></span></p>
-            </section>
-
-            {{-- Trip PIN --}}
-            <section class="pax-pincode" data-panel="pin" @if(empty($r['pin'])) hidden @endif aria-labelledby="pax-pin-label">
-                <p class="pax-pincode__label" id="pax-pin-label">Your trip PIN</p>
-                <p class="pax-pincode__digits" data-pax-pin aria-label="Trip PIN {{ implode(' ', str_split((string) ($r['pin'] ?? ''))) }}">
-                    @foreach (str_split((string) ($r['pin'] ?? '')) as $digit)<span class="pax-pincode__digit" aria-hidden="true">{{ $digit }}</span>@endforeach
-                </p>
-                <p class="pax-pincode__help">Say this PIN to the driver when you get in. The trip cannot start without it.</p>
-            </section>
-
-            {{-- Waiting at pickup --}}
-            <section class="pax-wait" data-panel="wait" @if($status !== 'driver_arrived') hidden @endif aria-label="Waiting time">
-                <span class="pax-rule">Driver waiting for</span>
-                <span class="pax-wait__clock" data-pax-wait-clock>0:00</span>
-                <p class="pax-rule" data-pax-wait-rule></p>
             </section>
 
             {{-- In the trip --}}
@@ -137,7 +137,7 @@
             </ol>
 
             {{-- Price and payment while the ride is on --}}
-            <p class="pax-trip" data-panel="price" @if($status === 'completed') hidden @endif>
+            <p class="pax-trip" data-panel="price" @if(! $active && $status !== 'scheduled') hidden @endif>
                 <span class="pax-trip__figure eh-num" data-pax-quoted>{{ isset($r['fare']['quoted_total_minor']) ? \App\Support\Ui\MoneyFormatter::format((int) $r['fare']['quoted_total_minor'], $currency) : '' }}</span>
                 <span class="pax-trip__note" data-pax-paywith>{{ $overview['payment']['method_label'] ? 'Paying with '.$overview['payment']['method_label'] : 'Agreed price' }}</span>
             </p>

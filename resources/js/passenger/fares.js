@@ -56,7 +56,7 @@ async function estimate() {
 
 function draw(result) {
     if (result.available === false || !result.options?.length) {
-        out.replaceChildren(el('div', { class: 'eh-banner eh-banner--caution', role: 'status' }, [icon('warning'), el('div', { class: 'eh-banner__body' }, [el('p', { class: 'eh-banner__title' }, 'No fare for this trip'), el('div', { class: 'eh-banner__text' }, result.available === false ? unavailableText(result, config?.routing?.unavailableMessage) : result.unavailable?.[0]?.message || 'No ride type is priced for this route.')])]));
+        out.replaceChildren(el('div', { class: 'eh-banner eh-banner--caution', role: 'status' }, [icon('warning'), el('div', { class: 'eh-banner__body' }, [el('p', { class: 'eh-banner__title' }, 'No fare for this trip'), el('div', { class: 'eh-banner__text' }, result.available === false ? unavailableText(result, config?.routing?.unavailableMessage) : 'The calculator prices the ride types that have drivers near the pickup right now. For this pickup:'), result.available === false ? null : el('ul', { class: 'pax-unavailable' }, (result.unavailable || []).map((u) => el('li', {}, u.message)))])]));
         announce('No fare could be worked out for this trip.');
         return;
     }

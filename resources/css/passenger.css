@@ -201,6 +201,7 @@
 
 /* ------------------------------------------------------------------ live ride */
 .pax-state { margin: 0 0 var(--eh-space-3); display: grid; gap: var(--eh-space-1); }
+.pax-state__title:focus, [data-pax-focus]:focus { outline: none; }
 .pax-state__title { margin: 0; font-family: var(--eh-font-display); font-size: var(--eh-text-3xl); font-weight: 700; line-height: 1; letter-spacing: -0.01em; }
 .pax-state__sub { margin: 0; color: var(--eh-ink-2); }
 .pax-state__sub strong { color: var(--eh-ink); font-variant-numeric: tabular-nums; }
@@ -226,21 +227,24 @@
     font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
-.pax-pincode { display: grid; gap: var(--eh-space-2); margin-top: var(--eh-space-3); padding: var(--eh-space-4); border-radius: var(--eh-radius); background: var(--eh-surface-2); }
+.pax-pincode { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--eh-space-1) var(--eh-space-4); margin-top: var(--eh-space-3); padding: var(--eh-space-3) var(--eh-space-4); border-radius: var(--eh-radius); background: var(--eh-signal); color: var(--eh-signal-ink); }
+.pax-pincode[hidden] { display: none; }
+.pax-pincode__help { grid-column: 1 / -1; }
 .pax-pincode__label { margin: 0; font-weight: 700; }
 .pax-pincode__digits { display: flex; gap: var(--eh-space-2); margin: 0; }
 .pax-pincode__digit {
-    display: grid; place-items: center; width: 3.25rem; height: 4rem; border-radius: var(--eh-radius-sm);
-    background: var(--eh-surface); color: var(--eh-ink); box-shadow: inset 0 -3px 0 var(--eh-signal);
+    display: grid; place-items: center; width: 2.75rem; height: 3.5rem; border-radius: var(--eh-radius-sm);
+    background: #ffffff; color: #0f1f19;
     font-family: var(--eh-font-display); font-size: 2.75rem; font-weight: 700; font-variant-numeric: tabular-nums;
 }
-.pax-pincode__help { margin: 0; font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.pax-pincode__help { margin: 0; font-size: var(--eh-text-sm); }
 
 .pax-eta { font-family: var(--eh-font-display); font-weight: 700; font-size: var(--eh-text-2xl); font-variant-numeric: tabular-nums; }
 .pax-stale { display: inline-flex; align-items: center; gap: var(--eh-space-1); --eh-icon: 16px; font-size: var(--eh-text-xs); font-weight: 600; color: var(--eh-caution); }
 .pax-stale[hidden] { display: none; }
 
 .pax-wait { margin-top: var(--eh-space-3); display: grid; gap: var(--eh-space-1); }
+.pax-wait[hidden] { display: none; }
 .pax-wait__clock { font-family: var(--eh-font-display); font-size: var(--eh-text-3xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
 .pax-wait[data-charging="true"] .pax-wait__clock { color: var(--eh-caution); }
 
