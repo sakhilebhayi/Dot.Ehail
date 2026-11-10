@@ -128,12 +128,15 @@
             @php
                 $allStatuses = [
                     'requested'   => ['label' => 'Requested',   'color' => '#f59e0b', 'bg' => 'rgba(245,158,11,0.12)'],
-                    'accepted'    => ['label' => 'Accepted',    'color' => '#60a5fa', 'bg' => 'rgba(96,165,250,0.12)'],
-                    'en_route'    => ['label' => 'En Route',    'color' => '#818cf8', 'bg' => 'rgba(129,140,248,0.12)'],
-                    'arrived'     => ['label' => 'Arrived',     'color' => '#a78bfa', 'bg' => 'rgba(167,139,250,0.12)'],
+                    'searching'   => ['label' => 'Finding a driver', 'color' => '#f59e0b', 'bg' => 'rgba(245,158,11,0.12)'],
+                    'driver_assigned' => ['label' => 'Driver assigned', 'color' => '#60a5fa', 'bg' => 'rgba(96,165,250,0.12)'],
+                    'driver_arriving' => ['label' => 'Driver on the way', 'color' => '#818cf8', 'bg' => 'rgba(129,140,248,0.12)'],
+                    'driver_arrived'  => ['label' => 'Driver arrived', 'color' => '#a78bfa', 'bg' => 'rgba(167,139,250,0.12)'],
                     'in_progress' => ['label' => 'In Progress', 'color' => '#67e8f9', 'bg' => 'rgba(103,232,249,0.12)'],
                     'completed'   => ['label' => 'Completed',   'color' => '#4ade80', 'bg' => 'rgba(74,222,128,0.12)'],
-                    'cancelled'   => ['label' => 'Cancelled',   'color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)'],
+                    'cancelled_by_passenger' => ['label' => 'Cancelled by passenger', 'color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)'],
+                    'cancelled_by_driver' => ['label' => 'Cancelled by driver', 'color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)'],
+                    'cancelled_by_operator' => ['label' => 'Cancelled by operator', 'color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)'],
                     'expired'     => ['label' => 'Expired',     'color' => '#a1a1aa', 'bg' => 'rgba(161,161,170,0.12)'],
                     'needs_review' => ['label' => 'Needs review', 'color' => '#fb7185', 'bg' => 'rgba(251,113,133,0.12)'],
                 ];
@@ -257,12 +260,15 @@
                     @php
                         $statusStyles = [
                             'requested'   => ['color' => '#f59e0b', 'bg' => 'rgba(245,158,11,0.12)', 'label' => 'Requested'],
-                            'accepted'    => ['color' => '#60a5fa', 'bg' => 'rgba(96,165,250,0.12)',  'label' => 'Accepted'],
-                            'en_route'    => ['color' => '#818cf8', 'bg' => 'rgba(129,140,248,0.12)', 'label' => 'En Route'],
-                            'arrived'     => ['color' => '#a78bfa', 'bg' => 'rgba(167,139,250,0.12)', 'label' => 'Arrived'],
+                            'searching'   => ['color' => '#f59e0b', 'bg' => 'rgba(245,158,11,0.12)', 'label' => 'Finding a driver'],
+                            'driver_assigned' => ['color' => '#60a5fa', 'bg' => 'rgba(96,165,250,0.12)',  'label' => 'Driver assigned'],
+                            'driver_arriving' => ['color' => '#818cf8', 'bg' => 'rgba(129,140,248,0.12)', 'label' => 'Driver on the way'],
+                            'driver_arrived'  => ['color' => '#a78bfa', 'bg' => 'rgba(167,139,250,0.12)', 'label' => 'Driver arrived'],
                             'in_progress' => ['color' => '#67e8f9', 'bg' => 'rgba(103,232,249,0.12)', 'label' => 'In Progress'],
                             'completed'   => ['color' => '#4ade80', 'bg' => 'rgba(74,222,128,0.12)',  'label' => 'Completed'],
-                            'cancelled'   => ['color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)', 'label' => 'Cancelled'],
+                            'cancelled_by_passenger' => ['color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)', 'label' => 'Cancelled by passenger'],
+                            'cancelled_by_driver' => ['color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)', 'label' => 'Cancelled by driver'],
+                            'cancelled_by_operator' => ['color' => '#f87171', 'bg' => 'rgba(248,113,113,0.12)', 'label' => 'Cancelled by operator'],
                             'expired'     => ['color' => '#a1a1aa', 'bg' => 'rgba(161,161,170,0.12)', 'label' => 'Expired'],
                             'needs_review' => ['color' => '#fb7185', 'bg' => 'rgba(251,113,133,0.12)', 'label' => 'Needs review'],
                         ];

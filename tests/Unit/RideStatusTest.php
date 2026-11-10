@@ -15,22 +15,32 @@ class RideStatusTest extends TestCase
     public static function legalTransitions(): array
     {
         return [
-            'driver accepts' => ['requested', 'accepted', 'driver'],
-            'passenger cancels a request' => ['requested', 'cancelled', 'passenger'],
+            // R-46 state machine v2: the pre-R-46 edges under their v2 names.
+            'driver claims from the open board' => ['requested', 'driver_assigned', 'driver'],
+            'dispatch starts searching' => ['requested', 'searching', 'system'],
+            'driver accepts an offer' => ['searching', 'driver_assigned', 'driver'],
+            'passenger cancels a request' => ['requested', 'cancelled_by_passenger', 'passenger'],
+            'passenger cancels while searching' => ['searching', 'cancelled_by_passenger', 'passenger'],
             'request expires' => ['requested', 'expired', 'system'],
-            'driver heads out' => ['accepted', 'en_route', 'driver'],
-            'passenger cancels after accept' => ['accepted', 'cancelled', 'passenger'],
-            'driver cancel re-queues from accepted' => ['accepted', 'requested', 'driver'],
-            'driver cancel re-queues from en_route' => ['en_route', 'requested', 'driver'],
-            'driver cancel re-queues from arrived' => ['arrived', 'requested', 'driver'],
-            'driver arrives' => ['en_route', 'arrived', 'driver'],
-            'trip starts' => ['arrived', 'in_progress', 'driver'],
+            'search expires' => ['searching', 'expired', 'system'],
+            'driver heads out' => ['driver_assigned', 'driver_arriving', 'driver'],
+            'passenger cancels after accept' => ['driver_assigned', 'cancelled_by_passenger', 'passenger'],
+            'driver cancel re-queues from driver_assigned' => ['driver_assigned', 'searching', 'driver'],
+            'driver cancel re-queues from driver_arriving' => ['driver_arriving', 'searching', 'driver'],
+            'driver cancel re-queues from driver_arrived' => ['driver_arrived', 'searching', 'driver'],
+            'driver arrives' => ['driver_arriving', 'driver_arrived', 'driver'],
+            'trip starts' => ['driver_arrived', 'in_progress', 'driver'],
+            'driver records a no-show' => ['driver_arrived', 'no_show', 'driver'],
             'driver completes' => ['in_progress', 'completed', 'driver'],
             'operator completes' => ['in_progress', 'completed', 'operator'],
             'stuck trip is flagged' => ['in_progress', 'needs_review', 'system'],
             'operator completes a flagged trip' => ['needs_review', 'completed', 'operator'],
-            'operator cancels a flagged trip' => ['needs_review', 'cancelled', 'operator'],
-            'too many reassignments expire it' => ['accepted', 'expired', 'driver'],
+            'operator cancels a flagged trip' => ['needs_review', 'cancelled_by_operator', 'operator'],
+            'too many reassignments end it as cancelled_by_driver' => ['driver_assigned', 'cancelled_by_driver', 'driver'],
+            'scheduled ride reaches its lead time' => ['scheduled', 'requested', 'system'],
+            'passenger cancels a scheduled ride' => ['scheduled', 'cancelled_by_passenger', 'passenger'],
+            'operator reassigns' => ['driver_arriving', 'searching', 'operator'],
+            'system fault fails a search' => ['searching', 'failed', 'system'],
         ];
     }
 
@@ -46,18 +56,21 @@ class RideStatusTest extends TestCase
     public static function illegalTransitions(): array
     {
         return [
-            'requested straight to en_route' => ['requested', 'en_route'],
-            'accepted straight to arrived' => ['accepted', 'arrived'],
-            'accepted straight to in_progress' => ['accepted', 'in_progress'],
-            'accepted straight to completed' => ['accepted', 'completed'],
-            'en_route straight to in_progress' => ['en_route', 'in_progress'],
-            'arrived straight to completed' => ['arrived', 'completed'],
-            'backwards: en_route to accepted' => ['en_route', 'accepted'],
+            'requested straight to driver_arriving' => ['requested', 'driver_arriving'],
+            'driver_assigned straight to driver_arrived' => ['driver_assigned', 'driver_arrived'],
+            'driver_assigned straight to in_progress' => ['driver_assigned', 'in_progress'],
+            'driver_assigned straight to completed' => ['driver_assigned', 'completed'],
+            'driver_arriving straight to in_progress' => ['driver_arriving', 'in_progress'],
+            'driver_arrived straight to completed' => ['driver_arrived', 'completed'],
+            'backwards: driver_arriving to driver_assigned' => ['driver_arriving', 'driver_assigned'],
             'backwards: completed to in_progress' => ['completed', 'in_progress'],
-            'completed to cancelled' => ['completed', 'cancelled'],
-            'cancelled to requested' => ['cancelled', 'requested'],
-            'expired to accepted' => ['expired', 'accepted'],
+            'completed to cancelled' => ['completed', 'cancelled_by_operator'],
+            'cancelled to requested' => ['cancelled_by_passenger', 'requested'],
+            'expired to driver_assigned' => ['expired', 'driver_assigned'],
             'needs_review back to in_progress' => ['needs_review', 'in_progress'],
+            'in_progress back to searching' => ['in_progress', 'searching'],
+            'no_show to anything' => ['no_show', 'searching'],
+            'scheduled straight to driver_assigned' => ['scheduled', 'driver_assigned'],
         ];
     }
 
@@ -74,16 +87,18 @@ class RideStatusTest extends TestCase
 
     public function test_actors_cannot_use_transitions_that_belong_to_another_role(): void
     {
-        $this->assertFalse(RideStatus::Requested->canTransitionTo(RideStatus::Accepted, RideActor::Passenger));
+        $this->assertFalse(RideStatus::Requested->canTransitionTo(RideStatus::DriverAssigned, RideActor::Passenger));
         $this->assertFalse(RideStatus::Requested->canTransitionTo(RideStatus::Expired, RideActor::Passenger));
-        $this->assertFalse(RideStatus::InProgress->canTransitionTo(RideStatus::Cancelled, RideActor::Passenger));
-        $this->assertFalse(RideStatus::InProgress->canTransitionTo(RideStatus::Cancelled, RideActor::Driver));
+        $this->assertFalse(RideStatus::InProgress->canTransitionTo(RideStatus::CancelledByPassenger, RideActor::Passenger));
+        $this->assertFalse(RideStatus::InProgress->canTransitionTo(RideStatus::CancelledByDriver, RideActor::Driver));
         $this->assertFalse(RideStatus::NeedsReview->canTransitionTo(RideStatus::Completed, RideActor::Driver));
+        $this->assertFalse(RideStatus::DriverArrived->canTransitionTo(RideStatus::NoShow, RideActor::Passenger));
+        $this->assertFalse(RideStatus::Searching->canTransitionTo(RideStatus::CancelledByPassenger, RideActor::Driver));
     }
 
     public function test_terminal_states_have_no_exits(): void
     {
-        foreach ([RideStatus::Completed, RideStatus::Cancelled, RideStatus::Expired] as $status) {
+        foreach ([RideStatus::Completed, RideStatus::CancelledByPassenger, RideStatus::CancelledByDriver, RideStatus::CancelledByOperator, RideStatus::Expired, RideStatus::NoShow, RideStatus::Failed] as $status) {
             $this->assertTrue($status->isTerminal());
             $this->assertSame([], $status->allowedTransitions());
         }
@@ -93,9 +108,9 @@ class RideStatusTest extends TestCase
 
     public function test_the_driver_forward_ladder_is_one_step_at_a_time(): void
     {
-        $this->assertSame(RideStatus::EnRoute, RideStatus::Accepted->nextStage());
-        $this->assertSame(RideStatus::Arrived, RideStatus::EnRoute->nextStage());
-        $this->assertSame(RideStatus::InProgress, RideStatus::Arrived->nextStage());
+        $this->assertSame(RideStatus::DriverArriving, RideStatus::DriverAssigned->nextStage());
+        $this->assertSame(RideStatus::DriverArrived, RideStatus::DriverArriving->nextStage());
+        $this->assertSame(RideStatus::InProgress, RideStatus::DriverArrived->nextStage());
         $this->assertSame(RideStatus::Completed, RideStatus::InProgress->nextStage());
         $this->assertNull(RideStatus::Completed->nextStage());
         $this->assertNull(RideStatus::Requested->nextStage());
@@ -104,8 +119,18 @@ class RideStatusTest extends TestCase
     public function test_every_database_status_value_has_a_case(): void
     {
         $this->assertSame(
-            ['requested', 'accepted', 'en_route', 'arrived', 'in_progress', 'completed', 'cancelled', 'expired', 'needs_review'],
+            ['scheduled', 'requested', 'searching', 'driver_assigned', 'driver_arriving', 'driver_arrived', 'in_progress', 'completed',
+                'cancelled_by_passenger', 'cancelled_by_driver', 'cancelled_by_operator', 'expired', 'no_show', 'failed', 'needs_review'],
             array_map(fn (RideStatus $s) => $s->value, RideStatus::cases()),
         );
+    }
+
+    public function test_pre_v2_values_still_resolve_through_their_aliases(): void
+    {
+        $this->assertSame(RideStatus::DriverAssigned, RideStatus::fromStored('accepted'));
+        $this->assertSame(RideStatus::DriverArriving, RideStatus::fromStored('en_route'));
+        $this->assertSame(RideStatus::DriverArrived, RideStatus::fromStored('arrived'));
+        $this->assertSame(RideStatus::CancelledByOperator, RideStatus::fromStored('cancelled'));
+        $this->assertSame(RideStatus::Searching, RideStatus::fromStored('searching'));
     }
 }

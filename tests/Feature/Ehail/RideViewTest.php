@@ -61,7 +61,8 @@ class RideViewTest extends TestCase
             'passenger_id' => $passenger->id,
             'pickup_address' => 'Totally Different Beta',
             'dropoff_address' => 'Elsewhere',
-            'status' => 'requested',
+            // R-46: a passenger has one active ride at a time (database guard), so the second is a past ride.
+            'status' => 'completed',
         ]);
 
         $response = $this->actingAs($user)->get(route('rides.index', ['q' => 'Alpha']));

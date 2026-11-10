@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Domain\Dispatch\Models\RideOffer;
+use App\Domain\Rides\FeedVersion;
+use App\Domain\Rides\Models\RideEvent;
 use App\Enums\PaymentStatus;
 use App\Enums\RideActor;
 use App\Enums\RideStatus;
@@ -21,7 +24,21 @@ class Ride extends Model
         'started_at', 'cancelled_at', 'expired_at', 'needs_review_at',
         'cancelled_by', 'cancel_reason', 'cancel_note', 'reassignment_count',
         'final_fare_reason', 'final_fare_set_by',
+        // R-46 dispatch (docs/R46_DISPATCH.md)
+        'fare_quote_id', 'quote_snapshot', 'category_code', 'quoted_total_minor', 'final_fare_minor',
+        'cancellation_fee_minor', 'currency', 'route_distance_m', 'route_duration_s',
+        'payment_method_kind', 'payment_method_ref',
+        'search_started_at', 'search_round', 'offers_sent', 'dispatch_priority', 'next_dispatch_at',
+        'pending_offer_expires_at', 'driver_arriving_at', 'arrived_at', 'no_show_at', 'failed_at',
+        'failure_reason', 'needs_review_reason', 'scheduled_for', 'requote_required_at',
+        'requote_quote_id', 'requote_total_minor', 'reminder_sent_at',
     ];
+
+    /**
+     * The PIN never leaves through serialisation; RideFeed shows the
+     * decrypted PIN to the passenger only. The guard columns are internal.
+     */
+    protected $hidden = ['pin_hash', 'pin_encrypted', 'dispatch_lease_owner'];
 
     protected $casts = [
         'requested_at' => 'datetime',
@@ -35,6 +52,31 @@ class Ride extends Model
         'final_fare' => 'decimal:2',
         'fare_waived_at' => 'datetime',
         'reassignment_count' => 'integer',
+        'version' => 'integer',
+        'quote_snapshot' => 'array',
+        'quoted_total_minor' => 'integer',
+        'final_fare_minor' => 'integer',
+        'cancellation_fee_minor' => 'integer',
+        'requote_total_minor' => 'integer',
+        'route_distance_m' => 'integer',
+        'route_duration_s' => 'integer',
+        'pin_encrypted' => 'encrypted',
+        'pin_attempts' => 'integer',
+        'pin_locked_until' => 'datetime',
+        'search_started_at' => 'datetime',
+        'search_round' => 'integer',
+        'offers_sent' => 'integer',
+        'dispatch_priority' => 'integer',
+        'next_dispatch_at' => 'datetime',
+        'pending_offer_expires_at' => 'datetime',
+        'dispatch_lease_until' => 'datetime',
+        'driver_arriving_at' => 'datetime',
+        'arrived_at' => 'datetime',
+        'no_show_at' => 'datetime',
+        'failed_at' => 'datetime',
+        'scheduled_for' => 'datetime',
+        'requote_required_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -44,11 +86,65 @@ class Ride extends Model
         static::creating(function (Ride $ride): void {
             $ride->requested_at ??= now();
         });
+
+        static::saving(function (Ride $ride): void {
+            if ($ride->exists && ! $ride->isDirty()) {
+                return;
+            }
+
+            // Feed version (App\Domain\Rides\FeedVersion): epoch microseconds, strictly increasing per ride.
+            $ride->version = FeedVersion::next((int) $ride->version);
+
+            $ride->syncConcurrencyGuards();
+        });
+    }
+
+    /**
+     * Keep the nullable-unique guard columns in step with the status (see the
+     * 2026_11_10_400000 migration): a value while the ride holds its driver /
+     * is active for its passenger, NULL otherwise. Set on entry into the
+     * holding states only, so a legacy duplicate that predates the guard can
+     * still move between active states and be finished.
+     */
+    public function syncConcurrencyGuards(): void
+    {
+        if ($this->exists && ! $this->isDirty('status') && ! $this->isDirty('driver_id')) {
+            return;
+        }
+
+        $status = RideStatus::fromStored((string) ($this->status ?? RideStatus::Requested->value));
+        $was = $this->exists ? RideStatus::fromStored((string) $this->getOriginal('status')) : null;
+
+        if ($status->holdsDriver() && $this->driver_id !== null) {
+            if ($was === null || ! $was->holdsDriver() || $this->isDirty('driver_id')) {
+                $this->active_driver_id = $this->driver_id;
+            }
+        } else {
+            $this->active_driver_id = null;
+        }
+
+        if ($status->isActiveForPassenger()) {
+            if ($was === null || ! $was->isActiveForPassenger()) {
+                $this->active_passenger_id = $this->passenger_id;
+            }
+        } else {
+            $this->active_passenger_id = null;
+        }
     }
 
     public function statusEnum(): RideStatus
     {
-        return RideStatus::from($this->status);
+        return RideStatus::fromStored($this->status);
+    }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(RideEvent::class)->orderBy('sequence');
+    }
+
+    public function offers(): HasMany
+    {
+        return $this->hasMany(RideOffer::class);
     }
 
     /**

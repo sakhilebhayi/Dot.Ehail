@@ -19,6 +19,18 @@ class RidePrivacyTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * R-46: rides reach the open board only after ehail_dispatch.open_board_after_seconds
+     * (sequential offers come first). These tests are about what the board shows, not the
+     * delay, so it opens at once (the delay is tested in DispatcherTest).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['ehail_dispatch.open_board_after_seconds' => 0]);
+    }
+
     private function operator(): User
     {
         $operator = User::factory()->withPersonalTeam()->create();
@@ -47,7 +59,7 @@ class RidePrivacyTest extends TestCase
             'driver_id' => $driver?->id,
             'pickup_address' => 'Secret Pickup '.$passenger->id,
             'dropoff_address' => 'Secret Dropoff '.$passenger->id,
-            'status' => $driver ? 'accepted' : 'requested',
+            'status' => $driver ? 'driver_assigned' : 'requested',
             'vehicle_type' => 'standard',
             'estimated_fare' => 80,
         ], $overrides));

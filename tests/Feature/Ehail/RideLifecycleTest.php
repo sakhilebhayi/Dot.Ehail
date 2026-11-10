@@ -21,6 +21,18 @@ class RideLifecycleTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * R-46: rides reach the open board only after ehail_dispatch.open_board_after_seconds
+     * (sequential offers come first). These tests exercise the claim mechanics, not the
+     * delay, so the board opens at once (the delay is tested in DispatcherTest).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['ehail_dispatch.open_board_after_seconds' => 0]);
+    }
+
     private function makeAvailableDriver(): User
     {
         $user = User::factory()->withPersonalTeam()->create();
@@ -93,7 +105,7 @@ class RideLifecycleTest extends TestCase
             ->assertRedirect(route('rides.show', $ride));
 
         $ride->refresh();
-        $this->assertSame('accepted', $ride->status);
+        $this->assertSame('driver_assigned', $ride->status);
         $this->assertSame($driver->id, $ride->driver_id);
         $this->assertNotNull($ride->vehicle_id);
         $this->assertNotNull($ride->accepted_at);
@@ -111,9 +123,9 @@ class RideLifecycleTest extends TestCase
         Event::assertDispatched(
             RideStatusUpdated::class,
             fn (RideStatusUpdated $event) => $event->ride->id === $ride->id
-                && $event->ride->status === 'accepted'
+                && $event->ride->status === 'driver_assigned'
                 && $event->ride->driver_id === $driver->id
-                && $event->broadcastWith()['status'] === 'accepted'
+                && $event->broadcastWith()['status'] === 'driver_assigned'
         );
     }
 
@@ -212,7 +224,7 @@ class RideLifecycleTest extends TestCase
         $ride = $this->makeRequestedRide();
         $this->actingAs($driver)->post(route('rides.accept', $ride));
 
-        foreach (['en_route', 'arrived', 'in_progress', 'completed'] as $status) {
+        foreach (['driver_arriving', 'driver_arrived', 'in_progress', 'completed'] as $status) {
             $this->actingAs($driver)
                 ->patch(route('rides.advance', $ride), ['status' => $status])
                 ->assertRedirect();
@@ -229,13 +241,13 @@ class RideLifecycleTest extends TestCase
         $driver = $this->makeAvailableDriver();
         $ride = $this->makeRequestedRide();
         $this->actingAs($driver)->post(route('rides.accept', $ride));
-        $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => 'en_route']);
+        $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => 'driver_arriving']);
 
         $this->actingAs($driver)
-            ->patch(route('rides.advance', $ride), ['status' => 'accepted'])
+            ->patch(route('rides.advance', $ride), ['status' => 'driver_assigned'])
             ->assertSessionHasErrors('status');
 
-        $this->assertSame('en_route', $ride->fresh()->status);
+        $this->assertSame('driver_arriving', $ride->fresh()->status);
     }
 
     public function test_a_stage_cannot_be_skipped_past_completed_and_then_changed_again(): void
@@ -243,7 +255,7 @@ class RideLifecycleTest extends TestCase
         $driver = $this->makeAvailableDriver();
         $ride = $this->makeRequestedRide();
         $this->actingAs($driver)->post(route('rides.accept', $ride));
-        foreach (['en_route', 'arrived', 'in_progress', 'completed'] as $status) {
+        foreach (['driver_arriving', 'driver_arrived', 'in_progress', 'completed'] as $status) {
             $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => $status]);
         }
 
@@ -260,7 +272,7 @@ class RideLifecycleTest extends TestCase
         $this->actingAs($driver)->post(route('rides.accept', $ride));
 
         $this->actingAs($otherDriver)
-            ->patch(route('rides.advance', $ride), ['status' => 'en_route'])
+            ->patch(route('rides.advance', $ride), ['status' => 'driver_arriving'])
             ->assertForbidden();
     }
 
@@ -271,7 +283,7 @@ class RideLifecycleTest extends TestCase
         $ride = $this->makeRequestedRide($passenger);
         $this->actingAs($driver)->post(route('rides.accept', $ride));
 
-        foreach (['en_route', 'arrived', 'in_progress', 'completed'] as $status) {
+        foreach (['driver_arriving', 'driver_arrived', 'in_progress', 'completed'] as $status) {
             $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => $status]);
         }
 
@@ -290,7 +302,7 @@ class RideLifecycleTest extends TestCase
             ->post(route('rides.cancel', $ride), ['reason' => 'changed_plans'])
             ->assertRedirect(route('rides.show', $ride));
 
-        $this->assertSame('cancelled', $ride->fresh()->status);
+        $this->assertSame('cancelled_by_passenger', $ride->fresh()->status);
     }
 
     public function test_a_ride_in_progress_cannot_be_cancelled(): void
@@ -298,8 +310,8 @@ class RideLifecycleTest extends TestCase
         $driver = $this->makeAvailableDriver();
         $ride = $this->makeRequestedRide();
         $this->actingAs($driver)->post(route('rides.accept', $ride));
-        $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => 'en_route']);
-        $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => 'arrived']);
+        $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => 'driver_arriving']);
+        $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => 'driver_arrived']);
         $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => 'in_progress']);
 
         $this->actingAs($driver)

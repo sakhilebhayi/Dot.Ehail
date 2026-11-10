@@ -29,7 +29,7 @@ class MoneyRideListener
             return;
         }
 
-        ChargeCancellationFee::dispatch($event->rideId, $event->actor, $event->occurredAt->toIso8601String());
+        ChargeCancellationFee::dispatch($event->rideId, $event->actorType, $event->occurredAt->toIso8601String());
     }
 
     public function rideUpdated(Ride $ride): void

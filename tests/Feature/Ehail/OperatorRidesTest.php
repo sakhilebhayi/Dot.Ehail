@@ -90,7 +90,7 @@ class OperatorRidesTest extends TestCase
         $this->makeRide(['status' => 'completed', 'driver_id' => $driver->id, 'final_fare' => 120.50]);
         $this->makeRide(['status' => 'completed', 'driver_id' => $driver->id, 'final_fare' => 79.50]);
         $this->makeRide(['status' => 'completed', 'driver_id' => $driver->id, 'final_fare' => null]);
-        $this->makeRide(['status' => 'cancelled', 'estimated_fare' => 5123.45, 'final_fare' => 5123.45]);
+        $this->makeRide(['status' => 'cancelled_by_passenger', 'estimated_fare' => 5123.45, 'final_fare' => 5123.45]);
         $this->makeRide(['status' => 'requested', 'estimated_fare' => 7234.56]);
 
         $this->actingAs($operator)->get(route('operator.rides.index'))
@@ -193,7 +193,7 @@ class OperatorRidesTest extends TestCase
             ->assertRedirect(route('operator.rides.index'));
 
         $ride->refresh();
-        $this->assertSame('cancelled', $ride->status);
+        $this->assertSame('cancelled_by_operator', $ride->status);
         $this->assertSame($operator->id, $ride->cancelled_by);
         $this->assertSame('other', $ride->cancel_reason);
         $this->assertSame('Neither party responded to the review call.', $ride->cancel_note);

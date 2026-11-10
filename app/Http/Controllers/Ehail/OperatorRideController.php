@@ -41,7 +41,7 @@ class OperatorRideController extends Controller
             ->limit(25)
             ->get();
 
-        $openRequests = Ride::where('status', 'requested');
+        $openRequests = Ride::whereIn('status', ['requested', 'searching']);
 
         $alertHours = max(1, (int) config('ehail.unpaid_fare_alert_hours'));
         $collected = RidePayment::where('status', RidePayment::STATUS_PAID);

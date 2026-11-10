@@ -65,7 +65,7 @@
     </div>
     @endif
 
-    @if($ride->status === 'cancelled' && $ride->cancel_reason)
+    @if($ride->statusEnum()->isCancelled() && $ride->cancel_reason)
     <div class="dot-card" style="padding:1rem 1.5rem;margin-bottom:1.25rem;">
         <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">
             Cancelled{{ $ride->cancelled_at ? ' '.$ride->cancelled_at->diffForHumans() : '' }}:
