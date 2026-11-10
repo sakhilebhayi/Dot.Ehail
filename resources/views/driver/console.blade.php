@@ -9,7 +9,7 @@
     $initial = $hasRide ? 'trip' : (in_array($availability, ['online', 'paused'], true) ? 'online' : 'offline');
     $statebar = match (true) {
         $hasRide => ['busy', 'On a trip', $feed['ride']['status_label'] ?? 'Trip in progress', 'route'],
-        $availability === 'online' => ['online', 'You are online', 'Waiting for ride offers. Each offer shows the pickup, the trip and your earnings before you answer.', 'online'],
+        $availability === 'online' => ['online', 'You are online', 'Waiting for ride offers. They arrive while this screen is open.', 'online'],
         $availability === 'paused' => ['offline', 'Paused', 'You stay signed in but get no offers until you resume.', 'offline'],
         default => ['offline', 'You are offline', 'Go online when you are ready to take rides.', 'offline'],
     };
@@ -124,6 +124,7 @@
                     @endif
                 </div>
             </div>
+            @include('driver._offer-alerts', ['uid' => 'dr-online-alerts', 'class' => 'dr-optional dr-panel', 'showWake' => true, 'compact' => true])
         </section>
 
         {{-- TRIP --}}
@@ -136,7 +137,7 @@
 
             <div class="dr-stop">
                 <p class="dr-stop__kicker" data-dr-stop-label>Pickup</p>
-                <h2 class="dr-stop__address" id="dr-trip-h" data-dr-stop-address></h2>
+                <h2 class="dr-stop__address" id="dr-trip-h"><button type="button" class="dr-addr" data-dr-addr data-dr-stop-address aria-expanded="false"></button></h2>
                 <p class="dr-stop__meta"><span data-dr-stop-distance></span> <span class="dr-passenger" data-dr-passenger></span></p>
             </div>
 
@@ -201,7 +202,7 @@
 
         {{-- TRIP SUMMARY --}}
         <section class="dr-view" data-dr-view="summary" hidden aria-labelledby="dr-summary-h">
-            <h2 class="dr-summary__title" id="dr-summary-h">Trip complete</h2>
+            <h2 class="eh-sr-only" id="dr-summary-h">Fare and earnings</h2>
             <div class="dr-cash" data-dr-cash hidden>
                 <p class="dr-cash__ask">Collect cash</p>
                 <p class="dr-cash__amount" data-dr-cash-amount></p>
@@ -232,32 +233,40 @@
     </div>
 
     {{-- OFFER: full screen, above everything --}}
+    {{-- The offer fills the screen in three bands: the clock (always visible), what the trip pays and where it goes
+         (scrolls if the phone is short), and Accept / Decline pinned to the bottom above the safe area. --}}
     <div class="dr-offer" data-dr-offer hidden role="dialog" aria-modal="true" aria-labelledby="dr-offer-title" aria-describedby="dr-offer-earn">
         <div class="dr-offer__clock">
-            <div class="dr-countdown" aria-hidden="true"><span data-dr-countdown-fill></span></div>
-            <p class="dr-offer__seconds"><span data-dr-countdown-seconds>15</span> s to answer</p>
-        </div>
-        <div class="dr-offer__body">
-            <h2 class="dr-offer__title" id="dr-offer-title">New ride offer</h2>
-            <div class="dr-offer__earn" id="dr-offer-earn">
-                <p class="dr-offer__net" data-dr-offer-net></p>
-                <p class="dr-offer__net-label" data-dr-offer-net-label>You earn</p>
+            <div class="dr-offer__top">
+                <h2 class="dr-offer__title" id="dr-offer-title">New ride offer</h2>
+                <p class="dr-offer__seconds"><span data-dr-countdown-seconds>15</span> s to answer</p>
             </div>
-            <dl class="dr-ledger dr-ledger--offer" data-dr-offer-ledger></dl>
+            <div class="dr-countdown" aria-hidden="true"><span data-dr-countdown-fill></span></div>
+        </div>
+        <div class="dr-offer__body" data-dr-offer-body>
+            <div class="dr-offer__money">
+                <div class="dr-offer__earn" id="dr-offer-earn">
+                    <p class="dr-offer__net-label" data-dr-offer-net-label>You earn (estimate)</p>
+                    <p class="dr-offer__net" data-dr-offer-net></p>
+                </div>
+                <dl class="dr-lines" data-dr-offer-ledger aria-label="How the fare divides"></dl>
+            </div>
+            <div class="dr-offer__trip">
+                <ol class="dr-legs">
+                    <li class="dr-legs__pickup">
+                        <span class="dr-legs__dot" aria-hidden="true"></span>
+                        <span class="dr-legs__what">Pickup <strong data-dr-offer-pickup-distance></strong></span>
+                        <button type="button" class="dr-addr dr-legs__where" data-dr-addr data-dr-offer-pickup aria-expanded="false"></button>
+                    </li>
+                    <li class="dr-legs__dropoff">
+                        <span class="dr-legs__dot" aria-hidden="true"></span>
+                        <span class="dr-legs__what">Trip <strong data-dr-offer-trip></strong></span>
+                        <span class="dr-legs__where" data-dr-offer-dropoff></span>
+                    </li>
+                </ol>
+                <p class="dr-offer__tags" data-dr-offer-tags></p>
+            </div>
             <p class="dr-offer__plan" data-dr-offer-plan hidden>The commission plan is an example the operator has not replaced yet.</p>
-            <ol class="dr-legs">
-                <li class="dr-legs__pickup">
-                    <span class="dr-legs__dot" aria-hidden="true"></span>
-                    <span class="dr-legs__what">Pickup <strong data-dr-offer-pickup-distance></strong></span>
-                    <span class="dr-legs__where" data-dr-offer-pickup></span>
-                </li>
-                <li class="dr-legs__dropoff">
-                    <span class="dr-legs__dot" aria-hidden="true"></span>
-                    <span class="dr-legs__what">Trip <strong data-dr-offer-trip></strong></span>
-                    <span class="dr-legs__where" data-dr-offer-dropoff></span>
-                </li>
-            </ol>
-            <p class="dr-offer__tags" data-dr-offer-tags></p>
         </div>
         <div class="dr-offer__actions">
             <button type="button" class="dr-accept" data-dr-accept>Accept</button>

@@ -34,10 +34,8 @@
                         <label class="dr-reason"><input type="radio" name="nav" value="{{ $value }}" @checked($value === 'google')> {{ $label }}</label>
                     @endforeach
                 </fieldset>
-                <label class="dr-reason"><input type="checkbox" name="sound" checked> Sound for new offers <span class="eh-muted" data-dr-switch-state="sound">On</span></label>
-                <label class="dr-reason"><input type="checkbox" name="vibrate" checked> Vibrate for new offers <span class="eh-muted" data-dr-switch-state="vibrate">On</span></label>
-                <p class="dr-note">The browser plays sound only after you have tapped the app once (for example Go online). Voice prompts are not offered.</p>
             </form>
+            @include('driver._offer-alerts', ['uid' => 'dr-account-alerts', 'class' => 'dr-panel', 'headingLevel' => 3])
         </section>
 
         @if ($profile)

@@ -83,6 +83,31 @@ class DriverApiTest extends TestCase
             ->assertJsonPath('deductions.0.code', 'commission');
     }
 
+    public function test_offer_earnings_list_what_the_platform_keeps_so_the_lines_add_up(): void
+    {
+        [$driver, $ride, $offer] = $this->offered();
+        // The jury's offer: R64.00 fare with a R3.00 booking fee that is not commissionable; 20% of R61.00.
+        RideFare::query()->create([
+            'ride_id' => $ride->id, 'currency' => 'ZAR', 'estimated_total_minor' => 6400,
+            'estimated_components' => [
+                ['code' => 'base', 'label' => 'Base fare', 'amount_minor' => 2500],
+                ['code' => 'distance', 'label' => 'Distance', 'amount_minor' => 3600],
+                ['code' => 'booking_fee', 'label' => 'Booking fee', 'amount_minor' => 300],
+            ],
+        ]);
+        $this->publishedCommissionPlan(['percent_bp' => 2000]);
+
+        $data = $this->actingAs($driver)->getJson(route('drive.api.offer-earnings', $offer))->assertOk()->json();
+
+        $this->assertSame(6100, $data['commissionable_minor']);
+        $this->assertSame([['code' => 'booking_fee', 'label' => 'Booking fee', 'amount_minor' => 300]], $data['kept_by_platform']);
+        $this->assertSame(2000, $data['commission_rule']['percent_bp']);
+        $this->assertSame(1220, $data['commission_minor']);
+        // fare - kept - commission = net, to the cent.
+        $this->assertSame($data['net_minor'], $data['fare_minor'] - array_sum(array_column($data['kept_by_platform'], 'amount_minor')) - $data['commission_minor']);
+        $this->assertSame(4880, $data['net_minor']);
+    }
+
     public function test_a_driver_cannot_see_or_answer_another_drivers_offer(): void
     {
         [, , $offer] = $this->offered();
