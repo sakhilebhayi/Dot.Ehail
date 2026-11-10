@@ -174,7 +174,7 @@ Low findings accepted or left to the owner are listed in section 2 of that file,
 | PHP on PostgreSQL 16 (throwaway database, `bin/test-pgsql.sh`) | 1,501 tests, 1,494 passed, 7 skipped, 0 failed |
 | JavaScript | 122 of 122 |
 | Build | Vite build and `view:cache` clean |
-| Browser end-to-end (`R46_QA.md`, real Chrome, local stubs for routing, search, Paystack, SMS and SMTP, and a proxy that fails the run if anything reaches the internet) | E2E_RESULT |
+| Browser end-to-end (`R46_QA.md`, real Chrome, local stubs for routing, search, Paystack, SMS and SMTP, and a proxy that fails the run if anything reaches the internet) | **16 of 16 pass** on the merged code (final full run, 2026-11-10): every journey, every failure scenario, and the route sweep (191 GET routes as 15 roles at 390 and 1440 px, 0 problems) |
 
 The browser suite covers passenger steps 1 to 14, driver steps 1 to 14, safety 1 to 6, pricing 1 to 7, ten failure scenarios, and a sweep of 189 routes for every role at 390 and 1440 px.
 
@@ -217,7 +217,33 @@ Until the owner completes steps 1 to 5 of `R46_OPERATIONS.md` section 1, the liv
 
 ## 17. Deployment
 
-DEPLOY_SECTION
+Merged to `main` as `38fd725` ([PR #33](https://github.com/sakhilebhayi/Dot.Ehail/pull/33)) and deployed on 2026-11-10 by `deploy.yml` (`confirm=deploy`), run [42861943395](https://github.com/sakhilebhayi/Dot.Ehail/actions/runs/42861943395): **success**.
+
+**What the run did:**
+
+1. **CI gate:** green on SQLite and PostgreSQL 16, JS, the upgrade rehearsal on a populated pre-R-46 database, and the signed-in production-like smoke check.
+2. **Before maintenance mode:** a rollback copy (`dot-ehail-deploy-20261110T171403Z.tgz`) and a database restore point (`dot-ehail-db-deploy-20261110T171403Z.sqlite`, integrity ok).
+3. **Release:** code moved from `d596a97` to `38fd725`; all migrations ran (43 applied, none pending), including the ride status migration to state machine v2.
+4. **Reference data:** 4 approximate service areas and 3 airport zones created.
+5. **Caches and schedule:** caches rebuilt and the 18 scheduled tasks registered.
+6. **Preflight:** `Preflight OK: 36 pass, 5 info, 4 off, 13 warning(s), 0 failure(s)`. The warnings are the owner steps in section 16.
+7. **Go live:** site up, cron lines installed through the shared-crontab runner, smoke check passed, and nothing in the app folder is readable over HTTP.
+
+**Checked live afterwards (from outside the host):**
+
+- **Pages:** `/`, `/login`, `/up`, `/fares` and `/offline.html` answer 200.
+- **Realtime:** `/up/realtime` answers `{"status":"ok","mode":"polling"}`. Before R-46 it answered "degraded".
+- **Access:** `/ride` sends a guest to the login, and a bogus `/t/<token>` share link answers 404.
+- **App shell:** `manifest.webmanifest` and `/sw.js` (as JavaScript) are served, the built CSS and JS answer 200, and the self-hosted Barlow fonts answer 200 as `font/woff2`.
+- **Security headers:** HSTS, an enforced nonce CSP, nosniff, frame options, referrer policy and permissions policy are present.
+- **In a browser:** `/fares` renders in the Route Line design with OpenStreetMap tiles and no console errors.
+
+**Live state, honestly:**
+
+- The site is up and safe, and preflight answers **"Can a passenger book? NO"**: there is no routing provider, no way to pay and no published tariff. That is intended until the owner completes section 16.
+- The live database is **SQLite** (preflight warns: one writer at a time). PostgreSQL is what the platform is load-tested on; move before real traffic (`R46_OPERATIONS.md` section 6).
+- Mail goes to the log, so no email is delivered yet.
+
 
 ## 18. Summary: complete, partial, future
 
