@@ -122,9 +122,12 @@ class DistanceMeter
                 continue;
             }
 
-            $jitter = max((float) $config['jitter_floor_m'], (($anchor->accuracy_m ?? 10) + ($point->accuracy_m ?? 10)) / 2);
+            // Two fixes of a parked car differ by up to about the sum of their accuracy radii; only movement beyond
+            // that counts. Progress is measured from the anchor, so slow traffic still accumulates.
+            $jitter = max((float) $config['jitter_floor_m'], ($anchor->accuracy_m ?? 10) + ($point->accuracy_m ?? 10));
+            $deviceSaysParked = $point->speed_mps !== null && $point->speed_mps < 0.5 && $anchor->speed_mps !== null && $anchor->speed_mps < 0.5;
 
-            if ($metres < $jitter) {
+            if ($metres < $jitter || ($deviceSaysParked && $metres < 2 * $jitter)) {
                 continue;
             }
 

@@ -3,6 +3,7 @@
 namespace App\Domain\Geo\Http\Controllers;
 
 use App\Domain\Geo\Deviation\DeviationMonitor;
+use App\Domain\Geo\Http\Controllers\Concerns\ValidatesJson;
 use App\Domain\Geo\Locations\DriverPresence;
 use App\Domain\Geo\Locations\LocationAccess;
 use App\Domain\Geo\Locations\LocationStore;
@@ -16,6 +17,8 @@ use Illuminate\Http\Request;
 
 class DriverLocationController extends Controller
 {
+    use ValidatesJson;
+
     /**
      * A driver's device reports one sample or a short queue of samples (after a dead zone). Only an approved
      * driver who is online or on an active ride may report; throttled per driver (ehail-geo-location limiter).
@@ -33,7 +36,7 @@ class DriverLocationController extends Controller
         }
 
         $max = (int) config('ehail-geo.locations.max_samples_per_post', 20);
-        $data = $request->validate([
+        $data = $this->validateJson($request, [
             'samples' => ['required', 'array', 'min:1', 'max:'.$max],
             'samples.*.lat' => ['required', 'numeric', 'between:-90,90'],
             'samples.*.lng' => ['required', 'numeric', 'between:-180,180'],
@@ -68,7 +71,9 @@ class DriverLocationController extends Controller
         $viewer = $request->user();
 
         if (! $access->canViewDriverOf($viewer, $ride)) {
-            abort_unless($viewer->id === $ride->passenger_id, 404);
+            if ($viewer->id !== $ride->passenger_id) {
+                return response()->json(['message' => 'Not found.'], 404);
+            }
 
             return response()->json([
                 'reason' => 'not_tracking',

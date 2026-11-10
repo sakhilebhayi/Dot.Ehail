@@ -1,0 +1,411 @@
+/*
+ * Dot.Ehail geo module: map frame, stations (pickup, destination), driver marker, place search, locate button.
+ * Reads the design system's --eh-* tokens ("Route Line": the dot on a line). Every token has a fallback equal to
+ * the design system's light value so the module renders correctly before or without the ds stylesheet.
+ * Raster tiles cannot be recoloured, so the map's theme is a CSS filter token: --eh-map-tile-filter.
+ */
+
+.eh-map,
+.eh-geo,
+.eh-search {
+    --eh-map-tile-filter: saturate(0.72) contrast(0.96) brightness(1.02);
+    --eh-geo-surface: var(--eh-surface, #ffffff);
+    --eh-geo-ink: var(--eh-ink, #0f1f19);
+    --eh-geo-ink-2: var(--eh-ink-2, #3a4a43);
+    --eh-geo-ink-3: var(--eh-ink-3, #56665e);
+    --eh-geo-rule: var(--eh-rule, #d3dbd5);
+    --eh-geo-focus: var(--eh-focus, #1d5bd6);
+    --eh-geo-accent: var(--eh-accent, #0b6a3c);
+    --eh-geo-accent-tint: var(--eh-accent-tint, #d9eedf);
+    --eh-geo-accent-tint-ink: var(--eh-accent-tint-ink, #0a4a2b);
+    --eh-geo-shadow: var(--eh-shadow-float, 0 12px 32px -8px rgb(15 31 25 / 0.28), 0 2px 6px rgb(15 31 25 / 0.12));
+    --eh-geo-ease: var(--eh-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .eh-map {
+        --eh-map-tile-filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.86) saturate(0.5);
+    }
+}
+
+:root[data-theme="dark"] .eh-map,
+.eh-map[data-map-style="night"] {
+    --eh-map-tile-filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.86) saturate(0.5);
+}
+
+/* ---- Map frame ---------------------------------------------------------------------------------------- */
+
+.eh-map {
+    position: relative;
+    min-height: 16rem;
+    overflow: hidden;
+    border-radius: var(--eh-radius, 12px);
+    background: var(--eh-map-land, #eef1ec);
+    font-family: var(--eh-font-ui, system-ui, sans-serif);
+    isolation: isolate;
+}
+
+.eh-map.is-loading::after {
+    content: "Loading map";
+    position: absolute;
+    inset: auto 0 50% 0;
+    text-align: center;
+    color: var(--eh-geo-ink-3);
+    font-size: var(--eh-text-sm, 0.875rem);
+}
+
+.eh-map.is-failed {
+    display: grid;
+    place-items: center;
+    padding: var(--eh-space-6, 1.5rem);
+    color: var(--eh-geo-ink-2);
+    text-align: center;
+}
+
+.eh-map .leaflet-container,
+.eh-map.leaflet-container {
+    background: var(--eh-map-land, #eef1ec);
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.eh-map .leaflet-tile-pane {
+    filter: var(--eh-map-tile-filter);
+}
+
+.eh-map:focus-visible,
+.eh-map .leaflet-container:focus-visible {
+    outline: 3px solid var(--eh-geo-focus);
+    outline-offset: -3px;
+}
+
+/* Zoom buttons: 44 px targets in the design system's surface and ink. */
+.eh-map .leaflet-bar {
+    border: 1px solid var(--eh-geo-rule);
+    border-radius: var(--eh-radius-sm, 6px);
+    box-shadow: var(--eh-geo-shadow);
+    overflow: hidden;
+}
+
+.eh-map .leaflet-bar a,
+.eh-map .leaflet-bar a:hover {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    font-size: 1.25rem;
+    color: var(--eh-geo-ink);
+    background: var(--eh-geo-surface);
+    border-bottom-color: var(--eh-geo-rule);
+}
+
+.eh-map .leaflet-bar a:focus-visible {
+    outline: 3px solid var(--eh-geo-focus);
+    outline-offset: -3px;
+}
+
+.eh-map .leaflet-bar a.leaflet-disabled {
+    color: var(--eh-geo-ink-3);
+    background: var(--eh-surface-2, #e4eae4);
+}
+
+/* Attribution stays readable and visible (OSMF policy: never hidden). */
+.eh-map .leaflet-control-attribution {
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--eh-geo-ink-2);
+    background: color-mix(in srgb, var(--eh-geo-surface) 88%, transparent);
+    border-top-left-radius: var(--eh-radius-sm, 6px);
+}
+
+.eh-map .leaflet-control-attribution a {
+    color: var(--eh-geo-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* Status banner (offline, tiles failing): the caution pair from the design system. */
+.eh-map-banner {
+    position: absolute;
+    z-index: 1000;
+    top: var(--eh-space-3, 0.75rem);
+    left: var(--eh-space-3, 0.75rem);
+    right: var(--eh-space-3, 0.75rem);
+    margin: 0;
+    padding: var(--eh-space-2, 0.5rem) var(--eh-space-3, 0.75rem);
+    border-radius: var(--eh-radius-sm, 6px);
+    background: var(--eh-caution-bg, #fdf1c9);
+    color: var(--eh-caution, #7a4f00);
+    font-size: var(--eh-text-sm, 0.875rem);
+    font-weight: 600;
+    box-shadow: var(--eh-geo-shadow);
+}
+
+/* ---- Markers: stations on the line, and the moving car ------------------------------------------------- */
+
+.eh-map .eh-map-marker {
+    background: none;
+    border: 0;
+}
+
+.eh-map-station {
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgb(15 31 25 / 0.3);
+}
+
+/* Pickup: the yellow dot, ringed in ink like a station on a route line. */
+.eh-map-station--pickup {
+    background: var(--eh-map-pickup, #f2c230);
+    border: 4px solid var(--eh-map-dropoff, #0f1f19);
+}
+
+/* Destination: the terminus, an ink disc with a white core. */
+.eh-map-station--destination {
+    background: var(--eh-map-route-casing, #ffffff);
+    border: 7px solid var(--eh-map-dropoff, #0f1f19);
+}
+
+.eh-map-driver {
+    position: absolute;
+    inset: 0;
+    display: block;
+}
+
+.eh-map-driver__body {
+    position: absolute;
+    inset: 7px;
+    border-radius: 50%;
+    background: var(--eh-map-driver, #1d5bd6);
+    border: 3px solid var(--eh-map-route-casing, #ffffff);
+    box-shadow: 0 3px 10px rgb(15 31 25 / 0.35);
+}
+
+/* The heading wedge rotates around the marker centre; hidden when the device reports no heading. */
+.eh-map-driver__heading {
+    position: absolute;
+    inset: 0;
+    display: block;
+}
+
+.eh-map-driver__heading::before {
+    content: "";
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform: translateX(-50%);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 11px solid var(--eh-map-driver, #1d5bd6);
+}
+
+.eh-map-driver__heading[hidden] {
+    display: none;
+}
+
+/* ---- Place search (combobox) --------------------------------------------------------------------------- */
+
+.eh-search {
+    position: relative;
+    display: grid;
+    gap: var(--eh-space-1, 0.25rem);
+    font-family: var(--eh-font-ui, system-ui, sans-serif);
+    color: var(--eh-geo-ink);
+}
+
+.eh-search__label {
+    font-size: var(--eh-text-sm, 0.875rem);
+    font-weight: 600;
+    color: var(--eh-geo-ink-2);
+}
+
+.eh-search__field {
+    display: flex;
+    align-items: center;
+    gap: var(--eh-space-2, 0.5rem);
+    min-height: var(--eh-target, 44px);
+    padding-inline: var(--eh-space-4, 1rem) var(--eh-space-1, 0.25rem);
+    border: 1px solid var(--eh-rule-strong, #7c8b84);
+    border-radius: var(--eh-radius-pill, 999px);
+    background: var(--eh-geo-surface);
+    transition: border-color var(--eh-duration-fast, 120ms) var(--eh-geo-ease), box-shadow var(--eh-duration-fast, 120ms) var(--eh-geo-ease);
+}
+
+.eh-search__field:focus-within {
+    border-color: var(--eh-geo-focus);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--eh-geo-focus) 25%, transparent);
+}
+
+.eh-search__marker {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--eh-map-pickup, #f2c230);
+    border: 3px solid var(--eh-map-dropoff, #0f1f19);
+}
+
+.eh-search__marker--destination {
+    background: var(--eh-map-route-casing, #ffffff);
+    border-width: 4px;
+}
+
+.eh-search__input {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--eh-geo-ink);
+    font: inherit;
+    font-size: var(--eh-text-md, 1rem);
+}
+
+.eh-search__input:focus {
+    outline: none;
+}
+
+.eh-search__input::placeholder {
+    color: var(--eh-geo-ink-3);
+}
+
+.eh-search__input:disabled {
+    cursor: not-allowed;
+}
+
+.eh-search__hint,
+.eh-search__status {
+    margin: 0;
+    min-height: 1.25em;
+    font-size: var(--eh-text-xs, 0.8125rem);
+    color: var(--eh-geo-ink-3);
+}
+
+.eh-search__status[data-kind="error"],
+.eh-geo-status[data-kind="error"] {
+    color: var(--eh-stop, #b3261e);
+}
+
+.eh-search__list {
+    position: absolute;
+    z-index: 1100;
+    top: calc(100% - 1.5rem);
+    left: 0;
+    right: 0;
+    max-height: min(22rem, 55vh);
+    margin: 0;
+    padding: var(--eh-space-1, 0.25rem);
+    overflow-y: auto;
+    list-style: none;
+    background: var(--eh-geo-surface);
+    border: 1px solid var(--eh-geo-rule);
+    border-radius: var(--eh-radius, 12px);
+    box-shadow: var(--eh-geo-shadow);
+    overscroll-behavior: contain;
+}
+
+.eh-search__option {
+    display: grid;
+    gap: 2px;
+    min-height: 48px;
+    padding: var(--eh-space-2, 0.5rem) var(--eh-space-3, 0.75rem);
+    border-radius: var(--eh-radius-sm, 6px);
+    cursor: pointer;
+}
+
+.eh-search__option:hover,
+.eh-search__option.is-active {
+    background: var(--eh-geo-accent-tint);
+    color: var(--eh-geo-accent-tint-ink);
+}
+
+.eh-search__name {
+    font-weight: 600;
+}
+
+.eh-search__detail {
+    font-size: var(--eh-text-sm, 0.875rem);
+    color: var(--eh-geo-ink-3);
+}
+
+.eh-search__option.is-active .eh-search__detail {
+    color: inherit;
+}
+
+/* Pill buttons: search (submit mode) and use-my-location. */
+.eh-geo-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--eh-space-2, 0.5rem);
+    min-height: var(--eh-target, 44px);
+    padding-inline: var(--eh-space-4, 1rem);
+    border: 1px solid transparent;
+    border-radius: var(--eh-radius-pill, 999px);
+    background: var(--eh-geo-accent);
+    color: var(--eh-accent-ink, #ffffff);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--eh-duration-fast, 120ms) var(--eh-geo-ease), transform var(--eh-duration-fast, 120ms) var(--eh-geo-ease);
+}
+
+.eh-search__field .eh-geo-button {
+    min-height: 36px;
+    padding-inline: var(--eh-space-3, 0.75rem);
+}
+
+.eh-geo-button:hover {
+    background: var(--eh-accent-hover, #08552f);
+}
+
+.eh-geo-button:active {
+    transform: scale(0.97);
+}
+
+.eh-geo-button:focus-visible {
+    outline: 3px solid var(--eh-geo-focus);
+    outline-offset: 2px;
+}
+
+.eh-geo-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.eh-geo-button--quiet {
+    background: var(--eh-geo-surface);
+    color: var(--eh-geo-ink);
+    border-color: var(--eh-rule-strong, #7c8b84);
+}
+
+.eh-geo-button--quiet:hover {
+    background: var(--eh-surface-2, #e4eae4);
+}
+
+.eh-geo-button svg {
+    width: 18px;
+    height: 18px;
+    flex: none;
+}
+
+.eh-geo-status {
+    margin: 0;
+    font-size: var(--eh-text-sm, 0.875rem);
+    color: var(--eh-geo-ink-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .eh-search__field,
+    .eh-geo-button {
+        transition: none;
+    }
+
+    .eh-geo-button:active {
+        transform: none;
+    }
+}

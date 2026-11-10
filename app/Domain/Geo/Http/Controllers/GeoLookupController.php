@@ -6,6 +6,7 @@ use App\Domain\Geo\Exceptions\GeocodingUnavailable;
 use App\Domain\Geo\Exceptions\RoutingUnavailable;
 use App\Domain\Geo\Geocoding\Geocoder;
 use App\Domain\Geo\Geocoding\Place;
+use App\Domain\Geo\Http\Controllers\Concerns\ValidatesJson;
 use App\Domain\Geo\LatLng;
 use App\Domain\Geo\Models\ServiceArea;
 use App\Domain\Geo\Models\Zone;
@@ -22,6 +23,8 @@ use Illuminate\Http\Request;
  */
 class GeoLookupController extends Controller
 {
+    use ValidatesJson;
+
     public function config(GeoClientConfig $config): JsonResponse
     {
         return response()->json($config->toArray());
@@ -29,7 +32,7 @@ class GeoLookupController extends Controller
 
     public function search(Request $request, Geocoder $geocoder): JsonResponse
     {
-        $data = $request->validate([
+        $data = $this->validateJson($request, [
             'q' => ['required', 'string', 'min:3', 'max:200'],
             'lat' => ['nullable', 'numeric', 'between:-90,90', 'required_with:lng'],
             'lng' => ['nullable', 'numeric', 'between:-180,180', 'required_with:lat'],
@@ -103,7 +106,7 @@ class GeoLookupController extends Controller
 
     private function point(Request $request, string $latKey, string $lngKey): LatLng
     {
-        $data = $request->validate([
+        $data = $this->validateJson($request, [
             $latKey => ['required', 'numeric', 'between:-90,90'],
             $lngKey => ['required', 'numeric', 'between:-180,180'],
         ]);
