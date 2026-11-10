@@ -148,10 +148,6 @@ export function createMap(el, config, { center, zoom, onMapClick } = {}) {
             heading.style.transform = `rotate(${Math.round(position.heading || 0)}deg)`;
             heading.hidden = !Number.isFinite(position.heading);
         }
-
-        if (following && position.done) {
-            map.panTo([position.lat, position.lng], { animate: motion, duration: 0.6 });
-        }
     }, { reducedMotion: !motion });
 
     const controller = {
@@ -174,6 +170,11 @@ export function createMap(el, config, { center, zoom, onMapClick } = {}) {
             }
 
             follower.moveTo(position);
+
+            // Following pans towards the new fix while the marker glides there, so the two move together.
+            if (following) {
+                map.panTo([position.lat, position.lng], { animate: motion, duration: 1, easeLinearity: 0.5 });
+            }
         },
         followDriver(on = true) {
             following = on;

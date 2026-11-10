@@ -33,3 +33,17 @@ Auth/SSO/teams, the lifecycle's locking and audit approach, Paystack webhook ver
 
 ## Domain audits
 (appended by the wave-1 agents)
+
+### Geo (maps, routing, geocoding, zones, locations) - geo agent, 2026-11-10
+
+| Area | Class before | Finding | After R-46 geo |
+|---|---|---|---|
+| Map | M | No map anywhere; booking had raw optional latitude/longitude number inputs | Leaflet map module, lazy chunk 45.6 KB gzip, stations, route line, moving driver marker, accuracy circle, offline/slow states |
+| Address search | M | Free-text address fields only, no geocoding | Server-proxied search (country ZA, near-point bias) and reverse; combobox with keyboard support; autocomplete only where the provider permits it |
+| Routing | M | `FareCalculator` used haversine straight-line km | `RoutePlanner` with 5 provider drivers, cache, breaker, honest `RoutingUnavailable`; default `none` with the exact unavailable sentence |
+| Service areas / zones | M | None; any coordinates accepted | `service_areas` + `zones` with polygon containment; approximate SA metros and airports seeded and flagged |
+| Driver location | M | `driver_profiles.is_online` flag only; no positions | Throttled, screened ingest; one latest row per driver; nearby search |
+| Trip trail and distance | M | `distance_km` set from the straight-line estimate | Sampled trail during the trip; travelled vs billable distance with jitter, jump and gap handling |
+| Route deviation / stops | M | None | Detector + monitor + events for safety |
+| Location privacy | M (undefined) | No rules | Passenger sees assigned driver only during the active ride; passenger live position never stored; 90-day trail retention |
+| Browser permissions | B | Global `Permissions-Policy: geolocation=()` blocks any location feature; CSP would block tiles once enforced | Seams provided (`AllowGeolocation`, `GeoCsp`); global change is a security-owner item |
