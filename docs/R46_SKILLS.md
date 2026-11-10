@@ -15,6 +15,15 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | `emil-design-eng` | unavailable | | `~/.claude/skills/emil-design-eng` is a dangling symlink (target missing). Not claimed. |
 | `gsap-*`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark` | not used | | No motion library: the landing's motion (reveals, hero crossfade, fare line) is 1 KB of plain JS and CSS, which fits the data budget. |
 
+## business agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | Business portal and operator review pages | `impeccable context` loaded PRODUCT.md and DESIGN.md; Operate mode inside the locked Route Line world (no new world); craft floor read before UI edits (no eyebrows, no side-stripe borders, no metric tiles, honest empty states, tabular figures, focus rings). `impeccable detect` on `resources/views/business`, `resources/css/business`, `resources/js/business`: one finding (a 2px left border used as a segment gap on the spend line) fixed; clean after. One advisory left: `#000` in print styles (print only). |
+| `design-taste-frontend` | invoked | App-screen run | `draw.mjs --app --kind finance --keep palette,type`: options pastel-consumer / achromatic-ledger; chose achromatic ledger (seed 543034165) because the portal is about money read by finance and travel managers. Applied: no KPI strip, each figure inside the panel that explains it, one hue on the main data element (billed this month on the spend line, with stops), worded state badges only, flat panels, settings in two columns, phones get stacked labelled rows. Not adopted: the style's near-black primary (DESIGN.md's sign green stays the action colour). `lint.mjs --app`: 0 FAIL, 0 WARN after replacing inset ring shadows with borders. Screens checked at 1440 and 390, light and night (`docs/R46_screens/business/`). |
+| `hallmark` | not invoked | | DESIGN.md is locked by ds; no new page world was needed. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Dangling symlinks (as recorded by ds). Not claimed. |
+| `gsap-*` and other motion skills | not used | | Operate surface; only the details-row chevron turns (160 ms, off under reduced motion). |
 ## comms agent (2026-11-10)
 
 | Skill | Status | Used for | What was applied |
@@ -33,3 +42,12 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | `gsap-*` | not used | | Motion is two CSS animations (waiting line, countdown) with reduced-motion fallbacks. |
 | `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Dangling symlinks in `~/.claude/skills` (as recorded by ds); not claimed. |
 | `hallmark`, `awesome-design-md`, `open-design`, `design-md` | not invoked | | Not a new world: the driver app lives inside the locked Route Line system. |
+
+## fleet agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | fleet portal (Operate mode) | `impeccable context --target resources/views/fleet` (PRODUCT.md, DESIGN.md; no surface brief; no question channel in this unattended run, so the brief stood in); read `reference/operate.md` and `reference/craft-floor.md` before UI code; applied: restrained colour on state and the one primary action, flat panels by tone step, every component with empty/disabled/error states, inline disclosures instead of modals, no eyebrows or numbered sections, tabular figures. `impeccable detect --json` on the fleet views and CSS: 2 advisories (plate radius 4px, plate size 1.0625rem off the ramp), both fixed to tokens; re-run clean. Finish-reviewer subagent not spawned (one inspection round plus one fix round within budget). |
+| `design-taste-frontend` | invoked | app-screen run | Read `references/app-screens.md`; `draw.mjs --app --kind smb-admin --keep palette,type` dealt framed-sheet and accent-ladder; chose accent-ladder (matches DESIGN.md's tint-led nav and badges); face: the number plate; each screen's one question written into its title line (overview: "N of M vehicles can work now. K cannot: ..."). `lint.mjs --app` on rendered pages: 1 FAIL from the Laravel Boost dev logger's console emoji (not shipped, dev only); `inspect.mjs --app` on saved renders: 0 FAIL; WARNs defended: fonts are cross-origin in the saved copy (they load on the real host, see screenshots), h1 at 36px is the ds page head contract, a 37px difference between two tables that shrink to their rows, "charts" counted are number plates. |
+| `gsap-*` | not used | | No motion needed: state changes only (hover tints, 160 ms). |
+| `hallmark`, `emil-design-eng`, `ui-ux-pro-max` | not invoked | | Not a new world (Route Line is fixed); emil/ui-ux-pro-max recorded earlier as unavailable symlinks; not claimed. |

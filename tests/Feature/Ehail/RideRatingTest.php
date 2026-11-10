@@ -391,7 +391,10 @@ class RideRatingTest extends TestCase
         $profile = DriverProfile::withoutGlobalScope('user')->where('user_id', $driver->id)->with('fleet')->firstOrFail();
 
         $this->actingAs($this->makeOperator())->get(route('drivers.show', $profile))->assertOk()->assertSee('Nokuthula Distinctive Rider');
-        $this->actingAs($profile->fleet->owner)->get(route('drivers.show', $profile))->assertOk()->assertSee('Nokuthula Distinctive Rider');
+        // R-46 (D-1205/D-1206): a fleet owner without identity-review rights no longer opens the legacy driver
+        // page (it carries passenger names and places); the fleet portal shows first names only.
+        $this->actingAs($profile->fleet->owner)->get(route('drivers.show', $profile))->assertNotFound();
+        $this->actingAs($profile->fleet->owner)->get(route('fleet.drivers.show', $profile->id))->assertOk()->assertDontSee('Nokuthula Distinctive Rider');
     }
 
     public function test_a_driver_with_no_ratings_says_so_instead_of_showing_zero_stars(): void

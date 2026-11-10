@@ -13,9 +13,12 @@ class Vehicle extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['driver_profile_id', 'make', 'model', 'year', 'color', 'plate_number', 'type', 'seats', 'is_active'];
+    protected $fillable = ['driver_profile_id', 'make', 'model', 'year', 'color', 'plate_number', 'type', 'seats', 'is_active', 'fleet_id', 'owned_by', 'doors', 'features', 'odometer_km'];
 
-    protected $casts = ['is_active' => 'boolean', 'seats' => 'integer'];
+    protected $casts = [
+        'is_active' => 'boolean', 'seats' => 'integer', 'doors' => 'integer', 'features' => 'array',
+        'odometer_km' => 'integer', 'out_of_service_at' => 'datetime', 'retired_at' => 'datetime',
+    ];
 
     /**
      * Plates are stored trimmed, single-spaced and upper case so "ca 123 456"
@@ -34,6 +37,31 @@ class Vehicle extends Model
     public function driverProfile(): BelongsTo
     {
         return $this->belongsTo(DriverProfile::class);
+    }
+
+    /**
+     * The driver profile holding this vehicle, for fleet pages: DriverProfile's per-user scope would hide every
+     * holder who is not the person looking.
+     */
+    public function holder(): BelongsTo
+    {
+        return $this->belongsTo(DriverProfile::class, 'driver_profile_id')->withoutGlobalScope('user');
+    }
+
+    public function fleet(): BelongsTo
+    {
+        return $this->belongsTo(Fleet::class);
+    }
+
+    /** Held by the fleet (assignable to permitted drivers), not the private car of one driver. */
+    public function isFleetOwned(): bool
+    {
+        return $this->owned_by === 'fleet';
+    }
+
+    public function isOutOfService(): bool
+    {
+        return $this->out_of_service_at !== null;
     }
 
     public function documents(): HasMany
