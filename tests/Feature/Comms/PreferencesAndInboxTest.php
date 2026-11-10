@@ -78,7 +78,7 @@ class PreferencesAndInboxTest extends TestCase
         $this->assertSame('Payouts and incentives', $items['payout_paid']['category_label']);
         $this->assertSame('/money/driver/payouts/1', $items['payout_paid']['url']);
         $this->assertNull($items['payout_failed']['url'], 'a link off this site is never offered');
-        $this->assertContains('Email: not delivered: email is only logged on this service', collect($items['payout_paid']['deliveries'])->pluck('label')->all());
+        $this->assertContains('Email: not delivered (this service only logs email)', collect($items['payout_paid']['deliveries'])->pluck('label')->all());
         $this->assertNotContains('Stranger payout', collect($response->json('items'))->pluck('title')->all());
 
         $strangerItem = $stranger->notifications()->first()->id;

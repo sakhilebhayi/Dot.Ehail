@@ -19,6 +19,12 @@ trait CreatesCommsFixtures
     /** @var array<int, array{private: string, public: string, auth: string}> subscription id => browser keys */
     protected array $browserKeys = [];
 
+    /** A developer's .env may hold real VAPID keys or a real mailer: every comms test starts unconfigured. */
+    protected function setUpCreatesCommsFixtures(): void
+    {
+        config(['ehail_comms.push.public_key' => null, 'ehail_comms.push.private_key' => null, 'mail.default' => 'array', 'notify.url' => null, 'notify.secret' => null]);
+    }
+
     protected function configurePush(): void
     {
         $keys = EcKeys::generate();

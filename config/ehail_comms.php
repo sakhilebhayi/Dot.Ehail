@@ -77,7 +77,7 @@ return [
             'channels' => ['push', 'email', 'sms'],
             'defaults' => ['push' => true, 'email' => true, 'sms' => true],
             'critical' => true,
-            'critical_reason' => 'Safety messages cannot be switched off: they are how we reach you, or the operations team, when someone may be in danger. SMS is used only if you confirm a number below.',
+            'critical_reason' => 'Safety messages cannot be switched off: they are how we reach you, or the operations team, when someone may be in danger.',
         ],
         'general' => [
             'label' => 'Other updates',

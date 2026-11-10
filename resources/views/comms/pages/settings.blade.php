@@ -104,15 +104,22 @@
                                 @if (count($category['channels']) === 0)
                                     <p class="comms-cat__inapp">In the app only</p>
                                 @endif
-                                @foreach ($category['channels'] as $channel => $choice)
-                                    @if ($category['critical'])
-                                        <x-eh.switch :name="'locked['.$key.']['.$channel.']'" :label="$channelNames[$channel]" :checked="true" disabled
-                                            :description="$channel === 'sms' ? ($state['sms']['verified'] ? 'To your confirmed number' : 'Needs a confirmed number') : 'Always on'" />
-                                    @else
+                                @if ($category['critical'])
+                                    <ul class="comms-locked" aria-label="{{ $category['label'] }} channels">
+                                        @foreach ($category['channels'] as $channel => $choice)
+                                            @php($smsLine = ! $state['sms']['configured'] ? 'not available on this service' : ($state['sms']['verified'] ? 'on, to your confirmed number' : 'on once you confirm a number'))
+                                            <li class="{{ $channel === 'sms' && ! $state['sms']['verified'] ? 'is-off' : '' }}">
+                                                <x-eh.icon :name="$channel === 'sms' && ! $state['sms']['verified'] ? 'minus' : 'check'" />
+                                                <span><strong>{{ $channelNames[$channel] }}</strong> {{ $channel === 'sms' ? $smsLine : 'always on' }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    @foreach ($category['channels'] as $channel => $choice)
                                         <x-eh.switch :name="'prefs['.$key.']['.$channel.']'" :label="$channelNames[$channel]" :checked="$choice['enabled']"
                                             :description="$choice['enabled'] ? 'On' : 'Off'" data-comms-switch />
-                                    @endif
-                                @endforeach
+                                    @endforeach
+                                @endif
                             </div>
                         </li>
                     @endforeach

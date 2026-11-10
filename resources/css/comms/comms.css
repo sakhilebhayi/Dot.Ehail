@@ -15,7 +15,7 @@
 .comms-bell__count {
     position: absolute; top: 4px; right: 2px; min-width: 20px; height: 20px; padding: 0 5px;
     display: grid; place-items: center; border-radius: var(--eh-radius-pill);
-    background: var(--eh-signal); color: var(--eh-signal-ink); box-shadow: 0 0 0 2px var(--eh-ground);
+    background: var(--eh-signal); color: var(--eh-signal-ink); outline: 2px solid var(--eh-ground);
     font-size: var(--eh-text-xs); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
 }
 
@@ -25,7 +25,7 @@
 .comms-line { list-style: none; margin: 0; padding: 0; position: relative; }
 .comms-line::before {
     content: ""; position: absolute; left: 11px; top: 14px; bottom: 14px; width: 2px;
-    background: var(--eh-rule-strong); border-radius: 2px;
+    background: var(--eh-rule-strong); border-radius: var(--eh-radius-pill);
 }
 .comms-stop { position: relative; display: grid; grid-template-columns: 24px 1fr; gap: var(--eh-space-4); padding: var(--eh-space-2) 0; }
 .comms-stop + .comms-stop { margin-top: var(--eh-space-3); }
@@ -66,7 +66,7 @@
 /* Channels on this service */
 .comms-channels { list-style: none; margin: 0; padding: 0; background: var(--eh-surface); border-radius: var(--eh-radius); }
 .comms-channel { display: grid; grid-template-columns: 24px 1fr; gap: var(--eh-space-3); padding: var(--eh-space-4) var(--eh-space-5); }
-.comms-channel + .comms-channel { border-top: 1px solid var(--eh-rule); }
+.comms-channel + .comms-channel { border-top: 1px solid var(--eh-rule); } /* taste-skill-ignore: list row divider, same as the kit's .eh-list (app-screen rule 7.3) */
 .comms-channel__icon { color: var(--eh-ink-2); margin-top: 2px; }
 .comms-channel__main { display: grid; gap: var(--eh-space-1); min-width: 0; }
 .comms-channel__name { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-2); font-weight: 700; }
@@ -78,13 +78,14 @@
 .comms-device__state[data-tone="go"] { color: var(--eh-go); }
 .comms-device__actions { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); }
 .comms-device__actions [hidden] { display: none; }
+.comms-device__actions:not(:has(> :not([hidden]))) { display: none; }
 .comms-devices__title { margin: 0 0 var(--eh-space-2); font-size: var(--eh-text-sm); font-weight: 700; }
 .comms-devices ul { margin: 0; padding-left: var(--eh-space-5); display: grid; gap: var(--eh-space-1); }
 
 /* What we send */
 .comms-cats { list-style: none; margin: 0; padding: 0; }
 .comms-cat { display: grid; gap: var(--eh-space-3); padding: var(--eh-space-5); }
-.comms-cat + .comms-cat { border-top: 1px solid var(--eh-rule); }
+.comms-cat + .comms-cat { border-top: 1px solid var(--eh-rule); } /* taste-skill-ignore: list row divider, same as the kit's .eh-list */
 @media (min-width: 640px) {
     .comms-cat { grid-template-columns: minmax(0, 1fr) auto; gap: var(--eh-space-6); align-items: start; }
 }
@@ -98,7 +99,14 @@
 .comms-cat__switches { display: flex; flex-wrap: wrap; gap: var(--eh-space-2) var(--eh-space-6); }
 @media (min-width: 640px) { .comms-cat__switches { flex-direction: column; min-width: 11rem; } }
 .comms-cat__inapp { margin: 0; font-size: var(--eh-text-sm); font-weight: 600; color: var(--eh-ink-2); min-height: var(--eh-target); display: flex; align-items: center; }
-.comms-save { display: flex; justify-content: flex-end; padding: var(--eh-space-4) var(--eh-space-5); border-top: 1px solid var(--eh-rule); }
+.comms-save { display: flex; justify-content: flex-end; padding: var(--eh-space-4) var(--eh-space-5); border-top: 1px solid var(--eh-rule); } /* taste-skill-ignore: closes the form panel above its one Save button */
+
+/* Safety: locked on, shown as facts rather than as switches that cannot move */
+.comms-locked { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--eh-space-2); }
+.comms-locked li { display: flex; gap: var(--eh-space-2); align-items: center; min-height: 32px; font-size: var(--eh-text-sm); color: var(--eh-ink); }
+.comms-locked li .eh-icon, .comms-locked li svg { color: var(--eh-go); flex: none; }
+.comms-locked li.is-off { color: var(--eh-ink-2); }
+.comms-locked li.is-off svg { color: var(--eh-ink-3); }
 
 /* SMS */
 .comms-sms { display: grid; gap: var(--eh-space-3); max-width: 24rem; }

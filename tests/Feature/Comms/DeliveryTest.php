@@ -283,7 +283,7 @@ class DeliveryTest extends TestCase
         $email = $this->delivery($user, 'payout_paid', 'email');
         $this->assertSame(NotificationDelivery::SKIPPED, $email->status);
         $this->assertSame('mail_transport_not_delivering', $email->reason);
-        $this->assertSame('Email: not delivered: email is only logged on this service', $email->toPublicArray()['label']);
+        $this->assertSame('Email: not delivered (this service only logs email)', $email->toPublicArray()['label']);
 
         $this->actingAs($user)->getJson(route('ehail.comms.preferences'))->assertJsonPath('channels.email.available', false)
             ->assertJsonPath('channels.email.state', 'not_delivering');
