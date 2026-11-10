@@ -36,6 +36,7 @@ class RolePermissionMatrixTest extends TestCase
     private const SPEC = [
         'ops.home' => self::ALL,
         'ops.notifications*' => self::ALL,
+        'ops.status' => self::ALL, // R-46 perf: operational health (counts and ages only), D-1514
         'ops.live*' => ['ops_agent', 'dispatcher', 'safety_officer'],
         'ops.rides*' => ['ops_agent', 'dispatcher', 'safety_officer', 'support_agent', 'finance'],
         'ops.drivers.suspend' => ['safety_officer'],

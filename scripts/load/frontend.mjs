@@ -34,6 +34,14 @@ const context = await browser.newContext({
 });
 if (cookieName) await context.addCookies([{ name: cookieName, value: decodeURIComponent(cookieRest.join('=')), domain: host, path: '/', httpOnly: true, sameSite: 'Lax' }]);
 
+// Map tiles are never fetched from the real tile server by this script (OSMF policy: no automated traffic):
+// they are answered locally with a 1x1 image and counted. Real raster tiles are ~10-40 KB each.
+let tileRequests = 0;
+await context.route(/tile\.openstreetmap\.org|\/tiles?\//, (route) => {
+    tileRequests++;
+    route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64') });
+});
+
 const page = await context.newPage();
 const cdp = await context.newCDPSession(page);
 await cdp.send('Network.enable');
@@ -102,7 +110,7 @@ for (const r of all) {
 }
 Object.values(byType).forEach((v) => (v.kb = Math.round(v.kb * 10) / 10));
 const mapChunk = all.filter((r) => /map-[\w-]+\.js|leaflet/i.test(r.url)).map((r) => ({ url: new URL(r.url).pathname, kb: Math.round(r.down / 102.4) / 10 }));
-const tiles = all.filter((r) => r.type === 'Image' && /tile/.test(r.url)).length;
+const tiles = tileRequests;
 console.log(`status ${response.status()} ${load.title}`);
 console.log('load', JSON.stringify(load));
 console.log('bytes by type', JSON.stringify(byType), 'map chunks', JSON.stringify(mapChunk), 'tiles', tiles);
@@ -145,6 +153,7 @@ for (let minute = 1; minute <= MINUTES; minute++) {
         nodes: now.Nodes,
         listeners: now.JSEventListeners,
         by_path: window.byPath,
+        tiles: tileRequests,
     });
     console.log('minute', JSON.stringify(samples[samples.length - 1]));
     previous = now;

@@ -11,7 +11,7 @@ WORKERS="${1:-4}"; PORT="${2:-8621}"; CONN="${3:-sqlite}"; DBNAME="${4:?database
 
 export APP_ENV=local APP_DEBUG=false LOG_LEVEL=warning
 export SESSION_DRIVER=database CACHE_STORE=database QUEUE_CONNECTION=database BROADCAST_CONNECTION=log
-export EHAIL_PERF_PROBE=true EHAIL_CASH_ENABLED=true
+export EHAIL_PERF_PROBE="${EHAIL_PERF_PROBE:-true}" EHAIL_CASH_ENABLED=true
 export EHAIL_ROUTING_DRIVER=osrm EHAIL_OSRM_URL="$OSRM"
 export DB_CONNECTION="$CONN" DB_DATABASE="$DBNAME"
 if [ "$CONN" = "sqlite" ]; then
