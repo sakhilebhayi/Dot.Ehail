@@ -23,9 +23,16 @@ final class GeoZoneLookupBridge implements PricingZoneLookup
         return class_exists(self::RESOLVER) && class_exists(self::SERVICE_AREA) && class_exists(GeoRoutePlannerBridge::LAT_LNG);
     }
 
+    /**
+     * Configured once an operator has at least one active service area (D-705). Before that, pricing uses the
+     * default market exactly as without geo, and dispatch's ServiceAreaCheck answers "unknown" by the same rule;
+     * after it, a pickup outside every area cannot be quoted.
+     */
     public function isConfigured(): bool
     {
-        return true;
+        $model = self::SERVICE_AREA;
+
+        return $model::query()->where('is_active', true)->exists();
     }
 
     public function serviceAreaFor(GeoPoint $point): ?ServiceAreaRef

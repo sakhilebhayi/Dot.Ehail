@@ -87,7 +87,7 @@ Route::middleware([
     // "{ride}" below, otherwise they're swallowed by {ride}'s implicit
     // route-model binding.
     Route::get('/rides/create', [RideRequestController::class, 'create'])->name('rides.create');
-    Route::post('/rides', [RideRequestController::class, 'store'])->name('rides.store');
+    Route::post('/rides', [RideRequestController::class, 'store'])->middleware('ehail.payment-clear')->name('rides.store');
     Route::get('/rides/available', [RideLifecycleController::class, 'available'])->name('rides.available');
     Route::get('/rides/{ride}', [RideController::class, 'show'])->name('rides.show');
     Route::post('/rides/{ride}/accept', [RideLifecycleController::class, 'accept'])->name('rides.accept');

@@ -123,18 +123,20 @@ class SupportCaseTest extends TestCase
         $this->assertCount(1, $this->notificationsOfType($operator, 'support_escalated'));
     }
 
-    public function test_fare_dispute_calls_the_pricing_seam_and_says_it_is_not_connected(): void
+    public function test_fare_dispute_goes_to_the_operators_fare_review_through_the_pricing_seam(): void
     {
         [$ride, $passenger] = $this->makeActiveRide();
         $ride->forceFill(['status' => 'completed', 'completed_at' => now()])->save();
 
+        // Since integration the seam is pricing's fare review (D-700): submitted to operators, never an automatic change.
         $id = $this->actingAs($passenger)->postJson(route('support.cases.store'), [
             'category' => 'fare_dispute', 'subject' => 'Charged twice the estimate', 'body' => 'The estimate was R80', 'ride_id' => $ride->id, 'requested_amount_minor' => 8000,
-        ])->assertCreated()->assertJsonPath('data.fare_review', 'not_connected')->json('data.id');
+        ])->assertCreated()->assertJsonPath('data.fare_review', 'submitted')->json('data.id');
 
         $case = SupportCase::find($id);
         $this->assertSame(8000, $case->meta['fare_review']['requested_amount_minor']);
-        $this->actingAs($passenger)->getJson(route('support.cases.show', $id))->assertSee('Automatic fare review is not connected yet.');
+        $this->assertNull($case->meta['fare_review']['fare'], 'this ride predates pricing: no fare record is invented');
+        $this->actingAs($passenger)->getJson(route('support.cases.show', $id))->assertSee('Your dispute is with an operator.');
     }
 
     public function test_cases_need_own_rides_and_conduct_cases_follow_roles(): void
