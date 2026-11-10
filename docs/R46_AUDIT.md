@@ -33,3 +33,32 @@ Auth/SSO/teams, the lifecycle's locking and audit approach, Paystack webhook ver
 
 ## Domain audits
 (appended by the wave-1 agents)
+
+### Money (money agent, 2026-11-10)
+
+As found (classes as above):
+
+| Area | Class | Finding |
+|---|---|---|
+| Paystack checkout (initialize, verify on return) | I | Solid: test-mode guard with a second switch for live keys, https-pinned base URL, no redirects, safe error messages, locking order ride -> payment, unmatched charges kept for the desk. Kept |
+| Paystack webhook | I | Signature checked in constant time before parsing, but the signed body was trusted as proof of payment and processed inline. Now: stored once, processed by a queued job, every state change confirmed with Paystack's verify/fetch endpoints |
+| Saved cards / server-side charging | M | None: the passenger had to open a checkout after every trip |
+| Refunds | M | None |
+| Cash | M | None |
+| Ledger / commission split | M | None: paid fares went to the platform balance with no record of what the driver was owed |
+| Driver earnings, payouts | M | None ("Payout is not available yet") |
+| Incentives | M | None |
+| Receipts | M | None |
+| Reconciliation, finance exceptions | P | Only the unmatched-payment list on the operator desk |
+| Money in floats | B (vs brief) | `rides.final_fare` decimal(8,2) converted to cents by number_format; amounts in ride_payments were already integer cents |
+
+Built (wave 1): see `docs/R46_MONEY.md`. Every item above is now F or I at the API level; the passenger, driver and ops screens are wave-2 work on these APIs.
+
+Behaviour changes to existing code, with reasons:
+- `PaystackWebhookController` stores and queues instead of settling inline; `RidePayments::handleWebhook` verifies with Paystack before settling (D-601, D-602). `tests/Feature/Paystack/PaystackWebhookTest.php` now fakes the verify endpoint; the mismatch cases drive the verify answer; "makes no HTTP call" became "only calls Paystack verify"; one new test proves a webhook body is never trusted over verify.
+- `RidePayments` posts to the ledger after a verified checkout payment and after a waiver (after commit); the driver's notification no longer says payouts do not exist.
+- `PaymentStatus` gained `awaiting_cash`.
+- `tests/Feature/Paystack/RidePaymentStateTest::test_migrating_legacy_rides_leaves_them_not_due` derives its rollback step count instead of assuming the payment migrations are the last two (R-46 adds later migrations).
+- `bootstrap/app.php`: JSON exceptions for `money/*` when the client expects JSON (one line).
+
+Honest limits (not built, or built only as seams): no card pre-authorisation (Paystack has none publicly); online-hours/acceptance/referral incentives are unmeasurable until dispatch data and a referral system exist; cancellation fees need pricing's policy; business-account billing needs the wave-2 business domain; no PDF library (print-to-PDF from the receipt page); Paystack settlement endpoints are undocumented in the OpenAPI file, so reconciliation compares the dashboard CSV export; nothing has been run against a live or test Paystack account (no keys here), only against a contract fake built from Paystack's OpenAPI description; no Dot.Finance/Billing contract exists.
