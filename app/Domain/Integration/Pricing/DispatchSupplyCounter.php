@@ -41,25 +41,25 @@ class DispatchSupplyCounter implements EligibleSupplyCounter
         }
 
         $supply = $this->supplyAround($near, $at);
+        $category->loadMissing('vehicleRules');
+        $count = 0;
 
-        if ($supply['rows']->isEmpty()) {
-            return 0;
+        // Each shape group (same car shape, same driver standing) is checked once per category.
+        foreach ($supply['groups'] as [$n, $vehicle, $profile]) {
+            if ($this->eligibility->vehicleQualifies($category, $vehicle, $at) && $this->eligibility->driverFailures($category, $profile) === []) {
+                $count += $n;
+            }
         }
 
-        $category->loadMissing('vehicleRules');
-
-        return $supply['rows']->filter(function (DriverAvailability $row) use ($supply, $category, $at) {
-            $vehicle = $supply['vehicles']->get($row->vehicle_id);
-            $profile = $supply['profiles']->get($row->user_id);
-
-            return $vehicle !== null && $profile !== null
-                && $this->eligibility->vehicleQualifies($category, $vehicle, $at)
-                && $this->eligibility->driverFailures($category, $profile) === [];
-        })->count();
+        return $count;
     }
 
     /**
-     * @return array{key: string, rows: Collection, vehicles: Collection, profiles: Collection}
+     * The free, fresh drivers around a point, grouped by what the catalogue rules look at: the car's type, year,
+     * seats, doors and features, and the driver's status, rating, trips and fleet. A city's 600 online drivers
+     * collapse into a few dozen groups.
+     *
+     * @return array{key: string, groups: list<array{0: int, 1: Vehicle, 2: DriverProfile}>}
      */
     private function supplyAround(GeoPoint $near, CarbonInterface $at): array
     {
@@ -79,12 +79,27 @@ class DispatchSupplyCounter implements EligibleSupplyCounter
             ->where('last_heartbeat_at', '>=', $at->copy()->subSeconds($stale))
             ->whereNotNull('vehicle_id')
             ->get(['user_id', 'vehicle_id']);
+        $groups = [];
 
-        return $this->supply = [
-            'key' => $key,
-            'rows' => $rows,
-            'vehicles' => $rows->isEmpty() ? collect() : Vehicle::query()->whereIn('id', $rows->pluck('vehicle_id'))->where('is_active', true)->get()->keyBy('id'),
-            'profiles' => $rows->isEmpty() ? collect() : DriverProfile::withoutGlobalScope('user')->whereIn('user_id', $rows->pluck('user_id'))->get()->keyBy('user_id'),
-        ];
+        if ($rows->isNotEmpty()) {
+            $vehicles = Vehicle::query()->whereIn('id', $rows->pluck('vehicle_id'))->where('is_active', true)->get()->keyBy('id');
+            $profiles = DriverProfile::withoutGlobalScope('user')->whereIn('user_id', $rows->pluck('user_id'))->get()->keyBy('user_id');
+
+            foreach ($rows as $row) {
+                $vehicle = $vehicles->get($row->vehicle_id);
+                $profile = $profiles->get($row->user_id);
+
+                if ($vehicle === null || $profile === null) {
+                    continue;
+                }
+
+                $shape = implode('|', [$vehicle->type, $vehicle->year, $vehicle->seats, json_encode($vehicle->getAttribute('doors')), json_encode($vehicle->getAttribute('features')),
+                    $profile->status, $profile->rating, $profile->total_rides, $profile->fleet_id]);
+                $groups[$shape] ??= [0, $vehicle, $profile];
+                $groups[$shape][0]++;
+            }
+        }
+
+        return $this->supply = ['key' => $key, 'groups' => array_values($groups)];
     }
 }
