@@ -77,7 +77,7 @@ export async function cancelRide(page) {
 }
 
 export async function paxTitle(page, re, timeout = 30000) {
-    await page.waitForFunction((src) => new RegExp(src).test(document.querySelector('[data-pax-title]')?.textContent || ''), re.source, { timeout });
+    await page.waitForFunction(([src, flags]) => new RegExp(src, flags).test(document.querySelector('[data-pax-title]')?.textContent || ''), [re.source, re.flags], { timeout });
 }
 
 export async function paxPin(page) {

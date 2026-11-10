@@ -35,7 +35,9 @@ async function onlineDriver(at = DRIVER_START, opts = {}) {
 
 test('routing provider down: honest "unavailable", nothing priced', async () => {
     const { page, pax, ctx } = await passenger({ card: false });
-    // Earlier specs priced this trip: the planner's route cache would answer without asking the provider.
+    // Earlier specs priced this trip: the planner's route cache (10 min) would answer without asking the provider.
+    // Time passes for it (D-1605) and for the cache store.
+    world('update', { table: 'route_cache', where: {}, set: { expires_at: '2000-01-01 00:00:00' } });
     artisan('cache:clear');
     await stub({ routingDown: true });
     try {

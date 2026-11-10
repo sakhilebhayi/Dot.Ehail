@@ -103,7 +103,8 @@ test('safety journey: SOS mid-trip to resolution', async () => {
     assert.ok(rows.some((r) => r.recipient_kind === 'operations' && r.channel === 'database' && r.status === 'sent'), 'operators alerted in the app');
     const whatWeDid = (await p.locator('main').innerText()).replace(/\s+/g, ' ');
     assert.match(whatWeDid, /10111/);
-    assert.match(whatWeDid, /does not|do not/i, 'states what Dot.Ehail does not do');
+    assert.match(whatWeDid, /What we did not do/i, 'states what Dot.Ehail did not do');
+    assert.ok((await p.locator('section[aria-labelledby="inc-not"] p').count()) >= 1, 'with at least one line');
     assert.match(whatWeDid, /Sent/);
     assert.doesNotMatch(whatWeDid, /police (have been|were) (called|notified)/i);
 
