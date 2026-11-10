@@ -256,8 +256,9 @@ class RideCancellationTest extends TestCase
 
         $ride = $this->makeRide();
 
-        // Rolled back: nothing may reach the broadcaster.
-        Queue::fake();
+        // Rolled back: nothing may reach the broadcaster. Only broadcast jobs are faked: the queue fake ignores
+        // afterCommit, and other domains' jobs (money's cancellation-fee check) are not what this test is about.
+        Queue::fake([BroadcastEvent::class]);
         try {
             DB::transaction(function () use ($ride) {
                 $ride->update(['status' => 'cancelled_by_passenger']);

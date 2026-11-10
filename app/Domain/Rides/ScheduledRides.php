@@ -13,6 +13,7 @@ use App\Models\Ride;
 use App\Models\User;
 use App\Services\Ehail\InvalidRideTransition;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Rides booked for later (config ehail_dispatch.scheduled).
@@ -161,12 +162,27 @@ class ScheduledRides
             throw new DispatchRefused('no_requote_pending', 'There is no new fare waiting for your answer on this ride.');
         }
 
-        $ride->forceFill([
-            'fare_quote_id' => $ride->requote_quote_id,
-            'quoted_total_minor' => $ride->requote_total_minor,
-            'estimated_fare' => $ride->requote_total_minor / 100,
-            'requote_required_at' => null, 'requote_quote_id' => null, 'requote_total_minor' => null,
-        ])->save();
+        $fresh = $this->quotes->findForPassenger((string) $ride->requote_quote_id, $passenger);
+
+        if ($fresh === null) {
+            // The offered quote lapsed: clear it so the next scheduler pass prices the ride again.
+            $ride->forceFill(['requote_required_at' => null, 'requote_quote_id' => null, 'requote_total_minor' => null])->save();
+
+            throw new DispatchRefused('quote_invalid', 'The new fare has expired. It will be offered again shortly.', 422);
+        }
+
+        DB::transaction(function () use ($ride, $fresh, $passenger) {
+            $ride->forceFill([
+                'fare_quote_id' => $fresh->id,
+                'quote_snapshot' => $fresh->snapshot(),
+                'quoted_total_minor' => $fresh->totalMinor,
+                'estimated_fare' => $fresh->totalMinor / 100,
+                'requote_required_at' => null, 'requote_quote_id' => null, 'requote_total_minor' => null,
+            ])->save();
+
+            // The pricing snapshot follows the accepted quote (D-701).
+            $this->quotes->bind($fresh, $passenger, $ride);
+        });
 
         $this->timeline->append($ride, 'requote_accepted', RideActor::Passenger, $passenger->id, 'new_fare_accepted', [
             'total_minor' => $ride->quoted_total_minor,

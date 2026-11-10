@@ -23,8 +23,9 @@ class GeoEndpointsTest extends TestCase
 
     public function test_guests_cannot_use_the_proxy(): void
     {
-        $this->get(route('geo.search', ['q' => 'Sandton']))->assertRedirect(route('login'));
-        $this->get(route('geo.route', ['from_lat' => -26, 'from_lng' => 28, 'to_lat' => -26.1, 'to_lng' => 28.1]))->assertRedirect(route('login'));
+        // JSON-only API paths answer 401 JSON even without an Accept header (the app-wide policy, D-711).
+        $this->get(route('geo.search', ['q' => 'Sandton']))->assertUnauthorized()->assertJsonPath('error', 'unauthenticated');
+        $this->get(route('geo.route', ['from_lat' => -26, 'from_lng' => 28, 'to_lat' => -26.1, 'to_lng' => 28.1]))->assertUnauthorized()->assertJsonPath('error', 'unauthenticated');
     }
 
     public function test_route_without_a_provider_says_so_and_offers_no_distance(): void

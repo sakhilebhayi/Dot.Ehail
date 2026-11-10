@@ -49,7 +49,8 @@ class FareQuoterTest extends TestCase
         $this->assertInstanceOf(QuoteUnavailable::class, $result);
         $this->assertSame('routing_unavailable', $result->reason);
         $this->assertSame('not_configured', $result->detail);
-        $this->assertStringContainsString('no routing provider', $result->message);
+        // Since integration the geo RoutePlanner answers (driver "none"), with geo's operator-facing sentence.
+        $this->assertStringContainsString('not configured a routing provider', $result->message);
         $this->assertSame(0, FareQuote::count());
     }
 
