@@ -210,6 +210,11 @@ class BusinessAccounts
      */
     public function invitationsFor(User $user): \Illuminate\Database\Eloquent\Collection
     {
+        // Matching by email is only safe for a proven address (R-46 security S-01); otherwise the emailed link is the proof.
+        if ($user->email_verified_at === null) {
+            return new \Illuminate\Database\Eloquent\Collection;
+        }
+
         return BusinessMember::with('account')->where('email', strtolower((string) $user->email))
             ->where('status', BusinessMember::INVITED)->where('invite_expires_at', '>', now())->get();
     }
