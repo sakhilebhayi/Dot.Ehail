@@ -85,6 +85,9 @@ class SafetyJourneyTest extends TestCase
         $this->assertSame(['raised', 'context_captured'], array_slice(array_column($view['timeline'], 'type'), 0, 2));
         $this->assertContains('escalated', array_column($view['timeline'], 'type'));
         $this->assertContains('resolved', array_column($view['timeline'], 'type'));
-        $this->assertSame([], app(TrailRetentionHold::class)->held([$rideId]), 'no hold once resolved');
+        // R-46 security S-28: a resolved incident keeps holding its trail for the incident-trail period, then lets go.
+        $this->assertSame([$rideId], app(TrailRetentionHold::class)->held([$rideId]), 'evidence kept after resolution');
+        $this->travel((int) config('ehail_security.retention.incident_trail') + 1)->days();
+        $this->assertSame([], app(TrailRetentionHold::class)->held([$rideId]), 'no hold after the incident-trail period');
     }
 }

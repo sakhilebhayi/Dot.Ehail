@@ -36,9 +36,16 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            $account = Str::transliterate(Str::lower((string) $request->input(Fortify::username())));
 
-            return Limit::perMinute(5)->by($throttleKey);
+            // Per account and address (typing mistakes), per address (one machine spraying many accounts), and per
+            // account from anywhere (a botnet on one account; generous, so it cannot lock the owner out for long).
+            // R-46 security S-32.
+            return [
+                Limit::perMinute(5)->by('login:'.$account.'|'.$request->ip()),
+                Limit::perMinute(30)->by('login-ip:'.$request->ip()),
+                Limit::perMinutes(15, 30)->by('login-account:'.$account),
+            ];
         });
 
         RateLimiter::for('two-factor', function (Request $request) {

@@ -35,7 +35,8 @@ export async function browser() {
 export async function person(b, email, { width = 390, theme = 'light', geo = PICKUP, reducedMotion = 'no-preference' } = {}) {
     const ctx = await b.newContext({
         viewport: { width, height: HEIGHT[width] || 900 }, deviceScaleFactor: 1, colorScheme: theme === 'dark' ? 'dark' : 'light', reducedMotion,
-        isMobile: false, hasTouch: width < 768, bypassCSP: true, geolocation: { latitude: geo[0], longitude: geo[1], accuracy: 8 }, permissions: ['geolocation'],
+        isMobile: false, hasTouch: width < 768, bypassCSP: !process.env.A11Y_CSP, // A11Y_CSP=1 keeps the page's own CSP (axe goes in through DevTools, which CSP does not block)
+        geolocation: { latitude: geo[0], longitude: geo[1], accuracy: 8 }, permissions: ['geolocation'],
     });
     await ctx.route(/tile\.openstreetmap\.org|tiles?\./, (r) => r.abort());
     await ctx.addInitScript((t) => { try { localStorage.setItem('eh-theme', t); localStorage.setItem('eh-theme-drive', t); } catch (e) { /* storage blocked */ } }, theme);

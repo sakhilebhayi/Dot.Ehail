@@ -412,6 +412,11 @@ class RidePayments
         $state = $ride->paymentStatusEnum();
         $cents = $this->fareCents($ride);
 
+        // A card charge already in flight would be a second charge for the same fare (R-46 security S-16).
+        if (Payment::query()->where('ride_id', $ride->id)->where('purpose', Payment::PURPOSE_RIDE_FARE)->where('status', Payment::PENDING)->exists()) {
+            throw new PaymentNotPossible('A card payment for this fare is still being confirmed. Check back in a few minutes.');
+        }
+
         return match (true) {
             $state === PaymentStatus::Paid => throw new PaymentNotPossible('This fare is already paid.'),
             $state === PaymentStatus::Waived => throw new PaymentNotPossible('This fare was waived. Nothing is due.'),

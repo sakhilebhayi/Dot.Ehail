@@ -22,6 +22,7 @@ class OpsPrivilegeGuard
     /** @var array<string, string> route name => permission an operator who is not a party needs */
     public const ROUTES = [
         'geo.rides.driver-location' => OpsPermission::DRIVERS_POSITIONS,
+        'pricing.rides.fare' => OpsPermission::RIDES_VIEW,
         'support.cases.show' => OpsPermission::SUPPORT_VIEW,
         'support.cases.reply' => OpsPermission::SUPPORT_ACT,
         'support.attachments.show' => OpsPermission::SUPPORT_VIEW,

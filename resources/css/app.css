@@ -32,3 +32,8 @@
         scroll-behavior: auto !important;
     }
 }
+
+/* Legacy ride tables: clickable rows (data-eh-href, resources/js/eh/inline-actions.js) tint on hover and keyboard
+   focus; this replaced inline onmouseover handlers, which the enforced CSP does not run (R-46 security S-29). */
+.eh-row-link { cursor: pointer; transition: background-color 0.15s; }
+.eh-row-link:hover, .eh-row-link:focus-visible { background-color: rgba(255, 255, 255, 0.03); }

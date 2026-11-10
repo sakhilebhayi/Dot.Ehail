@@ -20,7 +20,7 @@
         @if($this->notifications->isEmpty())
             <div style="text-align:center;padding:2rem 1rem;">
                 <x-eh.icon name="bell-off" size="30" style="color:#3f3f46;display:block;margin-bottom:0.5rem;" />
-                <p style="font-size:0.75rem;color:#52525b;margin:0;">No notifications yet.</p>
+                <p style="font-size:0.75rem;color:#a1a1aa;margin:0;">No notifications yet.</p>
             </div>
         @else
             <div>
@@ -32,7 +32,7 @@
                         @endif
                         <span style="font-size:12px;font-weight:600;color:#d4d4d8;">{{ $notification->data['title'] ?? 'Notification' }}</span>
                     </div>
-                    <div style="font-size:11px;color:#71717a;margin-top:3px;line-height:1.4;">{{ $notification->data['message'] ?? '' }}</div>
+                    <div style="font-size:11px;color:#a1a1aa;margin-top:3px;line-height:1.4;">{{ $notification->data['message'] ?? '' }}</div>
                 </div>
                 @endforeach
             </div>

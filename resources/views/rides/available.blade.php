@@ -4,9 +4,9 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
         <div>
             <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#f4f4f5;margin:0 0 0.25rem;">Available Rides</h1>
-            <p style="font-size:0.8rem;color:#71717a;margin:0;">Open requests any driver can claim. First to accept wins.</p>
+            <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">Open requests any driver can claim. First to accept wins.</p>
         </div>
-        <a href="{{ route('rides.index') }}" style="font-size:0.78rem;color:#71717a;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+        <a href="{{ route('rides.index') }}" style="font-size:0.78rem;color:#a1a1aa;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
             <x-eh.icon name="arrow-left" size="16" />
             Back to rides
         </a>
@@ -34,13 +34,13 @@
         @endif
     </div>
     @else
-    <p style="font-size:0.75rem;color:#71717a;margin:-0.75rem 0 1rem;">
+    <p style="font-size:0.75rem;color:#a1a1aa;margin:-0.75rem 0 1rem;">
         Showing requests your active vehicle can serve ({{ $vehicle->plate_number }}, {{ $vehicle->type === 'suv' ? 'SUV' : ucfirst($vehicle->type) }}).
         <a href="{{ route('drivers.vehicles.index') }}" style="color:#38bdf8;text-decoration:none;">Change vehicle</a>
     </p>
     <div class="dot-card" style="overflow:hidden;">
         @if($rides->isEmpty())
-        <div style="padding:3.5rem 1rem;text-align:center;color:#71717a;">
+        <div style="padding:3.5rem 1rem;text-align:center;color:#a1a1aa;">
             <x-eh.icon name="car" size="48" style="display:block;margin-bottom:0.75rem;opacity:0.3;" />
             <p style="font-size:0.85rem;margin:0;">No open ride requests for your vehicle right now.</p>
         </div>
@@ -49,8 +49,8 @@
         <div style="padding:1.1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
             <div style="flex:1;min-width:220px;">
                 <div style="font-size:0.8rem;color:#f4f4f5;font-weight:600;">{{ $ride->pickup_address }}</div>
-                <div style="font-size:0.75rem;color:#71717a;">→ {{ $ride->dropoff_address }}</div>
-                <div style="font-size:0.68rem;color:#52525b;margin-top:0.25rem;">
+                <div style="font-size:0.75rem;color:#a1a1aa;">→ {{ $ride->dropoff_address }}</div>
+                <div style="font-size:0.68rem;color:#a1a1aa;margin-top:0.25rem;">
                     {{ ucfirst($ride->vehicle_type) }} · Requested {{ $ride->created_at->diffForHumans() }}
                     @if($ride->estimated_fare !== null) · ~{{ \App\Services\Ehail\FareCalculator::format($ride->estimated_fare) }} @else · fare estimate not available @endif
                 </div>

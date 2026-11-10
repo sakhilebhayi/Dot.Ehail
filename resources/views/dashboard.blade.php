@@ -289,7 +289,7 @@
                         $pickup   = strlen($ride->pickup_address)   > 28 ? substr($ride->pickup_address, 0, 28).'…'   : $ride->pickup_address;
                         $dropoff  = strlen($ride->dropoff_address)  > 28 ? substr($ride->dropoff_address, 0, 28).'…'  : $ride->dropoff_address;
                     @endphp
-                    <tr tabindex="0" onclick="window.location='{{ route('rides.show', $ride) }}'" onkeydown="if(event.key==='Enter'){window.location='{{ route('rides.show', $ride) }}'}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;" onmouseover="this.style.background='rgba(26,36,56,0.6)'" onmouseout="this.style.background='transparent'">
+                    <tr tabindex="0" data-eh-href="{{ route('rides.show', $ride) }}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;" class="eh-row-link">
                         <td style="padding:0.85rem 1.5rem;font-size:0.75rem;font-weight:600;color:#a1a1aa;font-family:'Syne',sans-serif;">#{{ $ride->id }}</td>
                         <td style="padding:0.85rem 1rem;max-width:220px;">
                             <div style="font-size:0.75rem;color:#f4f4f5;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $pickup }}</div>
@@ -311,7 +311,7 @@
                             @endif
                         </td>
                         <td style="padding:0.85rem 1rem;">
-                            <span style="font-size:0.75rem;color:#f4f4f5;font-weight:500;">{{ $ride->passenger?->name ?? 'Not given' }}</span>
+                            <span style="font-size:0.75rem;color:#f4f4f5;font-weight:500;">{{-- A driver sees a rider's first name only (R-46 security S-08). --}}{{ (auth()->id() === $ride->passenger_id || auth()->user()->isPlatformOperator()) ? ($ride->passenger?->name ?? 'Not given') : \App\Domain\Safety\RideSafety::firstName($ride->passenger?->name, '—') }}</span>
                         </td>
                         <td style="padding:0.85rem 1rem;">
                             <span style="display:inline-flex;align-items:center;padding:0.25rem 0.6rem;background:{{ $ss['bg'] }};border-radius:9999px;font-size:0.65rem;font-weight:700;color:{{ $ss['color'] }};font-family:'Syne',sans-serif;white-space:nowrap;">

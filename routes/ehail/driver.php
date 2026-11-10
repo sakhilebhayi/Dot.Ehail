@@ -27,7 +27,7 @@ Route::middleware(AllowGeolocation::class)->group(function () {
     Route::get('/drive/earnings', [EarningsController::class, 'index'])->name('drive.earnings');
     Route::get('/drive/earnings/payouts', [EarningsController::class, 'payouts'])->name('drive.earnings.payouts');
     Route::get('/drive/earnings/payouts/{payout}', [EarningsController::class, 'payout'])->name('drive.earnings.payout');
-    Route::post('/drive/earnings/bank-account', [EarningsController::class, 'storeAccount'])->middleware('throttle:ehail-driver-forms')->name('drive.earnings.bank-account');
+    Route::post('/drive/earnings/bank-account', [EarningsController::class, 'storeAccount'])->middleware(['throttle:ehail-driver-forms', 'ehail.recent-auth'])->name('drive.earnings.bank-account');
     Route::post('/drive/earnings/bank-account/{account}/verify', [EarningsController::class, 'verifyAccount'])->middleware('throttle:ehail-driver-forms')->name('drive.earnings.bank-account.verify');
 
     Route::get('/drive/trips', [TripsController::class, 'index'])->name('drive.trips');

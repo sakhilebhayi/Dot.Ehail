@@ -38,7 +38,9 @@ class RideCompletedNotification extends Notification
         return [
             'type' => 'ride_completed',
             'title' => 'Ride completed',
-            'message' => "Ride #{$this->ride->id} from {$this->ride->pickup_address} to {$this->ride->dropoff_address} finished ({$fare}).",
+            // No addresses: this notice reaches both parties' inboxes (and the passenger's push/email); where someone
+            // was picked up and dropped off stays on the ride page (R-46 security S-23).
+            'message' => "Ride #{$this->ride->id} finished ({$fare}).",
             'ride_id' => $this->ride->id,
             'url' => route('rides.show', $this->ride),
         ];

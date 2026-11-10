@@ -4,9 +4,9 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
         <div>
             <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#f4f4f5;margin:0 0 0.25rem;">Rides</h1>
-            <p style="font-size:0.8rem;color:#71717a;margin:0;">Search and browse every ride recorded on the platform.</p>
+            <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">Search and browse every ride recorded on the platform.</p>
         </div>
-        <a href="{{ route('dashboard') }}" style="font-size:0.78rem;color:#71717a;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+        <a href="{{ route('dashboard') }}" style="font-size:0.78rem;color:#a1a1aa;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
             <x-eh.icon name="arrow-left" size="16" />
             Back to dashboard
         </a>
@@ -14,7 +14,7 @@
 
     <form method="GET" action="{{ route('rides.index') }}" style="margin-bottom:1.5rem;display:flex;gap:0.6rem;max-width:480px;">
         <div style="position:relative;flex:1;">
-            <x-eh.icon name="search" size="17" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#52525b;" />
+            <x-eh.icon name="search" size="17" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#a1a1aa;" />
             <input aria-label="Search rides"
                 type="text"
                 name="q"
@@ -32,7 +32,7 @@
 
     <div class="dot-card" style="overflow:hidden;">
         @if($rides->isEmpty())
-        <div style="padding:3.5rem 1rem;text-align:center;color:#71717a;">
+        <div style="padding:3.5rem 1rem;text-align:center;color:#a1a1aa;">
             <x-eh.icon name="car" size="48" style="display:block;margin-bottom:0.75rem;opacity:0.3;" />
             @if($search !== '')
                 <p style="font-size:0.85rem;margin:0;">No rides match "{{ $search }}".</p>
@@ -45,26 +45,26 @@
             <table style="width:100%;border-collapse:collapse;">
                 <thead>
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
-                        <th style="padding:0.65rem 1.5rem;text-align:left;font-size:0.65rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">#</th>
-                        <th style="padding:0.65rem 1rem;text-align:left;font-size:0.65rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Route</th>
-                        <th style="padding:0.65rem 1rem;text-align:left;font-size:0.65rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Driver</th>
-                        <th style="padding:0.65rem 1rem;text-align:left;font-size:0.65rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Status</th>
-                        <th style="padding:0.65rem 1.5rem;text-align:right;font-size:0.65rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Time</th>
+                        <th style="padding:0.65rem 1.5rem;text-align:left;font-size:0.65rem;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:0.12em;">#</th>
+                        <th style="padding:0.65rem 1rem;text-align:left;font-size:0.65rem;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:0.12em;">Route</th>
+                        <th style="padding:0.65rem 1rem;text-align:left;font-size:0.65rem;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:0.12em;">Driver</th>
+                        <th style="padding:0.65rem 1rem;text-align:left;font-size:0.65rem;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:0.12em;">Status</th>
+                        <th style="padding:0.65rem 1.5rem;text-align:right;font-size:0.65rem;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:0.12em;">Time</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($rides as $ride)
-                    <tr onclick="window.location='{{ route('rides.show', $ride) }}'" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-                        <td style="padding:0.85rem 1.5rem;font-size:0.75rem;font-weight:600;color:#71717a;font-family:'Syne',sans-serif;">#{{ $ride->id }}</td>
+                    <tr tabindex="0" class="eh-row-link" data-eh-href="{{ route('rides.show', $ride) }}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;">
+                        <td style="padding:0.85rem 1.5rem;font-size:0.75rem;font-weight:600;color:#a1a1aa;font-family:'Syne',sans-serif;">#{{ $ride->id }}</td>
                         <td style="padding:0.85rem 1rem;max-width:260px;">
                             <div style="font-size:0.75rem;color:#f4f4f5;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $ride->pickup_address }}</div>
-                            <div style="font-size:0.7rem;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">→ {{ $ride->dropoff_address }}</div>
+                            <div style="font-size:0.7rem;color:#a1a1aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">→ {{ $ride->dropoff_address }}</div>
                         </td>
                         <td style="padding:0.85rem 1rem;font-size:0.75rem;color:#f4f4f5;">{{ $ride->driver->name ?? 'Unassigned' }}</td>
                         <td style="padding:0.85rem 1rem;">
                             <x-ride-status :status="$ride->status" />
                         </td>
-                        <td style="padding:0.85rem 1.5rem;text-align:right;font-size:0.7rem;color:#71717a;white-space:nowrap;">{{ $ride->created_at->diffForHumans() }}</td>
+                        <td style="padding:0.85rem 1.5rem;text-align:right;font-size:0.7rem;color:#a1a1aa;white-space:nowrap;">{{ $ride->created_at->diffForHumans() }}</td>
                     </tr>
                     @endforeach
                 </tbody>
