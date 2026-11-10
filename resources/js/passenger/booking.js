@@ -5,6 +5,7 @@ import { createPlaceSearch, loadGeoConfig, locateOnce, locationPermission, mount
 import { announce, api, ApiError, idempotencyKey, island } from './api.js';
 import { formatKm, formatMinutes, renderBreakdown } from './breakdown.js';
 import { clock, quoteState } from './countdown.js';
+import { countdownCue } from '../eh/announce.js';
 import { businessReasons, categoryIcon, defaultPayment, etaText, laterBounds, laterError, paymentOptions, requestLabel, unavailableText } from './labels.js';
 import { formatMinor } from './money.js';
 import { el, icon, setSnap, showStep, watchConnection } from './dom.js';
@@ -326,15 +327,21 @@ function renderOptions() {
         children.push(el('ul', { class: 'pax-unavailable', 'aria-label': 'Not available right now' }, compare.unavailable.map((u) => el('li', {}, [icon('info'), el('span', {}, u.message)]))));
     }
 
-    children.push(el('p', { class: 'pax-quote', 'data-pax-quote': '' }));
+    // A timer role: the clock ticks every second and is never read aloud on its own (R-46 a11y, D-1702).
+    children.push(el('p', { class: 'pax-quote', 'data-pax-quote': '', role: 'timer', 'aria-label': 'Prices held' }));
     children.push(promoBlock());
     children.push(paymentBlock());
     if (data.paymentDue?.blocked) children.push(dueBlock(data.paymentDue));
     children.push(requestBar());
 
     body.replaceChildren(...children);
+    quoteSaid = null;
     tickQuote();
     quoteTimer = setInterval(tickQuote, 1000);
+    // One sentence instead of reading the whole list: how many rides, and how long the prices hold.
+    const count = compare.options?.length || 0;
+    const held = Math.round((quoteState(compare.options?.map((o) => o.expires_at).filter(Boolean).sort()[0]).left || 0) / 60);
+    if (count) announce(`${count} ${count === 1 ? 'ride' : 'rides'} priced. The first is selected.${held ? ` Prices held for ${held} min.` : ''}`);
     updateRequest();
 }
 
@@ -385,6 +392,7 @@ function optionCard(option) {
     ]);
 }
 
+let quoteSaid = null;
 function tickQuote() {
     const out = body.querySelector('[data-pax-quote]');
     if (!out || !state.compare?.options?.length) return;
@@ -398,6 +406,8 @@ function tickQuote() {
         updateRequest();
         return;
     }
+    if (countdownCue(quoteSaid, left, [60])) announce('Prices held for 1 more minute.');
+    quoteSaid = left;
     if (!out.firstChild || out.dataset.built !== '1') {
         out.dataset.built = '1';
         out.replaceChildren(el('span', {}, ['Prices held for ', el('strong', { class: 'pax-quote__clock' }, clock(left))]), el('span', {}, 'You pay this price unless the trip changes for a reason listed in the fare rules.'));

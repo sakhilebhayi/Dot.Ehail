@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Ehail;
 
+use App\Domain\Ops\Access\OpsAccess;
+use App\Domain\Ops\Access\OpsPermission;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\DriverProfile;
 use App\Models\Ride;
 use App\Models\RideRating;
+use App\Support\DriverIdentifiers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -42,18 +45,29 @@ class DriverController extends Controller
 
         $viewer = request()->user();
 
+        // Full identity numbers only for the driver and identity reviewers; every other role sees them masked,
+        // as the fleet portal and the ops driver page do (R-46 security S-04).
+        $fullIdentity = $viewer->id === $driverProfile->user_id
+            || ($viewer->isPlatformOperator() && app(OpsAccess::class)->can($viewer, OpsPermission::VERIFICATION_REVIEW));
+
         // The full licence and ID numbers are on this page. Their own owner
         // reading them is not an event; anyone else opening it is, and every
         // open is written to the append-only audit log.
         if ($viewer->id !== $driverProfile->user_id) {
             AuditLog::record('driver_profile.opened', $viewer, $driverProfile, [
-                'fields' => ['license_number', 'id_number'],
+                'fields' => $fullIdentity ? ['license_number', 'id_number'] : ['masked_identity'],
                 'as' => $viewer->isPlatformOperator() ? 'operator' : 'fleet_owner',
             ]);
         }
 
         return view('drivers.show', [
             'driverProfile' => $driverProfile,
+            'licenceShown' => $fullIdentity ? $driverProfile->license_number : DriverIdentifiers::mask($driverProfile->license_number),
+            'idShown' => $fullIdentity ? $driverProfile->id_number : DriverIdentifiers::mask($driverProfile->id_number),
+            'fullIdentity' => $fullIdentity,
+            // Riders' addresses: the driver's own history, or an operator whose role reads rides (S-04).
+            'rideAddresses' => $viewer->id === $driverProfile->user_id
+                || ($viewer->isPlatformOperator() && app(OpsAccess::class)->can($viewer, OpsPermission::RIDES_VIEW)),
             'rides' => $rides,
             'ratingCount' => (clone $received)->count(),
             'recentRatings' => (clone $received)->whereNotNull('comment')->where('comment_status', 'visible')->with('rater')->latest()->limit(10)->get(),

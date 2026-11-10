@@ -47,6 +47,20 @@ export function initSheets() {
         sheet.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && sheet.dataset.snap !== 'peek') { set('peek'); handle.focus(); }
         });
+        // Keyboard focus never lands on something the collapsed sheet hides (WCAG 2.4.11, R-46 a11y D-1713): a
+        // focused control outside the visible part of the sheet opens it fully, then is scrolled into view.
+        sheet.addEventListener('focusin', (e) => {
+            const target = e.target;
+            if (target === handle || sheet.dataset.snap === 'full' || sheet.dataset.dragging === 'true') return;
+            const r = target.getBoundingClientRect();
+            const hit = document.elementFromPoint(r.left + Math.min(r.width / 2, 12), r.top + Math.min(r.height / 2, 12));
+            const shown = r.bottom <= window.innerHeight && hit && (hit === target || target.contains(hit) || hit.contains(target));
+            if (shown) return;
+            set('full');
+            const reveal = () => target.scrollIntoView({ block: 'nearest' });
+            sheet.addEventListener('transitionend', reveal, { once: true });
+            setTimeout(reveal, 400);
+        });
 
         let startY = 0; let startVisible = 0; let dragging = false;
         const visibleNow = () => window.innerHeight - sheet.getBoundingClientRect().top;

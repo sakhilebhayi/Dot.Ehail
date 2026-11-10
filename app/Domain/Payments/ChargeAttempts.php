@@ -70,6 +70,26 @@ class ChargeAttempts
 
             switch ($result->status) {
                 case GatewayResult::SUCCEEDED:
+                    // The fare was already paid by another payment (a checkout while this charge was pending): keep
+                    // the money visible as unmatched for a refund instead of settling a second time (S-16).
+                    if ($ride !== null && $payment->purpose === Payment::PURPOSE_RIDE_FARE
+                        && Payment::query()->where('ride_id', $ride->id)->where('purpose', Payment::PURPOSE_RIDE_FARE)
+                            ->where('status', Payment::PAID)->whereKeyNot($payment->id)->exists()) {
+                        $payment->forceFill([
+                            'status' => Payment::UNMATCHED,
+                            'unmatched_reason' => 'duplicate_payment',
+                            'provider_transaction_id' => $result->providerId ?? $payment->provider_transaction_id,
+                            'next_retry_at' => null,
+                            'summary' => $summary,
+                        ])->save();
+                        $duplicate = $payment;
+                        DB::afterCommit(fn () => $this->issues->raise('duplicate_payment', "duplicate-payment:{$duplicate->id}", "Ride #{$duplicate->ride_id}: charged again after it was paid; refund payment #{$duplicate->id}", [
+                            'severity' => 'critical', 'subject_type' => Payment::class, 'subject_id' => $duplicate->id,
+                            'ride_id' => $duplicate->ride_id, 'amount_minor' => $duplicate->amountMinor(), 'currency' => $duplicate->currency,
+                        ]));
+                        break;
+                    }
+
                     $payment->forceFill([
                         'status' => Payment::PAID,
                         'provider_transaction_id' => $result->providerId ?? $payment->provider_transaction_id,

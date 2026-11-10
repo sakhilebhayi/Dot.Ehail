@@ -1,8 +1,22 @@
 name: CI
 
-# Runs the test suite on every pull request (whatever its base branch, so stacked
-# PRs are covered) and on pushes to the trunk. The suite uses in-memory SQLite
-# from phpunit.xml and fakes Vite, so no database or asset build is needed.
+# Runs on every pull request (whatever its base branch, so stacked PRs are covered) and on pushes to the trunk. It is
+# also the release gate that deploy.yml calls: a red job here means nothing reaches the host. Jobs:
+#
+#   tests              PHPUnit on in-memory SQLite (Vite is faked), including the ehail:preflight tests.
+#   pgsql-tests        the same suite on PostgreSQL 16 (phpunit.pgsql.xml), the database production should run.
+#   upgrade-rehearsal  the R-46 migrations on a POPULATED pre-R-46 database, SQLite and PostgreSQL
+#                      (scripts/ops/upgrade-rehearsal.sh): legacy rides in every old status, encrypted identifiers,
+#                      legacy documents; no row lost, every status mapped, guards filled.
+#   js                 the JS suite, the Vite build and the manifest check against every @vite entry in the views.
+#                      The build goes to the smoke job as an artifact, so the app is built once.
+#   signed-in-smoke    boots the app like the live host (APP_ENV=production, cached config/routes/views/events, the BUILT
+#                      assets), signs in as a passenger, a driver, an operator, a fleet owner and a business admin over
+#                      HTTP and requests every key page and JSON endpoint plus fonts, icons, manifest and the service
+#                      worker (tests/Support/signed-in-smoke.sh).
+#
+# Not here, on purpose: the browser E2E walkthroughs (docs/R46_OPERATIONS.md, "Verification"); they drive a real Chrome
+# against a local routing stub and run on a developer machine.
 on:
   # Called by deploy.yml as the release gate.
   workflow_call: {}
@@ -11,16 +25,22 @@ on:
   pull_request:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PHP_EXTENSIONS: sqlite3, pdo_sqlite, pgsql, pdo_pgsql, mbstring, intl, bcmath, curl, gd, fileinfo, openssl, pcntl
 
 jobs:
   tests:
+    name: PHP suite (SQLite)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -28,13 +48,18 @@ jobs:
           php-version: "8.4"
           tools: composer:v2
           coverage: none
-          extensions: sqlite3, pdo_sqlite, mbstring, intl, bcmath, curl
+          extensions: ${{ env.PHP_EXTENSIONS }}
+
+      # Composer's cache folder differs between runners, so ask it.
+      - name: Find the Composer cache folder
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.composer/cache/files
-          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('**/composer.lock') }}
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-8.4-composer-
 
@@ -44,7 +69,7 @@ jobs:
         run: cp .env.example .env
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Generate application key
         run: php artisan key:generate
@@ -59,3 +84,204 @@ jobs:
           MAIL_MAILER: array
           BROADCAST_CONNECTION: log
         run: ./vendor/bin/phpunit --colors=never
+
+      # The caches the host builds on every deploy must build here too (a limiter or binding registered in a route file
+      # breaks route:cache; a broken view breaks view:cache).
+      - name: Production caches build
+        run: |
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          php artisan event:cache
+
+  pgsql-tests:
+    name: PHP suite (PostgreSQL 16)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ehail_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+          coverage: none
+          extensions: ${{ env.PHP_EXTENSIONS }}
+
+      - name: Find the Composer cache folder
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.4-composer-
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # phpunit.pgsql.xml mirrors phpunit.xml but connects to PostgreSQL; DB_* come from here.
+      - name: Run tests on PostgreSQL
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: ehail_ci
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+        run: ./vendor/bin/phpunit -c phpunit.pgsql.xml --colors=never
+
+  upgrade-rehearsal:
+    name: Upgrade rehearsal (populated database)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+          coverage: none
+          extensions: ${{ env.PHP_EXTENSIONS }}
+
+      - name: Find the Composer cache folder
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.4-composer-
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Rehearse on SQLite
+        run: scripts/ops/upgrade-rehearsal.sh
+
+      - name: Rehearse on PostgreSQL
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: scripts/ops/upgrade-rehearsal.sh --pgsql
+
+  js:
+    name: JS (tests, build, manifest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: JS tests
+        run: npm run test:js
+
+      # No .env: no VITE_* variable is baked into the bundle, exactly like the deploy build.
+      - name: Build
+        run: npm run build
+
+      - name: Every @vite entry is built, every manifest file exists
+        run: node scripts/ops/check-vite-manifest.mjs
+
+      - name: Keep the build for the smoke job
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-build
+          path: public/build
+          retention-days: 1
+          if-no-files-found: error
+
+  signed-in-smoke:
+    name: Signed-in smoke (production-like boot)
+    needs: js
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+          coverage: none
+          extensions: ${{ env.PHP_EXTENSIONS }}
+
+      - name: Find the Composer cache folder
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.4-composer-
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: vite-build
+          path: public/build
+
+      # The script sets its own production environment, database, storage and caches under a temp folder.
+      - name: Signed-in smoke
+        run: tests/Support/signed-in-smoke.sh

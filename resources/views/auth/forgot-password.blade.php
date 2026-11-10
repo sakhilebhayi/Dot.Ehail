@@ -13,5 +13,5 @@
         <x-eh.field label="Email" name="email" type="email" id="email" required autofocus autocomplete="username" inputmode="email" />
         <x-eh.button type="submit" size="lg" block>Email me a reset link</x-eh.button>
     </form>
-    <p class="eh-small" style="margin:0"><a class="eh-link" href="{{ route('login') }}">Back to sign in</a></p>
+    <p class="eh-small" style="margin:0"><a class="eh-link eh-tap" href="{{ route('login') }}">Back to sign in</a></p>
 </x-guest-layout>

@@ -5,6 +5,7 @@ import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { boundsOf, decodePolyline } from './geometry.js';
 import { Follower } from './follow.js';
+import { stillMap } from './still.js';
 
 const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -59,6 +60,10 @@ export function createMap(el, config, { center, zoom, onMapClick } = {}) {
     });
 
     map.attributionControl.setPrefix(false);
+    // Top right: at the bottom the passenger sheet and the ops panels covered it, hiding the OSM credit (which must
+    // stay visible) and its links from keyboard users (R-46 a11y, D-1708).
+    map.attributionControl.setPosition('topright');
+    if (!motion) stillMap(map);
 
     const tiles = L.tileLayer(config.tiles.url, {
         maxZoom: config.tiles.maxZoom,

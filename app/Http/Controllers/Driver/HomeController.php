@@ -72,6 +72,7 @@ class HomeController extends Controller
                 'post_every_s' => (int) config('ehail_driver.location.post_every_s'),
                 'saver_post_every_s' => (int) config('ehail_driver.location.saver_post_every_s'),
                 'heartbeat_every_s' => (int) config('ehail_driver.location.heartbeat_every_s'),
+                'parked_post_every_s' => (int) config('ehail_perf.driver_poll.parked_post_every_s', 15),
                 'max_batch' => (int) config('ehail_driver.location.max_batch'),
                 'heartbeat_stale_s' => (int) config('ehail_dispatch.heartbeat_stale_seconds'),
                 'moving' => config('ehail_driver.moving'),
@@ -79,6 +80,7 @@ class HomeController extends Controller
             ],
             'urls' => [
                 'feed' => route('ehail.dispatch.driver.feed'),
+                'sync' => route('ehail.dispatch.driver.sync'),
                 'online' => route('ehail.dispatch.driver.online'),
                 'offline' => route('ehail.dispatch.driver.offline'),
                 'pause' => route('ehail.dispatch.driver.pause'),

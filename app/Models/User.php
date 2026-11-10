@@ -79,4 +79,18 @@ class User extends Authenticatable
             'is_platform_operator' => 'boolean',
         ];
     }
+
+    /**
+     * Initials as a local SVG instead of Jetstream's ui-avatars.com default, which sent every viewer's browser to a
+     * third party with people's initials (R-46 security S-30) and needed a CSP allowance.
+     */
+    protected function defaultProfilePhotoUrl(): string
+    {
+        $initials = mb_strtoupper(trim(collect(explode(' ', (string) $this->name))->filter()->take(2)->map(fn ($s) => mb_substr($s, 0, 1))->join('')));
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#EBF4FF"/>'
+            .'<text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="sans-serif" font-size="26" fill="#3F5F8F">'
+            .e($initials).'</text></svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
+    }
 }

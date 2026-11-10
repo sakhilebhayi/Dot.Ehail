@@ -24,7 +24,7 @@ class DriverIdentifiers
     public static function mask(?string $value): string
     {
         if ($value === null || $value === '') {
-            return '—';
+            return 'Not given';
         }
 
         return mb_strlen($value) >= 8 ? '•••• '.mb_substr($value, -4) : '••••';

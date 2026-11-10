@@ -16,7 +16,7 @@
                     <form class="bz-switch" method="POST" action="{{ route('business.switch') }}">
                         @csrf
                         <label class="eh-sr-only" for="bz-account">Business account</label>
-                        <div class="eh-select-wrap"><select class="eh-select" id="bz-account" name="account_id" onchange="this.form.submit()">
+                        <div class="eh-select-wrap"><select class="eh-select" id="bz-account" name="account_id" data-eh-autosubmit>
                             @foreach ($memberships as $m)<option value="{{ $m->business_account_id }}" @selected($m->business_account_id === $account->id)>{{ $m->account->displayName() }}</option>@endforeach
                         </select><x-eh.icon name="chevron-down" /></div>
                         <noscript><x-eh.button type="submit" variant="secondary" size="sm">Switch</x-eh.button></noscript>
@@ -98,7 +98,7 @@
                     <section class="bz-panel bz-panel--flush" aria-labelledby="bz-recent-title">
                         <div class="bz-panel__head">
                             <h2 class="bz-panel__title" id="bz-recent-title">Latest trips</h2>
-                            <a class="eh-link" href="{{ route('business.trips') }}">All trips</a>
+                            <a class="eh-link eh-tap" href="{{ route('business.trips') }}">All trips</a>
                         </div>
                         @if ($recentTrips->isEmpty())
                             <div style="padding:0 var(--eh-space-5) var(--eh-space-5)">
@@ -150,7 +150,7 @@
                     <section class="bz-panel" aria-labelledby="bz-people-title">
                         <div class="bz-panel__head">
                             <h2 class="bz-panel__title" id="bz-people-title">People</h2>
-                            <a class="eh-link" href="{{ route('business.people') }}">Manage</a>
+                            <a class="eh-link eh-tap" href="{{ route('business.people') }}">Manage</a>
                         </div>
                         <dl class="bz-facts">
                             <div><dt>On the account</dt><dd>{{ $peopleCount }}</dd></div>

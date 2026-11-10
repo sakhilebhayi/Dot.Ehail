@@ -18,7 +18,7 @@
 
 .ops-subnav { margin-bottom: var(--eh-space-5); }
 .ops-crumb { margin: 0 0 var(--eh-space-2); font-size: var(--eh-text-sm); }
-.ops-crumb a { color: var(--eh-ink-2); text-decoration: none; }
+.ops-crumb a { color: var(--eh-ink-2); text-decoration: underline; text-decoration-color: var(--eh-rule-strong); text-underline-offset: 3px; }
 .ops-crumb a:hover { color: var(--eh-ink); text-decoration: underline; text-underline-offset: 3px; }
 
 /* Grids: one gutter everywhere (16px). Arithmetic in comments where it matters. */
@@ -58,10 +58,13 @@
 .ops-figures [data-tone="stop"] dd { color: var(--eh-stop); }
 .ops-figures [data-tone="caution"] dd { color: var(--eh-caution); }
 .ops-figures a { color: inherit; text-decoration: none; }
-.ops-figures a:hover dt { color: var(--eh-ink); text-decoration: underline; text-underline-offset: 3px; }
+/* The term is the link (a dl only holds dt and dd, D-1707); it still covers the whole figure as a target. */
+.ops-figures > div:has(dt > a) { position: relative; }
+.ops-figures dt > a::after { content: ""; position: absolute; inset: 0; }
+.ops-figures > div:hover dt > a { color: var(--eh-ink); text-decoration: underline; text-underline-offset: 3px; }
 
 /* Tables: rules and alignment, numbers right and tabular, no zebra, no header band */
-.ops-tablewrap { overflow-x: auto; min-width: 0; position: relative; } /* contains absolutely placed screen-reader labels in cells (they widened the page at 390, D-1615) */
+.ops-tablewrap { overflow-x: auto; min-width: 0; position: relative; } /* keeps visually hidden header text inside the scroller */
 .ops-table { width: 100%; border-collapse: collapse; font-size: var(--eh-text-sm); }
 .ops-table th { text-align: left; font-weight: 600; color: var(--eh-ink-2); font-size: var(--eh-text-xs); padding: var(--eh-space-2) var(--eh-space-3); border-bottom: 1px solid var(--eh-rule-strong); white-space: nowrap; }
 .ops-table td { padding: var(--eh-space-2) var(--eh-space-3); border-bottom: 1px solid var(--eh-rule); vertical-align: top; }

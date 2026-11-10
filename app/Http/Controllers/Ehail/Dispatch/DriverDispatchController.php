@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Ehail\Dispatch;
 
 use App\Domain\Dispatch\AvailabilityService;
 use App\Domain\Dispatch\Dispatcher;
-use App\Domain\Dispatch\Models\DriverAvailability;
 use App\Domain\Dispatch\Models\RideOffer;
 use App\Domain\Dispatch\RideFeed;
 use App\Enums\CancelReason;
@@ -37,10 +36,10 @@ class DriverDispatchController extends Controller
         }
 
         $dispatcher->tick();
-        $state = DriverAvailability::where('user_id', $driver->id)->value('state');
-        $poll = (int) config($state !== null && $state !== DriverAvailability::OFFLINE ? 'ehail_dispatch.poll.driver_online' : 'ehail_dispatch.poll.driver_offline');
+        $result = $feed->forDriver($driver, $this->sinceVersion($request));
 
-        return $this->feedResponse($feed->forDriver($driver, $this->sinceVersion($request)), $poll);
+        // Adaptive polling hint from RideFeed (App\Domain\Perf\PollPolicy, docs/R46_PERF.md).
+        return $this->feedResponse($result, $result['poll']);
     }
 
     public function online(Request $request, AvailabilityService $availability, RideFeed $feed): JsonResponse

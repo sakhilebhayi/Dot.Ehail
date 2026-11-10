@@ -45,7 +45,7 @@ class PassengerPagesTest extends TestCase
 
         foreach ([route('ride.home'), route('ride.trips'), route('ride.safety'), route('ride.account'), route('ride.support'), route('ride.support.create')] as $url) {
             $page = $this->actingAs($user)->get($url)->assertOk();
-            $csp = (string) $page->headers->get('Content-Security-Policy-Report-Only');
+            $csp = (string) $page->headers->get('Content-Security-Policy'); // enforced since R-46 security S-29
             $this->assertStringContainsString("default-src 'self'", $csp, $url);
             $this->assertStringNotContainsString('fonts.googleapis.com', $csp, $url);
             $this->assertStringNotContainsString('cdn.tailwindcss.com', $csp, $url);

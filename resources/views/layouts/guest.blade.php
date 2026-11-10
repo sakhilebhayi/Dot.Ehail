@@ -22,7 +22,7 @@
         <main id="main" class="eh-guest__main" tabindex="-1">
             <div class="eh-guest__top" @if($wide) style="max-width: 48rem" @endif>
                 <x-eh.logo href="{{ url('/') }}" />
-                <a class="eh-link" href="{{ url('/') }}" style="font-weight:600">Home</a>
+                <a class="eh-link eh-tap" href="{{ url('/') }}" style="font-weight:600">Home</a>
             </div>
             <div class="eh-guest__card" @if($wide) style="max-width: 48rem" @endif>
                 {{ $slot }}

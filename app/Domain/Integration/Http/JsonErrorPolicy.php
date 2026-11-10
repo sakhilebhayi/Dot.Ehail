@@ -81,9 +81,9 @@ final class JsonErrorPolicy
         $message = trim((string) ($e instanceof \Throwable ? $e->getMessage() : ''));
 
         if (in_array($message, self::FRAMEWORK_WORDINGS, true) || str_starts_with($message, 'No query results') || str_starts_with($message, 'The route ')) {
-            return self::DEFAULT_MESSAGES[$status] ?? 'The request failed.';
+            return self::DEFAULT_MESSAGES[$status] ?? 'Something went wrong on our side. Try again in a moment.';
         }
 
-        return $status >= 500 && ! array_key_exists($status, self::DEFAULT_MESSAGES) ? 'The request failed.' : $message;
+        return $status >= 500 && ! array_key_exists($status, self::DEFAULT_MESSAGES) ? 'Something went wrong on our side. Try again in a moment.' : $message;
     }
 }

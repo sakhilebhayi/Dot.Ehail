@@ -7,12 +7,12 @@
 /* ------------------------------------------------------------------ stage: map behind, sheet in front */
 .pax-stage {
     position: relative;
-    height: calc(100dvh - var(--eh-topbar));
+    height: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px));
     overflow: hidden;
     background: var(--eh-map-land);
 }
 @media (max-width: 767.98px) {
-    .pax-stage { height: calc(100dvh - var(--eh-topbar) - var(--eh-tabbar) - env(safe-area-inset-bottom, 0px)); }
+    .pax-stage { height: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-tabbar) - env(safe-area-inset-bottom, 0px)); }
 }
 .pax-stage > .eh-mapframe { position: absolute; inset: 0; min-height: 0; }
 .pax-stage .eh-mapframe__canvas.eh-map { position: absolute; inset: 0; height: auto; min-height: 0; }
@@ -30,13 +30,13 @@
 /* At half height the lower half of the sheet hangs below the screen; end the scrolling body at the visible edge so
    everything in it can be scrolled into view without expanding the sheet. */
 @media (max-width: 1023.98px) {
-    .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - var(--eh-space-4)); }
-    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - var(--eh-tabbar) - var(--eh-space-4)); }
+    .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-space-4)); }
+    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-tabbar) - var(--eh-space-4)); }
     .pax-stage .eh-sheet[data-snap="half"] .eh-sheet__body { margin-bottom: calc(var(--pax-sheet-h) / 2); }
     .pax-stage .eh-sheet[data-snap="peek"] .eh-sheet__body { margin-bottom: calc(var(--pax-sheet-h) - var(--eh-sheet-peek)); }
 }
 @media (min-width: 768px) and (max-width: 1023.98px) {
-    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - var(--eh-space-4)); }
+    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-space-4)); }
 }
 
 /* The pin people move the map under to set the pickup exactly. */
@@ -304,7 +304,11 @@ a.pax-trip-row:hover { background: var(--eh-surface-2); }
 .pax-trip-row__route { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pax-trip-row__meta { grid-column: 1; font-size: var(--eh-text-sm); color: var(--eh-ink-2); display: flex; flex-wrap: wrap; gap: var(--eh-space-1) var(--eh-space-3); align-items: center; }
 .pax-trip-row__money { grid-column: 2; grid-row: 1 / span 2; align-self: center; text-align: right; display: grid; gap: 2px; justify-items: end; }
-.pax-trip-row__money a { font-size: var(--eh-text-xs); }
+/* The whole row opens the trip (the route link stretches over it); the receipt link sits above it at 44 px. */
+.pax-trip-row { position: relative; }
+.pax-trip-row__route::after { content: ""; position: absolute; inset: 0; }
+.pax-trip-row:hover { background: var(--eh-surface-2); }
+.pax-trip-row__money a { font-size: var(--eh-text-xs); position: relative; z-index: 1; display: inline-flex; align-items: center; min-height: var(--eh-target); }
 .pax-form { display: grid; gap: var(--eh-space-4); }
 .pax-form .eh-field { margin: 0; }
 .pax-inline-form { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); align-items: flex-end; }

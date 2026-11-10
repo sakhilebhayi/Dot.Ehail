@@ -35,7 +35,7 @@
                                 <td><x-eh.status :status="$ride->status" /></td>
                                 <td>{{ $ride->passenger?->name ?? '' }}</td>
                                 <td>@if($ride->driver){{ $ride->driver->name }}@else<span class="ops-dash" aria-label="none">-</span>@endif</td>
-                                <td>{{ ucfirst(str_replace('_', ' ', (string) ($ride->category_code ?? $ride->vehicle_type))) }}</td>
+                                <td>{{ \App\Domain\Business\CategoryNames::for($ride->category_code ?? $ride->vehicle_type) }}</td>
                                 <td class="num">
                                     @if ($ride->final_fare_minor !== null)<x-eh.money :minor="$ride->final_fare_minor" :currency="$ride->currency ?? 'ZAR'" />
                                     @elseif ($ride->quoted_total_minor !== null)<x-eh.money :minor="$ride->quoted_total_minor" :currency="$ride->currency ?? 'ZAR'" muted /> <span class="sub">quoted</span>

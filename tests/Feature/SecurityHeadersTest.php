@@ -2,14 +2,18 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
-/** Baseline browser protections are on every response; the CSP only reports; a route's own header is kept. */
+/** Browser protections are on every response; the nonce CSP is enforced; a route's own header is kept. */
 class SecurityHeadersTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_every_response_carries_the_enforced_baseline_headers(): void
     {
         $r = $this->get('/');
@@ -27,27 +31,73 @@ class SecurityHeadersTest extends TestCase
         $this->get('/does-not-exist')->assertNotFound()->assertHeader('X-Frame-Options', 'SAMEORIGIN');
     }
 
-    public function test_the_csp_is_report_only_and_reports_to_the_csp_report_endpoint(): void
+    public function test_the_csp_is_enforced_with_a_per_request_nonce_and_no_inline_allowance_for_scripts(): void
     {
         $r = $this->get('/');
 
-        $policy = (string) $r->headers->get('Content-Security-Policy-Report-Only');
-        $this->assertFalse($r->headers->has('Content-Security-Policy'), 'nothing is enforced yet');
-        $this->assertStringContainsString("default-src 'self'", $policy);
-        $this->assertStringContainsString('report-uri /csp-report', $policy);
-        $this->assertStringContainsString("frame-ancestors 'self'", $policy);
-        $this->assertStringContainsString("object-src 'none'", $policy);
-        $this->assertStringContainsString("base-uri 'self'", $policy);
-        $this->assertStringContainsString('connect-src', $policy);
-        $this->assertStringContainsString('https://cdn.tailwindcss.com', $policy, 'the Tailwind CDN the app layout loads');
-        $this->assertStringContainsString('https://fonts.googleapis.com', $policy);
-        $this->assertStringContainsString('https://fonts.gstatic.com', $policy);
-        $this->assertStringNotContainsString('paystack', $policy, 'Paystack is a redirect to its hosted page, so no script or frame allowance is needed');
-        // The switch turns the same policy into an enforced one, with no deploy.
-        config(['security.csp_report_only' => false]);
-        $enforced = $this->get('/');
-        $this->assertStringContainsString("default-src 'self'", (string) $enforced->headers->get('Content-Security-Policy'));
-        $this->assertFalse($enforced->headers->has('Content-Security-Policy-Report-Only'));
+        $policy = (string) $r->headers->get('Content-Security-Policy');
+        $this->assertFalse($r->headers->has('Content-Security-Policy-Report-Only'), 'enforced, not report-only (R-46 security S-29)');
+        $this->assertMatchesRegularExpression("/script-src 'self' 'nonce-[A-Za-z0-9+\\/=]{20,}'(;| )/", $policy);
+        $this->assertStringNotContainsString("'unsafe-inline' https", $policy);
+        $this->assertDoesNotMatchRegularExpression("/script-src[^;]*'unsafe-inline'/", $policy, 'no inline script allowance');
+        $this->assertDoesNotMatchRegularExpression("/script-src[^;]*'unsafe-eval'/", $policy, 'no eval on a page without Livewire');
+        foreach (["default-src 'self'", 'report-uri /csp-report', "frame-ancestors 'self'", "object-src 'none'", "base-uri 'self'", "connect-src 'self'", 'form-action', "worker-src 'self'"] as $part) {
+            $this->assertStringContainsString($part, $policy);
+        }
+        foreach (['cdn.tailwindcss.com', 'fonts.googleapis.com', 'ui-avatars.com', 'unsplash'] as $gone) {
+            $this->assertStringNotContainsString($gone, $policy, "no third-party $gone");
+        }
+
+        // Every executable inline script on the page carries this response's nonce.
+        preg_match("/'nonce-([^']+)'/", $policy, $m);
+        $html = $r->getContent();
+        preg_match_all('/<script(?![^>]*\\bsrc=)(?![^>]*type="application\\/json")[^>]*>/', $html, $tags);
+        foreach ($tags[0] as $tag) {
+            $this->assertStringContainsString('nonce="'.$m[1].'"', $tag);
+        }
+        $this->assertNotSame($m[1], $this->extractNonce($this->get('/')), 'a fresh nonce per response');
+
+        // The escape hatch turns the same policy into report-only without a deploy.
+        config(['security.csp_report_only' => true]);
+        $this->assertTrue($this->get('/')->headers->has('Content-Security-Policy-Report-Only'));
+    }
+
+    public function test_unsafe_eval_is_given_only_to_pages_that_load_livewire(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+
+        $profile = $this->actingAs($user)->get('/user/profile')->assertOk();
+        $this->assertStringContainsString('/livewire/livewire', $profile->getContent());
+        $this->assertMatchesRegularExpression("/script-src[^;]*'unsafe-eval'/", (string) $profile->headers->get('Content-Security-Policy'));
+
+        $ride = $this->actingAs($user)->get(route('ride.home'))->assertOk();
+        $this->assertStringNotContainsString('/livewire/livewire', $ride->getContent());
+        $this->assertDoesNotMatchRegularExpression("/script-src[^;]*'unsafe-eval'/", (string) $ride->headers->get('Content-Security-Policy'));
+    }
+
+    public function test_geolocation_is_allowed_only_on_the_passenger_and_driver_apps(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+
+        $this->assertStringContainsString('geolocation=()', (string) $this->get('/')->headers->get('Permissions-Policy'));
+        $this->assertStringContainsString('geolocation=()', (string) $this->actingAs($user)->get('/user/profile')->headers->get('Permissions-Policy'));
+        $this->assertStringContainsString('geolocation=(self)', (string) $this->actingAs($user)->get(route('ride.home'))->headers->get('Permissions-Policy'));
+        $this->assertStringContainsString('camera=()', (string) $this->actingAs($user)->get(route('ride.home'))->headers->get('Permissions-Policy'));
+    }
+
+    public function test_the_default_avatar_is_local(): void
+    {
+        $user = User::factory()->make(['name' => 'Thandi Mokoena']);
+
+        $this->assertStringStartsWith('data:image/svg+xml;base64,', $user->profile_photo_url);
+        $this->assertStringContainsString('TM', base64_decode(substr($user->profile_photo_url, 26)));
+    }
+
+    private function extractNonce($response): string
+    {
+        preg_match("/'nonce-([^']+)'/", (string) $response->headers->get('Content-Security-Policy'), $m);
+
+        return $m[1] ?? '';
     }
 
     public function test_the_csp_allows_the_configured_map_tile_server(): void

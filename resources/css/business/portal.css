@@ -83,7 +83,7 @@
 .bz-queue__note { height: 36px; min-width: 0; width: 14rem; max-width: 100%; padding: 0 var(--eh-space-3); border-radius: var(--eh-radius-pill); border: 1px solid var(--eh-rule-strong); background: var(--eh-surface); color: var(--eh-ink); font: inherit; font-size: var(--eh-text-sm); }
 
 /* Tables: rules and alignment, numbers right, sentence-case headers, scroll inside the panel on phones. */
-.bz-tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.bz-tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; }
 .bz-table { width: 100%; border-collapse: collapse; font-size: var(--eh-text-sm); }
 .bz-table th { text-align: left; font-weight: 600; color: var(--eh-ink-2); padding: var(--eh-space-3) var(--eh-space-4); border-bottom: 1px solid var(--eh-rule-strong); white-space: nowrap; }
 .bz-table td { padding: var(--eh-space-3) var(--eh-space-4); border-bottom: 1px solid var(--eh-rule); vertical-align: top; }
@@ -217,4 +217,9 @@
 @media (max-width: 1099px) {
     .bz-grid > .bz { display: contents; }
     .bz-first-on-phone { order: -1; }
+}
+
+/* Touch targets (R-46 a11y, D-1712). */
+@media (max-width: 767.98px), (pointer: coarse) {
+    .bz-check { min-height: var(--eh-target); }
 }

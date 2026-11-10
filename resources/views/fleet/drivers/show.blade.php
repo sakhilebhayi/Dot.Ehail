@@ -45,7 +45,7 @@
                         <div class="fl-strip__cell"><dt>Trips</dt><dd>{{ $performance['trips'] }}</dd></div>
                         <div class="fl-strip__cell"><dt>Cancelled</dt><dd>{{ $performance['cancellations'] }}</dd></div>
                         <div class="fl-strip__cell"><dt>Completion</dt><dd>{!! $pct($performance['completion_bp']) ?? '<span class="fl-dash">&#8212;</span>' !!}</dd></div>
-                        <div class="fl-strip__cell"><dt>Rating</dt><dd style="font-size: var(--eh-text-xl)">{{ $performance['rating']['label'] }}</dd><span class="fl-strip__note">{{ $performance['rating']['count'] }} ratings</span></div>
+                        <div class="fl-strip__cell"><dt>Rating</dt><dd style="font-size: var(--eh-text-xl)">{{ $performance['rating']['label'] }}</dd><dd class="fl-strip__note">{{ $performance['rating']['count'] }} ratings</dd></div>
                     </dl>
                 @else
                     <p class="fl-note">No trips yet.</p>

@@ -38,8 +38,9 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            // Unset (the default) keeps the driver's behaviour; the browser E2E suite sets these for its multi-worker server.
-            'busy_timeout' => env('DB_BUSY_TIMEOUT') !== null ? (int) env('DB_BUSY_TIMEOUT') : null,
+            // Concurrent writers (polls from many phones) need a wait instead of an instant "database is locked";
+            // WAL + IMMEDIATE is dispatch's recommendation for any SQLite deployment (docs/R46_PERF.md).
+            'busy_timeout' => env('DB_BUSY_TIMEOUT', 10000),
             'journal_mode' => env('DB_JOURNAL_MODE'),
             'synchronous' => env('DB_SYNCHRONOUS'),
             'transaction_mode' => env('DB_TRANSACTION_MODE', 'DEFERRED'),

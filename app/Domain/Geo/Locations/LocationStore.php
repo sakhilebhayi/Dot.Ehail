@@ -207,7 +207,13 @@ class LocationStore
 
     private function resetJumps(User $driver): void
     {
-        Cache::forget('ehail-geo:jumps:'.$driver->id);
+        // Almost every accepted fix comes here with no jump counted: read first so the common case costs a select,
+        // not a delete (a write) per fix on the database cache store (docs/R46_PERF.md, D-1505).
+        $key = 'ehail-geo:jumps:'.$driver->id;
+
+        if (Cache::get($key) !== null) {
+            Cache::forget($key);
+        }
     }
 
     private function worthStoring(LocationSample $sample, ?TripPoint $last): bool

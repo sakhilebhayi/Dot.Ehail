@@ -9,7 +9,7 @@
                     <p class="ops-none" style="padding:var(--eh-space-5)">No commission plan exists.</p>
                 @else
                     <div class="ops-tablewrap"><table class="ops-table">
-                        <thead><tr><th>Plan</th><th>State</th><th>Applies to</th><th class="num">Rate</th><th class="num">Fixed</th><th></th></tr></thead>
+                        <thead><tr><th>Plan</th><th>State</th><th>Applies to</th><th class="num">Rate</th><th class="num">Fixed</th><th><span class="eh-sr-only">Actions</span></th></tr></thead>
                         <tbody>
                             @foreach ($lineages as $versions)
                                 @foreach ($versions as $v)

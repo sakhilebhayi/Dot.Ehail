@@ -29,6 +29,9 @@ class AssignmentConcurrencyTest extends TestCase
 
     private string $path;
 
+    /** The connection under test: SQLite (file) by default, or the PostgreSQL test database under bin/test-pgsql.sh. */
+    private string $db;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -38,20 +41,33 @@ class AssignmentConcurrencyTest extends TestCase
         }
 
         $this->path = sys_get_temp_dir().'/ehail-fleet-race-'.getmypid().'-'.bin2hex(random_bytes(4)).'.sqlite';
-        touch($this->path);
-        config([
-            'database.connections.sqlite.database' => $this->path,
-            'database.connections.sqlite.busy_timeout' => 10000,
-            'database.connections.sqlite.journal_mode' => 'wal',
-            'database.connections.sqlite.transaction_mode' => 'IMMEDIATE',
-        ]);
-        DB::purge('sqlite');
+        $this->db = (string) config('database.default');
+
+        // On PostgreSQL every contender opens its own connection (the parent's socket must never be shared with a
+        // forked child: it hung the PostgreSQL run, R-46 perf).
+        if ($this->db === 'sqlite') {
+            touch($this->path);
+            config([
+                'database.connections.sqlite.database' => $this->path,
+                'database.connections.sqlite.busy_timeout' => 10000,
+                'database.connections.sqlite.journal_mode' => 'wal',
+                'database.connections.sqlite.transaction_mode' => 'IMMEDIATE',
+            ]);
+        }
+
+        DB::purge($this->db);
         $this->artisan('migrate:fresh')->assertExitCode(0);
     }
 
     protected function tearDown(): void
     {
-        DB::disconnect('sqlite');
+        if (($this->db ?? 'sqlite') !== 'sqlite') {
+            // The contenders committed for real: leave the shared test database clean and migrated.
+            DB::purge($this->db);
+            $this->artisan('migrate:fresh')->assertExitCode(0);
+        }
+
+        DB::disconnect($this->db ?? 'sqlite');
 
         foreach (['', '-wal', '-shm'] as $suffix) {
             @unlink(($this->path ?? '/nonexistent').$suffix);
@@ -66,7 +82,7 @@ class AssignmentConcurrencyTest extends TestCase
      */
     private function race(array $contenders): array
     {
-        DB::disconnect('sqlite');
+        DB::disconnect($this->db);
         $start = microtime(true) + 0.25;
         $pids = [];
 
@@ -75,7 +91,7 @@ class AssignmentConcurrencyTest extends TestCase
             $this->assertNotSame(-1, $pid, 'fork failed');
 
             if ($pid === 0) {
-                DB::purge('sqlite');
+                DB::purge($this->db);
 
                 while (microtime(true) < $start) {
                     usleep(100);
@@ -104,7 +120,7 @@ class AssignmentConcurrencyTest extends TestCase
             unlink($file);
         }
 
-        DB::purge('sqlite');
+        DB::purge($this->db);
 
         return $results;
     }

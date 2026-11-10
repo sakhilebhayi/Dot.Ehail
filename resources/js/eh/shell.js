@@ -1,5 +1,6 @@
 // Dot.Ehail shell behaviour (ds, R-46): theme choice, side drawer, account menu, bottom sheet, tabs, dialogs,
 // toasts and service-worker registration. No dependencies; every feature is progressive (markup works without it).
+import { initInlineActions } from './inline-actions.js';
 import { initSheets } from './sheet.js';
 import { resolveTheme } from './theme.js';
 
@@ -162,7 +163,40 @@ function initServiceWorker() {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));
 }
 
+// Tables that scroll sideways on a phone (R-46 a11y, D-1706): a keyboard user must be able to reach and scroll them,
+// and a screen reader hears what the region is. Only wrappers that really overflow become Tab stops.
+const SCROLLERS = '.ops-tablewrap, .bz-tablewrap, .fl-table-wrap, .eh-legacy .table-scroll, [data-eh-scroll]';
+function scrollRegionName(wrap) {
+    const table = wrap.querySelector('table');
+    const named = table?.getAttribute('aria-label') || table?.querySelector('caption')?.textContent;
+    if (named) return named.trim();
+    const section = wrap.closest('section[aria-labelledby]');
+    const heading = section && doc.getElementById(section.getAttribute('aria-labelledby'));
+
+    return (heading?.textContent || 'Table').trim().replace(/\s+/g, ' ');
+}
+function initScrollRegions() {
+    const apply = () => doc.querySelectorAll(SCROLLERS).forEach((wrap) => {
+        const scrolls = wrap.scrollWidth > wrap.clientWidth + 1;
+        if (scrolls && !wrap.hasAttribute('tabindex')) {
+            wrap.tabIndex = 0;
+            wrap.setAttribute('role', 'region');
+            wrap.setAttribute('aria-label', `${scrollRegionName(wrap)} (scrolls sideways)`);
+            wrap.dataset.ehScrollRegion = '';
+        } else if (!scrolls && wrap.hasAttribute('data-eh-scroll-region')) {
+            wrap.removeAttribute('tabindex');
+            wrap.removeAttribute('role');
+            wrap.removeAttribute('aria-label');
+            delete wrap.dataset.ehScrollRegion;
+        }
+    });
+    apply();
+    let pending = 0;
+    window.addEventListener('resize', () => { cancelAnimationFrame(pending); pending = requestAnimationFrame(apply); });
+}
+
 window.ehToast = toast;
+initInlineActions();
 initTheme();
 initDrawer();
 initMenus();
@@ -170,4 +204,5 @@ initTabs();
 initDialogs();
 initSheets({ reducedMotion });
 initFlashes();
+initScrollRegions();
 initServiceWorker();

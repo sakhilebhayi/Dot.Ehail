@@ -6,8 +6,12 @@ use App\Domain\Dispatch\Contracts\DriverEarningsEstimator;
 use App\Domain\Dispatch\Contracts\DriverLocator;
 use App\Domain\Dispatch\Contracts\PickupEtaEstimator;
 use App\Domain\Dispatch\Data\DriverPosition;
+use App\Domain\Dispatch\Data\EtaEstimate;
 use App\Domain\Dispatch\Models\DriverAvailability;
 use App\Domain\Dispatch\Models\RideOffer;
+use App\Domain\Geo\Geometry\Haversine;
+use App\Domain\Geo\LatLng;
+use App\Domain\Perf\PollPolicy;
 use App\Domain\Rides\ScheduledRides;
 use App\Enums\RideStatus;
 use App\Models\DriverProfile;
@@ -16,6 +20,7 @@ use App\Models\RideRating;
 use App\Models\User;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Polling payloads (D-1): compact JSON with a monotonic version. A client
@@ -40,6 +45,7 @@ class RideFeed
         private readonly DriverLocator $locator,
         private readonly PickupEtaEstimator $eta,
         private readonly DriverEarningsEstimator $earnings,
+        private readonly PollPolicy $poll,
     ) {}
 
     /**
@@ -80,9 +86,9 @@ class RideFeed
     }
 
     /**
-     * @return array{version: int, body: array<string, mixed>|null}
+     * @return array{version: int, body: array<string, mixed>|null, poll: int}
      */
-    public function forDriver(User $driver, int $sinceVersion = 0): array
+    public function forDriver(User $driver, int $sinceVersion = 0, bool $saver = false): array
     {
         $availability = DriverAvailability::where('user_id', $driver->id)->first();
         $offer = RideOffer::where('pending_driver_id', $driver->id)->first();
@@ -95,18 +101,19 @@ class RideFeed
             (int) RideOffer::where('driver_id', $driver->id)->max('version'),
         );
 
+        // Adaptive polling (PollPolicy, docs/R46_PERF.md): from what can happen next for this driver.
+        $poll = $this->poll->forDriverState($availability?->state, $offer !== null, $ride !== null, $saver);
+
         // A caller without a version (0) always gets the full view, even for a driver with no history yet
-        // (version 0): the action endpoints answer with this body (QA: a "null + array" 500 otherwise).
+        // (version 0): the action endpoints answer with this body (QA: a "null + array" 500 otherwise, D-1609).
         if ($sinceVersion > 0 && $version <= $sinceVersion) {
-            return ['version' => $version, 'body' => null];
+            return ['version' => $version, 'body' => null, 'poll' => $poll];
         }
 
-        $online = $availability !== null && $availability->state !== DriverAvailability::OFFLINE;
-
-        return ['version' => $version, 'body' => [
+        return ['version' => $version, 'poll' => $poll, 'body' => [
             'version' => $version,
             'server_time' => now()->toIso8601String(),
-            'poll_after_s' => (int) config($online ? 'ehail_dispatch.poll.driver_online' : 'ehail_dispatch.poll.driver_offline'),
+            'poll_after_s' => $poll,
             'availability' => $availability === null ? ['state' => DriverAvailability::OFFLINE] : [
                 'state' => $availability->state,
                 'since' => $this->iso($availability->since),
@@ -122,7 +129,7 @@ class RideFeed
 
     public function passengerPollSeconds(RideStatus $status): int
     {
-        return (int) config($status->isActiveForPassenger() ? 'ehail_dispatch.poll.passenger_active' : 'ehail_dispatch.poll.passenger_idle');
+        return $this->poll->forPassenger($status);
     }
 
     /**
@@ -144,6 +151,7 @@ class RideFeed
             'pickup' => $this->place($ride->pickup_address, $ride->pickup_lat, $ride->pickup_lng),
             'dropoff' => $this->place($ride->dropoff_address, $ride->dropoff_lat, $ride->dropoff_lng),
             'category' => $ride->category_code ?? $ride->vehicle_type,
+            'category_name' => \App\Domain\Business\CategoryNames::for($ride->category_code ?? $ride->vehicle_type),
             'fare' => [
                 'quoted_total_minor' => $ride->quoted_total_minor,
                 'final_total_minor' => $ride->final_fare_minor,
@@ -200,11 +208,7 @@ class RideFeed
         $eta = null;
 
         if ($status !== RideStatus::DriverArrived && $target[0] !== null && $target[1] !== null) {
-            try {
-                $eta = $this->eta->estimate($position->lat, $position->lng, (float) $target[0], (float) $target[1]);
-            } catch (\Throwable) {
-                $eta = null;
-            }
+            $eta = $this->reusableEta($ride, $status === RideStatus::InProgress ? 'dropoff' : 'pickup', $position, (float) $target[0], (float) $target[1]);
         }
 
         $staleAfter = (int) config('ehail_dispatch.heartbeat_stale_seconds');
@@ -222,6 +226,38 @@ class RideFeed
             'eta_to' => $status === RideStatus::InProgress ? 'dropoff' : 'pickup',
             'eta_method' => $eta?->method,
         ];
+    }
+
+    /**
+     * The driver's ETA for the passenger feed. A moving driver changes position on every poll, and a road route per
+     * poll would cost a routing call every 3 s per live ride (paid providers bill each one; the route cache cannot
+     * help because the position keeps changing). So the last answer is kept per ride for eta_reuse_seconds and counted
+     * down by the time that passed; it is asked again sooner when the driver moved further than recompute_after_m
+     * from where it was computed (a detour) or the target changed (D-1503). Same label (road or straight line).
+     */
+    private function reusableEta(Ride $ride, string $to, DriverPosition $position, float $toLat, float $toLng): ?EtaEstimate
+    {
+        $key = 'ehail:feed-eta:'.$ride->id.':'.$to;
+        $reuse = (int) config('ehail_perf.eta_reuse_seconds', 30);
+        $cached = $reuse > 0 ? Cache::get($key) : null;
+        $now = now()->getTimestamp();
+
+        if (is_array($cached) && $now - $cached['at'] < $reuse
+            && Haversine::metres(new LatLng($cached['lat'], $cached['lng']), new LatLng($position->lat, $position->lng)) < (int) config('ehail_perf.eta_recompute_after_m', 400)) {
+            return new EtaEstimate(max(0, $cached['seconds'] - ($now - $cached['at'])), $cached['distance'], $cached['method']);
+        }
+
+        try {
+            $eta = $this->eta->estimate($position->lat, $position->lng, $toLat, $toLng);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($reuse > 0) {
+            Cache::put($key, ['seconds' => $eta->seconds, 'distance' => $eta->distanceM, 'method' => $eta->method, 'lat' => $position->lat, 'lng' => $position->lng, 'at' => $now], $reuse);
+        }
+
+        return $eta;
     }
 
     /**
@@ -248,6 +284,7 @@ class RideFeed
             'fare_total_minor' => $ride->quoted_total_minor,
             'currency' => $ride->currency,
             'category' => $ride->category_code ?? $ride->vehicle_type,
+            'category_name' => \App\Domain\Business\CategoryNames::for($ride->category_code ?? $ride->vehicle_type),
             'payment_method' => $ride->payment_method_kind,
             'passenger' => $this->passengerSummary($ride),
         ];

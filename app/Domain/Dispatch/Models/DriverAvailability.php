@@ -52,7 +52,14 @@ class DriverAvailability extends Model
                 return;
             }
 
-            $row->version = FeedVersion::next((int) $row->version);
+            // The driver's own feed changes only with state, vehicle or ride. A heartbeat or a new position (every
+            // few seconds) moves location_version, which the passenger feed follows, and leaves version alone, so an
+            // idle driver's poll answers 304 instead of resending the same feed (docs/R46_PERF.md, D-1504).
+            $presenceOnly = ['last_heartbeat_at', 'last_lat', 'last_lng', 'heading', 'last_location_at', 'updated_at'];
+
+            if (! $row->exists || array_diff(array_keys($row->getDirty()), $presenceOnly) !== []) {
+                $row->version = FeedVersion::next((int) $row->version);
+            }
 
             if ($row->isDirty('last_location_at') || $row->isDirty('last_lat') || $row->isDirty('last_lng')) {
                 $row->location_version = FeedVersion::next((int) $row->location_version);

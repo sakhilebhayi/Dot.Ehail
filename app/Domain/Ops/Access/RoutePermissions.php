@@ -20,6 +20,7 @@ final class RoutePermissions
         'ops.home' => ['*'],
         // Comms (R-46 comms): every operator reads their own inbox and settings.
         'ops.notifications' => ['*'],
+        'ops.status' => ['*'],
         'ops.notifications.*' => ['*'],
         'ops.live' => [P::LIVE_VIEW],
         'ops.live.feed' => [P::LIVE_VIEW],

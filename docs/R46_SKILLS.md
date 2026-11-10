@@ -72,3 +72,26 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 
 ## qa2 (wave 3, 2026-11-10)
 - `impeccable` (context loaded with `--target resources/views/money/receipt.blade.php`): finish check of the three small UI fixes QA made. The receipt's "Why the fare differs from the quote" section uses the receipt's own tokens (ink-2 text, ink heading, the same minus sign as the promotion line, no dashes in copy); the passenger "Last position N s ago" indicator is the existing component, only its timing changed; the ops table wrapper gained `position: relative` (layout containment, nothing visible). No other design skill was needed: no new surface was built.
+
+## security agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `security-audit` | invoked | the whole review | Guidance mode (D-1400): the boundary-and-result evidence bar for every finding, severity anchors, smallest source fix; three focused read-only hunters; mutation check that the router-wide test catches a removed policy check. Full-audit mode not run (it forbids fixing and writes outside the repo). |
+| `impeccable` | invoked | one "Download my data" row on the driver account page | `impeccable context` loaded PRODUCT.md and DESIGN.md; craft floor read; existing `<x-eh.list-row>` and the kit's `download` icon reused, same copy as the passenger row; checked at 375 px in the browser (passenger page) and by a feature test (driver page). No new styles. |
+| others | not used | | No new surface or visual change: the CSP work moved inline handlers to data attributes with identical behaviour; the hover tint on legacy ride rows moved from inline handlers to a two-line `.eh-row-link` hover rule in app.css (same colour). |
+
+## a11y agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | accessibility and mobile pass (Operate mode, refinement of the locked Route Line world) | `impeccable context` loaded PRODUCT.md and DESIGN.md; read `reference/audit.md` (the five dimensions and P0 to P3 severity used in R46_A11Y.md) and `reference/adapt.md` (thumb zones, 44 px targets, landscape, 320 px, text scaling, "say what produced the evidence": every check names its engine, emulated viewport and touch emulation, and what stayed untested). Refinement rules held: identity, copy and behaviour kept except where a check failed. `impeccable detect` on every changed stylesheet and view: 11 advisories, 10 pre-existing (radii 2 to 4 px, off-ramp sizes in ds and business files not touched here), 1 mine (zoom button size) fixed to a type token. craft-floor not re-read: no new surface, only fixes inside existing components. |
+| `design-taste-frontend` | invoked | app-screen rules as a review lens | Read `references/app-screens.md` (the phone section and the house rules for app screens). Applied to the fixes: no new ornaments (no shadows, no gradients, no tinted icon squares) in any fix; colour only on status and action (the sunlight colours are darker steps of existing tokens); the phone keeps folded navigation (bottom tabs) and one row of controls. No draw: the system is locked. `inspect.mjs` not run (signed-in pages); its overflow, h1 and contrast measures are covered by the sweep (axe in real Chrome at 390, 768, 1440, light and night) and the mobile script (320 to 430 px, landscape, 200% text). |
+| `dataviz` | not used | | No chart was changed. |
+| `gsap-*`, `hallmark`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `open-design`, `design-md`, `awesome-design-md` | not used | | Not a new world or a motion task. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Dangling symlinks into `~/.agents/skills/` (checked: the targets do not exist); not claimed. |
+## Perf (wave 3, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| all design skills | not used | | No UI was built or restyled: the driver console's polling loop changed behind the same screens (one sync request instead of three; same states, alerts and wording), and the ops status work is a JSON data source only (no panel). Nothing visual to put through impeccable or the taste checks. |

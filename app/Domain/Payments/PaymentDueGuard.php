@@ -29,7 +29,12 @@ class PaymentDueGuard
                     $q->where('payment_status', PaymentStatus::Failed->value)
                         ->whereNotExists(fn ($s) => $s->from('ride_payments')->whereColumn('ride_payments.ride_id', 'rides.id')
                             ->where('purpose', Payment::PURPOSE_RIDE_FARE)->where('status', Payment::FAILED)->whereNotNull('next_retry_at'));
-                })->orWhere(fn ($q) => $q->where('payment_status', PaymentStatus::Unpaid->value)->where('completed_at', '<=', $grace));
+                })->orWhere(fn ($q) => $q->where('payment_status', PaymentStatus::Unpaid->value)->where('completed_at', '<=', $grace))
+                    // "Pending" only counts as settling while the server has a charge in flight. An opened checkout
+                    // the passenger walked away from also says pending; it must not clear the block (R-46 security S-11).
+                    ->orWhere(fn ($q) => $q->where('payment_status', PaymentStatus::Pending->value)->where('completed_at', '<=', $grace)
+                        ->whereNotExists(fn ($s) => $s->from('ride_payments')->whereColumn('ride_payments.ride_id', 'rides.id')
+                            ->where('purpose', Payment::PURPOSE_RIDE_FARE)->whereIn('status', [Payment::PENDING, Payment::AWAITING_CASH])));
             })
             ->get(['id', 'final_fare'])
             ->map(fn (Ride $r) => ['ride_id' => $r->id, 'amount_minor' => Money::decimalToMinor($r->final_fare ?? 0), 'currency' => Money::currency(), 'kind' => 'fare']);
