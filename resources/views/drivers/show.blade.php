@@ -72,7 +72,7 @@
                     {{ ucfirst(str_replace('_', ' ', $document->type)) }} — {{ $document->original_filename }}
                 </a>
                 @if(auth()->id() === $driverProfile->user_id)
-                <form method="POST" action="{{ route('drivers.documents.destroy', $document) }}" onsubmit="return confirm('Delete this document?');">
+                <form method="POST" action="{{ route('drivers.documents.destroy', $document) }}" data-eh-confirm="Delete this document?">
                     @csrf @method('DELETE')
                     <button type="submit" style="background:none;border:none;color:#f87171;font-size:11px;cursor:pointer;">Delete</button>
                 </form>
@@ -145,7 +145,7 @@
             <table style="width:100%;border-collapse:collapse;">
                 <tbody>
                     @foreach($rides as $ride)
-                    <tr tabindex="0" onclick="window.location='{{ route('rides.show', $ride) }}'" onkeydown="if(event.key==='Enter'){window.location='{{ route('rides.show', $ride) }}'}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);">
+                    <tr tabindex="0" data-eh-href="{{ route('rides.show', $ride) }}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);">
                         <td style="padding:0.85rem 1.5rem;font-size:0.75rem;color:#71717a;">#{{ $ride->id }}</td>
                         <td style="padding:0.85rem 1rem;font-size:0.75rem;color:#f4f4f5;">{{ $rideAddresses ? $ride->pickup_address.' → '.$ride->dropoff_address : 'Trip' }}</td>
                         <td style="padding:0.85rem 1rem;font-size:0.72rem;color:#38bdf8;">{{ ucfirst(str_replace('_', ' ', $ride->status)) }}</td>

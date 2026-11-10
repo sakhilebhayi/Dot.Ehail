@@ -172,8 +172,9 @@
             Questions about this trip?
             @if(!empty($s['support_url']))<a href="{{ $s['support_url'] }}">Contact support</a>@elseif(!empty($s['support_email']))<a href="mailto:{{ $s['support_email'] }}">{{ $s['support_email'] }}</a>@else Reply to the receipt email.@endif
         </span>
-        <button type="button" class="print no-print" onclick="window.print()">Print or save as PDF</button>
+        <button type="button" class="print no-print" data-eh-print>Print or save as PDF</button>
     </footer>
 </main>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-eh-print]');if(b){e.preventDefault();window.print();}});</script>
 </body>
 </html>

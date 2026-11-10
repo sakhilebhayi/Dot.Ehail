@@ -54,7 +54,7 @@
                 </thead>
                 <tbody>
                     @foreach($rides as $ride)
-                    <tr onclick="window.location='{{ route('rides.show', $ride) }}'" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                    <tr tabindex="0" class="eh-row-link" data-eh-href="{{ route('rides.show', $ride) }}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;">
                         <td style="padding:0.85rem 1.5rem;font-size:0.75rem;font-weight:600;color:#71717a;font-family:'Syne',sans-serif;">#{{ $ride->id }}</td>
                         <td style="padding:0.85rem 1rem;max-width:260px;">
                             <div style="font-size:0.75rem;color:#f4f4f5;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $ride->pickup_address }}</div>

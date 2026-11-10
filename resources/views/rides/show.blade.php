@@ -206,7 +206,7 @@
         @endif
 
         @can('waive', $ride)
-        <form method="POST" action="{{ route('operator.rides.waive', $ride) }}" style="display:flex;flex-direction:column;gap:0.6rem;max-width:460px;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.06);" onsubmit="return confirm('Waive this fare? The passenger will owe nothing.');">
+        <form method="POST" action="{{ route('operator.rides.waive', $ride) }}" style="display:flex;flex-direction:column;gap:0.6rem;max-width:460px;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.06);" data-eh-confirm="Waive this fare? The passenger will owe nothing.">
             @csrf
             <div style="font-size:0.8rem;font-weight:600;color:#d4d4d8;">Waive this fare (operators)</div>
             <div>
@@ -233,7 +233,7 @@
         @else
         <p style="font-size:0.75rem;color:#71717a;margin:0 0 1rem;">{{ $ride->driver_id ? 'Your driver is told straight away.' : 'Nobody has accepted yet.' }}</p>
         @endif
-        <form method="POST" action="{{ route('rides.cancel', $ride) }}" style="display:flex;flex-direction:column;gap:0.75rem;max-width:460px;" onsubmit="return confirm('Are you sure?');">
+        <form method="POST" action="{{ route('rides.cancel', $ride) }}" style="display:flex;flex-direction:column;gap:0.75rem;max-width:460px;" data-eh-confirm="Are you sure?">
             @csrf
             <div>
                 <label for="cancel-reason" style="display:block;font-size:0.75rem;color:#a1a1aa;margin-bottom:0.25rem;">Reason</label>
@@ -319,7 +319,7 @@
     from this same page simply never receives anything, so no extra
     server-side check is needed in the script below.
 --}}
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     (function () {
         if (! window.Echo) {
             return; // No Reverb credentials configured -- nothing to subscribe to.

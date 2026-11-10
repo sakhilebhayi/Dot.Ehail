@@ -22,5 +22,5 @@
         @endif
         @isset($actions)<div class="eh-banner__actions">{{ $actions }}</div>@endisset
     </div>
-    @if ($dismissible)<x-eh.icon-button icon="close" label="Dismiss" onclick="this.closest('.eh-banner').remove()" />@endif
+    @if ($dismissible)<x-eh.icon-button icon="close" label="Dismiss" data-eh-dismiss=".eh-banner" />@endif
 </div>

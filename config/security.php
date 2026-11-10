@@ -8,8 +8,8 @@ return [
     'hsts_seconds' => (int) env('SECURITY_HSTS_SECONDS', 15552000),
 
     /*
-    | The Content-Security-Policy is REPORT-ONLY: the browser reports what it would have blocked to /csp-report and blocks nothing.
-    | Set SECURITY_CSP_REPORT_ONLY=false to enforce the same policy without a deploy, once the reports have been reviewed.
+    | The Content-Security-Policy is ENFORCED (nonce-based, R-46 security S-29; a render sweep of every page in a real browser
+    | showed no violation). SECURITY_CSP_REPORT_ONLY=true turns the same policy back into report-only without a deploy.
     */
-    'csp_report_only' => (bool) env('SECURITY_CSP_REPORT_ONLY', true),
+    'csp_report_only' => (bool) env('SECURITY_CSP_REPORT_ONLY', false),
 ];

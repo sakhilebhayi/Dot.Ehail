@@ -29,7 +29,7 @@ class PassengerPagesJourneyTest extends TestCase
         $booking = $this->actingAs($passenger)->get(route('ride.home'))->assertOk()
             ->assertSee('Where to?')->assertSee('data-geo-config', false)->assertSee('Use my location');
         $this->assertSame('camera=(), microphone=(), geolocation=(self), payment=(), usb=()', $booking->headers->get('Permissions-Policy'));
-        $this->assertStringContainsString('img-src \'self\' data: blob: https://tile.openstreetmap.org', $booking->headers->get('Content-Security-Policy-Report-Only'));
+        $this->assertStringContainsString('img-src \'self\' data: blob: https://tile.openstreetmap.org', $booking->headers->get('Content-Security-Policy'));
 
         // Card saved through the money flow returns to the passenger account page.
         $this->actingAs($passenger)->postJson(route('money.cards.start'))->assertCreated();
