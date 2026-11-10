@@ -18,7 +18,7 @@
                 <h1>{{ $incident->kind->label() }} {{ $incident->reference }} @include('ops.partials.incident-badges')</h1>
                 <p class="ops-head__finding" @if($finding[1]) data-tone="{{ $finding[1] }}" @endif>{{ $finding[0] }}</p>
             </div>
-            @if ($canAct && $st === 'open')
+            @if ($canAct && in_array($st, ['open', 'escalated'], true)) {{-- escalated still needs an owner --}}
                 <form class="ops-head__actions" data-ops-action method="post" action="{{ route('safety.ops.incidents.acknowledge', $incident->id) }}" data-ops-done="Acknowledged. You own this incident.">
                     <x-eh.button type="submit" icon="check">Acknowledge and own</x-eh.button>
                 </form>
