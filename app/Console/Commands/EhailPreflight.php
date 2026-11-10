@@ -394,7 +394,8 @@ class EhailPreflight extends Command
                 $production ? self::WARN : self::INFO,
                 'Database',
                 'Driver',
-                'sqlite: one file, one writer at a time. Every driver posts a location every 4 s and every screen polls; PostgreSQL is the database this platform is built and load-tested for. '.($tuned ? "Tuned ({$settings})." : "Not tuned for concurrent writers ({$settings}); dispatch recommends IMMEDIATE, 10000, wal (docs/R46_DISPATCH.md)."),
+                'sqlite: one file, one writer at a time. Every driver posts a location every 4 s and every screen polls; PostgreSQL is the database this platform is built and load-tested for. '.($tuned ? "Tuned ({$settings})." : "Not tuned for concurrent writers ({$settings}); dispatch recommends IMMEDIATE, 10000, wal (docs/R46_DISPATCH.md).")
+                .(config('cache.default') === 'database' ? ' The cache (rate limiters, locks) also writes to this file on most requests: CACHE_STORE=file takes that load off it (D-818).' : ''),
             );
         } elseif ($driver === 'mysql' || $driver === 'mariadb') {
             $this->add($production ? self::WARN : self::INFO, 'Database', 'Driver', "{$driver}: the suites run on SQLite and PostgreSQL only; partial unique indexes (one active vehicle, one active ride) are not enforced by MySQL.");
