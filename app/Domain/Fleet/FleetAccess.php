@@ -31,9 +31,6 @@ final class FleetAccess
 
     public const SESSION_KEY = 'fleet.current';
 
-    /** @var array<string, ?FleetMember> */
-    private array $memberships = [];
-
     /**
      * Fleets this person works on (owner or active member), by name.
      *
@@ -54,15 +51,13 @@ final class FleetAccess
         return (int) $fleet->owner_user_id === (int) $user->id;
     }
 
+    /**
+     * Not memoised: controllers are kept between requests in long-running workers and tests, and a revoked
+     * manager must lose access on the very next request.
+     */
     public function membership(User $user, Fleet $fleet): ?FleetMember
     {
-        $key = $user->id.':'.$fleet->id;
-
-        if (! array_key_exists($key, $this->memberships)) {
-            $this->memberships[$key] = FleetMember::query()->active()->where('fleet_id', $fleet->id)->where('user_id', $user->id)->first();
-        }
-
-        return $this->memberships[$key];
+        return FleetMember::query()->active()->where('fleet_id', $fleet->id)->where('user_id', $user->id)->first();
     }
 
     public function isMember(User $user, Fleet $fleet): bool
