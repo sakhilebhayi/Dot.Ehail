@@ -36,6 +36,7 @@ export function setSnap(sheet, snap) {
 /** Shows one [data-step] section, hides the others, and moves focus to its heading. */
 export function showStep(sheet, name, { focus = true } = {}) {
     let target = null;
+    sheet.dataset.paxStep = name;
     sheet.querySelectorAll('[data-step]').forEach((section) => {
         const on = section.dataset.step === name;
         section.hidden = !on;

@@ -80,8 +80,12 @@ class PublicPagesTest extends TestCase
         $text = preg_replace('/\s+/', ' ', $xpath->query('//body')->item(0)->textContent);
         $this->assertStringNotContainsString("\u{2014}", $text, 'no em dashes');
         $this->assertStringNotContainsString("\u{2013}", $text, 'no en dashes');
-        // Every photograph is credited.
-        $this->assertGreaterThanOrEqual(5, $xpath->query('//img[@alt!=""]')->length);
+        // Every photograph is credited, and no photograph is shown twice (jury item 13, D-2010).
+        $photos = array_map(fn ($img) => $img->getAttribute('src'), iterator_to_array($xpath->query('//img[@alt!=""]')));
+        $this->assertGreaterThanOrEqual(4, count($photos));
+        $this->assertSame($photos, array_values(array_unique($photos)), 'a photograph appears twice');
+        $this->assertSame(0, $xpath->query('//*[@data-lp-crossfade]')->length, 'the hero no longer cycles through photographs used further down');
+        $response->assertDontSee('minibus');
         $response->assertSee('CC BY-SA 4.0')->assertSee('CC0');
     }
 

@@ -26,8 +26,10 @@ class TrustSignals
     {
         $min = (int) config('ehail_safety.ratings.min_count_for_band', 5);
 
+        // No counted rating: "New on Dot.Ehail" (D-1907). A driver with a few ratings is not new: say how far they
+        // are from a band instead (jury item 15, D-2008). The band stays "new" for both until the minimum is counted.
         if ($count < $min || $average === null) {
-            return ['band' => 'new', 'label' => 'New on Dot.Ehail', 'count' => $count];
+            return ['band' => 'new', 'label' => $count === 0 ? 'New on Dot.Ehail' : 'Fewer than '.$min.' ratings so far', 'count' => $count];
         }
 
         [$band, $label] = match (true) {

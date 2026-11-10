@@ -5,7 +5,7 @@ import { createPlaceSearch, loadGeoConfig, locateOnce } from '../geo/index.js';
 import { announce, api, island } from './api.js';
 import { el, icon } from './dom.js';
 import { formatMinor, parseAmountToMinor } from './money.js';
-import { bindShare, bindSos } from './safety.js';
+import { bindShare, bindSos, whatsappUrl } from './safety.js';
 import { formatLocal } from '../eh/time.js';
 
 const page = document.querySelector('[data-pax-page]')?.dataset.paxPage;
@@ -139,6 +139,28 @@ function incidentPage() {
             out.textContent = error.message;
             busy(button, false);
         }
+    });
+    // "Also message someone yourself": with a ride still on, the tap first makes a trip link and adds it to the words.
+    const wa = document.querySelector('[data-pax-wa]');
+    let waLink = null;
+    wa?.addEventListener('click', async (event) => {
+        if (!wa.dataset.sharesUrl || waLink) return;
+        event.preventDefault();
+        const text = document.querySelector('[data-pax-wa-text]')?.textContent.trim() || '';
+        const tab = window.open('', '_blank');
+        if (tab) tab.opener = null;
+        busy(wa, true);
+        try {
+            const { data: made } = await api(wa.dataset.sharesUrl, { method: 'POST', body: {} });
+            waLink = whatsappUrl(made.url, `${text} Follow my trip live`);
+        } catch {
+            waLink = whatsappUrl(null, text);
+        } finally {
+            busy(wa, false);
+        }
+        wa.href = waLink;
+        if (tab) tab.location.href = waLink;
+        else window.location.assign(waLink);
     });
     document.querySelector('[data-pax-incident-location]')?.addEventListener('click', async (event) => {
         const button = event.currentTarget;

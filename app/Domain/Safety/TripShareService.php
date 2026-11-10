@@ -3,6 +3,7 @@
 namespace App\Domain\Safety;
 
 use App\Domain\Geo\Locations\RideTracking;
+use App\Domain\Passenger\PlaceLabel;
 use App\Domain\Safety\Mail\TripShareMail;
 use App\Domain\Safety\Models\TripShare;
 use App\Domain\Safety\Models\TrustedContact;
@@ -10,6 +11,7 @@ use App\Domain\Safety\Seams\TripProgressSource;
 use App\Models\Ride;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Support\Ui\LocalTime;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
@@ -125,7 +127,9 @@ class TripShareService
     }
 
     /**
-     * What the public page may show. Nothing here identifies a person beyond a first name.
+     * What the public page may show. Nothing here identifies a person beyond a first name, and nothing names a
+     * street or a building: the two ends of the trip are given as areas only (D-2011). Times come ready to read,
+     * in the service's own time zone, so the page never formats a time itself.
      *
      * @return array<string, mixed>
      */
@@ -136,13 +140,21 @@ class TripShareService
         // Position only while the ride holds its driver (S-05): a ride flagged needs_review has released the driver.
         $progress = RideSafety::isTerminal($ride) || ! RideTracking::isTracking($ride) ? ['state' => (string) $ride->status, 'driver_position' => null, 'position_at' => null, 'eta_seconds' => null, 'eta_source' => null] : $this->progress->progress($ride);
         $decimals = (int) config('ehail_safety.trip_share.position_decimals', 3);
+        $state = (string) $progress['state'];
+        $etaTo = $progress['eta_seconds'] === null ? null : ($state === 'in_progress' ? 'dropoff' : 'pickup');
+        $sharedBy = (int) $share->created_by === (int) $ride->driver_id && (int) $share->created_by !== (int) $ride->passenger_id ? 'driver' : 'passenger';
+        $expires = $this->effectiveExpiry($share);
 
         return [
-            'state' => $progress['state'],
-            'state_label' => $this->stateLabel((string) $progress['state']),
+            'state' => $state,
+            'state_label' => $this->stateLabel($state),
             'ended' => RideSafety::isTerminal($ride),
             'passenger_first_name' => RideSafety::firstName($ride->passenger?->name, 'The passenger'),
             'driver_first_name' => $ride->driver_id ? RideSafety::firstName($ride->driver?->name, 'The driver') : null,
+            'sharer_first_name' => RideSafety::firstName($share->creator?->name, $sharedBy === 'driver' ? 'The driver' : 'The passenger'),
+            'shared_by' => $sharedBy,
+            'from_area' => PlaceLabel::area($ride->pickup_address) ?: null,
+            'to_area' => PlaceLabel::area($ride->dropoff_address) ?: null,
             'vehicle' => $vehicle ? [
                 'description' => trim("{$vehicle->color} {$vehicle->make} {$vehicle->model}"),
                 'registration' => $vehicle->plate_number,
@@ -151,11 +163,48 @@ class TripShareService
                 'lat' => round($progress['driver_position']['lat'], $decimals),
                 'lng' => round($progress['driver_position']['lng'], $decimals),
                 'at' => $progress['position_at'],
+                'time' => $progress['position_at'] ? $this->local($progress['position_at'], 'H:i:s') : null,
             ] : null,
             'eta_seconds' => $progress['eta_seconds'],
-            'expires_at' => $this->effectiveExpiry($share)->toIso8601String(),
+            'eta_to' => $etaTo,
+            'eta_text' => $etaTo === null ? null : sprintf('About %d min to %s', max(1, (int) round($progress['eta_seconds'] / 60)), $etaTo === 'dropoff' ? 'drop-off' : 'pickup'),
+            'route_key' => TripShareRoute::key($ride),
+            'expires_at' => $expires->toIso8601String(),
+            'expires_time' => $this->local($expires, 'H:i, j M'),
             'checked_at' => now()->toIso8601String(),
+            'checked_time' => $this->local(now(), 'H:i:s'),
+            'time_zone' => LocalTime::label(),
         ];
+    }
+
+    /**
+     * What the page's map needs, sent once with the page and never in the poll: the tile source and the planned
+     * road line with both ends cut off. No pickup or drop-off point.
+     *
+     * @return array{config: array<string, mixed>, route: ?string}
+     */
+    public function publicMap(TripShare $share): array
+    {
+        return [
+            'config' => [
+                'tiles' => [
+                    'url' => (string) config('ehail-geo.tiles.url'),
+                    'attribution' => (string) config('ehail-geo.tiles.attribution'),
+                    'maxZoom' => (int) config('ehail-geo.tiles.max_zoom'),
+                    'tileSize' => (int) config('ehail-geo.tiles.tile_size'),
+                    'reportIssueUrl' => config('ehail-geo.tiles.kind') === 'osm' ? 'https://www.openstreetmap.org/fixthemap' : null,
+                ],
+                'defaultCenter' => ['lat' => -26.2041, 'lng' => 28.0473],
+                'defaultZoom' => 11,
+            ],
+            'route' => RideSafety::isTerminal($share->ride) ? null : TripShareRoute::trimmed($share->ride),
+        ];
+    }
+
+    /** A moment in the service's display time zone (South African Standard Time unless the market says otherwise). */
+    private function local(\DateTimeInterface|string $at, string $format): string
+    {
+        return (string) LocalTime::format($at, $format);
     }
 
     private function stateLabel(string $state): string

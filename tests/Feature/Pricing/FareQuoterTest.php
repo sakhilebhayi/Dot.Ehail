@@ -209,6 +209,33 @@ class FareQuoterTest extends TestCase
         $this->assertSame(2, FareQuote::count());
     }
 
+    public function test_compare_only_offers_categories_that_fit_the_trip(): void
+    {
+        // D-2003: an airport transfer needs an airport zone at one end, long distance a long route.
+        foreach (['economy', 'airport', 'long_distance'] as $key) {
+            $this->publishedRuleSet(['ride_category_id' => $this->category($key)->id]);
+        }
+        $this->fakeRoute(8_000, 900);
+
+        $short = $this->quoter()->compare(new QuoteRequest($this->capeTown(), $this->seaPoint()));
+
+        $this->assertSame(['economy'], array_map(fn ($o) => $o->category->key, $short->options));
+        $this->assertEqualsCanonicalizing(['airport', 'long_distance'], array_map(fn ($u) => $u->categoryKey, $short->hidden));
+        $this->assertSame('not_for_this_trip', $short->hidden[0]->reason);
+        $this->assertNotContains('airport', array_map(fn ($u) => $u->categoryKey, $short->unavailable), 'a hidden category is not an explained refusal');
+        $this->assertCount(2, $short->toArray()['hidden']);
+
+        $zones = (new FakeZoneLookup)->addArea(new ServiceAreaRef(1, 'cpt', 'ZA', 'ZAR', 'Africa/Johannesburg'), $this->capeTown(), 500_000);
+        $zones->addZone(new ZoneRef(5, 'cpt-airport', 'airport', 'airport'), $this->seaPoint(), 200);
+        $this->useZones($zones);
+        $this->fakeRoute(55_000, 3_000);
+
+        $long = $this->quoter()->compare(new QuoteRequest($this->capeTown(), $this->seaPoint()));
+
+        $this->assertEqualsCanonicalizing(['economy', 'airport', 'long_distance'], array_map(fn ($o) => $o->category->key, $long->options));
+        $this->assertSame([], $long->hidden);
+    }
+
     public function test_compare_reports_routing_unavailable_once(): void
     {
         $this->publishedRuleSet();

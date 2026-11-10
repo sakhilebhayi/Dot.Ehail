@@ -16,6 +16,8 @@ export default defineConfig({
                 'resources/js/passenger/trip.js',
                 'resources/js/passenger/pages.js',
                 'resources/js/passenger/fares.js',
+                'resources/css/share.css',
+                'resources/js/share/trip-share.js',
                 'resources/css/driver.css',
                 'resources/js/driver/drive.js',
                 'resources/js/driver/pages.js',

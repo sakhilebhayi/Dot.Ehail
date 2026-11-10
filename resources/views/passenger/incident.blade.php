@@ -12,7 +12,7 @@
     <x-slot:header>
         <div class="eh-pagehead__text">
             <h1 class="eh-h1" tabindex="-1" data-pax-focus>{{ $incident->kind->value === 'sos' ? 'SOS sent' : $whatWeDid['incident']['kind_label'] }}</h1>
-            <p class="eh-muted" style="margin:0">Reference {{ $whatWeDid['incident']['reference'] }}, {{ $incident->created_at->timezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y, H:i') }}</p>
+            <p class="eh-muted" style="margin:0">Reference {{ $whatWeDid['incident']['reference'] }}, {{ \App\Support\Ui\LocalTime::format($incident->created_at) }} {{ \App\Support\Ui\LocalTime::label() }}</p>
         </div>
     </x-slot:header>
 
@@ -38,6 +38,15 @@
                 @endforeach
             </ul>
             <p class="pax-lead" style="margin-top: var(--eh-space-3)">{{ $whatWeDid['incident']['acknowledged'] ? 'Our operations team has seen this.' : 'Our operations team has not acknowledged this yet. If nobody does within minutes, it escalates automatically.' }}</p>
+        </section>
+
+        <section aria-labelledby="inc-wa" class="pax-wa">
+            <h2 id="inc-wa">Also message someone yourself</h2>
+            <p class="pax-lead" style="margin:0">WhatsApp opens with this message ready; you choose who gets it and press send.@if($whatsapp['ride_active']) The message also carries a live link to your trip.@endif</p>
+            <blockquote class="pax-wa__text" data-pax-wa-text>{{ $whatsapp['text'] }}</blockquote>
+            <div class="pax-actions pax-actions--row" style="margin-top:0">
+                <a class="eh-btn eh-btn--primary eh-btn--md" href="https://wa.me/?text={{ rawurlencode($whatsapp['text']) }}" target="_blank" rel="noopener noreferrer" data-pax-wa @if($whatsapp['ride_active'] && $incident->ride_id) data-shares-url="{{ route('safety.rides.shares.store', $incident->ride_id) }}" @endif><x-eh.icon name="chat" /><span class="eh-btn__label">Message on WhatsApp</span></a>
+            </div>
         </section>
 
         <section aria-labelledby="inc-not">

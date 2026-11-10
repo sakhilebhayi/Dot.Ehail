@@ -253,7 +253,7 @@ class IncidentService
 
         $why = [
             'no_confirmed_contacts' => 'You have no confirmed trusted contacts.',
-            'sms_not_configured' => 'No SMS provider is set up.',
+            'sms_not_configured' => 'SMS alerts are off: the operator has not set up an SMS provider.',
             'no_recipients_configured' => 'Nobody is configured for this escalation level.',
             'no_operators' => 'No operations accounts exist.',
             'delivery_not_visible_to_ehail' => 'Handed to Dot.Notify; Dot.Ehail cannot see whether the email arrived.',

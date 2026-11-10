@@ -13,10 +13,12 @@
 .comms-bell { position: relative; }
 .comms-bell[aria-current="page"] { background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); }
 .comms-bell__count {
-    position: absolute; top: 4px; right: 2px; min-width: 20px; height: 20px; padding: 0 5px;
+    /* Off the bell's shoulder, not over it (jury item 13): the badge sits on the top-right corner of the 24 px glyph
+       with only its rim touching the stroke, a ground-coloured ring keeps the two apart. */
+    position: absolute; top: 3px; left: calc(50% + 5px); min-width: 18px; height: 18px; padding: 0 4px;
     display: grid; place-items: center; border-radius: var(--eh-radius-pill);
-    background: var(--eh-signal); color: var(--eh-signal-ink); outline: 2px solid var(--eh-ground);
-    font-size: var(--eh-text-xs); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
+    background: var(--eh-signal); color: var(--eh-signal-ink); box-shadow: 0 0 0 2px var(--eh-ground); /* taste-skill-ignore: the ring that separates the badge from the bell */
+    font-size: 0.6875rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; pointer-events: none;
 }
 
 /* Inbox: days, then the line */

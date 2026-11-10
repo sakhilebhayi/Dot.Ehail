@@ -16,10 +16,7 @@
                 <label class="eh-field__label" for="case-amount">What do you think the fare should have been? <span class="eh-field__optional">optional</span></label>
                 <input class="eh-input" id="case-amount" name="requested_amount" inputmode="decimal" placeholder="R 0.00">
             </div>
-            <div class="eh-field">
-                <label class="eh-field__label" for="case-file">Photo or document <span class="eh-field__optional">optional</span></label>
-                <input id="case-file" name="attachment" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
-            </div>
+            <x-eh.file id="case-file" name="attachment" label="Photo or document" :optional="true" accept="image/jpeg,image/png,image/webp,application/pdf" hint="A photo (JPEG, PNG or WebP) or a PDF." />
             <p class="pax-field__status" data-kind="error" data-pax-case-status role="alert"></p>
             <div class="pax-actions pax-actions--row">
                 <x-eh.button type="submit">Open case</x-eh.button>

@@ -34,6 +34,16 @@ return [
         'retain_unconsumed_hours' => (int) env('EHAIL_QUOTE_RETAIN_HOURS', 24),
     ],
 
+    // Which categories a comparison offers for a trip (R-46 ppass, D-2003). A category listed here is left out of
+    // the passenger's list when the trip does not fit it, with the reason in the payload's "hidden" list:
+    //  - zone_kinds: offered only when the pickup or drop-off is inside a geo zone of one of these kinds;
+    //  - min_distance_m: offered only when the road distance is at least this long.
+    // Categories not listed are always offered (subject to tariff and supply, as before).
+    'relevance' => [
+        'airport' => ['zone_kinds' => ['airport']],
+        'long_distance' => ['min_distance_m' => (int) env('EHAIL_LONG_DISTANCE_MIN_KM', 40) * 1000],
+    ],
+
     // Per-minute request budgets (limiters are defined in EhailPricingServiceProvider::boot()).
     'rate_limits' => [
         'public_estimate_per_minute' => (int) env('EHAIL_ESTIMATE_PER_MINUTE', 20),

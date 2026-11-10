@@ -10,6 +10,8 @@ import { wallTimeToIso } from '../eh/time.js';
 import { businessReasons, categoryIcon, defaultPayment, etaText, laterBounds, laterError, paymentOptions, requestLabel, unavailableText } from './labels.js';
 import { formatMinor } from './money.js';
 import { el, icon, setSnap, showStep, watchConnection } from './dom.js';
+import { shortPlace } from './places.js';
+import { bindWhen, whenLabel } from '../eh/datetime.js';
 
 const data = island('pax-booking-data') || {};
 const stage = document.querySelector('[data-pax-booking]');
@@ -36,6 +38,8 @@ const state = {
     submitting: false,
     pinPoint: null,
     places: data.places || [],
+    recent: data.recent || [],
+    editingPickup: false,
     profiles: null,
     business: { purpose: '', status: null, approvalId: null },
 };
@@ -44,6 +48,7 @@ let config = null;
 let map = null;
 let searches = {};
 let quoteTimer = null;
+let picker = null;
 
 const urlFor = (template, id) => template.replace('__ID__', String(id));
 
@@ -100,7 +105,7 @@ async function reverseLabel(point) {
 
 async function placeFromMap(point) {
     if (stage.dataset.pinning === 'true') return;
-    const target = !state.pickup ? 'pickup' : 'dropoff';
+    const target = !state.pickup || state.editingPickup ? 'pickup' : 'dropoff';
     const place = { label: 'Pinned on the map', lat: point.lat, lng: point.lng };
     target === 'pickup' ? setPickup(place) : setDropoff(place);
     const label = await reverseLabel(point);
@@ -111,22 +116,54 @@ async function placeFromMap(point) {
 }
 
 // ------------------------------------------------------------------ pickup and destination
-function setPickup(place, { fit = true } = {}) {
+function setPickup(place, { fit = true, keepEditing = false } = {}) {
     state.pickup = place ? { label: place.label, lat: Number(place.lat), lng: Number(place.lng) } : null;
     searches.pickup?.setValue(place?.label || '');
     adjustBtn?.toggleAttribute('disabled', !state.pickup || !map);
     map?.setPickup(state.pickup);
+    drawPickupChip();
+    if (state.pickup && !keepEditing) editPickup(false);
     if (fit) fitVisible();
     readiness();
 }
 
-function setDropoff(place, { fit = true } = {}) {
+/** The compact pickup line at the top of the sheet: where the driver comes to, editable with one tap. */
+function drawPickupChip(pending = null) {
+    const out = sheet.querySelector('[data-pax-pickup-value]');
+    if (!out) return;
+    out.textContent = pending || (state.pickup ? (state.pickup.label === 'Your location' ? 'Your location' : shortPlace(state.pickup.label)) : 'Set your pickup');
+    out.dataset.empty = String(!state.pickup && !pending);
+    sheet.querySelector('[data-pax-pickup-chip]')?.setAttribute('aria-label', `Pickup: ${out.textContent}. Change the pickup`);
+}
+
+function editPickup(open) {
+    state.editingPickup = open;
+    const box = sheet.querySelector('[data-pax-pickup-edit]');
+    const chip = sheet.querySelector('[data-pax-pickup-chip]');
+    if (!box) return;
+    box.hidden = !open;
+    chip?.setAttribute('aria-expanded', String(open));
+    sheet.querySelector('[data-pax-places-title]') && (sheet.querySelector('[data-pax-places-title]').textContent = open ? 'Pick up from one of your places' : 'Your places');
+    if (open) {
+        setSnap(sheet, 'full');
+        searches.pickup?.setValue('');
+        box.querySelector('input')?.focus();
+    }
+}
+
+function setDropoff(place, { fit = true, advance = false } = {}) {
     state.dropoff = place ? { label: place.label, lat: Number(place.lat), lng: Number(place.lng) } : null;
     searches.dropoff?.setValue(place?.label || '');
     map?.setDestination(state.dropoff);
     if (fit) fitVisible();
     readiness();
     if (state.pickup && state.dropoff) {
+        // Search-as-you-submit: choosing where to go is the request for prices when the pickup is known.
+        if (advance && laterReady()) {
+            announce(`Destination set: ${state.dropoff.label}. Pricing every ride type.`);
+            loadOptions({ keepSelection: false });
+            return;
+        }
         announce(`Destination set: ${state.dropoff.label}. Press See prices to compare rides.`);
         setSnap(sheet, 'half');
         // Fit once the sheet has settled, so the stops land in the part of the map left visible.
@@ -135,16 +172,21 @@ function setDropoff(place, { fit = true } = {}) {
     }
 }
 
+const laterReady = () => state.when === 'now' || !laterError(state.laterAt, data.schedule);
+
 function readiness() {
     const ready = Boolean(state.pickup && state.dropoff);
-    const laterOk = state.when === 'now' || !laterError(state.laterAt, data.schedule);
+    const laterOk = laterReady();
     seePrices?.toggleAttribute('disabled', !(ready && laterOk));
+    const go = sheet.querySelector('[data-pax-go]');
+    // The button shows once there is something to price; until then the one field leads.
+    if (go) go.hidden = !(state.dropoff || (state.when === 'later' && state.pickup));
     const hint = sheet.querySelector('[data-pax-where-hint]');
     if (hint) {
         hint.textContent = !state.pickup
-            ? 'Set your pickup: use your location, search, or tap the map.'
+            ? 'Set your pickup first: tap Pickup above, use your location, or tap the map.'
             : !state.dropoff
-              ? 'Now your destination: search, pick a saved place, or tap the map.'
+              ? 'Now where to: search, pick one of your places, or tap the map.'
               : !laterOk
                 ? laterError(state.laterAt, data.schedule)
                 : 'You will see every ride type with its full fare before you request.';
@@ -154,6 +196,7 @@ function readiness() {
 async function locate(button, { quiet = false } = {}) {
     const status = sheet.querySelector('[data-pax-locate-status]');
     button?.setAttribute('aria-busy', 'true');
+    if (!state.pickup) drawPickupChip('Finding your location');
     if (!quiet) status.textContent = 'Finding you. Your position is used for this pickup only and is not stored.';
     try {
         const fix = await locateOnce({ timeoutMs: 12000 });
@@ -164,7 +207,9 @@ async function locate(button, { quiet = false } = {}) {
         const label = await reverseLabel(fix);
         if (label && state.pickup && state.pickup.lat === fix.lat) setPickup({ label, lat: fix.lat, lng: fix.lng }, { fit: false });
         if (!quiet && map && fix.accuracy > 60) startPin();
+        else if (!quiet) sheet.querySelector('#pax-dropoff')?.focus();
     } catch (error) {
+        drawPickupChip();
         if (!quiet) {
             status.textContent = error.message || 'Your position could not be found. Search for the address instead.';
             status.dataset.kind = 'error';
@@ -227,14 +272,17 @@ function endPin(confirm) {
     else map?.setPickup(state.pickup);
     showStep(sheet, 'where');
     setSnap(sheet, 'half');
+    if (state.pickup && state.dropoff && confirm) seePrices?.focus();
 }
 
 // ------------------------------------------------------------------ compare
 async function loadOptions({ keepSelection = true } = {}) {
     showStep(sheet, 'options');
-    setSnap(sheet, 'full');
-    sheet.querySelector('[data-pax-sum="pickup"]').textContent = state.pickup.label;
-    sheet.querySelector('[data-pax-sum="dropoff"]').textContent = state.dropoff.label;
+    // Half height: the rides list and the route on the map are both in view (the options step's half is taller).
+    setSnap(sheet, 'half');
+    setTimeout(fitVisible, 380);
+    sheet.querySelector('[data-pax-sum="pickup"]').textContent = shortPlace(state.pickup.label);
+    sheet.querySelector('[data-pax-sum="dropoff"]').textContent = shortPlace(state.dropoff.label);
     body.setAttribute('aria-busy', 'true');
     body.replaceChildren(el('div', { class: 'eh-skeleton', role: 'status' }, [el('span', { class: 'eh-sr-only' }, 'Pricing your trip'), ...[1, 2, 3].map(() => el('div', { class: 'eh-skeleton__bar' }))]));
     clearInterval(quoteTimer);
@@ -308,19 +356,14 @@ function renderOptions() {
 
     const children = [];
     const route = compare.route || compare.options[0].route;
-    children.push(
-        el('p', { class: 'pax-trip' }, [
-            el('span', { class: 'pax-trip__figure' }, formatKm(route.distance_m)),
-            el('span', { class: 'pax-trip__figure' }, formatMinutes(route.duration_s)),
-            el('span', { class: 'pax-trip__note' }, 'Estimated road distance and driving time for this route.'),
-        ]),
-    );
+    const trip = sheet.querySelector('[data-pax-sum="trip"]');
+    if (trip) trip.textContent = `${formatKm(route.distance_m)} · ${formatMinutes(route.duration_s)} by road`;
 
     if (compare.options.some((o) => o.tariff?.is_example)) {
-        children.push(el('p', { class: 'pax-note' }, [icon('info'), 'Example tariff: prices are placeholders until the operator publishes real rates']));
+        children.push(el('p', { class: 'pax-note pax-note--slim' }, [icon('info'), 'Example tariff: placeholder prices, not real rates yet']));
     }
 
-    const list = el('fieldset', { class: 'pax-options' }, [el('legend', {}, 'Ride types with their full price')]);
+    const list = el('fieldset', { class: 'pax-options' }, [el('legend', { class: 'eh-sr-only' }, 'Ride types with their full price')]);
     for (const option of compare.options) list.appendChild(optionCard(option));
     children.push(list);
 
@@ -356,11 +399,14 @@ function optionCard(option) {
     const model = renderBreakdown(fareList, option.fare, { caption: `Total for ${option.category.name}` });
     const notes = model.notes.map((n) => el('p', {}, n));
     notes.push(el('p', {}, option.wording));
+    // The server's own sentence on drivers nearby (never a promise of one); the row above carries the short form.
+    if (option.supply_note) notes.push(el('p', { 'data-pax-supply': option.supply || 'unknown' }, option.supply_note));
     if (option.promotion_note) notes.push(el('p', {}, option.promotion_note));
     if (!model.adds_up) notes.push(el('p', {}, 'These lines do not add up to the total, so this price is not shown as final. Refresh prices.'));
     detail.append(fareList, el('div', { class: 'pax-fare-notes' }, notes));
 
-    const more = el('button', { type: 'button', class: 'pax-option__more', 'aria-expanded': 'false', 'aria-controls': detailId }, ['Fare breakdown', icon('chevron-down')]);
+    // The breakdown opens inline under its own row; a closed row stays one line tall.
+    const more = el('button', { type: 'button', class: 'pax-option__more eh-textlink', 'aria-expanded': 'false', 'aria-controls': detailId }, ['How this price is built', icon('chevron-down')]);
     more.addEventListener('click', (event) => {
         event.preventDefault();
         const open = more.getAttribute('aria-expanded') !== 'true';
@@ -378,14 +424,15 @@ function optionCard(option) {
         updateRequest();
     });
 
-    return el('div', { class: 'pax-option' }, [
+    return el('div', { class: 'pax-option', 'data-key': key }, [
         input,
-        el('label', { class: 'pax-option__name', for: id }, [icon(categoryIcon(option.category.icon_key)), option.category.name]),
+        el('span', { class: 'pax-option__icon', 'aria-hidden': 'true' }, icon(categoryIcon(option.category.icon_key))),
+        el('label', { class: 'pax-option__name', for: id }, option.category.name),
         el('span', { class: 'pax-option__total eh-num' }, model.total?.text || ''),
-        el('p', { class: 'pax-option__meta', id: `${id}-meta`, style: 'margin:0' }, [
+        el('p', { class: 'pax-option__meta', id: `${id}-meta` }, [
             el('span', { class: 'pax-option__eta', 'data-state': eta.state }, eta.text),
-            el('span', {}, `${option.category.capacity} seats`),
-            option.category.luggage ? el('span', {}, `${option.category.luggage} bags`) : null,
+            el('span', { class: 'pax-option__seats' }, [icon('user'), `${option.category.capacity}`, el('span', { class: 'eh-sr-only' }, ' seats')]),
+            option.category.luggage ? el('span', { class: 'pax-option__seats' }, [icon('luggage'), `${option.category.luggage}`, el('span', { class: 'eh-sr-only' }, ' bags')]) : null,
             option.promotion ? el('span', { class: 'eh-badge eh-badge--go' }, [icon('tag'), option.promotion.name]) : null,
         ]),
         more,
@@ -429,7 +476,7 @@ function promoBlock() {
     });
     const note = state.compare?.options?.find((o) => o.promotion_note)?.promotion_note;
     return el('details', { class: 'pax-section pax-promo', open: state.promo ? '' : null }, [
-        el('summary', {}, state.promo ? `Promo code ${state.promo}` : 'Add a promo code'),
+        el('summary', { class: 'eh-textlink' }, [icon('tag'), state.promo ? `Promo code ${state.promo}` : 'Add a promo code']),
         el('label', { class: 'eh-sr-only', for: 'pax-promo' }, 'Promo code'),
         form,
         note ? el('p', { class: 'pax-rule', role: 'status', style: 'margin-top: var(--eh-space-2)' }, note) : null,
@@ -467,12 +514,12 @@ function renderPayment() {
             renderBusiness();
             updateRequest();
         });
-        set.appendChild(el('label', { class: 'pax-pay__opt' }, [radio, icon(option.icon), el('span', { class: 'pax-pay__text' }, [el('span', {}, option.label), el('span', { class: 'pax-pay__meta' }, option.meta)])]));
+        set.appendChild(el('label', { class: 'pax-pay__opt' }, [el('span', { class: 'eh-radio' }, [radio, el('span', { class: 'eh-radio__mark', 'aria-hidden': 'true' })]), icon(option.icon), el('span', { class: 'pax-pay__text' }, [el('span', { class: 'pax-pay__label' }, option.label), el('span', { class: 'pax-pay__meta' }, option.meta)])]));
     }
 
     const extras = [];
     if (wallet.card_payments?.available) {
-        const add = el('button', { type: 'button', class: 'eh-btn eh-btn--ghost eh-btn--sm' }, [icon('plus'), el('span', { class: 'eh-btn__label' }, 'Add a card')]);
+        const add = el('button', { type: 'button', class: 'eh-textlink' }, [icon('plus'), 'Add a card']);
         add.addEventListener('click', () => addCard(add));
         extras.push(add);
         extras.push(el('p', { class: 'pax-rule' }, `Adding a card makes a ${formatMinor(wallet.card_setup_charge_minor || 100)} check that is refunded straight away.${wallet.card_payments.test_mode ? ' Payments are in test mode.' : ''}`));
@@ -653,7 +700,9 @@ function updateRequest() {
           ? `No ${option.category.name} drivers are nearby right now. The price stays the same: try again shortly, pick another ride type, or schedule it.`
           : state.when === 'later'
           ? `Free to cancel or change until ${data.schedule.free_change_until_minutes} minutes before pickup.`
-          : `Free to cancel while we find a driver${Number.isFinite(free) ? ` and for ${free} minutes after one accepts` : ''}.`;
+          : Number.isFinite(free)
+            ? `Free to cancel until ${free} min after a driver accepts.`
+            : 'Free to cancel while we find a driver.';
 }
 
 let paymentRendered = false;
@@ -722,7 +771,19 @@ async function submit() {
                 if (why.reasons.length) error.append(' ', why.reasons.join(' '));
             }
             announce(failure.message, { assertive: true });
-            if (failure.status === 402) {
+            if (failure.status === 409 && failure.code === 'no_supply') {
+                // Nobody of this kind is nearby after all: say so on the row and keep the price. Nothing was booked.
+                state.key = null;
+                option.supply = 'none';
+                option.requestable_now = false;
+                option.drivers_nearby = 0;
+                const row = body.querySelector(`.pax-option[data-key="${option.category.key}"] .pax-option__eta`);
+                if (row) {
+                    const eta = etaText(null, 'none');
+                    row.dataset.state = eta.state;
+                    row.textContent = eta.text;
+                }
+            } else if (failure.status === 402) {
                 try {
                     const { data: wallet } = await api(data.urls.wallet);
                     state.wallet = wallet;
@@ -746,17 +807,51 @@ async function submit() {
 }
 
 // ------------------------------------------------------------------ saved places
-function renderPlaces() {
-    const host = sheet.querySelector('[data-pax-places]');
-    if (!host) return;
-    host.hidden = state.places.length === 0;
-    host.replaceChildren(
-        ...state.places.map((place) => {
-            const chip = el('button', { type: 'button', class: 'eh-chip', 'data-pax-place': String(place.id) }, [icon(place.kind === 'home' ? 'home' : place.kind === 'work' ? 'briefcase' : 'pin'), place.label]);
-            chip.addEventListener('click', () => (state.pickup ? setDropoff({ label: place.address, lat: place.lat, lng: place.lng }) : setPickup({ label: place.address, lat: place.lat, lng: place.lng })));
-            return chip;
-        }),
-    );
+/** Saved places and recent destinations: a tap sets the pickup while the pickup is being changed, else where to. */
+function usePlace(place) {
+    if (state.editingPickup || !state.pickup) {
+        setPickup(place);
+        if (state.dropoff) setDropoff(state.dropoff, { advance: true });
+        else sheet.querySelector('#pax-dropoff')?.focus();
+    } else {
+        setDropoff(place, { advance: true });
+    }
+}
+
+function bindPlaces() {
+    sheet.querySelectorAll('[data-pax-place]').forEach((button) => {
+        const place = state.places.find((p) => String(p.id) === button.dataset.paxPlace);
+        if (place) button.addEventListener('click', () => usePlace({ label: place.address, lat: place.lat, lng: place.lng }));
+    });
+    sheet.querySelectorAll('[data-pax-recent]').forEach((button) => {
+        const place = state.recent[Number(button.dataset.paxRecent)];
+        if (place) button.addEventListener('click', () => usePlace({ label: place.label, lat: place.lat, lng: place.lng }));
+    });
+}
+
+/** Now or later: the clock chip opens the day-and-time picker; "Ride now instead" closes it. */
+function setWhen(when) {
+    state.when = when;
+    const box = sheet.querySelector('[data-pax-later]');
+    const chip = sheet.querySelector('[data-pax-when-chip]');
+    box.hidden = when !== 'later';
+    chip?.setAttribute('aria-expanded', String(when === 'later'));
+    if (when === 'later') {
+        const bounds = laterBounds(data.schedule);
+        picker.setBounds(bounds.min, bounds.max);
+        state.laterAt = picker.value;
+        setSnap(sheet, 'full');
+        box.querySelector('input[type="radio"]:checked')?.focus();
+    } else {
+        state.laterAt = null;
+    }
+    drawWhenChip();
+    readiness();
+}
+
+function drawWhenChip() {
+    const out = sheet.querySelector('[data-pax-when-value]');
+    if (out) out.textContent = state.when === 'later' && state.laterAt ? whenLabel(state.laterAt) : 'Now';
 }
 
 // ------------------------------------------------------------------ start
@@ -774,9 +869,27 @@ async function start() {
         searches[kind] = createPlaceSearch(rootEl, {
             config,
             near: () => state.pickup,
-            onSelect: (place) => (kind === 'pickup' ? setPickup(place) : setDropoff(place)),
+            onSelect: (place) => (kind === 'pickup' ? setPickup(place) : setDropoff(place, { advance: true })),
         });
     }
+    // While the person types where to, their places step aside for the results.
+    const dropRoot = sheet.querySelector('[data-pax-search="dropoff"]');
+    const placesBox = sheet.querySelector('[data-pax-places]');
+    dropRoot?.addEventListener('geo:typing', (event) => placesBox && (placesBox.hidden = event.detail.value.trim().length > 0 && event.detail.value !== state.dropoff?.label));
+    dropRoot?.addEventListener('geo:cleared', () => {
+        placesBox && (placesBox.hidden = false);
+        state.dropoff = null;
+        map?.setDestination(null);
+        readiness();
+    });
+
+    sheet.querySelector('[data-pax-pickup-chip]')?.addEventListener('click', () => editPickup(!state.editingPickup));
+    sheet.querySelector('[data-pax-when-chip]')?.addEventListener('click', () => setWhen(state.when === 'later' ? 'now' : 'later'));
+    sheet.querySelector('[data-pax-now]')?.addEventListener('click', () => {
+        setWhen('now');
+        sheet.querySelector('[data-pax-when-chip]')?.focus();
+    });
+    picker = bindWhen(sheet.querySelector('[data-pax-later] [data-eh-when]'));
 
     sheet.querySelector('[data-pax-locate]')?.addEventListener('click', (event) => locate(event.currentTarget));
     adjustBtn?.addEventListener('click', startPin);
@@ -789,29 +902,15 @@ async function start() {
     });
     seePrices?.addEventListener('click', () => loadOptions({ keepSelection: false }));
 
-    const laterBox = sheet.querySelector('[data-pax-later]');
-    const laterInput = sheet.querySelector('#pax-later-at');
-    sheet.querySelectorAll('input[name="when"]').forEach((radio) =>
-        radio.addEventListener('change', () => {
-            state.when = radio.value;
-            laterBox.hidden = state.when !== 'later';
-            if (state.when === 'later') {
-                const bounds = laterBounds(data.schedule);
-                laterInput.min = bounds.min;
-                laterInput.max = bounds.max;
-                if (!laterInput.value) laterInput.value = bounds.min;
-                state.laterAt = laterInput.value;
-                laterInput.focus();
-            }
-            readiness();
-        }),
-    );
-    laterInput?.addEventListener('input', () => {
-        state.laterAt = laterInput.value;
+    sheet.querySelector('#pax-later-at')?.addEventListener('input', (event) => {
+        if (state.when !== 'later') return;
+        state.laterAt = event.target.value;
+        drawWhenChip();
         readiness();
     });
 
-    renderPlaces();
+    bindPlaces();
+    drawPickupChip();
     watchConnection(sheet.querySelectorAll('[data-pax-net]'));
 
     if (data.again) {
@@ -820,6 +919,10 @@ async function start() {
     }
 
     readiness();
+    // No pickup yet and no permission to look: open the pickup line so the first tap can set it.
+    locationPermission().then((permission) => {
+        if (!state.pickup && permission !== 'granted') drawPickupChip();
+    });
 
     // The map after first paint, so the sheet is usable at once on a slow connection.
     const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 200));

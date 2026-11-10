@@ -49,7 +49,7 @@ class PricingHttpTest extends TestCase
             ->assertJsonPath('reason', 'routing_unavailable');
 
         $this->fakeRoute();
-        $this->postJson(route('pricing.estimate'), $this->trip)->assertOk()->assertJsonPath('kind', 'estimate')->assertJsonCount(7, 'options');
+        $this->postJson(route('pricing.estimate'), $this->trip)->assertOk()->assertJsonPath('kind', 'estimate')->assertJsonCount(5, 'options')->assertJsonCount(2, 'hidden');
     }
 
     public function test_public_estimate_is_rate_limited_and_validated(): void
@@ -94,8 +94,12 @@ class PricingHttpTest extends TestCase
         $this->fakeRoute();
         $passenger = User::factory()->withPersonalTeam()->create();
 
-        $this->actingAs($passenger)->postJson(route('pricing.quotes.store'), $this->trip)->assertOk()->assertJsonCount(7, 'options');
-        $this->assertSame(7, FareQuote::count());
+        // A 10 km city trip with no airport at either end: airport transfer and long distance do not fit it (D-2003).
+        $this->actingAs($passenger)->postJson(route('pricing.quotes.store'), $this->trip)->assertOk()
+            ->assertJsonCount(5, 'options')
+            ->assertJsonCount(2, 'hidden')
+            ->assertJsonPath('hidden.0.reason', 'not_for_this_trip');
+        $this->assertSame(5, FareQuote::count());
     }
 
     public function test_available_categories_endpoint(): void

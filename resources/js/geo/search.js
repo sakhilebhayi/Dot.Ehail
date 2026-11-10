@@ -1,11 +1,22 @@
 // Place search: a keyboard-accessible combobox over the server proxy (/geo/search). With a provider that allows
-// search-as-you-type it searches 350 ms after typing stops; with one that does not (public Nominatim) it
-// searches when the user presses Enter or the search button, and says so in the hint.
+// search-as-you-type it searches 350 ms after typing stops. With one that does not (public Nominatim: no
+// keystroke autocomplete) it searches on Enter, on the search button inside the field, or once when typing has
+// paused for a full second with at least 4 letters; the same words are never sent twice in a row, the server
+// caches answers for 24 h and holds the whole app to one request a second (R-46 ppass, D-2001).
 
 import { comboboxKey, debounce } from './combobox.js';
 import { getJson } from './network.js';
 
 let uid = 0;
+
+// The area line under a result, without the postcode and the country (one-country service): "Rivonia Road, Sandhurst, Sandton".
+export function areaLine(text) {
+    return String(text || '')
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p) => p && !/^\d{4}$/.test(p) && !/^(south africa|suid-afrika)$/i.test(p))
+        .join(', ');
+}
 
 /**
  * Enhances markup:
@@ -24,6 +35,7 @@ export function createPlaceSearch(root, { config, near = () => null, onSelect = 
     const status = root.querySelector('[data-geo-search-status]');
     const hint = root.querySelector('[data-geo-search-hint]');
     const submit = root.querySelector('[data-geo-search-submit]');
+    const clearBtn = root.querySelector('[data-eh-place-clear]');
     const id = `eh-search-${++uid}`;
     const autocomplete = Boolean(config.geocoding.autocomplete);
 
@@ -43,9 +55,7 @@ export function createPlaceSearch(root, { config, near = () => null, onSelect = 
         input.setAttribute('aria-describedby', hint.id);
         hint.textContent = !config.geocoding.configured
             ? 'Address search is not set up. Tap the map to place the pin.'
-            : autocomplete
-              ? 'Type at least 3 letters.'
-              : 'Type an address and press Enter or Search.';
+            : '';
     }
 
     if (submit) {
@@ -56,12 +66,13 @@ export function createPlaceSearch(root, { config, near = () => null, onSelect = 
         input.disabled = true;
         submit && (submit.disabled = true);
 
-        return { destroy() {}, setValue() {} };
+        return { destroy() {}, setValue() {}, clear() {} };
     }
 
     let state = { open: false, active: -1, count: 0 };
     let results = [];
     let inflight = null;
+    let lastQuery = null;
 
     const render = () => {
         input.setAttribute('aria-expanded', String(state.open));
@@ -100,6 +111,7 @@ export function createPlaceSearch(root, { config, near = () => null, onSelect = 
         list.replaceChildren();
         render();
         setStatus('');
+        syncClear();
         onSelect(place);
     };
 
@@ -120,7 +132,7 @@ export function createPlaceSearch(root, { config, near = () => null, onSelect = 
                 if (place.label !== place.name) {
                     const detail = document.createElement('span');
                     detail.className = 'eh-search__detail';
-                    detail.textContent = place.label.startsWith(`${place.name}, `) ? place.label.slice(place.name.length + 2) : place.label;
+                    detail.textContent = areaLine(place.label.startsWith(`${place.name}, `) ? place.label.slice(place.name.length + 2) : place.label);
                     item.appendChild(detail);
                 }
 
@@ -138,8 +150,13 @@ export function createPlaceSearch(root, { config, near = () => null, onSelect = 
         setStatus(places.length === 0 ? 'No places found. Try a street and suburb, or tap the map.' : `${places.length} ${places.length === 1 ? 'place' : 'places'} found.`);
     };
 
-    const run = async () => {
+    const run = async ({ pause = false } = {}) => {
         const query = input.value.trim();
+
+        // A pause search never repeats the words just searched (the list is already showing their answer).
+        if (pause && (query.length < 4 || query === lastQuery)) {
+            return;
+        }
 
         if (query.length < 3) {
             show([]);
@@ -150,6 +167,7 @@ export function createPlaceSearch(root, { config, near = () => null, onSelect = 
 
         inflight?.abort();
         inflight = new AbortController();
+        lastQuery = query;
         root.setAttribute('aria-busy', 'true');
         setStatus('Searching…');
 
@@ -167,15 +185,25 @@ export function createPlaceSearch(root, { config, near = () => null, onSelect = 
         }
     };
 
+    const syncClear = () => {
+        if (clearBtn) clearBtn.hidden = input.value === '' || input.disabled;
+    };
+
     const typed = debounce(run, 350);
+    const paused = debounce(() => run({ pause: true }), 1000);
 
     const onInput = () => {
         if (autocomplete) {
             typed();
-        } else if (state.open) {
-            state = { ...state, open: false };
-            render();
+        } else {
+            if (state.open) {
+                state = { ...state, open: false };
+                render();
+            }
+            paused();
         }
+        syncClear();
+        root.dispatchEvent(new CustomEvent('geo:typing', { detail: { value: input.value } }));
     };
 
     const onKeyDown = (event) => {
@@ -197,6 +225,7 @@ export function createPlaceSearch(root, { config, near = () => null, onSelect = 
         } else if (action === 'submit') {
             event.preventDefault();
             typed.cancel();
+            paused.cancel();
             run();
         } else if (action === 'close') {
             event.key === 'Escape' && event.preventDefault();
@@ -211,24 +240,50 @@ export function createPlaceSearch(root, { config, near = () => null, onSelect = 
     };
 
     input.addEventListener('input', onInput);
+    clearBtn?.addEventListener('click', () => {
+        controller.clear();
+        input.focus();
+        root.dispatchEvent(new CustomEvent('geo:cleared'));
+    });
     input.addEventListener('keydown', onKeyDown);
     input.addEventListener('blur', onBlur);
     submit?.addEventListener('click', () => {
         typed.cancel();
+        paused.cancel();
         run();
         input.focus();
     });
 
-    return {
+    const controller = {
         setValue(text) {
             input.value = text;
+            lastQuery = null;
+            syncClear();
+        },
+        clear() {
+            inflight?.abort();
+            typed.cancel();
+            paused.cancel();
+            input.value = '';
+            lastQuery = null;
+            results = [];
+            list.replaceChildren();
+            state = { open: false, active: -1, count: 0 };
+            render();
+            setStatus('');
+            syncClear();
         },
         destroy() {
             inflight?.abort();
             typed.cancel();
+            paused.cancel();
             input.removeEventListener('input', onInput);
             input.removeEventListener('keydown', onKeyDown);
             input.removeEventListener('blur', onBlur);
         },
     };
+
+    syncClear();
+
+    return controller;
 }

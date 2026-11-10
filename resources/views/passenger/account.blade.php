@@ -37,16 +37,7 @@
                     <label class="eh-field__label" for="place-label">Name</label>
                     <input class="eh-input" id="place-label" name="label" maxlength="60" placeholder="Gym, school, mum's place">
                 </div>
-                <div class="pax-field" data-pax-search="place">
-                    <label class="pax-field__label" for="place-search">Address</label>
-                    <div class="pax-field__row">
-                        <input id="place-search" class="eh-input" type="search" placeholder="Street and suburb" enterkeyhint="search">
-                        <x-eh.button variant="secondary" data-geo-search-submit icon="search">Search</x-eh.button>
-                    </div>
-                    <p class="pax-field__hint" data-geo-search-hint></p>
-                    <ul class="pax-results" data-geo-search-list></ul>
-                    <p class="pax-field__status" data-geo-search-status></p>
-                </div>
+                <x-eh.place-field id="place-search" label="Address" placeholder="Street and suburb" data-pax-search="place" />
                 <p class="pax-field__status" data-pax-place-status role="status"></p>
                 <div><x-eh.button type="submit" icon="plus" data-pax-place-save disabled>Save place</x-eh.button></div>
             </form>

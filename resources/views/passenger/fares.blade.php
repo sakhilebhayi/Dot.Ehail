@@ -31,16 +31,8 @@
                         <p>Pick two points and read every part of the price: base fare, distance, time, fees, and the total. This is the same calculation a booking uses.</p>
                     </div>
                     @if ($canSearch)
-                        <div class="pax-field" data-pax-search="pickup">
-                            <label class="pax-field__label" for="pax-pickup"><span class="pax-route__dot" aria-hidden="true"></span>Pickup</label>
-                            <div class="pax-field__row"><input id="pax-pickup" class="eh-input" type="search" placeholder="Street and suburb"><x-eh.button variant="secondary" data-geo-search-submit icon="search">Search</x-eh.button></div>
-                            <p class="pax-field__hint" data-geo-search-hint></p><ul class="pax-results" data-geo-search-list></ul><p class="pax-field__status" data-geo-search-status></p>
-                        </div>
-                        <div class="pax-field" data-pax-search="dropoff">
-                            <label class="pax-field__label" for="pax-dropoff"><span class="pax-route__dot pax-route__dot--drop" aria-hidden="true"></span>Destination</label>
-                            <div class="pax-field__row"><input id="pax-dropoff" class="eh-input" type="search" placeholder="Where to?"><x-eh.button variant="secondary" data-geo-search-submit icon="search">Search</x-eh.button></div>
-                            <p class="pax-field__hint" data-geo-search-hint></p><ul class="pax-results" data-geo-search-list></ul><p class="pax-field__status" data-geo-search-status></p>
-                        </div>
+                        <x-eh.place-field id="pax-pickup" label="Pickup" placeholder="Street and suburb" dot="pickup" data-pax-search="pickup" />
+                        <x-eh.place-field id="pax-dropoff" label="Destination" placeholder="Where to?" dot="dropoff" data-pax-search="dropoff" />
                     @else
                         <ol class="pax-route">
                             <li class="pax-route__stop"><span class="pax-route__dot" aria-hidden="true"></span><span class="pax-route__text"><span class="pax-route__label">Pickup</span><span class="pax-route__address" data-pax-calc="pickup" data-empty="true">Tap the map, or use your location</span></span></li>

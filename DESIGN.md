@@ -29,7 +29,7 @@ colors:
   on-stop-fill: "#ffffff"
   info: "#1d4f9c"
   info-bg: "#e1ebf8"
-  focus: "#1d5bd6"
+  focus: "#0a4a2b"
   brand-yellow: "#f1c62f"
   brand-green: "#9dcb86"
   map-land: "#eef1ec"
@@ -55,7 +55,7 @@ colors:
   night-primary-tint: "#24493a"
   night-on-primary-tint: "#b4e8c8"
   night-stop: "#ff9a8b"
-  night-focus: "#8fbaff"
+  night-focus: "#f2c230"
   night-map-land: "#182721"
   night-map-road: "#2a3b34"
   night-map-water: "#0f2a36"
@@ -347,7 +347,7 @@ Strategy: Restrained in the apps (3 to 10 percent colour, nearly all as pale tin
 - **Road-marking yellow (signal #f2c230):** the stop: pickup marker, current step, destination dot, emergency call buttons, text selection. Always carries dark ink; never text on light ground.
 - **Map paper (ground #f1f4f0):** a cool, slightly green paper. Not cream. Surfaces step by tone (surface, surface-2, surface-3), never by shadow.
 - **State:** go, caution, stop and info each come as a text colour plus a background tint, always paired with a word or icon.
-- **Focus (#1d5bd6 / night #8fbaff):** a 3px ring, at least 3:1 against every ground.
+- **Focus (#0a4a2b deep sign green / night #f2c230 road yellow):** a 3px ring in the brand, at least 3:1 against every ground (9.5:1 light, 9:1 night); it replaced the browser-blue ring the outside jury flagged (D-2007).
 - **Brand marks (#f1c62f, #9dcb86):** the logo only, never interface colour.
 - **Map palette:** land, roads (major roads in pale marking yellow), water, parks, buildings, labels, route (sign green), pickup (yellow), drop-off (ink), driver (focus blue). The geo agent's map style reads `--eh-map-*`; night values swap automatically.
 

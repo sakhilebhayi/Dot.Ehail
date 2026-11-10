@@ -120,5 +120,5 @@ export function mapSummary(ride, position = null) {
 /** The driver's rating as a band, never a decimal (docs/R46_SAFETY.md "Ratings"). */
 export function ratingBand(rating) {
     if (rating?.label) return rating.label;
-    return 'New on Dot.Ehail';
+    return 'No ratings yet';
 }

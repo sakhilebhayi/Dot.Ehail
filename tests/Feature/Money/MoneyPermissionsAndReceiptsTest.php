@@ -99,6 +99,29 @@ class MoneyPermissionsAndReceiptsTest extends TestCase
         $this->actingAs($this->makeOperator())->get(route('money.receipts.show', $receipt))->assertOk();
     }
 
+    public function test_the_receipt_page_is_in_the_brand_and_leads_the_passenger_back_to_the_trip(): void
+    {
+        $ride = $this->paidTrip();
+        $receipt = Receipt::sole();
+
+        // The passenger: the shared head (fonts, own theme, SAST), never indexed, and a link back to the trip.
+        $this->actingAs($ride->passenger)->get(route('money.receipts.show', $receipt))->assertOk()
+            ->assertSee('<html lang="en-ZA" class="eh">', false)
+            ->assertSee('name="eh-tz" content="Africa/Johannesburg"', false)
+            ->assertSee('name="robots" content="noindex, nofollow"', false)
+            ->assertSee('Receipt '.$receipt->number.' | Dot.Ehail')
+            ->assertSee(route('ride.trip', $ride), false)->assertSee('Back to the trip');
+
+        // A place reads as a name and its area, with no postcode or country (the stored receipt is not changed).
+        $html = view('money.receipt', ['receipt' => $receipt, 's' => ['pickup_address' => 'Sandton City, Rivonia Road, Sandhurst, Sandton, 2196, South Africa'] + $receipt->snapshot])->render();
+        $this->assertStringContainsString('<div class="name">Sandton City</div>', $html);
+        $this->assertStringContainsString('<div class="area">Rivonia Road, Sandhurst</div>', $html);
+        $this->assertStringNotContainsString('2196', $html);
+
+        // An operator reading the same receipt gets no passenger link.
+        $this->actingAs($this->makeOperator())->get(route('money.receipts.show', $receipt))->assertOk()->assertDontSee('Back to the trip');
+    }
+
     public function test_every_finance_operations_route_refuses_non_operators(): void
     {
         $passenger = User::factory()->withPersonalTeam()->create();
