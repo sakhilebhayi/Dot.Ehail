@@ -70,7 +70,7 @@ On cPanel the ceiling is the account's CPU allowance (CloudLinux LVE: 100 % = on
 
 | Change | Effect (measured or reasoned) |
 |---|---|
-| `CACHE_LIMITER=file` (config only) | sync 19.1 -> 12.9 statements, 2.4 -> 1.2 writes (measured). Recommended now. |
+| `CACHE_LIMITER=file` (config only; documented, commented, in `.env.example`) | sync 19.1 -> 12.9 statements, 2.4 -> 1.2 writes (measured). Recommended now: set it in the host `.env`. Not made the default because CI copies `.env.example` and file-store counters would then persist between tests. |
 | `php artisan optimize` at deploy (config, route, event caches) | SQLite, 4 workers, 1,000 drivers: sync p50 31 -> 9 ms, p95 688 -> 360 ms at the same 330 rps (measured). Confirm the deploy runs it. |
 | Both (`optimize` + `CACHE_LIMITER=file`) | PostgreSQL, 4 workers, 1,000 drivers (saturated either way): 201 -> 255 rps, sync statements 19.6 -> 13, writes 2.7 -> 1.2, drivers polled 14 instead of 11 times a minute, p50 2.1 -> 1.0 s (measured). |
 | Redis for cache, limiter and sessions (a VPS or a host add-on) | removes the session read, limiter and dispatch-lock statements from the database: ~8 of 13 statements per idle poll; frees the database for rides. |
