@@ -136,7 +136,7 @@ class RideStateMachine
                 ?: $fail('This scheduled ride is not due for dispatch yet.'),
             'unassigned' => $ride->driver_id === null ?: $fail('That ride was just claimed by another driver.'),
             'driver_free' => $this->driverIsFree($this->incomingDriver($actor, $user, $options), $ride)
-                ?: $fail('That driver already has an active ride.'),
+                ?: $fail($actor === RideActor::Driver ? 'You already have an active ride.' : 'That driver already has an active ride.'),
             'pin' => (! $this->pin->required($ride) || $options->pinVerified)
                 ?: $fail('Enter the passenger\'s 4-digit PIN to start the trip.'),
             'no_show_wait' => ($ride->arrived_at !== null
