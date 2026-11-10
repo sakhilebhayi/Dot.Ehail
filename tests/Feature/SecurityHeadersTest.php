@@ -50,6 +50,18 @@ class SecurityHeadersTest extends TestCase
         $this->assertFalse($enforced->headers->has('Content-Security-Policy-Report-Only'));
     }
 
+    public function test_the_csp_allows_the_configured_map_tile_server(): void
+    {
+        // Regression (R-46 QA, D-1604): the driver trip map and the ops maps load raster tiles under this policy; without
+        // the tile host every tile was a violation report (and the map blank once the policy is enforced).
+        config(['ehail-geo.tiles.url' => 'https://tiles.example.test/{z}/{x}/{y}.png']);
+        $policy = (string) $this->get('/')->headers->get('Content-Security-Policy-Report-Only');
+        $this->assertMatchesRegularExpression('#img-src [^;]*https://tiles\.example\.test(;|$| )#', $policy);
+
+        config(['ehail-geo.tiles.url' => 'http://insecure.example.test/{z}/{x}/{y}.png']);
+        $this->assertStringNotContainsString('insecure.example.test', (string) $this->get('/')->headers->get('Content-Security-Policy-Report-Only'), 'only https tile hosts are allowed');
+    }
+
     public function test_hsts_is_sent_on_https_only_and_can_be_switched_off(): void
     {
         $this->assertFalse($this->get('/')->headers->has('Strict-Transport-Security'), 'plain http never gets HSTS');

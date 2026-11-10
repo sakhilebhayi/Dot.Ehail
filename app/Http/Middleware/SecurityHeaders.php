@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Geo\Support\GeoCsp;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,6 +24,7 @@ use Symfony\Component\HttpFoundation\Response;
  *   Material Symbols, linked from every layout and the error pages.
  * - https://images.unsplash.com (img-src): the welcome page and authentication-card backgrounds.
  * - https://ui-avatars.com (img-src): Jetstream's default avatar (profile photos are switched off), shown on the team pages.
+ * - the configured map tile server (img-src, from GeoCsp::imgSources()): the driver trip map and the ops maps.
  *
  * Paystack needs no allowance: checkout is a server-side redirect to Paystack's hosted payment page and back
  * (redirect()->away), so no js.paystack.co script, checkout.paystack.com frame or Paystack form is loaded here.
@@ -66,7 +68,7 @@ class SecurityHeaders
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' ".implode(' ', self::SCRIPT_ORIGINS),
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' data: https://fonts.gstatic.com",
-            "img-src 'self' data: blob: https://images.unsplash.com https://ui-avatars.com",
+            trim("img-src 'self' data: blob: https://images.unsplash.com https://ui-avatars.com ".implode(' ', GeoCsp::imgSources())),
             // Reverb websockets are wss: in production; local development talks plaintext ws:.
             "connect-src 'self' wss: https:".(app()->isLocal() ? ' ws:' : ''),
             "frame-ancestors 'self'",
