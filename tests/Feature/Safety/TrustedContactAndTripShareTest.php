@@ -110,7 +110,7 @@ class TrustedContactAndTripShareTest extends TestCase
         }
 
         $this->actingAs($owner)->postJson(route('safety.contacts.store'), ['name' => 'Six', 'email' => 'c6@example.com'])->assertUnprocessable();
-        TrustedContact::query()->where('user_id', $owner->id)->first()->delete();
+        TrustedContact::query()->where('user_id', $owner->id)->where('email_hash', TrustedContact::emailHash('c1@example.com'))->sole()->delete(); // C1, never C2 (the duplicate below): unordered first() follows the hash index
         $this->actingAs($owner)->postJson(route('safety.contacts.store'), ['name' => 'Dup', 'email' => 'C2@Example.com'])->assertUnprocessable();
         $this->actingAs($owner)->postJson(route('safety.contacts.store'), ['name' => 'Me', 'email' => $owner->email])->assertUnprocessable();
 
