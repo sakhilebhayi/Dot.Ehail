@@ -5,6 +5,8 @@ import { announce, api, island } from './api.js';
 import { renderBreakdown } from './breakdown.js';
 import { clock, freeCancelLeft, searchProgress, secondsSince, secondsUntil, waitState } from './countdown.js';
 import { el, watchConnection } from './dom.js';
+import { bindWhen, ceilToStep, localValue } from '../eh/datetime.js';
+import { laterBounds } from './labels.js';
 import { FeedClient } from './feed.js';
 import { formatMinor } from './money.js';
 import { bindCheckIns, bindShare, bindSos } from './safety.js';
@@ -163,6 +165,9 @@ function renderDriver(ride, position) {
         plate.textContent = vehicle.plate || '';
         plate.setAttribute('aria-label', `Registration ${vehicle.plate || 'not given'}`);
     }
+    // Before the trip the first thing to do is match the car: say so above the card.
+    const ask = $('[data-pax-who-ask]');
+    if (ask) ask.hidden = !['driver_assigned', 'driver_arriving', 'driver_arrived'].includes(ride.status);
     const stale = $('[data-pax-stale]');
     const staleText = $('[data-pax-stale-text]');
     if (holdsDriver(ride.status) && position?.stale) {
@@ -310,7 +315,7 @@ async function loadSafety() {
         safetyInfo = info;
         const d = info.driver;
         if (!d) return;
-        $('[data-pax-driver-rating]').textContent = d.rating?.label || 'New on Dot.Ehail';
+        $('[data-pax-driver-rating]').textContent = d.rating?.label || 'No ratings yet';
         $('[data-pax-driver-verified]').hidden = !d.verified;
         if (d.check) $('[data-pax-check]').textContent = d.check;
         if (d.photo_url) {
@@ -444,9 +449,18 @@ function bindActions() {
 
     // Scheduled ride: reschedule and accept a new price.
     const reschedule = $('[data-pax-reschedule]');
+    const when = reschedule ? bindWhen(reschedule.querySelector('[data-eh-when]')) : null;
+    const scheduledAt = snapshot?.ride?.scheduled_for ? new Date(snapshot.ride.scheduled_for) : null;
+    $('[data-pax-reschedule-box]')?.addEventListener('toggle', (event) => {
+        if (!event.target.open || !data.schedule) return;
+        const bounds = laterBounds(data.schedule);
+        when?.setBounds(bounds.minDate, bounds.maxDate);
+        if (scheduledAt && scheduledAt >= bounds.minDate && scheduledAt <= bounds.maxDate) when?.setValue(localValue(ceilToStep(scheduledAt, 15)));
+    });
     reschedule?.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const input = reschedule.querySelector('input');
+        const input = reschedule.querySelector('#pax-reschedule-at');
+        if (!input.value) return;
         const out = reschedule.querySelector('[data-pax-reschedule-status]');
         try {
             const { data: body } = await api(data.urls.reschedule, { method: 'PATCH', body: { scheduled_for: new Date(input.value).toISOString() } });

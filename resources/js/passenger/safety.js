@@ -146,14 +146,21 @@ export function bindCheckIns(dialog, { rideId = null, every = 20000 } = {}) {
     };
 }
 
+/** The WhatsApp hand-off: a wa.me link with a plain message and the trip link (WhatsApp opens with it ready to send). */
+export function whatsappUrl(url, text = 'Follow my Dot.Ehail trip live') {
+    return `https://wa.me/?text=${encodeURIComponent(url ? `${text}: ${url}` : text)}`;
+}
+
 /**
- * Trip share: create a link (the URL is shown once by the server), copy it, hand it to the phone's share sheet
- * where the browser has one, revoke it.
+ * Trip share: create a link (the URL is shown once by the server), copy it, send it on WhatsApp or with the phone's
+ * share sheet where the browser has one, revoke it. The link is shown as text; focus goes to Copy, not into the field.
  */
 export function bindShare(box, { createUrl, revokeUrl, title = 'My Dot.Ehail trip' }) {
     if (!box) return { open() {} };
     const input = box.querySelector('[data-pax-share-url]');
     const native = box.querySelector('[data-pax-share-native]');
+    const whatsapp = box.querySelector('[data-pax-share-whatsapp]');
+    const copy = box.querySelector('[data-pax-share-copy]');
     let share = null;
 
     if (native) native.hidden = typeof navigator.share !== 'function';
@@ -164,10 +171,11 @@ export function bindShare(box, { createUrl, revokeUrl, title = 'My Dot.Ehail tri
             const { data } = await api(createUrl, { method: 'POST', body: {} });
             share = { id: data.data.id, url: data.url };
             input.value = data.url;
+            if (whatsapp) whatsapp.href = whatsappUrl(data.url);
             box.hidden = false;
-            input.focus();
-            input.select();
-            announce('Share link ready. Copy it or send it with another app.');
+            box.scrollIntoView?.({ block: 'nearest' });
+            copy?.focus({ preventScroll: true });
+            announce('Share link ready. Copy it, or send it on WhatsApp or with another app.');
         } catch (error) {
             window.ehToast?.(error.message, { tone: 'stop' });
         } finally {
@@ -175,7 +183,7 @@ export function bindShare(box, { createUrl, revokeUrl, title = 'My Dot.Ehail tri
         }
     };
 
-    box.querySelector('[data-pax-share-copy]')?.addEventListener('click', async () => {
+    copy?.addEventListener('click', async () => {
         const ok = await copyText(input.value, input);
         window.ehToast?.(ok ? 'Link copied.' : 'Select the link and copy it.', { tone: ok ? 'go' : 'neutral' });
     });
@@ -188,6 +196,7 @@ export function bindShare(box, { createUrl, revokeUrl, title = 'My Dot.Ehail tri
             await api(revokeUrl.replace('__ID__', String(share.id)), { method: 'DELETE' });
             share = null;
             input.value = '';
+            if (whatsapp) whatsapp.href = 'https://wa.me/';
             box.hidden = true;
             window.ehToast?.('Link revoked. Nobody can open it now.', { tone: 'go' });
         } catch (error) {

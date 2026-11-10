@@ -12,7 +12,7 @@
     $active = in_array($status, ['requested', 'searching', 'driver_assigned', 'driver_arriving', 'driver_arrived', 'in_progress'], true);
     $holds = in_array($status, ['driver_assigned', 'driver_arriving', 'driver_arrived', 'in_progress'], true);
     $currency = $r['fare']['currency'] ?? 'ZAR';
-    $stageLabels = ['Search', 'On the way', 'Pickup', 'Trip', 'Arrived'];
+    $stageLabels = ['Search', 'En route', 'Pickup', 'Trip', 'Arrived'];
 @endphp
 <x-passenger-layout :title="$text['title']" :bleed="true">
     <x-slot:head>
@@ -36,6 +36,38 @@
                 <h1 class="pax-state__title" data-pax-title tabindex="-1">{{ $text['title'] }}</h1>
                 <p class="pax-state__sub" data-pax-sub>{{ $text['sub'] }}</p>
             </header>
+
+            {{-- Driver and car first: who to look for before anything else (jury item 4). --}}
+            <section class="pax-who" data-panel="driver" @if(! $holds && $status !== 'completed') hidden @endif aria-label="Your driver">
+                <p class="pax-who__ask" data-pax-who-ask @if(! in_array($status, ['driver_assigned', 'driver_arriving', 'driver_arrived'], true)) hidden @endif><x-eh.icon name="scan-face" />Check the car and plate</p>
+                <div class="pax-driver">
+                    <span class="eh-avatar pax-driver__face" data-pax-face aria-hidden="true">{{ mb_substr($r['driver']['first_name'] ?? '?', 0, 1) }}</span>
+                    <div class="pax-driver__who">
+                        <p class="pax-driver__name" data-pax-driver-name>{{ $r['driver']['first_name'] ?? 'Your driver' }}</p>
+                        <p class="pax-driver__model" data-pax-car>{{ trim(($r['driver']['vehicle']['color'] ?? '').' '.($r['driver']['vehicle']['make'] ?? '').' '.($r['driver']['vehicle']['model'] ?? '')) }}</p>
+                    </div>
+                    <span class="pax-plate" data-pax-plate aria-label="Registration {{ $r['driver']['vehicle']['plate'] ?? '' }}">{{ $r['driver']['vehicle']['plate'] ?? '' }}</span>
+                    <p class="pax-driver__facts"><span data-pax-driver-rating></span><span data-pax-driver-verified hidden><x-eh.icon name="shield-check" size="16" /> Documents verified</span></p>
+                </div>
+                <p class="pax-driver__check" data-pax-check>Check the registration and the driver's face before you get in. Never get into a car that does not match.</p>
+                <p class="pax-state__sub pax-who__stale"><span class="pax-stale" data-pax-stale hidden><x-eh.icon name="clock" /><span data-pax-stale-text>Last position unknown</span></span></p>
+            </section>
+
+            {{-- Trip PIN --}}
+            <section class="pax-pincode" data-panel="pin" @if(empty($r['pin'])) hidden @endif aria-labelledby="pax-pin-label">
+                <p class="pax-pincode__label" id="pax-pin-label">Your trip PIN</p>
+                <p class="pax-pincode__digits" data-pax-pin role="img" aria-label="Trip PIN {{ implode(' ', str_split((string) ($r['pin'] ?? ''))) }}">
+                    @foreach (str_split((string) ($r['pin'] ?? '')) as $digit)<span class="pax-pincode__digit" aria-hidden="true">{{ $digit }}</span>@endforeach
+                </p>
+                <p class="pax-pincode__help">Say this PIN to the driver when you get in. The trip cannot start without it.</p>
+            </section>
+
+            {{-- Waiting at pickup --}}
+            <section class="pax-wait" data-panel="wait" @if($status !== 'driver_arrived') hidden @endif aria-label="Waiting time">
+                <span class="pax-rule">Driver waiting for</span>
+                <span class="pax-wait__clock" data-pax-wait-clock>0:00</span>
+                <p class="pax-rule" data-pax-wait-rule></p>
+            </section>
 
             <ol class="eh-stepper eh-stepper--horizontal pax-steps" aria-label="Ride progress" data-pax-steps @if($stage < 0) hidden @endif>
                 @foreach ($stageLabels as $i => $label)
@@ -62,53 +94,20 @@
                         <div class="eh-banner__actions"><x-eh.button size="sm" data-pax-requote-accept>Accept the new price</x-eh.button></div>
                     </div>
                 </div>
-                <form class="pax-inline-form pax-section" data-pax-reschedule>
-                    <div class="eh-field">
-                        <label class="eh-field__label" for="pax-reschedule-at">Change the pickup time</label>
-                        <input class="eh-input" id="pax-reschedule-at" type="datetime-local" step="300" required>
-                    </div>
-                    <x-eh.button type="submit" variant="secondary">Change time</x-eh.button>
-                    <p class="pax-field__status" data-pax-reschedule-status role="status"></p>
-                </form>
+                <details class="pax-promo pax-section" data-pax-reschedule-box>
+                    <summary class="eh-textlink"><x-eh.icon name="calendar-clock" />Change the pickup time</summary>
+                    <form class="pax-form pax-later" data-pax-reschedule>
+                        <x-eh.datetime id="pax-reschedule-at" label="New pickup time" />
+                        <div><x-eh.button type="submit" variant="secondary">Change time</x-eh.button></div>
+                        <p class="pax-field__status" data-pax-reschedule-status role="status"></p>
+                    </form>
+                </details>
             </section>
 
             {{-- Searching --}}
             <section class="pax-section" data-panel="searching" @if(! in_array($status, ['requested', 'searching'], true)) hidden @endif aria-label="Finding a driver">
                 <div class="pax-progress" role="progressbar" aria-label="Search time used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-pax-search-progress><div class="pax-progress__bar"></div></div>
                 <p class="pax-rule" data-pax-search-left>We keep looking for up to {{ (int) config('ehail.ride_expiry_minutes', 10) }} minutes.</p>
-            </section>
-
-            {{-- Trip PIN --}}
-            <section class="pax-pincode" data-panel="pin" @if(empty($r['pin'])) hidden @endif aria-labelledby="pax-pin-label">
-                <p class="pax-pincode__label" id="pax-pin-label">Your trip PIN</p>
-                <p class="pax-pincode__digits" data-pax-pin role="img" aria-label="Trip PIN {{ implode(' ', str_split((string) ($r['pin'] ?? ''))) }}">
-                    @foreach (str_split((string) ($r['pin'] ?? '')) as $digit)<span class="pax-pincode__digit" aria-hidden="true">{{ $digit }}</span>@endforeach
-                </p>
-                <p class="pax-pincode__help">Say this PIN to the driver when you get in. The trip cannot start without it.</p>
-            </section>
-
-            {{-- Waiting at pickup --}}
-            <section class="pax-wait" data-panel="wait" @if($status !== 'driver_arrived') hidden @endif aria-label="Waiting time">
-                <span class="pax-rule">Driver waiting for</span>
-                <span class="pax-wait__clock" data-pax-wait-clock>0:00</span>
-                <p class="pax-rule" data-pax-wait-rule></p>
-            </section>
-
-            {{-- Driver and car --}}
-            <section class="pax-section" data-panel="driver" @if(! $holds && $status !== 'completed') hidden @endif aria-label="Your driver">
-                <div class="pax-driver">
-                    <span class="eh-avatar pax-driver__face" data-pax-face aria-hidden="true">{{ mb_substr($r['driver']['first_name'] ?? '?', 0, 1) }}</span>
-                    <div class="pax-driver__who">
-                        <p class="pax-driver__name" data-pax-driver-name>{{ $r['driver']['first_name'] ?? 'Your driver' }}</p>
-                        <p class="pax-driver__facts"><span data-pax-driver-rating>New on Dot.Ehail</span><span data-pax-driver-verified hidden><x-eh.icon name="shield-check" size="16" /> Documents verified</span></p>
-                    </div>
-                    <div class="pax-driver__car">
-                        <p class="pax-driver__model" data-pax-car>{{ trim(($r['driver']['vehicle']['color'] ?? '').' '.($r['driver']['vehicle']['make'] ?? '').' '.($r['driver']['vehicle']['model'] ?? '')) }}</p>
-                        <span class="pax-plate" data-pax-plate aria-label="Registration {{ $r['driver']['vehicle']['plate'] ?? '' }}">{{ $r['driver']['vehicle']['plate'] ?? '' }}</span>
-                    </div>
-                    <p class="pax-driver__check" data-pax-check>Check the registration and the driver's face before you get in. Never get into a car that does not match.</p>
-                </div>
-                <p class="pax-state__sub" style="margin-top: var(--eh-space-2)"><span class="pax-stale" data-pax-stale hidden><x-eh.icon name="clock" /><span data-pax-stale-text>Last position unknown</span></span></p>
             </section>
 
             {{-- In the trip --}}
@@ -118,37 +117,16 @@
                     <x-eh.button variant="ghost" icon="shield" :href="route('ride.safety')">Safety centre</x-eh.button>
                 </div>
                 <details class="pax-promo pax-section" data-pax-change>
-                    <summary>Change the destination</summary>
+                    <summary class="eh-textlink"><x-eh.icon name="route" />Change the destination</summary>
                     <p class="pax-rule">The fare is worked out again for the new route under the same tariff, and the receipt says why it changed.</p>
-                    <div class="pax-field" data-pax-search="change">
-                        <label class="pax-field__label" for="pax-change">New destination</label>
-                        <div class="pax-field__row">
-                            <input id="pax-change" class="eh-input" type="search" placeholder="Street and suburb" enterkeyhint="search">
-                            <x-eh.button variant="secondary" data-geo-search-submit icon="search">Search</x-eh.button>
-                        </div>
-                        <p class="pax-field__hint" data-geo-search-hint></p>
-                        <ul class="pax-results" data-geo-search-list></ul>
-                        <p class="pax-field__status" data-geo-search-status></p>
-                    </div>
+                    <x-eh.place-field id="pax-change" label="New destination" placeholder="Street and suburb" dot="dropoff" data-pax-search="change" />
                     <x-eh.button size="sm" data-pax-change-confirm disabled>Go here instead</x-eh.button>
                     <p class="pax-field__status" data-pax-change-status role="status"></p>
                 </details>
             </section>
 
             {{-- Share link (any active stage) --}}
-            <section class="pax-section" data-pax-share-box hidden aria-label="Trip share link">
-                <h2 class="pax-h3">Your trip share link</h2>
-                <p class="pax-rule">Anyone with this link sees your driver's first name, the car, the trip's progress and an approximate position until the trip ends. Revoke it any time.</p>
-                <div class="pax-share-url" style="margin-top: var(--eh-space-2)">
-                    <label class="eh-sr-only" for="pax-share-url">Share link</label>
-                    <input class="eh-input" id="pax-share-url" readonly data-pax-share-url>
-                    <x-eh.icon-button icon="copy" label="Copy link" data-pax-share-copy />
-                </div>
-                <div class="pax-actions pax-actions--row">
-                    <x-eh.button size="sm" icon="share" data-pax-share-native hidden>Send with another app</x-eh.button>
-                    <x-eh.button size="sm" variant="ghost" icon="close" data-pax-share-revoke>Revoke link</x-eh.button>
-                </div>
-            </section>
+            @include('passenger.partials.share-box', ['heading' => 'h2'])
 
             <ol class="pax-route pax-section" aria-label="Route">
                 <li class="pax-route__stop"><span class="pax-route__dot" aria-hidden="true"></span><span class="pax-route__text"><span class="pax-route__label">Pickup</span><span class="pax-route__address" data-pax-pickup>{{ $r['pickup']['address'] ?? $ride->pickup_address }}</span></span></li>
@@ -168,7 +146,7 @@
                     <div><dt>You pay</dt><dd data-pax-done-final>{{ isset($r['fare']['final_total_minor']) ? \App\Support\Ui\MoneyFormatter::format((int) $r['fare']['final_total_minor'], $currency) : 'Being finalised' }}</dd></div>
                 </dl>
                 <ul class="pax-changes" data-pax-changes></ul>
-                <details class="pax-promo"><summary>Final fare breakdown</summary><dl class="pax-fare" data-pax-final-breakdown></dl></details>
+                <details class="pax-promo"><summary class="eh-textlink">Final fare breakdown<x-eh.icon name="chevron-down" /></summary><dl class="pax-fare" data-pax-final-breakdown></dl></details>
                 <div class="pax-section" data-pax-payment-state>
                     <p class="pax-rule"><span class="eh-badge" data-pax-pay-badge>{{ $overview['payment']['label'] }}</span> <span data-pax-pay-method>{{ $overview['payment']['method_label'] }}</span></p>
                     <div class="pax-actions pax-actions--row">
@@ -203,7 +181,7 @@
                 <p class="pax-rule" data-pax-rated @if(! $overview['rated']) hidden @endif><x-eh.icon name="check" size="16" /> Thanks, your rating is saved.</p>
 
                 <details class="pax-promo pax-section" data-pax-report-box @if(! ($r['driver'] ?? null)) hidden @endif>
-                    <summary>Report a problem with this trip</summary>
+                    <summary class="eh-textlink"><x-eh.icon name="flag" />Report a problem with this trip</summary>
                     <form class="pax-form" data-pax-report>
                         <x-eh.select label="What happened?" name="category" :options="['unsafe_driving' => 'Unsafe driving', 'harassment' => 'Harassment', 'abusive_language' => 'Abusive language', 'discrimination' => 'Discrimination', 'intoxication' => 'Driver seemed impaired', 'vehicle_mismatch' => 'The car did not match', 'driver_mismatch' => 'The driver did not match', 'damage' => 'Damage', 'fraud' => 'Fraud or overcharging', 'threatening_behaviour' => 'Threatening behaviour', 'other' => 'Something else']" />
                         <x-eh.field label="Tell us more" name="description" type="textarea" :optional="true" />

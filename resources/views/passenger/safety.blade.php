@@ -34,32 +34,20 @@
                         <x-eh.button variant="secondary" icon="share" data-pax-share-open>Share this trip</x-eh.button>
                         <x-eh.button variant="ghost" :href="route('ride.trip', $activeRide)">Open the ride</x-eh.button>
                     </div>
-                    <div class="pax-section" data-pax-share-box hidden>
-                        <h3 class="pax-h3">Trip share link</h3>
-                        <p class="pax-rule">Anyone with this link sees your driver's first name, the car, the trip's progress and an approximate position until the trip ends.</p>
-                        <div class="pax-share-url" style="margin-top: var(--eh-space-2)">
-                            <label class="eh-sr-only" for="pax-share-url">Share link</label>
-                            <input class="eh-input" id="pax-share-url" readonly data-pax-share-url>
-                            <x-eh.icon-button icon="copy" label="Copy link" data-pax-share-copy />
-                        </div>
-                        <div class="pax-actions pax-actions--row">
-                            <x-eh.button size="sm" icon="share" data-pax-share-native hidden>Send with another app</x-eh.button>
-                            <x-eh.button size="sm" variant="ghost" icon="close" data-pax-share-revoke>Revoke link</x-eh.button>
-                        </div>
-                    </div>
+                    @include('passenger.partials.share-box', ['heading' => 'h3'])
                 </div>
             </section>
         @endif
 
         <section aria-labelledby="safety-contacts">
             <h2 id="safety-contacts">Trusted contacts</h2>
-            <p class="pax-lead">Up to five people we email if you press SOS or ask for help during a check-in. Each one confirms by email first; until then they get nothing.</p>
+            <p class="pax-lead">Up to five people we {{ $smsConfigured ? 'email and text' : 'email' }} if you press SOS or ask for help during a check-in. Each one confirms by email first; until then they get nothing.</p>
             <ul class="eh-list" data-pax-contacts aria-live="polite" aria-busy="true"><li><x-eh.skeleton :lines="2" label="Loading your contacts" /></li></ul>
             <form class="eh-panel pax-form pax-section" data-pax-contact-form>
                 <h3 class="pax-h3" style="margin:0">Add a contact</h3>
                 <x-eh.field label="Name" name="name" id="contact-name" />
                 <x-eh.field label="Email" name="email" type="email" id="contact-email" />
-                <x-eh.field label="Mobile number" name="phone" type="tel" id="contact-phone" :optional="true" hint="Used for SMS alerts only once an SMS provider is set up." />
+                <x-eh.field label="Mobile number" name="phone" type="tel" id="contact-phone" :optional="true" :hint="$smsConfigured ? 'We text this number too if you press SOS.' : 'SMS alerts are off: the operator has not set up an SMS provider. We email your contacts.'" />
                 <x-eh.field label="Relationship" name="relationship" id="contact-relationship" :optional="true" />
                 <p class="pax-field__status" data-pax-contact-status role="status"></p>
                 <div><x-eh.button type="submit" icon="plus">Add contact</x-eh.button></div>
