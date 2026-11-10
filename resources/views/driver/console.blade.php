@@ -80,6 +80,9 @@
                             <li @if($line['waiting']) data-waiting @endif><x-eh.icon :name="$line['waiting'] ? 'clock' : 'alert'" /><span>{{ $line['text'] }}</span></li>
                         @endforeach
                     </ul>
+                    @if (collect($eligibility['reasons'])->pluck('code')->intersect(['vehicle_out_of_service', 'vehicle_retired', 'fleet_vehicle_unassigned'])->isNotEmpty())
+                        <p class="dr-note">Only your fleet owner can put this vehicle back on the road or give you another one.</p>
+                    @endif
                     <div class="dr-checks__actions">
                         @if (collect($eligibility['reasons'])->contains(fn ($r) => str_starts_with($r['code'], 'document')))
                             <x-eh.button size="driver" :href="route('drive.documents')" icon="document-check" block>Fix my documents</x-eh.button>

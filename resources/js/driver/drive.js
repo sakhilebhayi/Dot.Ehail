@@ -34,6 +34,7 @@ const state = {
     shownOfferId: null,
     stopCountdown: null,
     earnings: {},
+    riders: {},
     routeFor: null,
     map: null,
 };
@@ -607,7 +608,13 @@ function renderTrip() {
     const target = tripTarget(ride);
     setText('[data-dr-stop-label]', stage === 'in_progress' ? 'Drop-off' : stage === 'arrived' ? 'At the pickup' : 'Pickup');
     setText('[data-dr-stop-address]', target?.address || 'Address not given');
-    setText('[data-dr-passenger]', ride.passenger?.first_name ? `${ride.passenger.first_name} · ${paymentLabel(ride.payment_method)}` : paymentLabel(ride.payment_method));
+    const rider = state.riders[ride.id];
+    if (rider === undefined) loadRider(ride.id);
+    const about = rider?.on_behalf ? [rider.guest ? 'guest' : null, rider.account || null].filter(Boolean) : [];
+    const who = rider?.on_behalf
+        ? `Pick up ${rider.name}${about.length ? ` (${about.join(', ')})` : ''}, booked by ${ride.passenger?.first_name || 'their company'}${rider.phone_masked ? `, phone ${rider.phone_masked}` : ''}`
+        : ride.passenger?.first_name;
+    setText('[data-dr-passenger]', who ? `${who} · ${paymentLabel(ride.payment_method)}` : paymentLabel(ride.payment_method));
 
     // Distance: the road route when a routing provider is configured, else the straight line, labelled.
     const fix = state.lastFix;
@@ -631,6 +638,17 @@ function renderTrip() {
     if (stage === 'arriving') renderArrival(distance);
     if (stage === 'arrived') renderWaiting();
     updateMap();
+}
+
+async function loadRider(id) {
+    state.riders[id] = null;
+    try {
+        const { data } = await api(fill(urls.rider, id));
+        state.riders[id] = data;
+        if (state.ride?.id === id) renderTrip();
+    } catch {
+        state.riders[id] = { on_behalf: false };
+    }
 }
 
 async function loadRoute(key, from, to) {

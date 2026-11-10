@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Driver;
 
+use App\Domain\Business\RiderDetails;
 use App\Domain\Dispatch\Dispatcher;
 use App\Domain\Dispatch\Models\RideOffer;
 use App\Domain\Pricing\Models\RideFare;
@@ -179,5 +180,37 @@ class DriverApiTest extends TestCase
 
         $this->actingAs($driver)->getJson(route('ehail.dispatch.driver.feed'))->assertOk()->assertJsonPath('offer.id', $offer->id);
         $this->actingAs($bystander)->getJson(route('ehail.dispatch.driver.feed'))->assertOk()->assertJsonPath('offer', null);
+    }
+
+    public function test_a_business_rider_is_shown_to_the_assigned_driver_with_a_masked_phone(): void
+    {
+        [$driver, $ride] = $this->assigned();
+        $this->app->instance(RiderDetails::class, new class extends RiderDetails
+        {
+            public function forRide(int $rideId): ?array
+            {
+                return ['on_behalf' => true, 'guest' => true, 'name' => 'Naledi Khumalo', 'phone' => '+27 82 555 4567', 'account' => 'Acme Logistics'];
+            }
+        });
+
+        $this->actingAs($driver)->getJson(route('drive.api.rider', $ride))
+            ->assertOk()
+            ->assertJsonPath('name', 'Naledi Khumalo')
+            ->assertJsonPath('phone_masked', '•••• 4567')
+            ->assertJsonMissingPath('phone');
+
+        $intruder = $this->onlineDriverAt(...$this->northOfPickup(900));
+        $this->actingAs($intruder)->getJson(route('drive.api.rider', $ride))->assertNotFound();
+
+        // Once the ride no longer holds the driver, the rider's details are gone too.
+        $ride->forceFill(['status' => 'completed', 'active_driver_id' => null, 'completed_at' => now()])->save();
+        $this->actingAs($driver)->getJson(route('drive.api.rider', $ride))->assertNotFound();
+    }
+
+    public function test_an_ordinary_ride_has_no_rider_on_behalf(): void
+    {
+        [$driver, $ride] = $this->assigned();
+
+        $this->actingAs($driver)->getJson(route('drive.api.rider', $ride))->assertOk()->assertJsonPath('on_behalf', false);
     }
 }

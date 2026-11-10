@@ -50,6 +50,9 @@
                             <li @if($line['waiting']) data-waiting @endif><x-eh.icon :name="$line['waiting'] ? 'clock' : 'alert'" /><span>{{ $line['text'] }}</span></li>
                         @endforeach
                 </ul>
+                    @if (collect($eligibility['reasons'])->pluck('code')->intersect(['vehicle_out_of_service', 'vehicle_retired', 'fleet_vehicle_unassigned'])->isNotEmpty())
+                        <p class="dr-note">Only your fleet owner can put this vehicle back on the road or give you another one.</p>
+                    @endif
             @endif
             @unless ($eligibility['documents_enforced'])
                 <p class="dr-note">Document checks are switched off by the operator for a transition period; your profile and vehicle are still checked.</p>

@@ -45,4 +45,5 @@ Route::prefix('drive/api')->name('drive.api.')->middleware('throttle:ehail-drive
     Route::get('/offers/{offer}/earnings', [DriverApiController::class, 'offerEarnings'])->name('offer-earnings');
     Route::post('/rides/{ride}/arrived', [DriverApiController::class, 'arrived'])->name('arrived');
     Route::get('/rides/{ride}/summary', [DriverApiController::class, 'summary'])->name('summary');
+    Route::get('/rides/{ride}/rider', [DriverApiController::class, 'rider'])->name('rider');
 });

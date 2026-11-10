@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Driver;
 
+use App\Domain\Business\RiderDetails;
 use App\Domain\Dispatch\Contracts\DriverLocator;
 use App\Domain\Dispatch\Dispatcher;
 use App\Domain\Dispatch\Exceptions\DispatchRefused;
@@ -113,6 +114,32 @@ class DriverApiController extends Controller
         }
 
         return response()->json($feed->forDriver($driver)['body'] + ['arrival_check' => $check]);
+    }
+
+    /**
+     * Who to pick up on a business ride booked for someone else (the booker is the passenger of record). Only for
+     * the assigned driver while the ride holds the driver; the phone is shown masked, as in the business portal
+     * (docs/R46_BUSINESS.md): the booker's app and support hold the full number.
+     */
+    public function rider(Request $request, Ride $ride, RiderDetails $riders): JsonResponse
+    {
+        abort_unless($ride->driver_id !== null && $ride->driver_id === $request->user()->id && $ride->statusEnum()->holdsDriver(), 404);
+
+        $details = $riders->forRide($ride->id);
+
+        if ($details === null) {
+            return response()->json(['on_behalf' => false]);
+        }
+
+        $digits = preg_replace('/\D/', '', (string) $details['phone']);
+
+        return response()->json([
+            'on_behalf' => true,
+            'guest' => $details['guest'],
+            'name' => $details['name'],
+            'account' => $details['account'],
+            'phone_masked' => strlen($digits) >= 4 ? '•••• '.substr($digits, -4) : null,
+        ]);
     }
 
     public function summary(Request $request, Ride $ride): JsonResponse

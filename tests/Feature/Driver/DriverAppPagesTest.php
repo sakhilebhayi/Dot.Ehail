@@ -253,6 +253,20 @@ class DriverAppPagesTest extends TestCase
         $this->actingAs($me)->get('/drive')->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(), usb=()');
     }
 
+    public function test_a_vehicle_the_fleet_took_out_of_service_is_stated_plainly(): void
+    {
+        [$me, , $vehicle] = $this->makeVerifiedDriver();
+        $vehicle->forceFill(['out_of_service_at' => now(), 'out_of_service_reason' => 'brake service'])->save();
+
+        $this->actingAs($me)->get('/drive')->assertOk()
+            ->assertSee('Your fleet has taken this vehicle out of service (brake service).')
+            ->assertSee('Only your fleet owner can put this vehicle back on the road');
+
+        $this->actingAs($me)->postJson(route('ehail.dispatch.driver.online'))
+            ->assertForbidden()
+            ->assertJsonPath('error', 'vehicle_out_of_service');
+    }
+
     private function earning(User $driver, int $fare, int $commission, int $net): DriverEarning
     {
         static $n = 0;

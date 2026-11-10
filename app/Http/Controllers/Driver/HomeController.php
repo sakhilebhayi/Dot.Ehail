@@ -95,6 +95,7 @@ class HomeController extends Controller
                 'no_show' => route('ehail.dispatch.driver.rides.no-show', ['ride' => '__ID__']),
                 'cancel' => route('ehail.dispatch.driver.rides.cancel', ['ride' => '__ID__']),
                 'summary' => route('drive.api.summary', ['ride' => '__ID__']),
+                'rider' => route('drive.api.rider', ['ride' => '__ID__']),
                 'cash' => route('money.driver.cash-received', ['ride' => '__ID__']),
                 'sos' => route('safety.rides.sos', ['ride' => '__ID__']),
                 'trip' => route('drive.trips.show', ['ride' => '__ID__']),

@@ -18,7 +18,7 @@ Owner: driver agent (wave 2), branch `feat/r46-driver`, decisions D-900 to D-916
 | `/drive/safety`, `/drive/safety/cases/{case}` | `drive.safety`, `drive.safety.case` | Emergency numbers, SOS on the current trip, documents that need attention (expiry alerts), support cases and replies, safety reports raised, ratings received with appeal. |
 | `/drive/account` | `drive.account` | Vehicles, documents, payouts, help, onboarding, notifications inbox and settings (comms), this phone's settings (navigation app, offer sound, vibration), cash trips opt-in (money), profile. |
 
-JSON owned here (`/drive/api`, limiter `ehail-driver-api` 60/min): `GET offers/{offer}/earnings` (pricing's split of the ride's quoted fare for this driver: fare, tolls, deductions with the commission detail, net; `available=false` or `net=null` with the reason when there is no snapshot or plan), `POST rides/{ride}/arrived` (D-902), `GET rides/{ride}/summary` (`TripSummary`). Each answers 404 for anything that is not this driver's.
+JSON owned here (`/drive/api`, limiter `ehail-driver-api` 60/min): `GET rides/{ride}/rider` (business rides booked for someone else: the rider's name, guest flag, company and the phone masked as in the business portal, only for the assigned driver while the ride holds the driver, from `App\Domain\Business\RiderDetails`; shown on the trip screen as "Pick up Naledi (guest, Acme), booked by ..., phone •••• 4567"), `GET offers/{offer}/earnings` (pricing's split of the ride's quoted fare for this driver: fare, tolls, deductions with the commission detail, net; `available=false` or `net=null` with the reason when there is no snapshot or plan), `POST rides/{ride}/arrived` (D-902), `GET rides/{ride}/summary` (`TripSummary`). Each answers 404 for anything that is not this driver's.
 
 ## 2. The console
 
@@ -41,7 +41,7 @@ State comes only from `GET /api/ehail/driver/feed` (ETag, `Retry-After`: 2 s onl
 
 - PHP: `tests/Feature/Driver/DriverAppPagesTest` (15) and `DriverApiTest` (8): guests, not registered, pending, verified vs unverified console, document chips and reasons, upload as JSON and plain form, earnings and payouts only the driver's own (another driver's payout 404), bank account masked and honest verification without Paystack, trips only own (another's 404), cash opt-in, safety page limits and SOS only on a trip, independent application, legacy vehicles in the driver shell, geolocation policy header; offer earnings from the pricing split (no snapshot, no plan, plan), another driver cannot read or accept the offer, arrival within tolerance, far arrival needs confirmation and is audited, tolerance includes accuracy up to the cap, another driver cannot act on or read the ride, summary with adjustments and split, feed carries only the driver's own offer. Minimal-distraction mode is a UI rule and is not tested as security (the server ignores it by design).
 - JS: `tests/js/driver-{countdown,throttle,motion,pin}.test.mjs` (19): server-clock countdown and expiry, location throttling (interval, accuracy, batching, Retry-After, saver), speed-based mode with hysteresis and derived speed, PIN keypad and lock, destination area, money formatting, navigation links, preferences storage failure.
-- Suite after merging the integrated trunk (integration + comms): PHP 1189 tests, 1181 passed, 8 skipped, 0 failed (run with `EHAIL_ROUTING_DRIVER=none` because this worktree's local `.env` pointed routing at the dev stub); JS 50 passed. `view:cache` and `route:cache` pass.
+- Suite after merging the trunk with integration, comms, business and fleet: PHP 1273 tests, 1265 passed, 8 skipped, 0 failed (driver tests: 26); JS 50 passed (driver: 19). Before this branch the merged trunk had 1247 PHP tests (business doc) and 31 JS tests. `view:cache` and `route:cache` pass.
 
 ## 5. Browser walkthrough (what was clicked)
 
@@ -57,10 +57,15 @@ Headless Chrome (playwright-core from the installed Playwright CLI, scripts in t
 
 Not exercised in a browser: real push (comms), Paystack card and bank verification (not configured; the honest unconfigured states were shown), an actual phone in a car (background behaviour is stated, not solved).
 
+Fleet: the go-online gate now includes the fleet's reasons (`vehicle_out_of_service` with the fleet's reason, `vehicle_retired`, `fleet_vehicle_unassigned`); the console and checklist show them as written, with "Only your fleet owner can put this vehicle back on the road or give you another one.", and a refused go-online (403 `vehicle_out_of_service`) shows dispatch's message and then the list (tested).
+
+After the last trunk merge (business, fleet) every driver page was opened again at 390 px: all 200, no overflow, one h1, comms bell present; go online and offline worked against the integrated backend.
+
 ## 6. Known limits and notes for other owners
 
 - A web app cannot receive offers in the background or with the screen off; stated on screen (D-907). A native wrapper or Web Push for offers would be an owner decision (comms sends none for offers by design).
 - Money: statement days run in UTC (D-913).
+- Business: the rider's full phone number is not shown to the driver (masked, per the business portal policy); if drivers need to call guests, a masked-call or relay service is an owner decision.
 - Ops: no ops UI was on this branch, so approvals in the walkthrough used the safety and money ops APIs.
 - `DriverActivitySource` measures no online time, so earnings never show it.
 - The vehicle "Change" link goes to the vehicles page (activation there); there is no in-console vehicle picker because dispatch uses the one active vehicle.
