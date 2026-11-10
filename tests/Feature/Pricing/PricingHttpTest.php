@@ -63,14 +63,14 @@ class PricingHttpTest extends TestCase
         $response = $this->postJson(route('pricing.estimate'), $this->trip)->assertOk()->assertJsonPath('kind', 'estimate');
         $this->assertNotEmpty($response->json('options'));
         $this->assertSame([], collect($response->json('unavailable'))->where('reason', 'no_supply')->values()->all());
-        $this->assertSame(['not_checked'], collect($response->json('options'))->pluck('supply')->unique()->values()->all());
+        // D-1902 (supersedes D-1603's "not_checked"): every option reports who is nearby; nobody here.
+        $this->assertSame(['none'], collect($response->json('options'))->pluck('supply')->unique()->values()->all());
         $this->assertStringContainsString('A driver is not guaranteed', $response->json('options.0.wording'));
 
-        $this->postJson(route('pricing.estimate'), $this->trip + ['category' => 'economy'])->assertOk()->assertJsonPath('supply', 'not_checked');
-
-        // A signed-in passenger's bookable quote still refuses a category nobody can drive.
+        // A signed-in passenger's bookable quote still prices (D-1902); it is the request for now that is refused
+        // with 409 no_supply (tests/Feature/Acceptance/QuotingWithoutSupplyTest).
         $this->actingAs(User::factory()->create())->postJson(route('pricing.quotes.store'), $this->trip + ['category' => 'economy'])
-            ->assertOk()->assertJsonPath('available', false)->assertJsonPath('reason', 'no_supply');
+            ->assertOk()->assertJsonPath('available', true);
     }
 
     public function test_public_estimate_is_rate_limited_and_validated(): void
