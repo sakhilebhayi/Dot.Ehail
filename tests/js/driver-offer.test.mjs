@@ -17,7 +17,7 @@ test('the offer lines list every deduction and add up to what the driver earns',
     const { rows, reconciles } = offerLines(jury);
     assert.deepEqual(rows.map((r) => [r.label, r.minor]), [
         ['Fare (estimate)', 6400],
-        ['Booking fee, kept by Dot.Ehail', -300],
+        ['Booking fee, kept by the platform', -300],
         ['Commission', -1220],
         ['You earn', 4880],
     ]);
@@ -30,7 +30,7 @@ test('the offer lines list every deduction and add up to what the driver earns',
 test('an older payload without the kept list still shows the difference as its own line', () => {
     const { rows, reconciles } = offerLines({ ...jury, kept_by_platform: undefined, commission_rule: undefined, commissionable_minor: undefined });
     assert.ok(reconciles);
-    assert.deepEqual(rows[1], { key: 'kept:other', label: 'Fees, kept by Dot.Ehail', minor: -300 });
+    assert.deepEqual(rows[1], { key: 'kept:other', label: 'Fees, kept by the platform', minor: -300 });
     assert.equal(rows.find((r) => r.key === 'commission').detail, '20.00% of the trip fare');
 });
 
@@ -50,7 +50,7 @@ test('a promotion the platform pays shows as an addition', () => {
     const data = { ...jury, fare_minor: 5400, kept_by_platform: [{ code: 'booking_fee', label: 'Booking fee', amount_minor: 300 }, { code: 'promotion:WELCOME', label: 'Promotion', amount_minor: -1000 }] };
     const { rows, reconciles } = offerLines(data);
     assert.ok(reconciles);
-    assert.deepEqual(rows[2], { key: 'kept:promotion:WELCOME', label: 'Promotion, paid by Dot.Ehail', minor: 1000 });
+    assert.deepEqual(rows[2], { key: 'kept:promotion:WELCOME', label: 'Promotion, paid by the platform', minor: 1000 });
 });
 
 test('no plan: the net is "not configured", not zero', () => {
@@ -107,4 +107,19 @@ test('the chime needs a tap to unlock and says when audio is missing', () => {
     chime.unlock();
     assert.equal(made, 1);
     assert.equal(createChime({}).supported, false);
+});
+
+test('the pricing walk (lines) is used as it comes when the server sends it', () => {
+    const data = { ...jury, lines: [
+        { code: 'not_earned:booking_fee', label: 'Booking fee, kept by the platform', amount_minor: -300, detail: 'Not part of your earnings and not commissioned' },
+        { code: 'commission', label: 'Platform commission', amount_minor: -1220, detail: '20% of R61.00 (fare before fees)' },
+    ] };
+    const { rows, reconciles } = offerLines(data);
+    assert.ok(reconciles);
+    assert.deepEqual(rows.map((r) => [r.label, r.minor, r.detail ?? null]), [
+        ['Fare (estimate)', 6400, null],
+        ['Booking fee, kept by the platform', -300, null],
+        ['Commission', -1220, '20% of R61.00 (fare before fees)'],
+        ['You earn', 4880, null],
+    ]);
 });

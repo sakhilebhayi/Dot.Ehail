@@ -35,7 +35,7 @@ export function commissionDetail(data) {
 /**
  * The lines of the offer's earnings, in reading order, each with a signed amount in minor units:
  *   Fare (estimate)                 R57.00
- *   Booking fee, kept by Dot.Ehail  -R3.00
+ *   Booking fee, kept by the platform  -R3.00
  *   Commission, 20% of R54.00      -R10.80
  *   You earn                        R43.20   (total)
  * Tolls are part of the fare and come back to the driver whole, so they are a note on the fare line, not a sum line.
@@ -46,12 +46,25 @@ export function offerLines(data) {
     const rows = [{ key: 'fare', label: 'Fare (estimate)', minor: data.fare_minor, note: data.tolls_minor ? `includes ${formatMoney(data.tolls_minor, cur)} tolls, paid back to you` : null }];
     if (!data.available) return { rows, net: null, reconciles: true, currency: cur };
 
+    // Preferred: the pricing domain's own walk from fare to net (pmoney, D-1901), each line signed, the commission's
+    // detail naming its base. Only the commission keeps its detail on the card; the fee lines' labels say enough.
+    if (Array.isArray(data.lines)) {
+        data.lines.forEach((l) => rows.push(l.code === 'commission'
+            ? { key: 'commission', label: 'Commission', detail: l.detail || commissionDetail(data), minor: l.amount_minor }
+            : { key: l.code, label: l.label, minor: l.amount_minor }));
+        const net = data.net_minor ?? null;
+        const sum = rows.reduce((s, r) => s + (Number(r.minor) || 0), 0);
+        rows.push({ key: 'net', label: 'You earn', minor: net, total: true });
+
+        return { rows, net, reconciles: net === null || sum === net, currency: cur };
+    }
+
     const kept = Array.isArray(data.kept_by_platform)
         ? data.kept_by_platform
         : Number.isFinite(data.driver_gross_minor) && Number.isFinite(data.fare_minor) && data.fare_minor !== data.driver_gross_minor
           ? [{ code: 'other', label: 'Fees', amount_minor: data.fare_minor - data.driver_gross_minor }]
           : [];
-    kept.forEach((k) => rows.push({ key: `kept:${k.code}`, label: k.amount_minor < 0 ? `${k.label}, paid by Dot.Ehail` : `${k.label}, kept by Dot.Ehail`, minor: -k.amount_minor }));
+    kept.forEach((k) => rows.push({ key: `kept:${k.code}`, label: k.amount_minor < 0 ? `${k.label}, paid by the platform` : `${k.label}, kept by the platform`, minor: -k.amount_minor }));
 
     (data.deductions || []).forEach((d) => {
         if (d.code === 'commission') rows.push({ key: 'commission', label: 'Commission', detail: commissionDetail(data), minor: -d.amount_minor });

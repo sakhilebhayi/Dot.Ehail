@@ -165,7 +165,7 @@ html.dr-offer-open { overflow: hidden; }
 .dr-offer {
     --dr-offer-w: 44rem;
     position: fixed; inset: 0; z-index: 60; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden;
-    height: 100vh; height: 100dvh;
+    height: 100vh; height: 100dvh; /* taste-skill-ignore: 100vh is only the fallback for browsers without dvh */
     background: var(--eh-ground); color: var(--eh-ink);
     padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) 0 env(safe-area-inset-left, 0);
 }
@@ -186,7 +186,7 @@ html.dr-offer-open { overflow: hidden; }
 .dr-offer__money, .dr-offer__trip { display: grid; gap: var(--eh-space-3); align-content: start; min-width: 0; }
 .dr-offer__earn { display: grid; gap: 2px; padding: var(--eh-space-3) var(--eh-space-4) var(--eh-space-4); border-radius: var(--eh-radius-lg); background: var(--eh-signal); color: var(--eh-signal-ink); }
 .dr-offer__net-label { margin: 0; font-weight: 600; }
-.dr-offer__net { margin: 0; font-family: var(--eh-font-display); font-size: clamp(2.75rem, min(15vw, 9vh), 4.25rem); font-weight: 700; line-height: 0.95; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.dr-offer__net { margin: 0; font-family: var(--eh-font-display); font-size: clamp(3rem, min(15vw, 9vh), 4.75rem); font-weight: 700; line-height: 0.95; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 .dr-offer__plan { margin: 0; font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
 
 /* The fare's arithmetic, compact: each line a label (its basis under it) and a signed amount; the total ruled off. */
@@ -218,7 +218,7 @@ html.dr-offer-open { overflow: hidden; }
 .dr-offer__actions {
     display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--eh-space-3);
     padding: var(--eh-space-3) var(--eh-gutter) calc(var(--eh-space-3) + env(safe-area-inset-bottom, 0));
-    border-top: 1px solid var(--eh-rule); background: var(--eh-ground);
+    background: var(--eh-surface); /* a tone step, not a rule, separates the pinned answers from the scrolling body */
 }
 .dr-offer__actions > * { width: 100%; max-width: 100%; }
 .dr-offer__actions { padding-inline: max(var(--eh-gutter), calc((100% - var(--dr-offer-w)) / 2 + var(--eh-gutter))); }
@@ -254,7 +254,7 @@ html.dr-offer-open { overflow: hidden; }
     .dr-offer__body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--eh-space-6); max-width: 64rem; }
     .dr-offer__body > .dr-offer__plan { grid-column: 1 / -1; }
     .dr-offer__clock { max-width: 64rem; }
-    .dr-offer__net { font-size: clamp(2.25rem, 12vh, 3.5rem); }
+    .dr-offer__net { font-size: clamp(2.25rem, 12vh, 3rem); }
     .dr-accept, .dr-decline { min-height: 60px; }
     .dr-accept { font-size: var(--eh-text-2xl); }
     .dr-offer__actions { padding-top: var(--eh-space-2); padding-bottom: calc(var(--eh-space-2) + env(safe-area-inset-bottom, 0)); }
@@ -427,3 +427,10 @@ html[data-moving="true"] .eh-statebar__sub { display: none; }
 .eh-drive input[type="date"]::-webkit-calendar-picker-indicator:hover { background: var(--eh-surface-2); opacity: 1; }
 .eh-drive .dr-panel .eh-btn--driver { font-size: var(--eh-text-lg); }
 .dr-upload__verb { margin: 0 0 var(--eh-space-2); font-weight: 700; }
+
+/* Night (jury 41b, 53b): the safety card was an inverted pale slab in a dark car. At night it is a dark card held by a
+   road-marking yellow rule, the call buttons stay yellow; by day it keeps the kit's inverted look. */
+:root[data-theme="dark"] .eh-drive .eh-banner--safety { background: var(--eh-surface); color: var(--eh-ink); outline: 2px solid var(--eh-signal); outline-offset: -2px; }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .eh-drive .eh-banner--safety { background: var(--eh-surface); color: var(--eh-ink); outline: 2px solid var(--eh-signal); outline-offset: -2px; }
+}
