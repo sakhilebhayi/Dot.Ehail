@@ -17,8 +17,9 @@
                 </div>
             </div>
             @php
-                $from = \App\Support\Ui\PlaceNames::for($approval->pickup_address, $approval->pickup_lat, $approval->pickup_lng);
-                $to = \App\Support\Ui\PlaceNames::for($approval->dropoff_address, $approval->dropoff_lat, $approval->dropoff_lng);
+                // Waiting approvals are few: a pinned point gets one looked-up name (cached by the geocoder).
+                $from = \App\Support\Ui\PlaceNames::for($approval->pickup_address, $approval->pickup_lat, $approval->pickup_lng, lookup: true);
+                $to = \App\Support\Ui\PlaceNames::for($approval->dropoff_address, $approval->dropoff_lat, $approval->dropoff_lng, lookup: true);
                 $stops = ['pickup' => ['lat' => (float) $approval->pickup_lat, 'lng' => (float) $approval->pickup_lng], 'dropoff' => ['lat' => (float) $approval->dropoff_lat, 'lng' => (float) $approval->dropoff_lng]];
             @endphp
             <div class="bz-queue__place">

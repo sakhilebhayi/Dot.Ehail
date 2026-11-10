@@ -178,7 +178,8 @@ a.fl-name:hover { text-decoration: underline; text-underline-offset: 3px; }
     .fl-table--stack tfoot { display: block; }
     .fl-table--stack tr { grid-template-columns: minmax(0, 1fr); row-gap: 2px; }
     .fl-table--stack td:first-child { font-weight: 600; padding-bottom: var(--eh-space-1) !important; }
-    .fl-table--stack td.num[data-label] { display: flex; justify-content: space-between; align-items: baseline; gap: var(--eh-space-3); }
-    .fl-table--stack td.num[data-label]::before { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
-    .fl-table--stack tfoot td { font-weight: 700; }
+    .fl-table--stack td[data-label]:is(.num, :has(> .fl-val)) { display: flex; justify-content: space-between; align-items: baseline; gap: var(--eh-space-3); }
+    .fl-table--stack td[data-label]:is(.num, :has(> .fl-val))::before { font-size: var(--eh-text-sm); color: var(--eh-ink-2); flex: none; }
+    .fl-table--stack td[data-label] .fl-val { text-align: right; min-width: 0; }
+    .fl-table--stack tfoot td { font-weight: 700; border-top: 0 !important; }
 }

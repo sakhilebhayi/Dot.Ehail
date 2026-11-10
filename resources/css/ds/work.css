@@ -30,8 +30,8 @@
 .eh-pagehead > .fl-head { margin-bottom: 0; }
 /* Titles get the width of the header (a tariff name wrapped at 72 characters of 14px text, jury 55b); the finding
    sentence under it keeps a reading measure. */
-.ops-head__text { max-width: none; flex: 1 1 30rem; }
-.ops-head__finding { max-width: 90ch; }
+.ops .ops-head__text { max-width: none; flex: 1 1 30rem; }
+.ops .ops-head__finding { max-width: 90ch; }
 /* Long titles (a tariff, an incident) keep their badges on the title's own line and wrap as a block */
 .ops-head h1 .eh-badge { font-family: var(--eh-font-ui); vertical-align: 0.3em; margin-left: var(--eh-space-1); letter-spacing: 0; }
 @media (max-width: 599px) {
@@ -66,8 +66,11 @@
 
 /* Small maps of a trip (business approvals, incidents): a frame the geo map mounts in, lazily */
 .eh-stopmap { position: relative; height: 9.5rem; border-radius: var(--eh-radius-sm); overflow: hidden; background: var(--eh-map-land); }
-.eh-stopmap [data-eh-map-canvas] { position: absolute; inset: 0; }
+/* The geo map gives its canvas a 16rem floor; inside a stop map the frame sets the size. */
+.eh-stopmap [data-eh-map-canvas], .eh-stopmap [data-eh-map-canvas].eh-map { position: absolute; inset: 0; height: auto; min-height: 0; border-radius: 0; }
 .eh-stopmap--tall { height: 20rem; }
+.eh-stopmap:not(.eh-stopmap--tall) .leaflet-control-zoom { display: none; }
+.eh-stopmap .leaflet-control-attribution { font-size: 10px; line-height: 1.4; white-space: nowrap; }
 .eh-stopmap__status { position: absolute; left: var(--eh-space-2); bottom: var(--eh-space-2); z-index: 500; margin: 0; padding: 2px 8px; border-radius: var(--eh-radius-sm); background: var(--eh-surface); color: var(--eh-ink-2); font-size: var(--eh-text-xs); }
 .eh-stopmap__status:empty { display: none; }
 

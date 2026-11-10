@@ -41,8 +41,26 @@ async function draw(frame) {
     }
 
     const valid = points.filter((p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lng));
-    if (valid.length === 1) map.map.setView([valid[0].lat, valid[0].lng], 15, { animate: false });
-    else if (valid.length > 1) map.map.fitBounds(L_bounds(valid), { padding: [24, 24], maxZoom: 15, animate: false });
+    // A small map is a picture of where, not a place to pan around: no wheel zoom stealing the page's scroll.
+    if (!frame.classList.contains('eh-stopmap--tall')) {
+        map.map.scrollWheelZoom.disable();
+        // The credit stays; the "report a map issue" link does not fit a 15rem frame and stays on the full maps.
+        const report = [...frame.querySelectorAll('.leaflet-control-attribution a')].find((a) => /report a map issue/i.test(a.textContent));
+        if (report) {
+            const bar = report.previousSibling;
+            if (bar?.nodeType === Node.TEXT_NODE) bar.textContent = bar.textContent.replace(/\s*\|\s*$/, '');
+            report.remove();
+        }
+    }
+    const fit = () => {
+        map.invalidateSize();
+        if (valid.length === 1) map.map.setView([valid[0].lat, valid[0].lng], 15, { animate: false });
+        else if (valid.length > 1) map.map.fitBounds(L_bounds(valid), { padding: [28, 28], maxZoom: 15, animate: false });
+    };
+    fit();
+    // The geo map settles its own first view after mounting; fit again once it has.
+    requestAnimationFrame(() => requestAnimationFrame(fit));
+    setTimeout(fit, 400);
     if (status && !valid.length) status.textContent = 'No position was recorded.';
 }
 
