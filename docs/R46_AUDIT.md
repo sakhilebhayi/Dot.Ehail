@@ -47,3 +47,17 @@ Auth/SSO/teams, the lifecycle's locking and audit approach, Paystack webhook ver
 | Route deviation / stops | M | None | Detector + monitor + events for safety |
 | Location privacy | M (undefined) | No rules | Passenger sees assigned driver only during the active ride; passenger live position never stored; 90-day trail retention |
 | Browser permissions | B | Global `Permissions-Policy: geolocation=()` blocks any location feature; CSP would block tiles once enforced | Seams provided (`AllowGeolocation`, `GeoCsp`); global change is a security-owner item |
+### Safety, verification, trust and support (safety agent, 2026-11-10)
+
+| Item | Before | Class before | After this branch |
+|---|---|---|---|
+| Driver documents | 3 fixed types (licence, id, vehicle_inspection), no status, no expiry, no reviewer, fleet owner could open them | P | Per-market configurable types (11 SA defaults), review queue with reasons, expiry warnings and auto-expiry, history, view audit |
+| Go-online gate | Policy checked ownership only; a **pending** driver could toggle `is_online` on | B | `DriverEligibility` with structured reasons; model guard on every path; expired/rejected mandatory document takes the driver offline |
+| Upload security | Extension-based `mimes:` rule, original bytes stored (EXIF/GPS kept) | I | Content sniffing, image re-encode, size and pixel caps, private disks, nosniff/sandbox streaming; no virus scanning (stated) |
+| Passenger safety | Nothing | M | Safety card (verified driver photo, first name, band, vehicle, registration), trusted contacts, trip share, check-ins, SOS |
+| Emergency workflow | Nothing | M | Incidents with timeline, context capture, honest notifications, escalation timers, ops queue, "what we did" |
+| Driver safety | Nothing | M | Passenger facts, private reports, driver SOS, cancellation-pattern flags (review only) |
+| Ratings | One per trip per side, completed only, no moderation | I | Held comments, hide/release, appeals with exclusion, bands, rate limits |
+| Support | Nothing | M | Cases, messages, attachments, SLA, escalation, lost property relay with masking, fare-dispute seam |
+| JSON error rendering | Validation errors on web routes redirected JSON clients | B (for APIs) | JSON when the request expects JSON (D-515) |
+| Legacy toggle | `drivers.toggle-online` flips without checks | B | Still exists (dispatch/driver-app own its replacement); now guarded |

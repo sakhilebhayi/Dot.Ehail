@@ -56,7 +56,7 @@ class DriverController extends Controller
             'driverProfile' => $driverProfile,
             'rides' => $rides,
             'ratingCount' => (clone $received)->count(),
-            'recentRatings' => (clone $received)->whereNotNull('comment')->with('rater')->latest()->limit(10)->get(),
+            'recentRatings' => (clone $received)->whereNotNull('comment')->where('comment_status', 'visible')->with('rater')->latest()->limit(10)->get(),
             // Who left a rating is for the people who run the driver
             // (operators, the fleet owner) -- the driver sees the words, not
             // the names, and no rider can open this page at all.
