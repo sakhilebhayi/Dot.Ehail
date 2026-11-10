@@ -139,6 +139,7 @@
                 <div>
                     <div data-lp-reveal>
                         <h2 class="lp-h2" id="drivers-title">Know what you earn before you accept</h2>
+                        <p class="lp-lede" style="margin-top: var(--eh-space-5)">One commission rate per market, the same on every trip and printed on every statement. The rate is published before launch.</p>
                     </div>
                     <ul class="lp-index" role="tablist" aria-label="For drivers" data-lp-index data-lp-reveal>
                         @foreach ($driverFacts as $i => [$key, $label, $text])

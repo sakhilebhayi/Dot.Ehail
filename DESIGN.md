@@ -44,20 +44,20 @@ colors:
   map-pickup: "#f2c230"
   map-dropoff: "#0f1f19"
   map-driver: "#1d5bd6"
-  night-ground: "#13201b"
-  night-surface: "#1a2823"
-  night-surface-2: "#22322c"
+  night-ground: "#1a2a24"
+  night-surface: "#22342d"
+  night-surface-2: "#2a3d35"
   night-ink: "#e8f0eb"
-  night-ink-2: "#b3c1b9"
-  night-ink-3: "#97a89f"
-  night-primary: "#4fb47f"
+  night-ink-2: "#b8c6be"
+  night-ink-3: "#a0b1a8"
+  night-primary: "#48b17b"
   night-on-primary: "#04120a"
-  night-primary-tint: "#1d4030"
-  night-on-primary-tint: "#a8e3c0"
-  night-stop: "#ff8a7a"
-  night-focus: "#86b3ff"
-  night-map-land: "#121c18"
-  night-map-road: "#22302a"
+  night-primary-tint: "#24493a"
+  night-on-primary-tint: "#b4e8c8"
+  night-stop: "#ff9a8b"
+  night-focus: "#8fbaff"
+  night-map-land: "#182721"
+  night-map-road: "#2a3b34"
   night-map-water: "#0f2a36"
   night-map-park: "#15291c"
 typography:
@@ -342,16 +342,16 @@ Modes: the app shells are Operate surfaces (the tool disappears into the task; c
 
 Strategy: Restrained in the apps (3 to 10 percent colour, nearly all as pale tints of sign green), Committed on the landing footer (a whole field of sign green).
 
-- **Sign green (primary #0b6a3c, night #4fb47f):** the one action colour. Primary buttons, the active tab indicator, route lines, the online state. Never decoration.
-- **Green tint (#d9eedf / night #1d4030):** area work: the active navigation row, the open fare explanation, selected chips.
+- **Sign green (primary #0b6a3c, night #48b17b):** the one action colour. Primary buttons, the active tab indicator, route lines, the online state. Never decoration.
+- **Green tint (#d9eedf / night #24493a):** area work: the active navigation row, the open fare explanation, selected chips.
 - **Road-marking yellow (signal #f2c230):** the stop: pickup marker, current step, destination dot, emergency call buttons, text selection. Always carries dark ink; never text on light ground.
 - **Map paper (ground #f1f4f0):** a cool, slightly green paper. Not cream. Surfaces step by tone (surface, surface-2, surface-3), never by shadow.
 - **State:** go, caution, stop and info each come as a text colour plus a background tint, always paired with a word or icon.
-- **Focus (#1d5bd6 / night #86b3ff):** a 3px ring, at least 3:1 against every ground.
+- **Focus (#1d5bd6 / night #8fbaff):** a 3px ring, at least 3:1 against every ground.
 - **Brand marks (#f1c62f, #9dcb86):** the logo only, never interface colour.
 - **Map palette:** land, roads (major roads in pale marking yellow), water, parks, buildings, labels, route (sign green), pickup (yellow), drop-off (ink), driver (focus blue). The geo agent's map style reads `--eh-map-*`; night values swap automatically.
 
-Every text pair is measured in `docs/R46_DS.md`: body ink 15.4:1 (light) and 14.5:1 (night); secondary inks above 4.9:1; white on sign green 6.7:1; field borders 3.2:1 and up.
+Every text pair is measured in `docs/R46_DS.md`: body ink 15.4:1 (light) and 12.9:1 (night); secondary inks above 4.9:1; white on sign green 6.7:1; field borders 3.2:1 and up.
 
 **Night theme.** Default for the driver app between 18:00 and 06:00 (or whenever the phone is dark): a car interior at night needs less glare and an OLED phone saves battery; by day the driver app follows the phone, because sun on a windscreen needs the light theme. Passengers and operators follow the phone. Everyone can pin Light or Dark in the account menu.
 
