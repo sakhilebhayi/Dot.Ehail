@@ -66,7 +66,7 @@ function draw(result) {
         el('p', { class: 'pax-trip' }, [el('span', { class: 'pax-trip__figure' }, formatKm(route.distance_m)), el('span', { class: 'pax-trip__figure' }, formatMinutes(route.duration_s)), el('span', { class: 'pax-trip__note' }, 'Estimated road distance and driving time.')]),
     ];
     if (result.options.some((o) => o.tariff?.is_example)) {
-        children.push(el('p', { class: 'eh-badge eh-badge--caution', style: 'margin: 0 0 var(--eh-space-3)' }, [icon('info'), 'Example tariff: placeholder prices until real rates are published']));
+        children.push(el('p', { class: 'pax-note' }, [icon('info'), 'Example tariff: placeholder prices until real rates are published']));
     }
 
     for (const option of result.options) {

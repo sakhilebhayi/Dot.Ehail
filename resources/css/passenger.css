@@ -15,12 +15,25 @@
     .pax-stage { height: calc(100dvh - var(--eh-topbar) - var(--eh-tabbar) - env(safe-area-inset-bottom, 0px)); }
 }
 .pax-stage > .eh-mapframe { position: absolute; inset: 0; min-height: 0; }
+.pax-stage .eh-mapframe__canvas.eh-map { position: absolute; inset: 0; height: auto; min-height: 0; }
 .pax-stage .eh-mapframe__status { inset: var(--eh-space-4) var(--eh-space-4) auto var(--eh-space-4); }
 @media (min-width: 1024px) {
     .pax-stage .eh-mapframe__status { left: calc(26rem + var(--eh-space-8)); }
 }
-.pax-stage .eh-sheet { z-index: 40; }
+/* Under the tab bar (30): at half height the sheet's lower part hangs below the viewport and must not cover the tabs. */
+.pax-stage .eh-sheet { z-index: 25; }
 .pax-stage .eh-sheet__body { padding-bottom: var(--eh-space-8); }
+/* At half height the lower half of the sheet hangs below the screen; end the scrolling body at the visible edge so
+   everything in it can be scrolled into view without expanding the sheet. */
+@media (max-width: 1023.98px) {
+    .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - var(--eh-space-4)); }
+    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - var(--eh-tabbar) - var(--eh-space-4)); }
+    .pax-stage .eh-sheet[data-snap="half"] .eh-sheet__body { margin-bottom: calc(var(--pax-sheet-h) / 2); }
+    .pax-stage .eh-sheet[data-snap="peek"] .eh-sheet__body { margin-bottom: calc(var(--pax-sheet-h) - var(--eh-sheet-peek)); }
+}
+@media (min-width: 768px) and (max-width: 1023.98px) {
+    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - var(--eh-space-4)); }
+}
 
 /* The pin people move the map under to set the pickup exactly. */
 .pax-pin {
@@ -104,6 +117,8 @@
 /* ------------------------------------------------------------------ compare categories */
 .pax-trip { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--eh-space-1) var(--eh-space-4); margin: 0 0 var(--eh-space-3); }
 .pax-trip__figure { font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pax-note { display: flex; align-items: flex-start; gap: var(--eh-space-2); --eh-icon: 18px; margin: 0 0 var(--eh-space-3); padding: var(--eh-space-2) var(--eh-space-3); border-radius: var(--eh-radius-sm); background: var(--eh-caution-bg); color: var(--eh-caution); font-size: var(--eh-text-sm); font-weight: 600; }
+.pax-note .eh-icon { flex: none; margin-top: 1px; }
 .pax-trip__note { font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
 
 .pax-options { border: 0; margin: 0; padding: 0; display: grid; gap: var(--eh-space-2); }
@@ -181,7 +196,7 @@
 .pax-pay__text { display: grid; gap: 1px; min-width: 0; }
 .pax-pay__meta { font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
 
-.pax-request { position: sticky; bottom: calc(-1 * var(--eh-space-8)); margin: var(--eh-space-5) calc(-1 * var(--eh-space-5)) calc(-1 * var(--eh-space-8)); padding: var(--eh-space-3) var(--eh-space-5) var(--eh-space-5); background: var(--eh-surface); border-top: 1px solid var(--eh-rule); display: grid; gap: var(--eh-space-2); }
+.pax-request { z-index: 2; position: sticky; bottom: calc(-1 * var(--eh-space-8)); margin: var(--eh-space-5) calc(-1 * var(--eh-space-5)) calc(-1 * var(--eh-space-8)); padding: var(--eh-space-3) var(--eh-space-5) var(--eh-space-5); background: var(--eh-surface); border-top: 1px solid var(--eh-rule); display: grid; gap: var(--eh-space-2); }
 .pax-request__fine { margin: 0; font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
 
 /* ------------------------------------------------------------------ live ride */

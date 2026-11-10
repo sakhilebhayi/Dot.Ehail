@@ -122,7 +122,13 @@ function setDropoff(place, { fit = true } = {}) {
     map?.setDestination(state.dropoff);
     if (fit) fitVisible();
     readiness();
-    if (state.pickup && state.dropoff) announce(`Destination set: ${state.dropoff.label}. Press See prices to compare rides.`);
+    if (state.pickup && state.dropoff) {
+        announce(`Destination set: ${state.dropoff.label}. Press See prices to compare rides.`);
+        setSnap(sheet, 'half');
+        // Fit once the sheet has settled, so the stops land in the part of the map left visible.
+        setTimeout(fitVisible, 380);
+        seePrices?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
 }
 
 function readiness() {
@@ -303,7 +309,7 @@ function renderOptions() {
     );
 
     if (compare.options.some((o) => o.tariff?.is_example)) {
-        children.push(el('p', { class: 'eh-badge eh-badge--caution', style: 'margin: 0 0 var(--eh-space-3)' }, [icon('info'), 'Example tariff: prices are placeholders until the operator publishes real rates']));
+        children.push(el('p', { class: 'pax-note' }, [icon('info'), 'Example tariff: prices are placeholders until the operator publishes real rates']));
     }
 
     const list = el('fieldset', { class: 'pax-options' }, [el('legend', {}, 'Ride types with their full price')]);
@@ -643,6 +649,8 @@ async function start() {
 
     for (const kind of ['pickup', 'dropoff']) {
         const rootEl = sheet.querySelector(`[data-pax-search="${kind}"]`);
+        // Typing needs the room: the results list opens under the field.
+        rootEl.querySelector('input')?.addEventListener('focus', () => setSnap(sheet, 'full'));
         searches[kind] = createPlaceSearch(rootEl, {
             config,
             near: () => state.pickup,
