@@ -34,7 +34,7 @@ use Illuminate\Testing\TestResponse;
  */
 trait AcceptanceWorld
 {
-    use ApprovesDriverDocuments;
+    use CreatesSafetyFixtures;
     use MoneyFixtures;
 
     protected const PICKUP = [-33.9400000, 18.4100000];
@@ -321,6 +321,22 @@ trait AcceptanceWorld
         $this->stage($driver, $rideId, 'arrived')->assertOk();
 
         return (string) $this->passengerFeed($passenger, $rideId)['ride']['pin'];
+    }
+
+    /**
+     * A passenger with a saved card books the standard category; the online driver accepts, drives to the
+     * pickup and starts the trip with the passenger's PIN. Returns the ride id.
+     *
+     * @param  array{0: float, 1: float}  $to
+     */
+    protected function tripUnderWay(User $passenger, User $driver, array $to = self::DESTINATION): int
+    {
+        $quote = $this->quoteFor($passenger, 'standard', self::PICKUP, $to);
+        $rideId = $this->requestRide($passenger, $quote['quote_id'])->assertCreated()->json('ride.id');
+        $pin = $this->acceptAndArrive($driver, $passenger, $rideId);
+        $this->stage($driver, $rideId, 'start', $pin)->assertOk()->assertJsonPath('ride_status', 'in_progress');
+
+        return $rideId;
     }
 
     // ---------------------------------------------------------------- money checks
