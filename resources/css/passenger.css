@@ -18,6 +18,10 @@
 .pax-stage .eh-mapframe__canvas.eh-map { position: absolute; inset: 0; height: auto; min-height: 0; }
 .pax-stage .eh-mapframe__status { inset: var(--eh-space-4) var(--eh-space-4) auto var(--eh-space-4); }
 @media (min-width: 1024px) {
+    /* Docked as a side panel: a snap point from the phone layout must not move it. */
+    .pax-stage .eh-sheet--dock-desktop[data-snap] { transform: none; }
+}
+@media (min-width: 1024px) {
     .pax-stage .eh-mapframe__status { left: calc(26rem + var(--eh-space-8)); }
 }
 /* Under the tab bar (30): at half height the sheet's lower part hangs below the viewport and must not cover the tabs. */
@@ -40,7 +44,7 @@
     position: absolute; z-index: 30; left: 50%; top: 50%;
     width: 40px; height: 52px; margin: -52px 0 0 -20px;
     pointer-events: none; color: var(--eh-map-pickup);
-    filter: drop-shadow(0 2px 2px rgb(15 31 25 / 0.35));
+    filter: drop-shadow(0 2px 2px rgb(15 31 25 / 0.35)); /* taste-skill-ignore: the pin floats over the map */
 }
 .pax-pin svg { width: 100%; height: 100%; display: block; }
 .pax-pin__ring { stroke: var(--eh-signal-ink); }
@@ -70,12 +74,12 @@
 }
 .pax-route__dot {
     justify-self: center; width: 16px; height: 16px; border-radius: 50%;
-    background: var(--eh-map-pickup); box-shadow: 0 0 0 3px var(--eh-surface), 0 0 0 4.5px var(--eh-signal-ink);
+    background: var(--eh-map-pickup); box-shadow: 0 0 0 3px var(--eh-surface), 0 0 0 4.5px var(--eh-signal-ink); /* taste-skill-ignore: ring around a route stop, drawn like the map markers, not elevation */
 }
-.pax-route__stop--drop .pax-route__dot { background: var(--eh-map-dropoff); border-radius: 3px; box-shadow: 0 0 0 3px var(--eh-surface); }
+.pax-route__stop--drop .pax-route__dot, .pax-route__dot--drop { background: var(--eh-map-dropoff); border-radius: var(--eh-radius-sm); box-shadow: 0 0 0 3px var(--eh-surface); } /* taste-skill-ignore: ring around the drop-off stop */
 .pax-route__stop + .pax-route__stop::before {
     content: ""; position: absolute; left: 13px; top: calc(-1 * var(--eh-space-2) - 14px); height: calc(var(--eh-space-2) + 22px);
-    width: 3px; border-radius: 2px; background: var(--eh-map-route);
+    width: 3px; border-radius: var(--eh-radius-pill); background: var(--eh-map-route);
 }
 .pax-route__text { min-width: 0; display: grid; gap: 1px; }
 .pax-route__label { font-size: var(--eh-text-xs); font-weight: 600; color: var(--eh-ink-3); }
@@ -165,7 +169,7 @@
 .pax-fare__row:first-child::before { top: 50%; }
 .pax-fare__row::after {
     content: ""; position: absolute; left: 3px; top: calc(50% - 5px); width: 10px; height: 10px; border-radius: 50%;
-    background: var(--eh-surface); box-shadow: inset 0 0 0 2px var(--eh-map-route);
+    background: var(--eh-surface); box-shadow: inset 0 0 0 2px var(--eh-map-route); /* taste-skill-ignore: stop ring on the fare line */
 }
 .pax-fare__row dt { min-width: 0; font-size: var(--eh-text-sm); }
 .pax-fare__row dd { margin: 0; font-size: var(--eh-text-sm); font-variant-numeric: tabular-nums; font-weight: 600; }
@@ -173,7 +177,7 @@
 .pax-fare__row.is-credit dd { color: var(--eh-go); }
 .pax-fare__row--total { margin-top: var(--eh-space-1); padding-top: var(--eh-space-2); }
 .pax-fare__row--total::before { bottom: 50%; }
-.pax-fare__row--total::after { left: 0; top: calc(50% - 8px); width: 16px; height: 16px; background: var(--eh-signal); box-shadow: 0 0 0 2px var(--eh-signal-ink); }
+.pax-fare__row--total::after { left: 0; top: calc(50% - 8px); width: 16px; height: 16px; background: var(--eh-signal); box-shadow: 0 0 0 2px var(--eh-signal-ink); } /* taste-skill-ignore: yellow total stop ring */
 .pax-fare__row--total dt { font-weight: 700; font-size: var(--eh-text-md); }
 .pax-fare__row--total dd { font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-weight: 700; }
 .pax-fare-notes { margin: var(--eh-space-2) 0 0; padding-left: var(--eh-space-6); font-size: var(--eh-text-xs); color: var(--eh-ink-2); display: grid; gap: 2px; }
@@ -196,7 +200,7 @@
 .pax-pay__text { display: grid; gap: 1px; min-width: 0; }
 .pax-pay__meta { font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
 
-.pax-request { z-index: 2; position: sticky; bottom: calc(-1 * var(--eh-space-8)); margin: var(--eh-space-5) calc(-1 * var(--eh-space-5)) calc(-1 * var(--eh-space-8)); padding: var(--eh-space-3) var(--eh-space-5) var(--eh-space-5); background: var(--eh-surface); border-top: 1px solid var(--eh-rule); display: grid; gap: var(--eh-space-2); }
+.pax-request { z-index: 2; position: sticky; bottom: calc(-1 * var(--eh-space-8)); margin: var(--eh-space-5) calc(-1 * var(--eh-space-5)) calc(-1 * var(--eh-space-8)); padding: var(--eh-space-3) var(--eh-space-5) var(--eh-space-5); background: var(--eh-surface); border-top: 1px solid var(--eh-rule); display: grid; gap: var(--eh-space-2); } /* taste-skill-ignore: sticky request bar edge (app screen, sticky bar) */
 .pax-request__fine { margin: 0; font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
 
 /* ------------------------------------------------------------------ live ride */
@@ -206,8 +210,8 @@
 .pax-state__sub { margin: 0; color: var(--eh-ink-2); }
 .pax-state__sub strong { color: var(--eh-ink); font-variant-numeric: tabular-nums; }
 
-.pax-progress { height: 6px; border-radius: 3px; background: var(--eh-surface-3); overflow: hidden; margin: var(--eh-space-2) 0 var(--eh-space-3); }
-.pax-progress__bar { height: 100%; width: var(--pax-progress, 0%); background: var(--eh-accent); border-radius: inherit; transition: width 1s linear; }
+.pax-progress { height: 6px; border-radius: var(--eh-radius-pill); background: var(--eh-surface-3); overflow: hidden; margin: var(--eh-space-2) 0 var(--eh-space-3); }
+.pax-progress__bar { height: 100%; width: 100%; transform-origin: left center; transform: scaleX(var(--pax-progress, 0)); background: var(--eh-accent); transition: transform 1s linear; }
 
 .pax-driver { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--eh-space-3) var(--eh-space-4); align-items: center; padding: var(--eh-space-4); border-radius: var(--eh-radius); background: var(--eh-surface-2); }
 .pax-driver__face { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--eh-surface-3); }
@@ -222,8 +226,8 @@
 /* A South African number plate: dark letters on white, a thin dark frame. White in both themes, like the real thing. */
 .pax-plate {
     display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--eh-space-4);
-    border-radius: 5px; background: #ffffff; color: #0f1f19; box-shadow: inset 0 0 0 2.5px #0f1f19;
-    font-family: var(--eh-font-display); font-size: 1.625rem; font-weight: 700; letter-spacing: 0.06em; line-height: 1;
+    border-radius: var(--eh-radius-sm); background: #ffffff; color: #0f1f19; box-shadow: inset 0 0 0 2.5px #0f1f19; /* taste-skill-ignore: the number plate frame, drawn as the plate border */
+    font-family: var(--eh-font-display); font-size: var(--eh-text-2xl); font-weight: 700; letter-spacing: 0.06em; line-height: 1;
     font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
@@ -235,7 +239,7 @@
 .pax-pincode__digit {
     display: grid; place-items: center; width: 2.75rem; height: 3.5rem; border-radius: var(--eh-radius-sm);
     background: #ffffff; color: #0f1f19;
-    font-family: var(--eh-font-display); font-size: 2.75rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    font-family: var(--eh-font-display); font-size: var(--eh-text-4xl); font-weight: 700; font-variant-numeric: tabular-nums;
 }
 .pax-pincode__help { margin: 0; font-size: var(--eh-text-sm); }
 
@@ -316,10 +320,10 @@ a.pax-trip-row:hover { background: var(--eh-surface-2); }
 
 /* Public fare calculator */
 .pax-public { min-height: 100dvh; display: grid; grid-template-rows: auto 1fr; background: var(--eh-ground); }
-.pax-public__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-3); height: var(--eh-topbar); padding: 0 var(--eh-gutter); background: var(--eh-surface); border-bottom: 1px solid var(--eh-rule); }
+.pax-public__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-3); height: var(--eh-topbar); padding: 0 var(--eh-gutter); background: var(--eh-surface); border-bottom: 1px solid var(--eh-rule); } /* taste-skill-ignore: top bar edge, same as the ds shells */
 .pax-public .pax-stage { height: calc(100dvh - var(--eh-topbar)); }
 .pax-calc-head { margin: 0 0 var(--eh-space-3); display: grid; gap: var(--eh-space-2); }
-.pax-calc-head h1 { margin: 0; font-family: var(--eh-font-display); font-size: var(--eh-text-3xl); line-height: 1; }
+.pax-calc-head h1 { margin: 0; font-family: var(--eh-font-display); font-size: var(--eh-text-2xl); line-height: 1.05; }
 .pax-calc-head p { margin: 0; color: var(--eh-ink-2); }
 .pax-tap { display: flex; gap: var(--eh-space-2); flex-wrap: wrap; margin-bottom: var(--eh-space-3); }
 

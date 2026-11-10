@@ -1,6 +1,6 @@
 // The live ride page: follows GET /api/ehail/rides/{id}/feed and keeps every panel true to the ride's state.
 
-import { mountMap, loadGeoConfig } from '../geo/index.js';
+import { createPlaceSearch, loadGeoConfig, mountMap } from '../geo/index.js';
 import { announce, api, island } from './api.js';
 import { renderBreakdown } from './breakdown.js';
 import { clock, freeCancelLeft, searchProgress, secondsSince, secondsUntil, waitState } from './countdown.js';
@@ -102,6 +102,8 @@ function render() {
     const said = announcement(lastStatus, ride, position);
     if (said) {
         announce(said.text, { assertive: said.assertive });
+        // A new state starts at its top: the title, the line, then what to do now.
+        sheet.querySelector('.eh-sheet__body')?.scrollTo({ top: 0 });
         if (said.assertive) $('[data-pax-title]').focus({ preventScroll: true });
         if (holdsDriver(status) && !holdsDriver(lastStatus)) loadSafety();
         if (map) fitRide();
@@ -196,7 +198,7 @@ function tick() {
         const progress = searchProgress(ride.search.started_at, ride.search.window_ends_at);
         const bar = $('[data-pax-search-progress]');
         if (progress !== null) {
-            bar.style.setProperty('--pax-progress', `${Math.round(progress * 100)}%`);
+            bar.style.setProperty('--pax-progress', progress.toFixed(3));
             bar.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
             const left = secondsUntil(ride.search.window_ends_at);
             $('[data-pax-search-left]').textContent = left > 0 ? `Searching for ${clock(secondsSince(ride.search.started_at))}. We keep looking for another ${clock(left)}.` : 'Still looking. If nobody accepts, the ride ends and you are not charged.';
@@ -386,6 +388,43 @@ function bindActions() {
             status.textContent = error.message;
         }
     });
+
+    // Change the destination mid-trip (dispatch trip-change; pricing recalculates with the reason).
+    const change = $('[data-pax-change]');
+    if (change) {
+        let chosen = null;
+        const confirm = change.querySelector('[data-pax-change-confirm]');
+        const out = change.querySelector('[data-pax-change-status]');
+        change.addEventListener('toggle', async () => {
+            if (!change.open || change.dataset.ready) return;
+            change.dataset.ready = '1';
+            createPlaceSearch(change.querySelector('[data-pax-search="change"]'), {
+                config: await loadGeoConfig(),
+                near: () => snapshot.ride?.dropoff,
+                onSelect: (place) => {
+                    chosen = place;
+                    confirm.disabled = false;
+                    out.textContent = `New destination: ${place.label}`;
+                },
+            });
+        });
+        confirm.addEventListener('click', async () => {
+            if (!chosen) return;
+            confirm.setAttribute('aria-busy', 'true');
+            try {
+                const { data: body } = await api(data.urls.tripChange, { method: 'POST', body: { kind: 'destination', lat: chosen.lat, lng: chosen.lng, address: chosen.label.slice(0, 255) } });
+                snapshot = { ...snapshot, ...body };
+                change.open = false;
+                render();
+                feed?.refresh();
+                announce(`Destination changed to ${chosen.label}. Your driver sees the new destination.`);
+            } catch (error) {
+                out.textContent = error.message;
+            } finally {
+                confirm.removeAttribute('aria-busy');
+            }
+        });
+    }
 
     // Scheduled ride: reschedule and accept a new price.
     const reschedule = $('[data-pax-reschedule]');

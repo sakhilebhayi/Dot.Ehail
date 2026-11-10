@@ -31,9 +31,22 @@ function set(kind, point, text) {
     label(kind, text);
     if (map) {
         kind === 'pickup' ? map.setPickup(point) : map.setDestination(point);
-        map.fitToContent({ maxZoom: 15 });
+        fit();
     }
     if (state.pickup && state.dropoff) estimate();
+}
+
+/** Fit the chosen points into the part of the map the calculator panel leaves visible. */
+function fit() {
+    const points = [state.pickup, state.dropoff].filter(Boolean);
+    if (!map || !points.length) return;
+    const wide = matchMedia('(min-width: 1024px)').matches;
+    const cover = wide ? 0 : Math.max(0, innerHeight - sheet.getBoundingClientRect().top);
+    if (points.length === 1) {
+        map.map.panTo([points[0].lat, points[0].lng]);
+        return;
+    }
+    map.map.fitBounds(points.map((p) => [p.lat, p.lng]), { paddingTopLeft: [wide ? 448 : 32, 48], paddingBottomRight: [32, cover + 32], maxZoom: 15 });
 }
 
 async function estimate() {

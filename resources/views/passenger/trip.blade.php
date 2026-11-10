@@ -114,6 +114,22 @@
                     <x-eh.button variant="secondary" icon="share" data-pax-share>Share trip</x-eh.button>
                     <x-eh.button variant="ghost" icon="shield" :href="route('ride.safety')">Safety centre</x-eh.button>
                 </div>
+                <details class="pax-promo pax-section" data-pax-change>
+                    <summary>Change the destination</summary>
+                    <p class="pax-rule">The fare is worked out again for the new route under the same tariff, and the receipt says why it changed.</p>
+                    <div class="pax-field" data-pax-search="change">
+                        <label class="pax-field__label" for="pax-change">New destination</label>
+                        <div class="pax-field__row">
+                            <input id="pax-change" class="eh-input" type="search" placeholder="Street and suburb" enterkeyhint="search">
+                            <x-eh.button variant="secondary" data-geo-search-submit icon="search">Search</x-eh.button>
+                        </div>
+                        <p class="pax-field__hint" data-geo-search-hint></p>
+                        <ul class="pax-results" data-geo-search-list></ul>
+                        <p class="pax-field__status" data-geo-search-status></p>
+                    </div>
+                    <x-eh.button size="sm" data-pax-change-confirm disabled>Go here instead</x-eh.button>
+                    <p class="pax-field__status" data-pax-change-status role="status"></p>
+                </details>
             </section>
 
             {{-- Share link (any active stage) --}}
@@ -244,6 +260,7 @@
             'cancel' => route('ehail.dispatch.rides.cancel', $ride),
             'reschedule' => route('ehail.dispatch.rides.reschedule', $ride),
             'requote' => route('ehail.dispatch.rides.requote.accept', $ride),
+            'tripChange' => route('ehail.dispatch.rides.trip-change', $ride),
             'fare' => route('pricing.rides.fare', $ride),
             'safety' => route('safety.rides.show', $ride),
             'shares' => route('safety.rides.shares.store', $ride),

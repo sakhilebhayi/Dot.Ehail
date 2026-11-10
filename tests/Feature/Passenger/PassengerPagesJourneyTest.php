@@ -75,7 +75,7 @@ class PassengerPagesJourneyTest extends TestCase
         $this->stage($driver, $rideId, 'arrived')->assertOk();
         $this->actingAs($passenger)->get(route('ride.trip', $rideId))->assertOk()->assertSee('Lindiwe is here')->assertSee('Driver waiting for');
         $this->stage($driver, $rideId, 'start', $pin)->assertOk();
-        $this->actingAs($passenger)->get(route('ride.trip', $rideId))->assertOk()->assertSee('On the way to Bree Street')->assertDontSee('class="pax-pincode__digit"', false);
+        $this->actingAs($passenger)->get(route('ride.trip', $rideId))->assertOk()->assertSee('On the way to Bree Street')->assertSee('Change the destination')->assertDontSee('class="pax-pincode__digit"', false);
         $this->drive($driver, self::PICKUP, self::DESTINATION);
         $this->stage($driver, $rideId, 'complete')->assertOk();
 

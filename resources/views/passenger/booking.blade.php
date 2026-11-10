@@ -55,7 +55,7 @@
                 </div>
 
                 <div class="pax-field" data-pax-search="dropoff">
-                    <label class="pax-field__label" for="pax-dropoff"><span class="pax-route__dot" style="background: var(--eh-map-dropoff); border-radius: 3px" aria-hidden="true"></span>Destination</label>
+                    <label class="pax-field__label" for="pax-dropoff"><span class="pax-route__dot pax-route__dot--drop" aria-hidden="true"></span>Destination</label>
                     <div class="pax-field__row">
                         <input id="pax-dropoff" class="eh-input" type="search" placeholder="Where are you going?" enterkeyhint="search">
                         <x-eh.button variant="secondary" size="md" data-geo-search-submit icon="search">Search</x-eh.button>
