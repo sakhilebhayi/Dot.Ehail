@@ -57,6 +57,9 @@ final class Navigation
             ['key' => 'earnings', 'label' => 'Earnings', 'icon' => 'coins', 'routes' => ['fleet.earnings']],
             ['key' => 'documents', 'label' => 'Documents', 'icon' => 'document-check', 'routes' => ['fleet.documents']],
             ['key' => 'maintenance', 'label' => 'Maintenance', 'icon' => 'wrench', 'routes' => ['fleet.maintenance']],
+            ['key' => 'trips', 'label' => 'Trips', 'icon' => 'history', 'routes' => ['fleet.trips']],
+            ['key' => 'alerts', 'label' => 'Alerts', 'icon' => 'alert', 'routes' => ['fleet.alerts']],
+            ['key' => 'settings', 'label' => 'Settings', 'icon' => 'settings', 'routes' => ['fleet.settings']],
         ],
     ];
 

@@ -236,6 +236,11 @@ class DriverPiiTest extends TestCase
         $this->profileFor($fleet, 'ZA-LICENCE-557731', '8001015009087', 'pending');
         $this->profileFor($fleet, 'ZA-LICENCE-662842', '8002025009088', 'approved');
 
+        // R-46 (D-1205): the owner sees masked numbers only once operations granted identity-review rights.
+        $this->actingAs($fleet->owner)->get(route('fleets.show', $fleet))->assertOk()
+            ->assertDontSee('ZA-LICENCE-557731')->assertDontSee('•••• 7731')->assertDontSee('•••• 9087');
+        $fleet->forceFill(['identity_review_granted_at' => now()])->save();
+
         foreach ([$fleet->owner, $this->makeOperator()] as $viewer) {
             $this->actingAs($viewer)->get(route('fleets.show', $fleet))
                 ->assertOk()
@@ -255,6 +260,10 @@ class DriverPiiTest extends TestCase
     {
         $profile = $this->profileWithIdentifiers();
         $owner = $profile->fleet->owner;
+
+        // R-46 (D-1205): without identity-review rights the fleet owner does not get this page at all.
+        $this->actingAs($owner)->get(route('drivers.show', $profile))->assertNotFound();
+        $profile->fleet->forceFill(['identity_review_granted_at' => now()])->save();
 
         $this->actingAs($owner)->get(route('drivers.show', $profile))
             ->assertOk()

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Ehail;
 
+use App\Domain\Fleet\DriverApplications;
+use App\Domain\Fleet\Exceptions\FleetActionRefused;
+use App\Domain\Fleet\FleetAccess;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
 use App\Models\Vehicle;
-use App\Services\Notify\EhailNotifyEvents;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -38,8 +40,12 @@ class FleetController extends Controller
                 ->get()
             : null;
 
+        $access = app(FleetAccess::class);
+
         return view('fleets.show', [
             'fleet' => $fleet,
+            'fleets' => $access->fleetsFor(request()->user()),
+            'masked' => $access->seesMaskedIdentity(request()->user(), $fleet),
             'vehicles' => $vehicles,
             'pending' => $driverProfiles->where('status', 'pending'),
             'reviewed' => $driverProfiles->whereIn('status', ['approved', 'suspended', 'rejected']),
@@ -48,63 +54,37 @@ class FleetController extends Controller
 
     /**
      * $driverProfileId is deliberately an int, not an implicitly-bound
-     * DriverProfile $driverProfile -- Laravel resolves implicit bindings
-     * with the model's default query *before* the controller method runs,
-     * which still applies HasUserScope and would 404 for any driver
-     * profile that isn't the current request's own user_id (i.e. every
-     * application a fleet owner is reviewing). withoutGlobalScope('user')
-     * below is the only place this can be bypassed.
+     * DriverProfile -- implicit binding would apply HasUserScope and 404
+     * every application a reviewer is not the applicant of. The decision
+     * itself lives in App\Domain\Fleet\DriverApplications (R-46), shared
+     * with the fleet portal: same policy, row lock, audit and notification.
      */
-    public function approveDriver(Fleet $fleet, int $driverProfileId, Request $request): RedirectResponse
+    public function approveDriver(Fleet $fleet, int $driverProfileId, Request $request, DriverApplications $applications): RedirectResponse
     {
         Gate::authorize('view', $fleet);
 
-        $driverProfile = DriverProfile::withoutGlobalScope('user')
-            ->where('fleet_id', $fleet->id)
-            ->findOrFail($driverProfileId);
-
-        Gate::authorize('reviewDriver', [$fleet, $driverProfile]);
-
-        if ($driverProfile->status !== 'pending') {
-            return back()->withErrors(['status' => 'Only a pending application can be approved.']);
-        }
-
-        $driverProfile->update([
-            'status' => 'approved',
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-        ]);
-
-        app(EhailNotifyEvents::class)->driverApplicationDecided($driverProfile, 'approved');
-
-        return back()->with('status', 'Driver approved.');
+        return $this->decide(fn () => $applications->approve($fleet, $driverProfileId, $request->user()), 'Driver approved.');
     }
 
-    public function rejectDriver(Fleet $fleet, int $driverProfileId, Request $request): RedirectResponse
+    public function rejectDriver(Fleet $fleet, int $driverProfileId, Request $request, DriverApplications $applications): RedirectResponse
     {
         Gate::authorize('view', $fleet);
-
-        $driverProfile = DriverProfile::withoutGlobalScope('user')
-            ->where('fleet_id', $fleet->id)
-            ->findOrFail($driverProfileId);
-
-        Gate::authorize('reviewDriver', [$fleet, $driverProfile]);
-
-        if ($driverProfile->status !== 'pending') {
-            return back()->withErrors(['status' => 'Only a pending application can be rejected.']);
-        }
 
         $validated = $request->validate(['reason' => 'required|string']);
 
-        $driverProfile->update([
-            'status' => 'rejected',
-            'rejected_reason' => $validated['reason'],
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-        ]);
+        return $this->decide(fn () => $applications->reject($fleet, $driverProfileId, $request->user(), $validated['reason']), 'Driver rejected.');
+    }
 
-        app(EhailNotifyEvents::class)->driverApplicationDecided($driverProfile, 'rejected');
+    private function decide(\Closure $decision, string $done): RedirectResponse
+    {
+        try {
+            $decision();
+        } catch (FleetActionRefused $refused) {
+            abort_if(in_array($refused->status, [403, 404], true), $refused->status);
 
-        return back()->with('status', 'Driver rejected.');
+            return back()->withErrors(['status' => $refused->getMessage()]);
+        }
+
+        return back()->with('status', $done);
     }
 }

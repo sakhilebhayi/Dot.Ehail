@@ -2,6 +2,7 @@
 
 namespace App\Support\Ui;
 
+use App\Domain\Fleet\Models\FleetMember;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
 use App\Models\User;
@@ -97,7 +98,7 @@ final class RoleHome
         return $this->facts[$user->getKey()] ??= [
             // DriverProfile carries a per-user global scope; the role check is about this user only.
             'driver' => DriverProfile::withoutGlobalScope('user')->where('user_id', $user->getKey())->exists(),
-            'fleetOwner' => Fleet::where('owner_user_id', $user->getKey())->exists(),
+            'fleetOwner' => Fleet::where('owner_user_id', $user->getKey())->exists() || FleetMember::query()->active()->where('user_id', $user->getKey())->exists(),
         ];
     }
 }

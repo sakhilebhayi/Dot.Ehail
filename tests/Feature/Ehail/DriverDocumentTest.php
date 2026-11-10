@@ -113,6 +113,10 @@ class DriverDocumentTest extends TestCase
         ]);
         Storage::disk('driver-documents')->put('somefile.pdf', 'fake contents');
 
+        // R-46 (D-1205): identity documents open for the fleet owner only with identity-review rights.
+        $this->actingAs($fleetOwner)->get(route('drivers.documents.show', $document))->assertForbidden();
+        $fleet->forceFill(['identity_review_granted_at' => now()])->save();
+
         $this->actingAs($fleetOwner)
             ->get(route('drivers.documents.show', $document))
             ->assertOk();
