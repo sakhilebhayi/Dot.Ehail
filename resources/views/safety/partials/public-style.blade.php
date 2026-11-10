@@ -1,6 +1,6 @@
 <style>
-/* hallmark: app-screen scope, direction: Dot control room (memory dot-design-language), theme: none (custom, ecosystem system), signature: the registration readout, deal: manual */
-/* critique: utility page read under stress on a cheap phone; words before figures, one amber signal, panels share edges, no webfont download (privacy, no CDN) */
+/* Hallmark · shape: app screen · direction: Dot control room (owner memory dot-design-language) · theme: none, ecosystem system (by request) · signature: the registration readout · posture: restrained · deal: manual */
+/* Hallmark · critique: utility page read under stress on a cheap phone; words before figures, one amber signal, panels share edges, no webfont download (privacy, no CDN) */
 :root {
     --eh-ground: #0f1113;
     --eh-rule: #2a2f35;
@@ -29,7 +29,7 @@
         --eh-ink-2: #45484d;
         --eh-ink-3: #5f6268;
         --eh-signal: #8a5c07;
-        --eh-signal-ink: #ffffff;
+        --eh-signal-ink: #fffaf0;
         --eh-stop: #a32a1c;
         --eh-focus: #8a5c07;
     }
@@ -50,7 +50,8 @@ body {
 .eh-board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; background: var(--eh-rule); border: 1px solid var(--eh-rule); border-radius: var(--eh-radius); }
 .eh-board > * { background: var(--eh-panel); padding: 1rem; min-width: 0; }
 .eh-state { background: var(--eh-panel-sunken); }
-.eh-state h1 { font-family: var(--eh-font-display); font-weight: 600; font-size: clamp(1.6rem, 6vw, 2.2rem); line-height: 1.15; margin: 0; overflow-wrap: break-word; min-width: 0; }
+/* Hallmark · dismissed F6: the state head is words (a trip state), never figures */
+.eh-state h1 { text-wrap: balance; font-family: var(--eh-font-display); font-weight: 600; font-size: clamp(1.6rem, 6vw, 2.2rem); line-height: 1.15; margin: 0; overflow-wrap: break-word; min-width: 0; }
 .eh-state p { margin: .35rem 0 0; color: var(--eh-ink-2); }
 .eh-label { display: block; font-size: .875rem; color: var(--eh-ink-3); margin-bottom: .2rem; }
 .eh-value { font-size: 1.125rem; overflow-wrap: break-word; }

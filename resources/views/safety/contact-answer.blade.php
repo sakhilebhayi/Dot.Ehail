@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <meta name="referrer" content="no-referrer">
+    <meta name="description" content="Answer a Dot.Ehail trusted-contact request.">
     <title>Trusted contact | Dot.Ehail</title>
     @include('safety.partials.public-style')
 </head>
@@ -20,7 +21,7 @@
                 <h1>You are a trusted contact</h1>
                 <p>If {{ $ownerFirstName }} presses the emergency button or shares a trip with you, Dot.Ehail will email you. Every email has a link to stop.</p>
             @elseif($mode === 'confirm')
-                <h1>Be {{ $ownerFirstName }}'s trusted contact?</h1>
+                <h1>Be {{ $ownerFirstName }}’s trusted contact?</h1>
                 <p>Dot.Ehail will email you if {{ $ownerFirstName }} presses the emergency button during a trip or shares a trip with you. Nothing else.</p>
             @elseif($done)
                 <h1>You will not be contacted</h1>

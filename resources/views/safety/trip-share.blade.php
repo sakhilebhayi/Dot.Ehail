@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="referrer" content="no-referrer">
+    <meta name="description" content="A trip someone shared with you on Dot.Ehail: progress, driver first name and vehicle.">
     <title>{{ $payload ? 'Shared trip' : 'Link not available' }} | Dot.Ehail</title>
     @if($payload && ! $payload['ended'])
         <noscript><meta http-equiv="refresh" content="30"></noscript>
@@ -42,7 +43,7 @@
                 </div>
                 <div>
                     <span class="eh-label">Arriving in</span>
-                    <div class="eh-value eh-mono" data-field="eta">{{ $payload['eta_seconds'] !== null ? max(1, (int) round($payload['eta_seconds'] / 60)).' min' : 'Not available' }}</div>
+                    <div class="eh-value{{ $payload['eta_seconds'] !== null ? ' eh-mono' : '' }}" data-field="eta">{{ $payload['eta_seconds'] !== null ? max(1, (int) round($payload['eta_seconds'] / 60)).' min' : 'Not available' }}</div>
                 </div>
             </div>
 
@@ -76,6 +77,9 @@
             var timer = null;
             function set(name, text) { var el = board.parentNode.querySelector('[data-field="' + name + '"]'); if (el) { el.textContent = text; } return el; }
             function pad(n) { return (n < 10 ? '0' : '') + n; }
+            // Times are rendered by the server in its own timezone; show them in the viewer's.
+            var exp = board.parentNode.querySelector('[data-field="expires"]');
+            if (exp) { var e = new Date(exp.getAttribute('datetime')); exp.textContent = pad(e.getHours()) + ':' + pad(e.getMinutes()) + ', ' + e.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); }
             function tick() {
                 fetch(url, { credentials: 'omit', cache: 'no-store', headers: { 'Accept': 'application/json' } })
                     .then(function (r) { if (r.status === 404) { throw 'gone'; } return r.json(); })
@@ -84,7 +88,7 @@
                         set('driver', p.driver_first_name || 'Not assigned yet');
                         set('registration', p.vehicle ? p.vehicle.registration : 'Not assigned yet');
                         set('vehicle', p.vehicle ? p.vehicle.description : '');
-                        set('eta', p.eta_seconds === null ? 'Not available' : Math.max(1, Math.round(p.eta_seconds / 60)) + ' min');
+                        var eta = set('eta', p.eta_seconds === null ? 'Not available' : Math.max(1, Math.round(p.eta_seconds / 60)) + ' min'); if (eta) { eta.className = p.eta_seconds === null ? 'eh-value' : 'eh-value eh-mono'; }
                         set('position', p.approximate_position ? p.approximate_position.lat.toFixed(3) + ', ' + p.approximate_position.lng.toFixed(3) : 'Not available right now');
                         var d = new Date(p.checked_at); set('checked', pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()));
                         set('stale', '');
