@@ -40,7 +40,7 @@ class FareCalculatorTest extends TestCase
         $this->assertSame("R1\u{202F}234.50", FareCalculator::format(1234.5));
 
         config(['ehail.currency.symbol' => '$']);
-        $this->assertSame('$ 9.00', FareCalculator::format(9));
+        $this->assertSame('$9.00', FareCalculator::format(9));
     }
 
     public function test_every_vehicle_type_has_a_multiplier_and_a_tier_mapping(): void

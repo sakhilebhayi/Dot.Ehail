@@ -74,8 +74,8 @@ class FareQuoterTest extends TestCase
         $option = $this->quoter()->quote($this->request('economy', $passenger));
 
         $this->assertInstanceOf(PricedOption::class, $option);
-        // 1000 + 12.345 km x 800 (9 876) + 21 min x 100 (2 100) = 12 976
-        $this->assertSame(12_976, $option->breakdown->totalMinor());
+        // 1000 + 12.3 km x 800 (9 840, billed on the tenth of a km shown, D-1900) + 21 min x 100 (2 100) = 12 940
+        $this->assertSame(12_940, $option->breakdown->totalMinor());
         $quote = $option->quote;
         $this->assertNotNull($quote);
         $this->assertSame($passenger->id, $quote->passenger_id);
@@ -201,7 +201,7 @@ class FareQuoterTest extends TestCase
         $this->assertSame('none', $comparison->options[1]->supply);
         $this->assertFalse($comparison->options[1]->requestableNow());
         $this->assertSame(0, $comparison->options[1]->driversNearby);
-        $this->assertStringContainsString('not guaranteed', strtolower($comparison->options[1]->toArray()['supply_note']));
+        $this->assertStringContainsString('not guaranteed', $comparison->options[1]->toArray()['supply_note']);
         $reasons = collect($comparison->unavailable)->mapWithKeys(fn ($u) => [$u->categoryKey => $u->reason])->all();
         $this->assertArrayNotHasKey('premium', $reasons);
         $this->assertSame('no_tariff', $reasons['standard']);
