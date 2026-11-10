@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Ehail;
 
+use App\Domain\Payments\Webhooks\PaystackWebhookInbox;
 use App\Exceptions\Payments\PaymentGatewayException;
 use App\Http\Controllers\Controller;
-use App\Domain\Payments\Webhooks\PaystackWebhookInbox;
 use App\Services\Payments\Paystack\PaystackConfig;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

@@ -12,9 +12,10 @@ use App\Domain\Ledger\Account;
 use App\Domain\Ledger\Ledger;
 use App\Domain\Ledger\Models\FinanceIssue;
 use App\Domain\Payments\Models\DriverMoneySetting;
-use App\Domain\Payments\Models\Payment;
 use App\Domain\Payments\Models\RidePaymentChoice;
+use App\Models\DriverProfile;
 use App\Models\Fleet;
+use App\Models\Ride;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,7 +34,7 @@ class CashAndPayoutsTest extends TestCase
         config(['money.commission.percent' => 20, 'money.cash.enabled' => true, 'money.payouts.minimum_minor' => 1000]);
     }
 
-    private function cashTrip(User $driver, string $fare = '100.00', ?User $passenger = null): \App\Models\Ride
+    private function cashTrip(User $driver, string $fare = '100.00', ?User $passenger = null): Ride
     {
         DriverMoneySetting::updateOrCreate(['user_id' => $driver->id], ['accepts_cash' => true]);
 
@@ -233,7 +234,7 @@ class CashAndPayoutsTest extends TestCase
     {
         config(['money.payouts.payee_for_fleet_drivers' => 'fleet_owner']);
         $driver = $this->makeApprovedDriver();
-        $fleet = Fleet::find(\App\Models\DriverProfile::withoutGlobalScope('user')->where('user_id', $driver->id)->value('fleet_id'));
+        $fleet = Fleet::find(DriverProfile::withoutGlobalScope('user')->where('user_id', $driver->id)->value('fleet_id'));
         $owner = User::find($fleet->owner_user_id);
         app(PayoutAccounts::class)->add($owner, ['payee_type' => 'fleet_owner', 'fleet_id' => $fleet->id, 'account_holder' => 'Fleet Co', 'account_number' => '1234567890', 'bank_code' => '470010', 'bank_name' => 'Capitec', 'account_type' => 'business']);
         $passenger = User::factory()->create();

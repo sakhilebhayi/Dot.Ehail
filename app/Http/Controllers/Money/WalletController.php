@@ -11,6 +11,7 @@ use App\Domain\Payments\PaymentDueGuard;
 use App\Domain\Payments\PaymentMethods;
 use App\Domain\Payments\Seams\BusinessBilling;
 use App\Domain\Payments\Seams\FareSource;
+use App\Domain\Payments\Settlement;
 use App\Enums\PaymentStatus;
 use App\Exceptions\Payments\PaymentGatewayException;
 use App\Http\Controllers\Controller;
@@ -148,7 +149,7 @@ class WalletController extends Controller
 
         // A queued automatic retry is replaced by this payment.
         Payment::where('ride_id', $ride->id)->where('purpose', Payment::PURPOSE_RIDE_FARE)->whereNotNull('next_retry_at')->update(['next_retry_at' => null]);
-        app(\App\Domain\Payments\Settlement::class)->recogniseTrip($ride);
+        app(Settlement::class)->recogniseTrip($ride);
 
         $payment = $charges->charge($ride, Payment::PURPOSE_RIDE_FARE, $fare->payableMinor(), $fare->currency, 'card', $method);
 

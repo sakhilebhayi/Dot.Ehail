@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * A saved way to pay. Only the provider's token (authorization code, encrypted at rest) and display
@@ -45,8 +46,8 @@ class PaymentMethod extends Model
             return false;
         }
 
-        $at = $at === null ? now() : \Illuminate\Support\Carbon::instance($at);
-        $endOfExpiryMonth = \Illuminate\Support\Carbon::create((int) $this->exp_year, (int) $this->exp_month, 1)->endOfMonth();
+        $at = $at === null ? now() : Carbon::instance($at);
+        $endOfExpiryMonth = Carbon::create((int) $this->exp_year, (int) $this->exp_month, 1)->endOfMonth();
 
         return $at->greaterThan($endOfExpiryMonth);
     }

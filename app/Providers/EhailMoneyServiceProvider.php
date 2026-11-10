@@ -6,8 +6,8 @@ use App\Domain\Payments\Console\DraftPayoutBatch;
 use App\Domain\Payments\Console\EvaluateIncentives;
 use App\Domain\Payments\Console\MoneySweep;
 use App\Domain\Payments\Console\ReconcileLedger;
+use App\Domain\Payments\Http\EnsureNoPaymentDue;
 use App\Domain\Payments\Listeners\MoneyRideListener;
-use App\Domain\Payments\PaymentDueGuard;
 use App\Domain\Payments\Policies\MoneyPolicies;
 use App\Domain\Payments\Seams\BusinessBilling;
 use App\Domain\Payments\Seams\CancellationFeeSource;
@@ -73,7 +73,7 @@ class EhailMoneyServiceProvider extends ServiceProvider
         RateLimiter::for('money-cash', fn (Request $request) => Limit::perMinute(20)->by('money-cash:'.$request->user()?->id));
 
         // For dispatch's ride-request routes: refuses a new request while the passenger owes money.
-        $router->aliasMiddleware('ehail.payment-clear', \App\Domain\Payments\Http\EnsureNoPaymentDue::class);
+        $router->aliasMiddleware('ehail.payment-clear', EnsureNoPaymentDue::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([MoneySweep::class, EvaluateIncentives::class, DraftPayoutBatch::class, ReconcileLedger::class]);

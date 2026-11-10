@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Money;
 use App\Domain\Payments\Models\Receipt;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 /**

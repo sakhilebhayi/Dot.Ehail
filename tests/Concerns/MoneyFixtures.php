@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\Ehail\RideLifecycle;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -219,7 +220,7 @@ trait MoneyFixtures
 
     protected function ledgerSumsToZero(): bool
     {
-        $row = \Illuminate\Support\Facades\DB::table('ledger_entries')->selectRaw('COALESCE(SUM(debit_minor),0) d, COALESCE(SUM(credit_minor),0) c')->first();
+        $row = DB::table('ledger_entries')->selectRaw('COALESCE(SUM(debit_minor),0) d, COALESCE(SUM(credit_minor),0) c')->first();
 
         return (int) $row->d === (int) $row->c;
     }

@@ -6,6 +6,7 @@ use App\Domain\Earnings\Models\DriverEarning;
 use App\Domain\Ledger\Account;
 use App\Domain\Ledger\Ledger;
 use App\Domain\Ledger\Models\FinanceIssue;
+use App\Domain\Ledger\Models\LedgerJournal;
 use App\Domain\Payments\ChargeAttempts;
 use App\Domain\Payments\Jobs\SettleCompletedRide;
 use App\Domain\Payments\Models\Payment;
@@ -220,7 +221,7 @@ class CardChargingTest extends TestCase
         $this->assertSame('not_due', $ride->fresh()->payment_status);
         $this->assertSame('not_collected', app(RideSettlement::class)->onTripCompleted($ride->id));
         $this->assertSame(0, DriverEarning::count());
-        $this->assertSame(0, \App\Domain\Ledger\Models\LedgerJournal::count());
+        $this->assertSame(0, LedgerJournal::count());
     }
 
     public function test_an_expired_card_is_not_charged(): void

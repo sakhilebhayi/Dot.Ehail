@@ -6,6 +6,7 @@ use App\Domain\Ledger\Models\FinanceIssue;
 use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Opens and resolves items on the finance exceptions list. Raising the same problem twice (same
@@ -27,7 +28,7 @@ class FinanceIssues
         }
 
         try {
-            return \Illuminate\Support\Facades\DB::transaction(fn () => FinanceIssue::create(array_merge([
+            return DB::transaction(fn () => FinanceIssue::create(array_merge([
                 'kind' => $kind,
                 'dedupe_key' => $dedupeKey,
                 'summary' => mb_substr($summary, 0, 255),

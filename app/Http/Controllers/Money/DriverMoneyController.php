@@ -12,11 +12,12 @@ use App\Domain\Payments\CashCollection;
 use App\Domain\Payments\Exceptions\PaymentMethodRefused;
 use App\Domain\Payments\Models\DriverMoneySetting;
 use App\Http\Controllers\Controller;
+use App\Models\DriverProfile;
 use App\Models\Ride;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -102,7 +103,7 @@ class DriverMoneyController extends Controller
         $programs = IncentiveProgram::whereIn('status', ['active', 'paused'])->where('starts_at', '<=', $now)
             ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', $now))
             ->get()
-            ->filter(fn (IncentiveProgram $p) => $p->fleet_id === null || \App\Models\DriverProfile::withoutGlobalScope('user')->where('user_id', $driver->id)->where('fleet_id', $p->fleet_id)->exists())
+            ->filter(fn (IncentiveProgram $p) => $p->fleet_id === null || DriverProfile::withoutGlobalScope('user')->where('user_id', $driver->id)->where('fleet_id', $p->fleet_id)->exists())
             ->map(function (IncentiveProgram $program) use ($engine, $driver, $now) {
                 [$from, $to] = $engine->windowFor($program, $now);
                 $stored = IncentiveProgress::where('incentive_program_id', $program->id)->where('driver_id', $driver->id)->where('window_start', $from)->first();

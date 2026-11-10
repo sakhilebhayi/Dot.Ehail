@@ -9,6 +9,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Ride;
 use App\Notifications\RidePaymentNotification;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -222,7 +223,7 @@ class ChargeAttempts
         }
     }
 
-    private function nextRetryAt(Payment $payment): ?\Illuminate\Support\Carbon
+    private function nextRetryAt(Payment $payment): ?Carbon
     {
         $delays = array_values((array) config('money.charging.retry_minutes', []));
         $index = $payment->attempt - 1;

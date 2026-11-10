@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Money;
 
 use App\Domain\Earnings\EarningsService;
 use App\Domain\Earnings\Models\DriverEarning;
+use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
