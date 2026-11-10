@@ -60,7 +60,7 @@ class EhailPricingServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('ehail-fare-quote', function (Request $request) {
-            return Limit::perMinute(max(1, (int) config('ehail_pricing.rate_limits.quote_per_minute', 30)))->by('quote|'.($request->user()?->id ?? $request->ip()));
+            return Limit::perMinute(max(1, (int) config('ehail_pricing.rate_limits.quote_per_minute', 30)))->by('quote|'.($request->user() !== null ? 'user:'.$request->user()->getAuthIdentifier() : 'ip:'.$request->ip()));
         });
 
         // The app renders JSON errors only for api/*; the pricing JSON endpoints live in the web group (session auth),

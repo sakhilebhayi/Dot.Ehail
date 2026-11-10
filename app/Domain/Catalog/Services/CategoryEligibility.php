@@ -4,6 +4,7 @@ namespace App\Domain\Catalog\Services;
 
 use App\Domain\Catalog\Models\RideCategory;
 use App\Models\DriverProfile;
+use App\Models\Fleet;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
 
@@ -68,7 +69,8 @@ final class CategoryEligibility
             }
         }
 
-        if ($category->fleet_only && $driver->fleet_id === null) {
+        // Fleet-only categories need a driver in an APPROVED fleet (every profile has a fleet row; it may be pending).
+        if ($category->fleet_only && Fleet::query()->whereKey($driver->fleet_id)->value('status') !== Fleet::STATUS_APPROVED) {
             $failures[] = 'fleet_only';
         }
 

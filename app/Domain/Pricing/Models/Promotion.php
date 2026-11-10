@@ -61,6 +61,9 @@ class Promotion extends Model
         });
     }
 
+    /**
+     * @return HasMany<PromotionRedemption, $this>
+     */
     public function redemptions(): HasMany
     {
         return $this->hasMany(PromotionRedemption::class);

@@ -8,7 +8,6 @@ use App\Domain\Pricing\Models\PricingRuleSet;
 use App\Models\AuditLog;
 use App\Models\User;
 use Carbon\CarbonInterface;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -124,7 +123,7 @@ final class PricingAdmin
         $valid = self::validateCommission($merged);
 
         return DB::transaction(function () use ($valid, $actor, $from) {
-            $lineage = $from?->lineage_key ?? (string) Str::ulid();
+            $lineage = $from === null ? (string) Str::ulid() : $from->lineage_key;
             $version = $from === null ? 1 : (int) CommissionPlan::query()->where('lineage_key', $lineage)->lockForUpdate()->pluck('version')->max() + 1;
             $plan = CommissionPlan::query()->create($valid + ['lineage_key' => $lineage, 'version' => $version, 'status' => 'draft', 'created_by' => $actor->id]);
             AuditLog::record('pricing.commission_plan_drafted', $actor, $plan, ['lineage_key' => $lineage, 'version' => $version]);
@@ -173,7 +172,6 @@ final class PricingAdmin
 
         return DB::transaction(function () use ($draft, $actor, $effectiveFrom, $action, $terms) {
             $effective = $effectiveFrom === null || $effectiveFrom->lessThan(now()) ? now() : $effectiveFrom;
-            /** @var class-string<Model> $class */
             $class = $draft::class;
 
             // Earlier live versions of the same tariff stop when this one starts.

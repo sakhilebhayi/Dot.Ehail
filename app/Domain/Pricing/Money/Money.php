@@ -49,7 +49,7 @@ final readonly class Money implements JsonSerializable
             $minor = IntegerMath::add($minor, 1);
         }
 
-        return new self(($m[1] ?? '') === '-' ? -$minor : $minor, $currency);
+        return new self($m[1] === '-' ? -$minor : $minor, $currency);
     }
 
     public function plus(self $other): self

@@ -99,6 +99,9 @@ class PricingRuleSet extends Model
         'published_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<RideCategory, $this>
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(RideCategory::class, 'ride_category_id');

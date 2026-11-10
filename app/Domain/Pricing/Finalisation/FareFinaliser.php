@@ -117,7 +117,8 @@ final class FareFinaliser
 
         $quotedTolls = $quoted->amountFor('tolls');
         $actualTolls = $rules->toll_mode === 'pass_through' && $actuals->tollsMinor !== null ? max(0, $actuals->tollsMinor) : null;
-        $promotionLabel = collect($quoted->components)->firstWhere('code', 'promotion')?->label ?? 'Promotion';
+        $promotionComponent = collect($quoted->components)->firstWhere('code', 'promotion');
+        $promotionLabel = $promotionComponent instanceof FareComponent ? $promotionComponent->label : 'Promotion';
         $discount = $fare->promotion_discount_minor > 0 ? DiscountTerms::fixed($promotionLabel, $fare->promotion_discount_minor) : null;
 
         $breakdown = $this->engine->compute($rules, new FareInputs(
@@ -199,6 +200,6 @@ final class FareFinaliser
      */
     private static function zones(array $codes): array
     {
-        return array_values(array_map(fn (string $code) => new ZoneRef(0, $code, 'snapshot', $code), $codes));
+        return array_map(fn (string $code) => new ZoneRef(0, $code, 'snapshot', $code), $codes);
     }
 }

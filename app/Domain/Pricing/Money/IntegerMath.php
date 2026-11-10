@@ -13,35 +13,33 @@ final class IntegerMath
 {
     public static function add(int $a, int $b): int
     {
-        $result = $a + $b;
-
-        if (! is_int($result)) {
+        if (($b > 0 && $a > PHP_INT_MAX - $b) || ($b < 0 && $a < PHP_INT_MIN - $b)) {
             throw new OverflowException('Integer overflow in money addition.');
         }
 
-        return $result;
+        return $a + $b;
     }
 
     public static function subtract(int $a, int $b): int
     {
-        $result = $a - $b;
-
-        if (! is_int($result)) {
+        if (($b < 0 && $a > PHP_INT_MAX + $b) || ($b > 0 && $a < PHP_INT_MIN + $b)) {
             throw new OverflowException('Integer overflow in money subtraction.');
         }
 
-        return $result;
+        return $a - $b;
     }
 
     public static function multiply(int $a, int $b): int
     {
-        $result = $a * $b;
+        if ($a === 0 || $b === 0) {
+            return 0;
+        }
 
-        if (! is_int($result)) {
+        if ($a === PHP_INT_MIN || $b === PHP_INT_MIN || abs($a) > intdiv(PHP_INT_MAX, abs($b))) {
             throw new OverflowException('Integer overflow in money multiplication.');
         }
 
-        return $result;
+        return $a * $b;
     }
 
     /**
@@ -53,12 +51,12 @@ final class IntegerMath
             throw new InvalidArgumentException('The denominator must be a positive integer.');
         }
 
-        $negative = $numerator < 0;
-        $absolute = $negative ? -$numerator : $numerator;
-
-        if (! is_int($absolute)) {
+        if ($numerator === PHP_INT_MIN) {
             throw new OverflowException('Integer overflow in money division.');
         }
+
+        $negative = $numerator < 0;
+        $absolute = $negative ? -$numerator : $numerator;
 
         $quotient = intdiv($absolute, $denominator);
         $remainder = $absolute % $denominator;

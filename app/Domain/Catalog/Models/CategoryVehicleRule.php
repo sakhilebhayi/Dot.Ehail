@@ -36,6 +36,9 @@ class CategoryVehicleRule extends Model
         'min_seats' => 'integer',
     ];
 
+    /**
+     * @return BelongsTo<RideCategory, $this>
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(RideCategory::class, 'ride_category_id');

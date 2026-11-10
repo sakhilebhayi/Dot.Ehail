@@ -92,26 +92,41 @@ class FareQuote extends Model
         return $this->expires_at->lessThanOrEqualTo($at ?? now());
     }
 
+    /**
+     * @return BelongsTo<RideCategory, $this>
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(RideCategory::class, 'ride_category_id');
     }
 
+    /**
+     * @return BelongsTo<PricingRuleSet, $this>
+     */
     public function ruleSet(): BelongsTo
     {
         return $this->belongsTo(PricingRuleSet::class, 'rule_set_id');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function passenger(): BelongsTo
     {
         return $this->belongsTo(User::class, 'passenger_id');
     }
 
+    /**
+     * @return BelongsTo<Ride, $this>
+     */
     public function ride(): BelongsTo
     {
         return $this->belongsTo(Ride::class);
     }
 
+    /**
+     * @return BelongsTo<Promotion, $this>
+     */
     public function promotion(): BelongsTo
     {
         return $this->belongsTo(Promotion::class);

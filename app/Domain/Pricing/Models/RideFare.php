@@ -65,16 +65,25 @@ class RideFare extends Model
         'earnings' => 'array',
     ];
 
+    /**
+     * @return BelongsTo<Ride, $this>
+     */
     public function ride(): BelongsTo
     {
         return $this->belongsTo(Ride::class);
     }
 
+    /**
+     * @return BelongsTo<PricingRuleSet, $this>
+     */
     public function ruleSet(): BelongsTo
     {
         return $this->belongsTo(PricingRuleSet::class, 'rule_set_id');
     }
 
+    /**
+     * @return BelongsTo<FareQuote, $this>
+     */
     public function quote(): BelongsTo
     {
         return $this->belongsTo(FareQuote::class, 'fare_quote_id');

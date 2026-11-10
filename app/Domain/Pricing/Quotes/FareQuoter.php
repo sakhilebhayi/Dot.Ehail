@@ -3,7 +3,6 @@
 namespace App\Domain\Pricing\Quotes;
 
 use App\Domain\Catalog\Models\RideCategory;
-use App\Domain\Catalog\Services\CategoryAvailability;
 use App\Domain\Pricing\Contracts\DemandSignal;
 use App\Domain\Pricing\Contracts\EligibleSupplyCounter;
 use App\Domain\Pricing\Contracts\PricingRoutePlanner;
@@ -43,7 +42,6 @@ final class FareQuoter
         private DemandSignal $demand,
         private TollEstimator $tolls,
         private EligibleSupplyCounter $supply,
-        private CategoryAvailability $availability,
         private QuoteSigner $signer,
     ) {}
 

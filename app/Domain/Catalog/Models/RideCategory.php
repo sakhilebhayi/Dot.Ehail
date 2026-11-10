@@ -51,6 +51,9 @@ class RideCategory extends Model
         'display_order' => 'integer',
     ];
 
+    /**
+     * @return HasMany<CategoryVehicleRule, $this>
+     */
     public function vehicleRules(): HasMany
     {
         return $this->hasMany(CategoryVehicleRule::class, 'ride_category_id');

@@ -21,6 +21,9 @@ class PromotionRedemption extends Model
 
     protected $casts = ['discount_minor' => 'integer', 'reversed_at' => 'datetime'];
 
+    /**
+     * @return BelongsTo<Promotion, $this>
+     */
     public function promotion(): BelongsTo
     {
         return $this->belongsTo(Promotion::class);
