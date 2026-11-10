@@ -16,7 +16,7 @@
                     <form method="GET" class="fl-switch" action="{{ url()->current() }}">
                         <label for="fl-switch">Fleet</label>
                         <div class="eh-select-wrap">
-                            <select id="fl-switch" name="fleet" class="eh-select" onchange="this.form.submit()">
+                            <select id="fl-switch" name="fleet" class="eh-select" data-eh-autosubmit>
                                 @foreach ($fleets as $option)
                                     <option value="{{ $option->id }}" @selected($option->id === $fleet->id)>{{ $option->name }}</option>
                                 @endforeach

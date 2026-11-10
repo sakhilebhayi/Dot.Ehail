@@ -25,6 +25,11 @@ class PaystackWebhookController extends Controller
 {
     public function __invoke(Request $request, PaystackConfig $config, PaystackWebhookInbox $inbox): JsonResponse
     {
+        // Paystack events are a few kilobytes; anything far larger is not one, and is refused before hashing (S-34).
+        if (strlen($request->getContent()) > 256 * 1024) {
+            return response()->json(['error' => 'payload_too_large'], 413);
+        }
+
         $raw = $request->getContent();
         $signature = strtolower(trim((string) $request->header('x-paystack-signature')));
 

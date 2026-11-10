@@ -20,6 +20,7 @@ class PayoutAccount extends Model
         'account_holder' => 'encrypted',
         'account_number' => 'encrypted',
         'verified_at' => 'datetime',
+        'payable_from' => 'datetime',
         'is_active' => 'boolean',
     ];
 

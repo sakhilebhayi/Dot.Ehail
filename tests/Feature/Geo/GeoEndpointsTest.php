@@ -154,6 +154,7 @@ class GeoEndpointsTest extends TestCase
         $this->actingAs($this->user)->get(route('geo.demo'))
             ->assertOk()
             ->assertSee('data-geo-demo', false)
-            ->assertHeader('Permissions-Policy', AllowGeolocation::POLICY);
+            ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(), usb=()')
+            ->assertHeaderMissing(AllowGeolocation::MARKER);
     }
 }

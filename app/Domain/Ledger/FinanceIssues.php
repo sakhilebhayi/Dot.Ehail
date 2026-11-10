@@ -3,6 +3,7 @@
 namespace App\Domain\Ledger;
 
 use App\Domain\Ledger\Models\FinanceIssue;
+use App\Domain\Payments\Settlement;
 use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -49,6 +50,11 @@ class FinanceIssues
         ])->save();
 
         AuditLog::record('money.issue_resolved', $operator, $issue, ['kind' => $issue->kind, 'note' => $note]);
+
+        // A cash shortfall held the trip earning back (CashCollection); the operator's decision releases it.
+        if ($issue->kind === 'cash_discrepancy' && $issue->ride_id !== null) {
+            app(Settlement::class)->makeAvailable("trip:{$issue->ride_id}");
+        }
 
         return $issue;
     }

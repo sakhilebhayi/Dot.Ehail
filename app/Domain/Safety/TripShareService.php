@@ -2,6 +2,7 @@
 
 namespace App\Domain\Safety;
 
+use App\Domain\Geo\Locations\RideTracking;
 use App\Domain\Safety\Mail\TripShareMail;
 use App\Domain\Safety\Models\TripShare;
 use App\Domain\Safety\Models\TrustedContact;
@@ -91,6 +92,13 @@ class TripShareService
             return null;
         }
 
+        // A link lives only while its creator is still a party to the ride: a driver who backed out, or was
+        // replaced, must not keep following the car that now carries the passenger (R-46 security S-05).
+        $creator = $share->creator;
+        if ($creator === null || RideSafety::roleOf($share->ride, $creator) === null) {
+            return null;
+        }
+
         return $this->effectiveExpiry($share)->isFuture() ? $share : null;
     }
 
@@ -125,7 +133,8 @@ class TripShareService
     {
         $ride = $share->ride;
         $vehicle = $ride->vehicle_id ? Vehicle::query()->find($ride->vehicle_id) : null;
-        $progress = RideSafety::isTerminal($ride) ? ['state' => (string) $ride->status, 'driver_position' => null, 'position_at' => null, 'eta_seconds' => null, 'eta_source' => null] : $this->progress->progress($ride);
+        // Position only while the ride holds its driver (S-05): a ride flagged needs_review has released the driver.
+        $progress = RideSafety::isTerminal($ride) || ! RideTracking::isTracking($ride) ? ['state' => (string) $ride->status, 'driver_position' => null, 'position_at' => null, 'eta_seconds' => null, 'eta_source' => null] : $this->progress->progress($ride);
         $decimals = (int) config('ehail_safety.trip_share.position_decimals', 3);
 
         return [

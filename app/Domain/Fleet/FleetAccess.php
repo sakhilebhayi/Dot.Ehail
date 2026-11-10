@@ -3,6 +3,8 @@
 namespace App\Domain\Fleet;
 
 use App\Domain\Fleet\Models\FleetMember;
+use App\Domain\Ops\Access\OpsAccess;
+use App\Domain\Ops\Access\OpsPermission;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
 use App\Models\User;
@@ -80,12 +82,28 @@ final class FleetAccess
             return ! in_array($area, self::OWNER_ONLY, true) && $member->hasScope($area);
         }
 
-        return ! $write && $user->isPlatformOperator() && $area !== 'members';
+        return ! $write && $area !== 'members' && $this->operatorMayRead($user, $area);
     }
 
     public function canView(User $user, Fleet $fleet): bool
     {
-        return $this->isMember($user, $fleet) || $user->isPlatformOperator();
+        return $this->isMember($user, $fleet) || $this->operatorMayRead($user);
+    }
+
+    /**
+     * Operators read fleets through their role (R-46 security S-02): fleets.review for the fleet's records, and
+     * finance.view as well for its earnings, the same permissions /ops/fleets and the money pages ask for.
+     */
+    public function operatorMayRead(User $user, ?string $area = null): bool
+    {
+        if (! $user->isPlatformOperator()) {
+            return false;
+        }
+
+        $access = app(OpsAccess::class);
+
+        return $access->can($user, OpsPermission::FLEETS_REVIEW)
+            && ($area !== 'earnings' || $access->can($user, OpsPermission::FINANCE_VIEW));
     }
 
     /**
@@ -93,7 +111,7 @@ final class FleetAccess
      */
     public function seesDriverRecords(User $user, Fleet $fleet): bool
     {
-        return $fleet->isApproved() || $user->isPlatformOperator();
+        return $fleet->isApproved() || $this->operatorMayRead($user);
     }
 
     /**
@@ -102,7 +120,7 @@ final class FleetAccess
      */
     public function seesMaskedIdentity(User $user, Fleet $fleet): bool
     {
-        return $user->isPlatformOperator() || ($this->isOwner($user, $fleet) && $fleet->identityReviewGranted());
+        return $this->operatorMayRead($user) || ($this->isOwner($user, $fleet) && $fleet->identityReviewGranted());
     }
 
     /**

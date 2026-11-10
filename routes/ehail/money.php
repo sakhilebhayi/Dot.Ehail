@@ -15,7 +15,7 @@ Route::prefix('money')->name('money.')->group(function () {
     // Passenger wallet
     Route::get('/wallet', [WalletController::class, 'index'])->name('wallet');
     Route::get('/payment-due', [WalletController::class, 'paymentDue'])->name('payment-due');
-    Route::post('/cards', [WalletController::class, 'startCard'])->middleware('throttle:money-card-setup')->name('cards.start');
+    Route::post('/cards', [WalletController::class, 'startCard'])->middleware(['throttle:money-card-setup', 'throttle:ehail-card-setup-abuse'])->name('cards.start');
     Route::get('/cards/callback', [WalletController::class, 'cardCallback'])->name('cards.callback');
     Route::post('/methods/{method}/default', [WalletController::class, 'makeDefault'])->name('methods.default');
     Route::delete('/methods/{method}', [WalletController::class, 'destroy'])->name('methods.destroy');
@@ -38,7 +38,7 @@ Route::prefix('money')->name('money.')->group(function () {
 
     // Payout bank accounts (drivers and fleet owners)
     Route::get('/payout-accounts', [PayoutAccountController::class, 'index'])->name('payout-accounts.index');
-    Route::post('/payout-accounts', [PayoutAccountController::class, 'store'])->middleware('throttle:money-pay')->name('payout-accounts.store');
+    Route::post('/payout-accounts', [PayoutAccountController::class, 'store'])->middleware(['throttle:money-pay', 'ehail.recent-auth'])->name('payout-accounts.store');
     Route::post('/payout-accounts/{account}/verify', [PayoutAccountController::class, 'verify'])->middleware('throttle:money-pay')->name('payout-accounts.verify');
 
     // Fleet owner

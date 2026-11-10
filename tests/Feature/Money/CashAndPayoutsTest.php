@@ -201,6 +201,8 @@ class CashAndPayoutsTest extends TestCase
     {
         $driver = $this->makeApprovedDriver();
         $this->bankAccount($driver);
+        // R-46 security S-15: automatic transfers only reach an account Paystack verified.
+        PayoutAccount::where('user_id', $driver->id)->update(['verification_status' => 'verified']);
         $passenger = User::factory()->create();
         $this->savedCard($passenger);
         $this->completeTrip($passenger, $driver, '100.00');

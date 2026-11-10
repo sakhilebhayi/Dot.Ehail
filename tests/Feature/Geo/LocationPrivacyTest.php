@@ -78,7 +78,10 @@ class LocationPrivacyTest extends TestCase
         $ride = $this->makeRide(['driver_id' => $this->driver->id, 'status' => 'completed'], $this->passenger);
 
         $this->actingAs($this->driver)->getJson($this->url($ride))->assertOk();
-        $this->actingAs($this->makeOperator())->getJson($this->url($ride))->assertOk();
+        // R-46 security S-22: an operator reads a driver's position through a ride only while that ride holds them.
+        $this->actingAs($this->makeOperator())->getJson($this->url($ride))->assertForbidden();
+        $live = $this->makeRide(['driver_id' => $this->makeApprovedDriver()->id, 'status' => 'in_progress'], User::factory()->withPersonalTeam()->create());
+        $this->actingAs($this->makeOperator())->getJson($this->url($live))->assertOk();
     }
 
     public function test_no_geo_endpoint_exposes_or_accepts_a_passenger_position(): void

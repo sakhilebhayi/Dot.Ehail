@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Domain\Dispatch\Models\DriverAvailability;
+use App\Domain\Fleet\FleetAccess;
 use App\Domain\Ops\Access\OpsAccess;
 use App\Domain\Ops\Access\OpsPermission;
 use App\Domain\Ops\Audit\OpsAudit;
@@ -11,6 +12,7 @@ use App\Domain\Ops\Http\OpsPrivilegeGuard;
 use App\Domain\Verification\Models\VerificationDocument;
 use App\Models\DriverDocument;
 use App\Models\DriverProfile;
+use App\Models\Fleet;
 use App\Models\User;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
@@ -60,6 +62,9 @@ class EhailOpsServiceProvider extends ServiceProvider
             $subject instanceof VerificationDocument => $user->id === $subject->user_id ? null : [OpsPermission::VERIFICATION_REVIEW],
             $subject instanceof DriverDocument => $this->ownsDriverDocument($user, $subject) ? null : [OpsPermission::VERIFICATION_REVIEW],
             $subject instanceof DriverProfile && $ability === 'view' => $user->id === $subject->user_id ? null : [OpsPermission::DRIVERS_VIEW],
+            // Fleet pages and driver applications (R-46 security S-02): an operator who is not the fleet's own
+            // owner or manager needs fleets.review, as on /ops/fleets.
+            $subject instanceof Fleet && in_array($ability, ['view', 'viewVehicles', 'reviewDriver'], true) => $this->app->make(FleetAccess::class)->isMember($user, $subject) ? null : [OpsPermission::FLEETS_REVIEW],
             $ability === 'money.view-receipt' => ($subject?->passenger_id ?? null) === $user->id ? null : [OpsPermission::FINANCE_VIEW, OpsPermission::SUPPORT_VIEW],
             $ability === 'money.view-earning' => ($subject?->driver_id ?? null) === $user->id ? null : [OpsPermission::FINANCE_VIEW, OpsPermission::DRIVERS_EARNINGS],
             $ability === 'money.view-payout' => ($subject?->payee_user_id ?? null) === $user->id ? null : [OpsPermission::FINANCE_VIEW, OpsPermission::DRIVERS_EARNINGS],

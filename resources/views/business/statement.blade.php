@@ -9,7 +9,7 @@
         <a class="eh-link" href="{{ route('business.invoices') }}">All statements</a>
         <div class="bz-title__actions">
             <x-eh.button variant="secondary" size="sm" icon="download" :href="route('business.statements.csv', $statement)">CSV</x-eh.button>
-            <x-eh.button size="sm" icon="document" onclick="window.print()">Print or save as PDF</x-eh.button>
+            <x-eh.button size="sm" icon="document" data-eh-print>Print or save as PDF</x-eh.button>
         </div>
     </div>
     <article class="bz-doc" aria-labelledby="bz-doc-title">

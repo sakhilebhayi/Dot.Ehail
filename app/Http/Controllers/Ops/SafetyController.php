@@ -118,8 +118,8 @@ class SafetyController extends Controller
         $what = $validated['what'] ?? 'all';
 
         $patterns = match ($what) {
-            'documents' => ['verification_document.viewed', 'ops.viewed.verification_document'],
-            'incidents' => ['ops.viewed.safety_incident'],
+            'documents' => ['verification_document.viewed', 'ops.viewed.verification_document', 'driver_document.viewed'],
+            'incidents' => ['ops.viewed.safety_incident', 'safety_incident.opened'],
             'drivers' => ['ops.viewed.driver', 'driver_profile.opened', 'safety.driver_photo_viewed'],
             'rides' => ['ops.viewed.ride'],
             'cases' => ['ops.viewed.support_case', 'support_attachment.viewed'],
@@ -134,7 +134,7 @@ class SafetyController extends Controller
                     return;
                 }
                 $q->where('action', 'like', 'ops.viewed.%')
-                    ->orWhereIn('action', ['verification_document.viewed', 'driver_profile.opened', 'safety.driver_photo_viewed', 'support_attachment.viewed']);
+                    ->orWhereIn('action', ['verification_document.viewed', 'driver_document.viewed', 'driver_profile.opened', 'safety.driver_photo_viewed', 'support_attachment.viewed', 'safety_incident.opened', 'account.data_exported']);
             })
             ->when($validated['actor'] ?? null, fn ($q, $actor) => $q->where('actor_user_id', $actor))
             ->orderByDesc('id')
