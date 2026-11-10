@@ -17,6 +17,11 @@ return [
 
     'default' => env('CACHE_STORE', 'database'),
 
+    // The store the rate limiter counts in (null = the default store). Every throttled request reads and increments a
+    // counter: on the database store that is about four statements and one write per poll. "file" keeps that off the
+    // database on a single shared host (docs/R46_PERF.md section 1).
+    'limiter' => env('CACHE_LIMITER'),
+
     /*
     |--------------------------------------------------------------------------
     | Cache Stores

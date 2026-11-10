@@ -59,3 +59,35 @@ test('battery and data saving slow reporting down', () => {
     assert.equal(shouldSave({ battery: { level: 0.8, charging: false } }), false);
     assert.equal(shouldSave(), false);
 });
+
+test('sync: the newest fix rides along with every poll while moving, one per 15 s when parked', () => {
+    const t = new LocationThrottler();
+    t.push(fix(1000));
+    t.push(fix(2000));
+    t.push(fix(3000));
+    assert.deepEqual(t.takeForSync(3000, { moving: true }).map((f) => f.recorded_at), [3000], 'only the newest while moving');
+    assert.deepEqual(t.takeForSync(3100, { moving: true }), [], 'nothing while a sync is in flight');
+    t.syncSent(1);
+    assert.equal(t.pending(), 0);
+
+    t.push(fix(5000));
+    assert.deepEqual(t.takeForSync(6000, { moving: false }), [], 'parked: not yet 15 s since the last fix went up');
+    assert.deepEqual(t.takeForSync(18000, { moving: false }).map((f) => f.recorded_at), [5000]);
+    t.syncSent(1);
+    assert.deepEqual(t.takeForSync(19000, { moving: false }), [], 'nothing queued');
+});
+
+test('sync: a failed sync keeps its fixes and the next one sends the backlog in order', () => {
+    const t = new LocationThrottler({ maxBatch: 3 });
+    t.push(fix(1000));
+    const first = t.takeForSync(1000, { moving: true });
+    t.syncFailed();
+    t.push(fix(2000));
+    t.push(fix(3000));
+    t.push(fix(4000));
+    assert.deepEqual(first.map((f) => f.recorded_at), [1000]);
+    assert.deepEqual(t.takeForSync(4000, { moving: false }).map((f) => f.recorded_at), [1000, 2000, 3000], 'backlog goes even when parked, capped');
+    t.syncSent(3);
+    assert.deepEqual(t.takeForSync(4100, { moving: false }), [], 'one fix left is not a backlog: back to the parked rule');
+    assert.equal(t.pending(), 1);
+});

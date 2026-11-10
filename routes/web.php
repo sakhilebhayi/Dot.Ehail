@@ -117,6 +117,7 @@ Route::middleware([
     foreach (['geo', 'pricing', 'dispatch', 'safety', 'money', 'passenger', 'driver', 'ops', 'business', 'fleet', 'comms'] as $ehailRoutes) {
         require __DIR__.'/ehail/'.$ehailRoutes.'.php';
     }
+    require __DIR__.'/ehail/perf.php';
 
     Route::middleware('operator')->prefix('operator')->name('operator.')->group(function () {
         Route::get('/fleets', [OperatorFleetController::class, 'index'])->name('fleets.index');

@@ -129,14 +129,34 @@ function chime() {
 
 // ---------- the feed ----------
 
+// One request per poll (docs/R46_PERF.md): the fixes since the last sync go up with it, the feed comes back
+// (null when unchanged), and the server says when to ask again (Retry-After: 2 s with an offer, 3 s waiting or on a
+// trip, 6 s in saver mode, 15 s paused, 30 s offline). Falls back to the plain feed when no sync URL is configured.
+async function syncOnce() {
+    const samples = online() ? throttler.takeForSync(Date.now(), { moving: motion.moving || Boolean(state.ride), parkedEveryS: policy.parked_post_every_s ?? 15 }) : [];
+    const body = { samples: samples.map(locationBody), saver: throttler.saver };
+    try {
+        const res = await api(urls.sync, { method: 'POST', body, headers: state.version ? { 'If-None-Match': `"v${state.version}"` } : {} });
+        throttler.syncSent(samples.length);
+        // Every answered sync while online is a heartbeat (the server refreshes it, at most every 20 s).
+        if (online() && res.data?.location?.error !== 'not_online') lastHeartbeatOk = Date.now();
+        if (res.data?.feed) applyFeed(res.data.feed);
+
+        return res;
+    } catch (e) {
+        if (samples.length) throttler.syncFailed();
+        throw e;
+    }
+}
+
 async function poll() {
     clearTimeout(state.pollTimer);
-    let wait = online() ? 2 : 30;
+    let wait = online() ? 3 : 30;
 
     try {
-        const res = await api(urls.feed, { headers: state.version ? { 'If-None-Match': `"v${state.version}"` } : {} });
+        const res = urls.sync ? await syncOnce() : await api(urls.feed, { headers: state.version ? { 'If-None-Match': `"v${state.version}"` } : {} });
         wait = Number(res.headers.get('Retry-After')) || wait;
-        if (res.status !== 304 && res.data) applyFeed(res.data);
+        if (!urls.sync && res.status !== 304 && res.data) applyFeed(res.data);
         state.failures = 0;
         alertOff('connection');
         setText('[data-dr-conn-status]', `Checked at ${clockTime(new Date())}`);
@@ -249,7 +269,7 @@ async function goOnline(button) {
 
         const res = await api(urls.online, { method: 'POST', body: boot.vehicle ? { vehicle_id: boot.vehicle.id } : {} });
         applyFeed(res.data);
-        sendHeartbeat();
+        if (!urls.sync) sendHeartbeat();
         keepAwake();
         // Online polls every 2 s: restart the loop now instead of waiting out the offline interval.
         poll();
@@ -342,8 +362,12 @@ function stopLocation() {
     state.watchId = null;
 }
 
+function locationBody(f) {
+    return { lat: f.lat, lng: f.lng, accuracy: f.accuracy, speed: f.speed ?? undefined, heading: f.heading ?? undefined, recorded_at: f.recorded_at };
+}
+
 async function postLocations() {
-    if (!online()) return;
+    if (!online() || urls.sync) return;
     const now = Date.now();
     const batch = throttler.take(now);
     if (!batch.length) return;
@@ -398,6 +422,8 @@ setInterval(() => {
         document.documentElement.dataset.moving = 'false';
         shareMoving(false);
     }
+    // With the sync request, positions and liveness ride along with each poll; nothing else is sent.
+    if (urls.sync) return;
     postLocations();
     if (online() && Date.now() - lastHeartbeat >= (policy.heartbeat_every_s ?? 10) * 1000) sendHeartbeat();
 }, 1000);

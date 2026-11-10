@@ -16,6 +16,7 @@ export class LocationThrottler {
         this.lastPostAt = -Infinity;
         this.lastKeptAt = -Infinity;
         this.inFlight = false;
+        this.backlog = false;
     }
 
     setSaver(on) {
@@ -72,6 +73,40 @@ export class LocationThrottler {
 
     pending() {
         return this.queue.length;
+    }
+
+    /**
+     * For the combined sync request (POST /api/ehail/driver/sync, docs/R46_PERF.md): which fixes ride along with this
+     * poll. Moving: the newest fix every poll. Parked: one every parkedEveryS (enough to stay matchable; a parked
+     * phone repeating the same spot costs two database writes per post for nothing). After a failed sync or a dead
+     * zone (backlog): the queued fixes, oldest first, so the trip trail stays whole. Call sent()/failed() after.
+     */
+    takeForSync(nowMs, { moving = false, parkedEveryS = 15 } = {}) {
+        if (this.inFlight || this.queue.length === 0) return [];
+        const backlog = this.backlog === true;
+        if (!moving && !backlog && nowMs - this.lastPostAt < parkedEveryS * 1000) return [];
+
+        this.inFlight = true;
+        this.lastPostAt = nowMs;
+        if (backlog) return this.queue.slice(0, this.maxBatch);
+
+        // Only the newest matters for the marker and matching; older unsent fixes from this interval are dropped.
+        this.queue.splice(0, this.queue.length - 1);
+
+        return this.queue.slice(0, 1);
+    }
+
+    /** The sync with fixes failed: keep them and send the backlog with the next sync. */
+    syncFailed() {
+        this.inFlight = false;
+        this.backlog = true;
+    }
+
+    /** The sync succeeded: drop what was sent. */
+    syncSent(count) {
+        this.sent(count);
+        // More than one fix still waiting (a long backlog, capped per post): keep draining.
+        this.backlog = this.backlog && this.queue.length > 1;
     }
 }
 
