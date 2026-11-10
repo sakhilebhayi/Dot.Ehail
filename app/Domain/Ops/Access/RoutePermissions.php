@@ -18,6 +18,9 @@ final class RoutePermissions
     public const MAP = [
         // Operations centre pages (this agent)
         'ops.home' => ['*'],
+        // Comms (R-46 comms): every operator reads their own inbox and settings.
+        'ops.notifications' => ['*'],
+        'ops.notifications.*' => ['*'],
         'ops.live' => [P::LIVE_VIEW],
         'ops.live.feed' => [P::LIVE_VIEW],
         'ops.rides' => [P::RIDES_VIEW],
