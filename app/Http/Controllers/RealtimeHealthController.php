@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Health\HealthReport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -29,23 +30,34 @@ use Illuminate\Support\Facades\Redis;
  */
 class RealtimeHealthController extends Controller
 {
-    public function check(): JsonResponse
+    public function check(HealthReport $report): JsonResponse
     {
-        $checks = [
-            'broadcasting_config' => $this->checkBroadcastingConfig(),
-            'queue_connection' => $this->checkQueueConnection(),
-            'reverb_process' => $this->checkReverbProcess(),
-        ];
+        // Dot.Ehail's designed mode on the shared host is polling (docs/R46_ARCHITECTURE.md section 0): no Reverb
+        // process exists there, so its absence is not a fault. In polling mode the chain is the database and the
+        // per-minute dispatch tick (docs/R46_PERF.md section 6, D-1508). With Reverb configured, the original
+        // broadcasting -> queue -> reverb:start chain is checked.
+        $mode = HealthReport::realtimeMode();
+
+        if ($mode === 'polling') {
+            $checks = collect($report->pollingChain())->map(fn (array $c) => ['status' => $c['status'] === HealthReport::OK ? 'ok' : 'fail', 'detail' => $c['summary']])->all();
+        } else {
+            $checks = [
+                'broadcasting_config' => $this->checkBroadcastingConfig(),
+                'queue_connection' => $this->checkQueueConnection(),
+                'reverb_process' => $this->checkReverbProcess(),
+            ];
+        }
 
         $healthy = collect($checks)->every(fn (array $check) => $check['status'] === 'ok');
 
         if (! $healthy) {
             Log::warning('Realtime health check degraded.', [
+                'mode' => $mode,
                 'checks' => collect($checks)->reject(fn (array $check) => $check['status'] === 'ok')->all(),
             ]);
         }
 
-        return response()->json(['status' => $healthy ? 'ok' : 'degraded'], $healthy ? 200 : 503);
+        return response()->json(['status' => $healthy ? 'ok' : 'degraded', 'mode' => $mode], $healthy ? 200 : 503);
     }
 
     private function checkBroadcastingConfig(): array

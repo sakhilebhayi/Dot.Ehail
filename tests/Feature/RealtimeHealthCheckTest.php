@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Health\HealthReport;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 /**
@@ -39,7 +41,7 @@ class RealtimeHealthCheckTest extends TestCase
         fclose($server);
 
         $response->assertOk()
-            ->assertExactJson(['status' => 'ok']);
+            ->assertExactJson(['status' => 'ok', 'mode' => 'websocket']);
     }
 
     public function test_never_leaks_broadcast_config_or_reverb_host_and_port(): void
@@ -53,21 +55,33 @@ class RealtimeHealthCheckTest extends TestCase
 
         $response = $this->getJson('/up/realtime');
 
-        $response->assertStatus(503)->assertExactJson(['status' => 'degraded']);
+        $response->assertStatus(503)->assertExactJson(['status' => 'degraded', 'mode' => 'websocket']);
         $body = $response->getContent();
         foreach (['reverb', '127.0.0.1', 'test-key', 'test-secret', 'test-app-id', 'checks', 'detail', 'BROADCAST_CONNECTION'] as $needle) {
             $this->assertStringNotContainsStringIgnoringCase($needle, $body);
         }
     }
 
-    public function test_reports_degraded_when_broadcast_driver_is_not_reverb(): void
+    /**
+     * R-46 (D-1508): without Reverb the app runs in its designed polling mode. That is not a fault; the chain is the
+     * database and the per-minute dispatch tick instead.
+     */
+    public function test_polling_mode_is_healthy_when_the_database_answers_and_the_dispatch_tick_is_recent(): void
+    {
+        config(['broadcasting.default' => 'log', 'queue.default' => 'database']);
+        Cache::forever(HealthReport::TICK_KEY, now()->subSeconds(30)->getTimestamp());
+
+        $this->getJson('/up/realtime')->assertOk()->assertExactJson(['status' => 'ok', 'mode' => 'polling']);
+    }
+
+    public function test_polling_mode_is_degraded_when_the_cron_has_stopped_ticking(): void
     {
         config(['broadcasting.default' => 'log', 'queue.default' => 'database']);
 
-        $this->getJson('/up/realtime')
-            ->assertStatus(503)
-            ->assertJsonPath('status', 'degraded')
-            ->assertExactJson(['status' => 'degraded']);
+        $this->getJson('/up/realtime')->assertStatus(503)->assertExactJson(['status' => 'degraded', 'mode' => 'polling']);
+
+        Cache::forever(HealthReport::TICK_KEY, now()->subMinutes(30)->getTimestamp());
+        $this->getJson('/up/realtime')->assertStatus(503)->assertExactJson(['status' => 'degraded', 'mode' => 'polling']);
     }
 
     public function test_reports_degraded_when_reverb_credentials_are_missing(): void
@@ -82,7 +96,7 @@ class RealtimeHealthCheckTest extends TestCase
 
         $this->getJson('/up/realtime')
             ->assertStatus(503)
-            ->assertExactJson(['status' => 'degraded']);
+            ->assertExactJson(['status' => 'degraded', 'mode' => 'websocket']);
     }
 
     public function test_reports_degraded_when_reverb_process_is_unreachable(): void
@@ -97,7 +111,7 @@ class RealtimeHealthCheckTest extends TestCase
 
         $this->getJson('/up/realtime')
             ->assertStatus(503)
-            ->assertExactJson(['status' => 'degraded']);
+            ->assertExactJson(['status' => 'degraded', 'mode' => 'websocket']);
     }
 
     public function test_reports_degraded_when_redis_queue_connection_is_unreachable(): void
@@ -111,6 +125,6 @@ class RealtimeHealthCheckTest extends TestCase
 
         $this->getJson('/up/realtime')
             ->assertStatus(503)
-            ->assertExactJson(['status' => 'degraded']);
+            ->assertExactJson(['status' => 'degraded', 'mode' => 'websocket']);
     }
 }
