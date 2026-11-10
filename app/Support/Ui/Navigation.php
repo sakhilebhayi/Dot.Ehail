@@ -41,6 +41,8 @@ final class Navigation
             ['key' => 'fleets', 'label' => 'Fleets', 'icon' => 'fleet', 'routes' => ['ops.fleets', 'operator.fleets.index'], 'requires' => 'operator'],
             ['key' => 'business', 'label' => 'Business', 'icon' => 'briefcase', 'routes' => ['ops.business'], 'requires' => 'operator'],
             ['key' => 'insights', 'label' => 'Insights', 'icon' => 'chart', 'routes' => ['ops.insights'], 'requires' => 'operator'],
+            ['key' => 'audit', 'label' => 'Audit log', 'icon' => 'eye', 'routes' => ['ops.audit'], 'requires' => 'operator'],
+            ['key' => 'team', 'label' => 'Team and roles', 'icon' => 'key', 'routes' => ['ops.roles'], 'requires' => 'operator'],
         ],
         'business' => [
             ['key' => 'overview', 'label' => 'Overview', 'icon' => 'briefcase', 'routes' => ['business.home']],

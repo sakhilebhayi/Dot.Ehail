@@ -11,6 +11,7 @@ export default defineConfig({
                 'resources/js/geo/index.js',
                 'resources/js/eh/shell.js',
                 'resources/js/eh/landing.js',
+                'resources/js/ops/index.js',
             ],
             refresh: true,
         }),
