@@ -53,7 +53,7 @@ class TripPin
             return true;
         }
 
-        return DB::transaction(function () use ($ride, $driver, $entered) {
+        $outcome = DB::transaction(function () use ($ride, $driver, $entered) {
             $locked = Ride::whereKey($ride->id)->lockForUpdate()->firstOrFail();
 
             if ($locked->pin_locked_until !== null && $locked->pin_locked_until->isFuture()) {
@@ -66,7 +66,7 @@ class TripPin
             if ($ok) {
                 $locked->forceFill(['pin_attempts' => 0, 'pin_locked_until' => null])->save();
 
-                return true;
+                return 'ok';
             }
 
             $attempts = $locked->pin_attempts + 1;
@@ -81,7 +81,14 @@ class TripPin
                 $lock ? 'pin_locked' : 'pin_wrong', ['attempt' => $attempts]);
             AuditLog::record('ride.pin_rejected', $driver, $locked, ['attempt' => $attempts, 'locked' => $lock]);
 
-            return false;
-        }, 3) ?: throw new DispatchRefused('pin_wrong', 'That PIN is not right. Ask the passenger for the 4-digit PIN in their app.');
+            return $lock ? 'locked' : 'wrong';
+        }, 3);
+
+        return match ($outcome) {
+            'ok' => true,
+            // The attempt that locks it says so (QA: it used to say only "not right", and the keypad stayed open).
+            'locked' => throw new DispatchRefused('pin_locked', 'Too many wrong PINs: the PIN is locked for '.(int) config('ehail_dispatch.pin.lock_minutes').' minutes. Try again then, or contact support.', 429),
+            default => throw new DispatchRefused('pin_wrong', 'That PIN is not right. Ask the passenger for the 4-digit PIN in their app.'),
+        };
     }
 }

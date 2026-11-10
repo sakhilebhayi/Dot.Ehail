@@ -143,7 +143,12 @@ class RideStateMachineTest extends TestCase
                 $dispatcher->advance($ride->fresh(), $driver, RideStatus::InProgress, $wrong);
                 $this->fail('a wrong PIN must be refused');
             } catch (DispatchRefused $e) {
-                $this->assertSame('pin_wrong', $e->reason);
+                // The fifth wrong PIN locks entry and says so (D-1611).
+                $this->assertSame($i < 5 ? 'pin_wrong' : 'pin_locked', $e->reason);
+                if ($i === 5) {
+                    $this->assertSame(429, $e->status);
+                    $this->assertStringContainsString('locked', $e->getMessage());
+                }
             }
         }
 
