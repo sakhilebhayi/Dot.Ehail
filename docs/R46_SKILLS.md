@@ -121,3 +121,14 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 |---|---|---|---|
 | `impeccable` | invoked | the few view edits this branch made (receipt, statement, bell badge, status badge, fleet strip, incident timeline) | Loaded the product context; kept to the existing Route Line components and tokens, tabular figures for money, no new patterns. The work is data and wording, so the craft rule applied was "the numbers on screen must agree with each other". |
 | other design skills | not used | | No new page, motion or brand system; UI edits were kept minimal by brief. |
+
+## ppass agent (jury polish, passenger app, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | polish of the passenger screens (booking home, category rows, approaching and arrived card, share page, receipt), inside the locked Route Line world | Polish in triage order: one "Where to?" field leads a map-first home, compact category rows at half height so the route stays visible, identity (photo, car, plate chip) above the PIN, branded controls in place of native ones (place field, day and time picker, file picker, radio, text link), one brand focus token. |
+| `design-taste-frontend` | invoked | app-screen run, as a review lens | Read the app-screen rules: the screen's one question first, no duplicate actions, only relevant categories offered (the rest listed as hidden), honest SMS wording. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Dangling symlinks (as recorded above); not claimed. |
+| others | not used | | Refinement inside an existing system; no motion library, chart or new world. |
+
+The agent was stopped by the account's weekly usage limit after its final trunk merge; the coordinator committed its last contract adaptation (`0695e7e`) after reading the diff, and ran the PHP, JS and build checks. Its browser pass after that last merge was not repeated by the agent; the end-to-end suite covers the passenger journey on the merged trunk (docs/R46_QA.md).
