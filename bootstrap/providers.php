@@ -4,6 +4,7 @@ use App\Domain\Geo\EhailGeoServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\BroadcastServiceProvider;
 use App\Providers\EhailSafetyServiceProvider;
+use App\Providers\EhailMoneyServiceProvider;
 use App\Providers\FortifyServiceProvider;
 use App\Providers\JetstreamServiceProvider;
 
@@ -14,4 +15,5 @@ return [
     JetstreamServiceProvider::class,
     EhailGeoServiceProvider::class,
     EhailSafetyServiceProvider::class,
+    EhailMoneyServiceProvider::class,
 ];

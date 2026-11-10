@@ -12,6 +12,7 @@ namespace App\Enums;
  * paid     a verified Paystack charge for exactly the fare was recorded
  * failed   the last attempt was declined; the passenger can try again
  * waived   an operator wrote the fare off, with a reason
+ * awaiting_cash  the passenger chose cash; the driver has not confirmed receiving it yet
  */
 enum PaymentStatus: string
 {
@@ -21,6 +22,7 @@ enum PaymentStatus: string
     case Paid = 'paid';
     case Failed = 'failed';
     case Waived = 'waived';
+    case AwaitingCash = 'awaiting_cash';
 
     public function label(): string
     {
@@ -31,6 +33,7 @@ enum PaymentStatus: string
             self::Paid => 'Paid',
             self::Failed => 'Payment failed',
             self::Waived => 'Waived',
+            self::AwaitingCash => 'Cash due to the driver',
         };
     }
 
