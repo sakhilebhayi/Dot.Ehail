@@ -311,7 +311,7 @@
                             @endif
                         </td>
                         <td style="padding:0.85rem 1rem;">
-                            <span style="font-size:0.75rem;color:#f4f4f5;font-weight:500;">{{ $ride->passenger?->name ?? '—' }}</span>
+                            <span style="font-size:0.75rem;color:#f4f4f5;font-weight:500;">{{-- A driver sees a rider's first name only (R-46 security S-08). --}}{{ (auth()->id() === $ride->passenger_id || auth()->user()->isPlatformOperator()) ? ($ride->passenger?->name ?? '—') : \App\Domain\Safety\RideSafety::firstName($ride->passenger?->name, '—') }}</span>
                         </td>
                         <td style="padding:0.85rem 1rem;">
                             <span style="display:inline-flex;align-items:center;padding:0.25rem 0.6rem;background:{{ $ss['bg'] }};border-radius:9999px;font-size:0.65rem;font-weight:700;color:{{ $ss['color'] }};font-family:'Syne',sans-serif;white-space:nowrap;">

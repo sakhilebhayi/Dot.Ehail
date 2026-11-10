@@ -94,7 +94,7 @@
         <div style="display:flex;gap:2rem;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;">
             <div>
                 <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.35rem;">Passenger</div>
-                <div style="font-size:12px;color:#d4d4d8;">{{ $ride->passenger?->name ?? '—' }}</div>
+                <div style="font-size:12px;color:#d4d4d8;">{{-- A driver sees a rider's first name only (R-46 security S-08). --}}{{ (auth()->id() === $ride->passenger_id || auth()->user()->isPlatformOperator()) ? ($ride->passenger?->name ?? '—') : \App\Domain\Safety\RideSafety::firstName($ride->passenger?->name, '—') }}</div>
             </div>
             <div>
                 <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.35rem;">Driver</div>

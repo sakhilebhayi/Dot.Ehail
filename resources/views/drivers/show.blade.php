@@ -18,8 +18,8 @@
             <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.2rem;letter-spacing:-0.01em;">
                 {{ $driverProfile->user?->name ?? 'Driver' }}
             </h1>
-            <p style="font-size:0.78rem;color:#71717a;margin:0;">License {{ $driverProfile->license_number }} · ID {{ $driverProfile->id_number }}</p>
-            @if(auth()->id() !== $driverProfile->user_id)
+            <p style="font-size:0.78rem;color:#71717a;margin:0;">License {{ $licenceShown }} · ID {{ $idShown }}</p>
+            @if(auth()->id() !== $driverProfile->user_id && $fullIdentity)
             <p style="font-size:0.72rem;color:#52525b;margin:0.2rem 0 0;">Opening this profile shows the full numbers and is recorded in the audit log.</p>
             @endif
         </div>
@@ -147,7 +147,7 @@
                     @foreach($rides as $ride)
                     <tr tabindex="0" onclick="window.location='{{ route('rides.show', $ride) }}'" onkeydown="if(event.key==='Enter'){window.location='{{ route('rides.show', $ride) }}'}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);">
                         <td style="padding:0.85rem 1.5rem;font-size:0.75rem;color:#71717a;">#{{ $ride->id }}</td>
-                        <td style="padding:0.85rem 1rem;font-size:0.75rem;color:#f4f4f5;">{{ $ride->pickup_address }} → {{ $ride->dropoff_address }}</td>
+                        <td style="padding:0.85rem 1rem;font-size:0.75rem;color:#f4f4f5;">{{ $rideAddresses ? $ride->pickup_address.' → '.$ride->dropoff_address : 'Trip' }}</td>
                         <td style="padding:0.85rem 1rem;font-size:0.72rem;color:#38bdf8;">{{ ucfirst(str_replace('_', ' ', $ride->status)) }}</td>
                         <td style="padding:0.85rem 1.5rem;text-align:right;font-size:0.7rem;color:#71717a;">{{ $ride->created_at->diffForHumans() }}</td>
                     </tr>

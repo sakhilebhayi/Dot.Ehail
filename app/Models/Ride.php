@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Domain\Dispatch\Models\RideOffer;
+use App\Domain\Ops\Access\OpsAccess;
+use App\Domain\Ops\Access\OpsPermission;
 use App\Domain\Rides\FeedVersion;
 use App\Domain\Rides\Models\RideEvent;
 use App\Enums\PaymentStatus;
@@ -172,20 +174,20 @@ class Ride extends Model
     }
 
     /**
-     * Rides a user is entitled to see: their own (as passenger or as the
-     * assigned driver), the rides of drivers in fleets they own (approved
-     * fleets only), and everything for a platform operator.
+     * Rides a user is entitled to see on the ride pages: their own (as passenger or as the assigned driver), and
+     * everything for a platform operator whose role includes rides.view. Fleet owners are not included: they see
+     * their drivers' trips in the fleet portal (/fleet/trips), which shows a first name and no addresses (D-1206;
+     * R-46 security S-08: these pages showed full passenger names and addresses to fleets).
      */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        if ($user->isPlatformOperator()) {
+        if ($user->isPlatformOperator() && app(OpsAccess::class)->can($user, OpsPermission::RIDES_VIEW)) {
             return $query;
         }
 
         return $query->where(function (Builder $q) use ($user) {
             $q->where('passenger_id', $user->id)
-                ->orWhere('driver_id', $user->id)
-                ->orWhereIn('driver_id', static::fleetDriverUserIds($user));
+                ->orWhere('driver_id', $user->id);
         });
     }
 

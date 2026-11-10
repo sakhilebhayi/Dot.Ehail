@@ -27,12 +27,13 @@ class RideController extends Controller
 
         $rides = Ride::visibleTo($request->user())
             ->with(['driver', 'passenger', 'vehicle'])
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
+            ->when($search !== '', function ($query) use ($search, $request) {
+                $query->where(function ($q) use ($search, $request) {
                     $q->where('pickup_address', 'like', "%{$search}%")
                         ->orWhere('dropoff_address', 'like', "%{$search}%")
                         ->orWhereHas('driver', fn ($d) => $d->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('passenger', fn ($p) => $p->where('name', 'like', "%{$search}%"));
+                        // Searching riders by name is for operators; a driver sees riders' first names only (S-08).
+                        ->when($request->user()->isPlatformOperator(), fn ($q) => $q->orWhereHas('passenger', fn ($p) => $p->where('name', 'like', "%{$search}%")));
                 });
             })
             ->latest()
