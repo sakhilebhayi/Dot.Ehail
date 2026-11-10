@@ -63,8 +63,11 @@
                 @if (Route::has('profile.show'))
                     <li><a class="eh-row" href="{{ route('profile.show') }}"><span class="eh-row__icon"><x-eh.icon name="account" /></span><span class="eh-row__main"><span class="eh-row__title">Profile and password</span><span class="eh-row__meta">Name, email, password, two-step sign-in, signed-in devices</span></span><span class="eh-row__trail"><x-eh.icon name="chevron-right" /></span></a></li>
                 @endif
+                @if ($inboxRoute)
+                    <li><a class="eh-row" href="{{ route($inboxRoute) }}"><span class="eh-row__icon"><x-eh.icon name="inbox" /></span><span class="eh-row__main"><span class="eh-row__title">Notifications</span><span class="eh-row__meta">Trip updates, receipts and safety messages</span></span><span class="eh-row__trail"><x-eh.icon name="chevron-right" /></span></a></li>
+                @endif
                 @if ($notificationsRoute)
-                    <li><a class="eh-row" href="{{ route($notificationsRoute) }}"><span class="eh-row__icon"><x-eh.icon name="bell" /></span><span class="eh-row__main"><span class="eh-row__title">Notifications</span><span class="eh-row__meta">What we send you, and how</span></span><span class="eh-row__trail"><x-eh.icon name="chevron-right" /></span></a></li>
+                    <li><a class="eh-row" href="{{ route($notificationsRoute) }}"><span class="eh-row__icon"><x-eh.icon name="bell" /></span><span class="eh-row__main"><span class="eh-row__title">Notification settings</span><span class="eh-row__meta">What we send you, and how: in the app, push, email, SMS</span></span><span class="eh-row__trail"><x-eh.icon name="chevron-right" /></span></a></li>
                 @endif
                 @if ($dataExportRoute)
                     <li><a class="eh-row" href="{{ route($dataExportRoute) }}"><span class="eh-row__icon"><x-eh.icon name="download" /></span><span class="eh-row__main"><span class="eh-row__title">Download my data</span><span class="eh-row__meta">A copy of what Dot.Ehail holds about you</span></span><span class="eh-row__trail"><x-eh.icon name="chevron-right" /></span></a></li>

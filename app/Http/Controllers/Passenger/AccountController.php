@@ -15,7 +15,9 @@ use Illuminate\View\View;
 class AccountController extends Controller
 {
     /** Route names other owners may register; the first that exists is linked (D-808). */
-    public const NOTIFICATION_ROUTES = ['comms.preferences', 'notifications.preferences', 'account.notifications'];
+    public const NOTIFICATION_ROUTES = ['ride.notifications.settings', 'comms.settings', 'account.notifications'];
+
+    public const INBOX_ROUTES = ['ride.notifications', 'comms.inbox'];
 
     public const DATA_EXPORT_ROUTES = ['privacy.export', 'account.data-export', 'account.export'];
 
@@ -25,6 +27,7 @@ class AccountController extends Controller
             'places' => SavedPlace::query()->where('user_id', $request->user()->id)
                 ->orderByRaw("case kind when 'home' then 0 when 'work' then 1 else 2 end")->orderBy('label')->get(),
             'notificationsRoute' => $this->firstRoute(self::NOTIFICATION_ROUTES),
+            'inboxRoute' => $this->firstRoute(self::INBOX_ROUTES),
             'dataExportRoute' => $this->firstRoute(self::DATA_EXPORT_ROUTES),
         ]);
     }
