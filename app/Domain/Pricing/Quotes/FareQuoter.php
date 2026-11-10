@@ -97,8 +97,17 @@ final class FareQuoter
         [$market, $route, $pickupZones, $dropoffZones, $at] = $context;
         $options = [];
         $unavailable = [];
+        $hidden = [];
 
         foreach (RideCategory::query()->activeRides()->get() as $category) {
+            $irrelevant = $this->irrelevance($category, $route, [...$pickupZones, ...$dropoffZones]);
+
+            if ($irrelevant !== null) {
+                $hidden[] = $irrelevant;
+
+                continue;
+            }
+
             $option = $this->priceCategory($request, $category, $market, $route, $pickupZones, $dropoffZones, $at);
 
             if ($option instanceof QuoteUnavailable) {
@@ -116,7 +125,36 @@ final class FareQuoter
             $options[] = $option;
         }
 
-        return new QuoteComparison($route, $options, $unavailable);
+        return new QuoteComparison($route, $options, $unavailable, $hidden);
+    }
+
+    /**
+     * Whether a category fits this trip at all (config ehail_pricing.relevance): an airport transfer needs an airport
+     * at one end, a long-distance ride a long route. Null when it fits.
+     *
+     * @param  list<ZoneRef>  $zones
+     */
+    private function irrelevance(RideCategory $category, PricedRoute $route, array $zones): ?QuoteUnavailable
+    {
+        $rule = config('ehail_pricing.relevance.'.$category->key);
+
+        if (! is_array($rule)) {
+            return null;
+        }
+
+        if (! empty($rule['zone_kinds'])) {
+            $kinds = array_map(fn (ZoneRef $zone) => $zone->kind, $zones);
+
+            if (array_intersect($kinds, (array) $rule['zone_kinds']) === []) {
+                return new QuoteUnavailable('not_for_this_trip', $category->name.' is for trips to or from '.implode(' or ', (array) $rule['zone_kinds']).' zones.', $category->key);
+            }
+        }
+
+        if (isset($rule['min_distance_m']) && $route->distanceM < (int) $rule['min_distance_m']) {
+            return new QuoteUnavailable('not_for_this_trip', $category->name.' is for trips of '.round(((int) $rule['min_distance_m']) / 1000).' km or more.', $category->key);
+        }
+
+        return null;
     }
 
     /**
