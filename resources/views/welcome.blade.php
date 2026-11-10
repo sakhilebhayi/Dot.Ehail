@@ -81,7 +81,7 @@
                     <li><a href="#drivers">Drive with us</a></li>
                 </ul>
             </div>
-            <figure class="lp-photo lp-hero__photo" data-lp-crossfade="{{ json_encode([asset('images/landing/gandhi-1024.webp'), asset('images/landing/seapoint-1200.webp')]) }}" data-lp-captions="{{ json_encode(['Gandhi Square, Johannesburg', 'Sea Point, Cape Town, at night']) }}">
+            <figure class="lp-photo lp-hero__photo">
                 <img src="{{ asset('images/landing/bridge-1600.webp') }}" srcset="{{ asset('images/landing/bridge-800.webp') }} 800w, {{ asset('images/landing/bridge-1600.webp') }} 1600w" sizes="(min-width: 960px) 50vw, 100vw" width="1600" height="1199" alt="The road across the Nelson Mandela Bridge in Johannesburg, yellow lane lines running toward the city" fetchpriority="high" data-caption="Nelson Mandela Bridge, Johannesburg">
                 <figcaption>Nelson Mandela Bridge, Johannesburg</figcaption>
             </figure>
@@ -151,9 +151,17 @@
                     @endforeach
                     <x-eh.button size="lg" variant="secondary" :href="$driveUrl" icon="steering-wheel">Drive with Dot.Ehail</x-eh.button>
                 </div>
-                <figure class="lp-drive__disc">
-                    <img src="{{ asset('images/landing/minibus-1200.webp') }}" srcset="{{ asset('images/landing/minibus-640.webp') }} 640w, {{ asset('images/landing/minibus-1200.webp') }} 1200w" sizes="(min-width: 960px) 34rem, 86vw" width="1200" height="891" loading="lazy" decoding="async" alt="A white minibus taxi with a yellow stripe parked on a street in Cape Town">
-                    <figcaption>A minibus taxi in Cape Town</figcaption>
+                {{-- What a driver reads on every offer before accepting, drawn as the route line (no photograph: the
+                     jury read the minibus taxi as the wrong kind of service; no figures: rates are not published yet). --}}
+                <figure class="lp-drive__disc lp-offer" aria-labelledby="lp-offer-cap">
+                    <ol class="lp-offer__stops">
+                        <li><span class="lp-offer__dot" aria-hidden="true"></span><b>Pickup</b><span>how far, and how many minutes</span></li>
+                        <li><span class="lp-offer__dot" aria-hidden="true"></span><b>Trip</b><span>distance, time, drop-off area</span></li>
+                        <li><span class="lp-offer__dot" aria-hidden="true"></span><b>Fare</b><span>what the rider pays, line by line</span></li>
+                        <li><span class="lp-offer__dot" aria-hidden="true"></span><b>Commission</b><span>one rate, the same every trip</span></li>
+                        <li class="lp-offer__total"><span class="lp-offer__dot" aria-hidden="true"></span><b>You earn</b><span>the amount on your statement</span></li>
+                    </ol>
+                    <figcaption id="lp-offer-cap">On every offer, before you accept</figcaption>
                 </figure>
             </div>
         </section>
@@ -255,7 +263,7 @@
             </div>
             <div class="lp-foot__fine">
                 <p>Dot.Ehail is part of the Dot ecosystem.</p>
-                <p>Pictures: <a href="https://commons.wikimedia.org/w/index.php?curid=76253417">"Johannesburg, Nelson Mandela Bridge"</a> by S'busiso siso, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Cape_Town_(ZA),_Sea_Point,_Nachtansicht_--_2024_--_1867-70_-_2.jpg">"Cape Town (ZA), Sea Point, Nachtansicht"</a> by Dietmar Rabich, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/w/index.php?curid=58773022">"SouthAfricanMinibus"</a> by Martinvl, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/w/index.php?curid=70630291">"Road signs N1 Johannesburg"</a> by Marco Scholtz, <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">CC0</a>; <a href="https://www.flickr.com/photos/25779097@N08/8722268247">"View of Joburg inner city from Gandhi Square"</a> by South African Tourism, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>. Cropped and resized. Fonts: Barlow (SIL Open Font License). Icons: Lucide (ISC) and our own.</p>
+                <p>Pictures: <a href="https://commons.wikimedia.org/w/index.php?curid=76253417">"Johannesburg, Nelson Mandela Bridge"</a> by S'busiso siso, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Cape_Town_(ZA),_Sea_Point,_Nachtansicht_--_2024_--_1867-70_-_2.jpg">"Cape Town (ZA), Sea Point, Nachtansicht"</a> by Dietmar Rabich, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/w/index.php?curid=70630291">"Road signs N1 Johannesburg"</a> by Marco Scholtz, <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">CC0</a>; <a href="https://www.flickr.com/photos/25779097@N08/8722268247">"View of Joburg inner city from Gandhi Square"</a> by South African Tourism, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>. Cropped and resized. Fonts: Barlow (SIL Open Font License). Icons: Lucide (ISC) and our own.</p>
             </div>
         </div>
     </footer>
