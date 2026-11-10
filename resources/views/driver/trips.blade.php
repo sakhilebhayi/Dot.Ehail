@@ -19,7 +19,7 @@
                     <li>
                         <a class="dr-trip-row" href="{{ route('drive.trips.show', $ride) }}">
                             <span class="dr-trip-row__title">{{ \Illuminate\Support\Str::limit($ride->dropoff_address, 56) }}</span>
-                            <span class="dr-trip-row__meta">From {{ \Illuminate\Support\Str::limit($ride->pickup_address, 40) }}, {{ ($ride->completed_at ?? $ride->cancelled_at ?? $ride->requested_at ?? $ride->created_at)?->isoFormat('D MMM HH:mm') }}</span>
+                            <span class="dr-trip-row__meta">From {{ \Illuminate\Support\Str::limit($ride->pickup_address, 40) }}, {{ \App\Http\Controllers\Driver\Support\Local::at($ride->completed_at ?? $ride->cancelled_at ?? $ride->requested_at ?? $ride->created_at)?->isoFormat('D MMM HH:mm') }}</span>
                             <span class="dr-trip-row__amount">
                                 @if ($amount !== null)<x-eh.money :minor="$amount" :currency="$ride->currency ?? 'ZAR'" />@endif
                                 <x-eh.status :status="$ride->status" />

@@ -9,10 +9,10 @@
 .dr-page { display: grid; gap: var(--eh-space-6); max-width: 46rem; margin-inline: auto; }
 .dr-page--wide { max-width: 64rem; }
 .dr-head { display: grid; gap: var(--eh-space-2); }
-.dr-head h1 { font-size: var(--eh-text-2xl); line-height: 1.15; margin: 0; letter-spacing: -0.01em; }
+.dr-head h1 { font-size: var(--eh-text-2xl); font-weight: 700; line-height: 1.15; margin: 0; letter-spacing: -0.01em; }
 .dr-head p { margin: 0; color: var(--eh-ink-2); max-width: 60ch; }
 .dr-section { display: grid; gap: var(--eh-space-3); }
-.dr-section > h2 { font-size: var(--eh-text-xl); margin: 0; line-height: 1.2; }
+.dr-section > h2 { font-size: var(--eh-text-xl); font-weight: 700; margin: 0; line-height: 1.2; }
 .dr-section > h2 + p { margin: 0; color: var(--eh-ink-2); }
 .dr-note { margin: 0; font-size: var(--eh-text-sm); color: var(--eh-ink-2); line-height: 1.45; }
 .dr-textlink { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: var(--eh-accent); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; }
@@ -220,7 +220,7 @@ html.dr-offer-open { overflow: hidden; }
 .dr-periodnav { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-3); }
 .dr-periodnav__label { font-weight: 700; text-align: center; flex: 1; }
 .dr-panel { padding: var(--eh-space-5); background: var(--eh-surface); border-radius: var(--eh-radius); display: grid; gap: var(--eh-space-3); }
-.dr-panel > h2, .dr-panel > h3 { margin: 0; font-size: var(--eh-text-lg); }
+.dr-panel > h2, .dr-panel > h3 { margin: 0; font-size: var(--eh-text-lg); font-weight: 700; }
 .dr-bar { height: 10px; border-radius: var(--eh-radius-pill); background: var(--eh-surface-2); overflow: hidden; }
 .dr-bar span { display: block; height: 100%; background: var(--eh-accent); border-radius: inherit; }
 .dr-trip-row { display: grid; grid-template-columns: 1fr auto; gap: var(--eh-space-1) var(--eh-space-4); padding: var(--eh-space-3) var(--eh-space-4); text-decoration: none; color: inherit; min-height: 56px; }

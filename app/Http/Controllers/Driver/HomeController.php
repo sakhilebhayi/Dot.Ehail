@@ -29,7 +29,8 @@ class HomeController extends Controller
             return view('driver.onboarding', ['state' => $state, 'documents' => $state->documents(), 'eligibility' => $state->eligibility()]);
         }
 
-        $body = $feed->forDriver($request->user())['body'];
+        // A driver who has never been online has no feed sources yet (version 0, no body): start from "offline".
+        $body = $feed->forDriver($request->user())['body'] ?? ['version' => 0, 'availability' => ['state' => 'offline'], 'offer' => null, 'ride' => null];
         $today = $earnings->forDriver($request->user(), 'day');
 
         return view('driver.console', [

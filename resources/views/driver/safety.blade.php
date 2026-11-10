@@ -35,7 +35,7 @@
                                 <p class="dr-doc__name">{{ $item['label'] }}@if($item['vehicle']) <span class="dr-plate">{{ $item['vehicle']->plate_number }}</span>@endif</p>
                                 <x-eh.badge :tone="$item['chip']['tone']">{{ $item['chip']['label'] }}</x-eh.badge>
                             </div>
-                            @if ($item['expires_on'])<p class="dr-note">{{ $item['satisfied'] ? 'Expires' : 'Expired' }} {{ \Illuminate\Support\Carbon::parse($item['expires_on'])->isoFormat('D MMMM YYYY') }}. Upload the renewal before then so you stay online.</p>@endif
+                            @if ($item['expires_on'])<p class="dr-note">{{ $item['satisfied'] ? 'Expires' : 'Expired' }} {{ \App\Http\Controllers\Driver\Support\Local::at($item['expires_on'])->isoFormat('D MMMM YYYY') }}. Upload the renewal before then so you stay online.</p>@endif
                             <a class="dr-textlink" href="{{ route('drive.documents') }}#doc-{{ $item['type'] }}{{ $item['vehicle'] ? '-v'.$item['vehicle']->id : '' }}">Open documents</a>
                         </li>
                     @endforeach
@@ -51,7 +51,7 @@
                         <li>
                             <a class="dr-trip-row" href="{{ route('drive.safety.case', $case['id']) }}">
                                 <span class="dr-trip-row__title">{{ $case['subject'] }}</span>
-                                <span class="dr-trip-row__meta">{{ $case['reference'] }}, {{ $case['category_label'] }}, opened {{ \Illuminate\Support\Carbon::parse($case['opened_at'])->isoFormat('D MMM') }}</span>
+                                <span class="dr-trip-row__meta">{{ $case['reference'] }}, {{ $case['category_label'] }}, opened {{ \App\Http\Controllers\Driver\Support\Local::at($case['opened_at'])->isoFormat('D MMM') }}</span>
                                 <span class="dr-trip-row__amount"><x-eh.badge :tone="$case['status'] === 'waiting_on_user' ? 'caution' : (in_array($case['status'], ['resolved', 'closed'], true) ? 'go' : 'info')">{{ $caseStatus[$case['status']] ?? $case['status'] }}</x-eh.badge></span>
                             </a>
                         </li>
@@ -77,7 +77,7 @@
         <section class="dr-section" aria-labelledby="inc-h">
             <h2 id="inc-h">Safety reports you raised</h2>
             @forelse ($incidents as $incident)
-                <p class="dr-note"><strong>{{ $incident['reference'] }}</strong> {{ $incident['kind_label'] }}, {{ \Illuminate\Support\Carbon::parse($incident['raised_at'])->isoFormat('D MMM HH:mm') }}: {{ $incidentStatus[$incident['status']] ?? $incident['status'] }}.</p>
+                <p class="dr-note"><strong>{{ $incident['reference'] }}</strong> {{ $incident['kind_label'] }}, {{ \App\Http\Controllers\Driver\Support\Local::at($incident['raised_at'])->isoFormat('D MMM HH:mm') }}: {{ $incidentStatus[$incident['status']] ?? $incident['status'] }}.</p>
             @empty
                 <p class="dr-note">None.</p>
             @endforelse
@@ -86,7 +86,7 @@
         @if ($ratings)
             <section class="dr-section" aria-labelledby="rat-h">
                 <h2 id="rat-h">Ratings from passengers</h2>
-                <p class="dr-note">Your band: {{ $ratings['band'] }}@if($ratings['average'] !== null) (average {{ number_format($ratings['average'], 2) }}, only you see this number)@endif. You may appeal a rating once, within 30 days.</p>
+                <p class="dr-note">Your band: {{ $ratings['band']['label'] ?? 'New' }}@if($ratings['average'] !== null) (average {{ number_format($ratings['average'], 2) }}, only you see this number)@endif. You may appeal a rating once, within 30 days.</p>
                 @foreach (collect($ratings['data'])->take(10) as $r)
                     <div class="dr-panel">
                         <div class="dr-doc__head">

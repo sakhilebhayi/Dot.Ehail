@@ -13,7 +13,7 @@
         <ol class="dr-docs" aria-label="Messages">
             @foreach ($messages as $m)
                 <li class="dr-doc">
-                    <p class="dr-note"><strong>{{ $m['from'] === 'you' ? 'You' : $m['from'] }}</strong>, {{ \Illuminate\Support\Carbon::parse($m['at'])->isoFormat('D MMM HH:mm') }}</p>
+                    <p class="dr-note"><strong>{{ $m['from'] === 'you' ? 'You' : $m['from'] }}</strong>, {{ \App\Http\Controllers\Driver\Support\Local::at($m['at'])->isoFormat('D MMM HH:mm') }}</p>
                     <p style="margin:0;white-space:pre-line">{{ $m['body'] }}</p>
                     @if ($m['attachment'])<a class="dr-textlink" href="{{ $m['attachment']['url'] }}">{{ $m['attachment']['name'] }}</a>@endif
                 </li>

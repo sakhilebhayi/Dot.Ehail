@@ -10,6 +10,9 @@
 
 return [
 
+    // Times on the driver pages are shown in the market's local time (storage stays UTC).
+    'timezone' => env('EHAIL_DRIVER_TIMEZONE', 'Africa/Johannesburg'),
+
     // "I've arrived" is enabled when the phone's last fix is within this distance of the pickup (plus the fix's
     // own accuracy, capped). Farther away the driver must confirm, and the confirmation is audited.
     'arrival' => [

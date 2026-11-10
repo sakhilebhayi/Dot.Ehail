@@ -4,6 +4,7 @@
 export const NAV_APPS = { google: 'Google Maps', waze: 'Waze', apple: 'Apple Maps' };
 
 export function navLink(app, lat, lng) {
+    if (lat === null || lng === null || lat === undefined || lng === undefined || lat === '' || lng === '') return null;
     if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return null;
     const p = `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
 

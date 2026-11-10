@@ -833,7 +833,7 @@ function renderSummary(s) {
     const rows = [];
     if (s.fare.quoted_minor !== null) rows.push(ledgerRow('Fare agreed at request', formatMoney(s.fare.quoted_minor, s.currency)));
     if (s.fare.final_minor !== null) rows.push(ledgerRow('Final fare', formatMoney(s.fare.final_minor, s.currency), true));
-    if (s.fare.difference_minor) rows.push(ledgerRow('Difference', `${formatMoney(s.fare.difference_minor, s.currency)}${s.fare.adjustments.length ? ` (${s.fare.adjustments.map((a) => a.label || a.reason || a.code).filter(Boolean).join(', ')})` : ''}`));
+    if (s.fare.difference_minor) rows.push(ledgerRow('Difference', `${formatMoney(s.fare.difference_minor, s.currency)}${s.fare.adjustments.length ? ` (${s.fare.adjustments.map((a) => a.text || a.label || a.reason || a.code).filter(Boolean).join(', ')})` : ''}`));
     if (s.earnings) {
         if (s.earnings.commission_minor !== null) rows.push(ledgerRow('Commission', formatMoney(-s.earnings.commission_minor, s.currency)));
         if (s.earnings.deductions_minor) rows.push(ledgerRow('Platform fees, tax and other', formatMoney(-s.earnings.deductions_minor, s.currency)));

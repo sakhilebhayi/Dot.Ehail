@@ -15,10 +15,10 @@
         <p class="dr-doc__reason">{{ $item['reason'] }}@if($item['review_note']). {{ $item['review_note'] }}@endif</p>
     @endif
     @if ($item['expires_on'])
-        <p class="dr-note">{{ $item['satisfied'] ? 'Valid until' : 'Expiry date given' }} {{ \Illuminate\Support\Carbon::parse($item['expires_on'])->isoFormat('D MMMM YYYY') }}.</p>
+        <p class="dr-note">{{ $item['satisfied'] ? 'Valid until' : 'Expiry date given' }} {{ \App\Http\Controllers\Driver\Support\Local::at($item['expires_on'])->isoFormat('D MMMM YYYY') }}.</p>
     @endif
     @if ($item['state'] === 'pending_review')
-        <p class="dr-note">Sent {{ $item['submitted_at']?->diffForHumans() }}. A person checks it before it counts.</p>
+        <p class="dr-note">Sent {{ $item['submitted_at']?->diffForHumans() ?? 'recently' }}. A person checks it before it counts.</p>
     @endif
 
     @if ($needsAction || $item['satisfied'])

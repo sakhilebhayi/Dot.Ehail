@@ -5,8 +5,8 @@
     </x-slot:head>
     <x-slot:header>
         <div class="dr-head">
-            <h1>Payout for the week to {{ $payout->batch?->period_end?->isoFormat('D MMMM YYYY') ?? 'date not set' }}</h1>
-            <p>Reference {{ $payout->reference }}. Status: {{ ucfirst($payout->status) }}@if($payout->paid_at), paid {{ $payout->paid_at->isoFormat('D MMMM HH:mm') }}@endif.@if($payout->failure_reason) {{ $payout->failure_reason }}@endif</p>
+            <h1>Payout for the week to {{ \App\Http\Controllers\Driver\Support\Local::at($payout->batch?->period_end)?->isoFormat('D MMMM YYYY') ?? 'date not set' }}</h1>
+            <p>Reference {{ $payout->reference }}. Status: {{ ucfirst($payout->status) }}@if($payout->paid_at), paid {{ \App\Http\Controllers\Driver\Support\Local::at($payout->paid_at)->isoFormat('D MMMM HH:mm') }}@endif.@if($payout->failure_reason) {{ $payout->failure_reason }}@endif</p>
         </div>
     </x-slot:header>
     <div class="dr-page">
@@ -23,7 +23,7 @@
                 <li>
                     <a class="dr-trip-row" href="{{ $e->ride_id ? route('drive.trips.show', $e->ride_id) : '#' }}">
                         <span class="dr-trip-row__title">{{ ucfirst(str_replace('_', ' ', $e->kind)) }}{{ $e->ride_id ? ' #'.$e->ride_id : '' }}</span>
-                        <span class="dr-trip-row__meta">{{ $e->earned_at?->isoFormat('D MMM HH:mm') }}, fare <x-eh.money :minor="$e->fare_minor" :currency="$e->currency" /></span>
+                        <span class="dr-trip-row__meta">{{ \App\Http\Controllers\Driver\Support\Local::at($e->earned_at)?->isoFormat('D MMM HH:mm') }}, fare <x-eh.money :minor="$e->fare_minor" :currency="$e->currency" /></span>
                         <span class="dr-trip-row__amount"><x-eh.money :minor="$e->net_minor ?? 0" :currency="$e->currency" /></span>
                     </a>
                 </li>

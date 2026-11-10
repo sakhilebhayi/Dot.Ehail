@@ -17,7 +17,7 @@
     <x-slot:header>
         <div class="dr-head">
             <h1>{{ \Illuminate\Support\Str::limit($s['dropoff'], 60) }}</h1>
-            <p>From {{ $s['pickup'] }}. <x-eh.status :status="$s['status']" />@if($s['completed_at']) {{ \Illuminate\Support\Carbon::parse($s['completed_at'])->isoFormat('D MMMM YYYY, HH:mm') }}@endif</p>
+            <p>From {{ $s['pickup'] }}. <x-eh.status :status="$s['status']" />@if($s['completed_at']) {{ \App\Http\Controllers\Driver\Support\Local::at($s['completed_at'])->isoFormat('D MMMM YYYY, HH:mm') }}@endif</p>
         </div>
     </x-slot:header>
 
@@ -31,7 +31,7 @@
                     <div><dt>Difference</dt><dd><x-eh.money :minor="$f['difference_minor']" :currency="$cur" signed /></dd></div>
                 @endif
                 @foreach ($f['adjustments'] as $adj)
-                    <div><dt>{{ $adj['label'] ?? $adj['reason_label'] ?? $adj['reason'] ?? $adj['code'] ?? 'Adjustment' }}</dt><dd>@isset($adj['amount_minor'])<x-eh.money :minor="$adj['amount_minor']" :currency="$cur" signed />@endisset</dd></div>
+                    <div><dt>{{ $adj['text'] ?? $adj['label'] ?? $adj['reason_label'] ?? $adj['reason'] ?? $adj['code'] ?? 'Adjustment' }}</dt><dd>@isset($adj['amount_minor'])<x-eh.money :minor="$adj['amount_minor']" :currency="$cur" signed />@endisset</dd></div>
                 @endforeach
             </dl>
             @if ($e)

@@ -3,9 +3,9 @@
     $t = $statement['totals'];
     $cur = $statement['currency'];
     $label = match ($period) {
-        'day' => $from->isToday() ? 'Today' : $from->isoFormat('dddd D MMMM'),
-        'week' => 'Week of '.$from->isoFormat('D MMMM'),
-        'month' => $from->isoFormat('MMMM YYYY'),
+        'day' => $from->isToday() ? 'Today' : \App\Http\Controllers\Driver\Support\Local::at($from)->isoFormat('dddd D MMMM'),
+        'week' => 'Week of '.\App\Http\Controllers\Driver\Support\Local::at($from)->isoFormat('D MMMM'),
+        'month' => \App\Http\Controllers\Driver\Support\Local::at($from)->isoFormat('MMMM YYYY'),
     };
     $tabs = collect(['day' => 'Day', 'week' => 'Week', 'month' => 'Month'])->map(fn ($l, $p) => ['label' => $l, 'href' => route('drive.earnings', ['period' => $p])])->all();
     $kinds = ['trip' => 'Trip', 'cancellation_fee' => 'Cancellation fee', 'incentive' => 'Incentive', 'adjustment' => 'Adjustment'];
@@ -90,7 +90,7 @@
                         <li>
                             <a class="dr-trip-row" href="{{ $ride ? route('drive.trips.show', $ride) : '#' }}" @unless($ride) aria-disabled="true" @endunless>
                                 <span class="dr-trip-row__title">{{ $ride ? \Illuminate\Support\Str::limit($ride->dropoff_address, 48) : $kinds[$row['kind']] ?? $row['kind'] }}</span>
-                                <span class="dr-trip-row__meta">{{ $kinds[$row['kind']] ?? $row['kind'] }}, {{ \Illuminate\Support\Carbon::parse($row['earned_at'])->isoFormat('D MMM HH:mm') }}. Fare <x-eh.money :minor="$row['fare_minor']" :currency="$row['currency']" />@if($row['commission_minor']), commission <x-eh.money :minor="$row['commission_minor']" :currency="$row['currency']" />@endif @if($row['cash_collected_minor']), cash <x-eh.money :minor="$row['cash_collected_minor']" :currency="$row['currency']" />@endif</span>
+                                <span class="dr-trip-row__meta">{{ $kinds[$row['kind']] ?? $row['kind'] }}, {{ \App\Http\Controllers\Driver\Support\Local::at($row['earned_at'])->isoFormat('D MMM HH:mm') }}. Fare <x-eh.money :minor="$row['fare_minor']" :currency="$row['currency']" />@if($row['commission_minor']), commission <x-eh.money :minor="$row['commission_minor']" :currency="$row['currency']" />@endif @if($row['cash_collected_minor']), cash <x-eh.money :minor="$row['cash_collected_minor']" :currency="$row['currency']" />@endif</span>
                                 <span class="dr-trip-row__amount"><x-eh.money :minor="$row['net_minor']" :currency="$row['currency']" /><x-eh.badge :tone="$statusTone[$row['status']] ?? 'neutral'">{{ $statusWord[$row['status']] ?? $row['status'] }}</x-eh.badge></span>
                             </a>
                         </li>
@@ -104,7 +104,7 @@
             @forelse ($incentives as $program)
                 <div class="dr-panel">
                     <h3>{{ $program['name'] }}</h3>
-                    <p class="dr-note">Reward <x-eh.money :minor="$program['reward_minor']" :currency="$program['currency']" />, {{ \Illuminate\Support\Carbon::parse($program['window_start'])->isoFormat('D MMM') }} to {{ \Illuminate\Support\Carbon::parse($program['window_end'])->isoFormat('D MMM') }}.</p>
+                    <p class="dr-note">Reward <x-eh.money :minor="$program['reward_minor']" :currency="$program['currency']" />, {{ \App\Http\Controllers\Driver\Support\Local::at($program['window_start'])->isoFormat('D MMM') }} to {{ \App\Http\Controllers\Driver\Support\Local::at($program['window_end'])->isoFormat('D MMM') }}.</p>
                     @if ($program['state'] === 'unmeasurable')
                         <p class="dr-note">This programme needs data Dot.Ehail does not record yet, so it cannot be earned. It is shown so you know it exists.</p>
                     @else
@@ -117,6 +117,6 @@
             @endforelse
         </section>
 
-        <p class="dr-note">Next payout batch is drafted {{ $nextPayout->isoFormat('dddd D MMMM [at] HH:mm') }}. Money moves once operations pays the batch.</p>
+        <p class="dr-note">Next payout batch is drafted {{ \App\Http\Controllers\Driver\Support\Local::at($nextPayout)->isoFormat('dddd D MMMM [at] HH:mm') }}. Money moves once operations pays the batch.</p>
     </div>
 </x-driver-layout>
