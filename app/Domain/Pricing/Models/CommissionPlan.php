@@ -30,9 +30,10 @@ class CommissionPlan extends Model
 
     /**
      * Commission is charged on the trip fare: not on tolls (passed to the driver at cost), the booking fee, zone
-     * fees or tax (platform or third-party money), and promotions are funded by the platform.
+     * fees or tax (platform or third-party money), and promotions are funded by the platform. Caps, rounding and
+     * operator adjustments move the trip fare, so the driver shares them.
      */
-    public const DEFAULT_COMMISSIONABLE = ['base', 'distance', 'time', 'waiting', 'minimum_adjustment', 'demand', 'recalculation_cap', 'rounding'];
+    public const DEFAULT_COMMISSIONABLE = ['base', 'distance', 'time', 'waiting', 'minimum_adjustment', 'demand', 'recalculation_cap', 'rounding', 'operator_adjustment'];
 
     public const TERMS = [
         'name', 'country', 'currency', 'service_area_id', 'ride_category_id', 'fleet_id', 'percent_bp', 'fixed_minor',
