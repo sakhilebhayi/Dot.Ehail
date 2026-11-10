@@ -10,4 +10,5 @@ return [
     BroadcastServiceProvider::class,
     FortifyServiceProvider::class,
     JetstreamServiceProvider::class,
+    App\Providers\EhailDesignServiceProvider::class,
 ];

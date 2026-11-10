@@ -1,0 +1,233 @@
+/* Hallmark v2 stamp: Dot.Ehail "Route Line" system, locked by DESIGN.md (custom world from the impeccable direction round, seed 5aa5fa14; taste one-motif, seed 262676140). */
+/* Critique: the dot on a line (logo disc, transit station, pickup pin) is the one motif; colour is sign green and road-marking yellow on cool map paper, never neon on black. */
+/* answered 48: every colour and face below is a token; components read tokens only. */
+
+/*
+ * Dot.Ehail tokens (--eh-*). Contract: docs/R46_ARCHITECTURE.md section 6, documented in DESIGN.md.
+ * Theme: <html data-theme="light|dark"> pins a theme; without the attribute the OS preference decides.
+ * Contrast pairs are measured in docs/R46_DS.md (every text pair at least 4.5:1, controls 3:1).
+ */
+:root {
+    color-scheme: light;
+
+    /* Map paper and its surfaces */
+    --eh-ground: #f1f4f0;
+    --eh-surface: #ffffff;
+    --eh-surface-2: #e4eae4;
+    --eh-surface-3: #d6ded7;
+
+    /* Ink */
+    --eh-ink: #0f1f19;
+    --eh-ink-2: #3a4a43;
+    --eh-ink-3: #56665e;
+    --eh-rule: #d3dbd5;
+    --eh-rule-strong: #7c8b84;
+
+    /* Sign green: the one action colour, with its pale tints doing the area work */
+    --eh-accent: #0b6a3c;
+    --eh-accent-hover: #08552f;
+    --eh-accent-ink: #ffffff;
+    --eh-accent-tint: #d9eedf;
+    --eh-accent-tint-ink: #0a4a2b;
+
+    /* Road-marking yellow: the dot (pickup, current stop, highlight); always carries dark ink */
+    --eh-signal: #f2c230;
+    --eh-signal-ink: #0f1f19;
+
+    /* State */
+    --eh-go: #0e6e3d;
+    --eh-go-bg: #ddf0e3;
+    --eh-caution: #7a4f00;
+    --eh-caution-bg: #fdf1c9;
+    --eh-stop: #b3261e;
+    --eh-stop-bg: #fbe4e1;
+    --eh-stop-fill: #b3261e;
+    --eh-stop-fill-ink: #ffffff;
+    --eh-info: #1d4f9c;
+    --eh-info-bg: #e1ebf8;
+    --eh-focus: #1d5bd6;
+
+    /* Map palette (the geo agent's map style reads these) */
+    --eh-map-land: #eef1ec;
+    --eh-map-road: #ffffff;
+    --eh-map-road-casing: #cdd5ce;
+    --eh-map-road-major: #f7dc80;
+    --eh-map-road-major-casing: #d9b84a;
+    --eh-map-water: #b9d6e6;
+    --eh-map-park: #cfe4c8;
+    --eh-map-building: #e1e6e0;
+    --eh-map-label: #3a4a43;
+    --eh-map-label-halo: #ffffff;
+    --eh-map-route: #0b6a3c;
+    --eh-map-route-casing: #ffffff;
+    --eh-map-route-alt: #7c8b84;
+    --eh-map-pickup: #f2c230;
+    --eh-map-dropoff: #0f1f19;
+    --eh-map-driver: #1d5bd6;
+
+    /* Ride-category line colours (identity, like transit lines; used as small marks only) */
+    --eh-line-1: #0b6a3c;
+    --eh-line-2: #1d4f9c;
+    --eh-line-3: #8a4b08;
+    --eh-line-4: #6b2d5c;
+
+    /* Type */
+    --eh-font-ui: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --eh-font-display: "Barlow Condensed", "Barlow", system-ui, sans-serif;
+    --eh-font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --eh-text-xs: 0.8125rem;   /* 13px floor */
+    --eh-text-sm: 0.875rem;    /* 14 */
+    --eh-text-md: 1rem;        /* 16 body */
+    --eh-text-lg: 1.125rem;    /* 18 driver body */
+    --eh-text-xl: 1.375rem;    /* 22 */
+    --eh-text-2xl: 1.75rem;    /* 28 */
+    --eh-text-3xl: 2.25rem;    /* 36 */
+    --eh-text-4xl: 3rem;       /* 48 */
+
+    /* Space (4px base) */
+    --eh-space-1: 0.25rem;
+    --eh-space-2: 0.5rem;
+    --eh-space-3: 0.75rem;
+    --eh-space-4: 1rem;
+    --eh-space-5: 1.25rem;
+    --eh-space-6: 1.5rem;
+    --eh-space-8: 2rem;
+    --eh-space-10: 2.5rem;
+    --eh-space-12: 3rem;
+    --eh-space-16: 4rem;
+    --eh-space-24: 6rem;
+    --eh-gutter: 1rem;
+
+    /* Shape: panels have a small radius, controls are pill (a route line with round caps), markers are discs */
+    --eh-radius-sm: 6px;
+    --eh-radius: 12px;
+    --eh-radius-lg: 20px;
+    --eh-radius-pill: 999px;
+
+    /* Targets */
+    --eh-target: 44px;
+    --eh-target-driver: 56px;
+
+    /* Elevation: only things that float get a shadow */
+    --eh-shadow-float: 0 12px 32px -8px rgb(15 31 25 / 0.28), 0 2px 6px rgb(15 31 25 / 0.12);
+
+    /* Motion */
+    --eh-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --eh-ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --eh-duration-fast: 120ms;
+    --eh-duration: 200ms;
+    --eh-duration-slow: 320ms;
+
+    /* Layout */
+    --eh-container: 72rem;
+    --eh-topbar: 56px;
+    --eh-tabbar: 64px;
+    --eh-sidebar: 248px;
+}
+
+/* Night map. Not near-black with one acid accent: a deep green-grey ground, a soft sign green and the same yellow dot. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --eh-ground: #0d1613;
+        --eh-surface: #141f1b;
+        --eh-surface-2: #1c2924;
+        --eh-surface-3: #26352f;
+        --eh-ink: #e8f0eb;
+        --eh-ink-2: #b3c1b9;
+        --eh-ink-3: #91a299;
+        --eh-rule: #26352f;
+        --eh-rule-strong: #6b7d75;
+        --eh-accent: #5cc48c;
+        --eh-accent-hover: #79d3a2;
+        --eh-accent-ink: #05140c;
+        --eh-accent-tint: #173828;
+        --eh-accent-tint-ink: #a8e3c0;
+        --eh-signal: #f2c230;
+        --eh-signal-ink: #05140c;
+        --eh-go: #6fd39b;
+        --eh-go-bg: #12301f;
+        --eh-caution: #f2c230;
+        --eh-caution-bg: #3a2e0a;
+        --eh-stop: #ff8a7a;
+        --eh-stop-bg: #3d1612;
+        --eh-stop-fill: #c62f26;
+        --eh-stop-fill-ink: #ffffff;
+        --eh-info: #9cc0ff;
+        --eh-info-bg: #142640;
+        --eh-focus: #86b3ff;
+        --eh-map-land: #121c18;
+        --eh-map-road: #22302a;
+        --eh-map-road-casing: #0b120f;
+        --eh-map-road-major: #5a4d1d;
+        --eh-map-road-major-casing: #2a2410;
+        --eh-map-water: #0f2a36;
+        --eh-map-park: #15291c;
+        --eh-map-building: #1a2621;
+        --eh-map-label: #b3c1b9;
+        --eh-map-label-halo: #0d1613;
+        --eh-map-route: #5cc48c;
+        --eh-map-route-casing: #0d1613;
+        --eh-map-route-alt: #6b7d75;
+        --eh-map-pickup: #f2c230;
+        --eh-map-dropoff: #e8f0eb;
+        --eh-map-driver: #86b3ff;
+        --eh-line-1: #5cc48c;
+        --eh-line-2: #9cc0ff;
+        --eh-line-3: #e7a35c;
+        --eh-line-4: #e09ad0;
+        --eh-shadow-float: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.4);
+    }
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --eh-ground: #0d1613;
+    --eh-surface: #141f1b;
+    --eh-surface-2: #1c2924;
+    --eh-surface-3: #26352f;
+    --eh-ink: #e8f0eb;
+    --eh-ink-2: #b3c1b9;
+    --eh-ink-3: #91a299;
+    --eh-rule: #26352f;
+    --eh-rule-strong: #6b7d75;
+    --eh-accent: #5cc48c;
+    --eh-accent-hover: #79d3a2;
+    --eh-accent-ink: #05140c;
+    --eh-accent-tint: #173828;
+    --eh-accent-tint-ink: #a8e3c0;
+    --eh-signal: #f2c230;
+    --eh-signal-ink: #05140c;
+    --eh-go: #6fd39b;
+    --eh-go-bg: #12301f;
+    --eh-caution: #f2c230;
+    --eh-caution-bg: #3a2e0a;
+    --eh-stop: #ff8a7a;
+    --eh-stop-bg: #3d1612;
+    --eh-stop-fill: #c62f26;
+    --eh-stop-fill-ink: #ffffff;
+    --eh-info: #9cc0ff;
+    --eh-info-bg: #142640;
+    --eh-focus: #86b3ff;
+    --eh-map-land: #121c18;
+    --eh-map-road: #22302a;
+    --eh-map-road-casing: #0b120f;
+    --eh-map-road-major: #5a4d1d;
+    --eh-map-road-major-casing: #2a2410;
+    --eh-map-water: #0f2a36;
+    --eh-map-park: #15291c;
+    --eh-map-building: #1a2621;
+    --eh-map-label: #b3c1b9;
+    --eh-map-label-halo: #0d1613;
+    --eh-map-route: #5cc48c;
+    --eh-map-route-casing: #0d1613;
+    --eh-map-route-alt: #6b7d75;
+    --eh-map-pickup: #f2c230;
+    --eh-map-dropoff: #e8f0eb;
+    --eh-map-driver: #86b3ff;
+    --eh-line-1: #5cc48c;
+    --eh-line-2: #9cc0ff;
+    --eh-line-3: #e7a35c;
+    --eh-line-4: #e09ad0;
+    --eh-shadow-float: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.4);
+}
