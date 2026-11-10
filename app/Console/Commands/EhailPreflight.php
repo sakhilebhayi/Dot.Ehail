@@ -67,6 +67,7 @@ class EhailPreflight extends Command
         'business:statements',
         'ehail:comms-deliver',
         'ehail:comms-prune',
+        'ehail:privacy-purge',
     ];
 
     protected $signature = 'ehail:preflight
@@ -688,7 +689,7 @@ class EhailPreflight extends Command
             $missing === [] ? self::PASS : self::FAIL,
             'Schedule',
             'Registered tasks',
-            $missing === [] ? count(self::EXPECTED_SCHEDULE).' tasks: dispatch tick and ride expiry, safety and money sweeps and comms delivery every minute; retention purges (quotes hourly, trails 02:40, comms 03:30); verification expiry 05:00; payout drafts daily '.config('money.payouts.schedule_time', '06:00').' acting on ISO weekday '.config('money.payouts.schedule_day', 1).'.' : 'Not scheduled: '.implode(', ', $missing),
+            $missing === [] ? count(self::EXPECTED_SCHEDULE).' tasks: dispatch tick and ride expiry, safety and money sweeps and comms delivery every minute; retention purges (quotes hourly, trails 02:40, comms 03:30, the POPIA privacy purge); verification expiry 05:00; payout drafts daily '.config('money.payouts.schedule_time', '06:00').' acting on ISO weekday '.config('money.payouts.schedule_day', 1).'.' : 'Not scheduled: '.implode(', ', $missing),
         );
 
         $log = storage_path('logs/cron-scheduler.log');

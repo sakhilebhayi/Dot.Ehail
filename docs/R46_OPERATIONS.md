@@ -19,7 +19,7 @@ Do these once, in this order. Until steps 2 to 5 are done the site is up and saf
    - openrouteservice (cheapest real routing; free tier with limits): `EHAIL_ROUTING_DRIVER=ors`, `EHAIL_ORS_KEY=...`, optionally `EHAIL_GEOCODING_DRIVER=ors`.
    - Mapbox, or your own OSRM / Valhalla server: `mapbox` + `EHAIL_MAPBOX_SERVER_TOKEN`, `osrm` + `EHAIL_OSRM_URL`, `valhalla` + `EHAIL_VALHALLA_URL`.
    Then `config:cache` and preflight: `Routing  PASS`. Set a spending cap at the provider. Routes are cached for 10 minutes per ~11 m of start and end, and a circuit breaker stops calls for 60 s after 5 failures, so a provider outage shows "temporarily unavailable" instead of piling up timeouts.
-   **Map tiles:** the default OpenStreetMap Foundation server has no SLA and may refuse heavy commercial traffic. Before traffic grows, contract a tile provider (Google Map Tiles, Mapbox, MapTiler, Stadia) and set `EHAIL_TILES_URL`, `EHAIL_TILES_ATTRIBUTION`, `EHAIL_TILES_KIND=` anything but `osm` (which adds the OSM "report a map issue" link); restrict the key to this site by HTTP referrer at the provider (tile URLs are visible in the browser). If the Content-Security-Policy is enforced, the tile host must be in its `img-src` (`App\Domain\Geo\Support\GeoCsp`).
+   **Map tiles:** the default OpenStreetMap Foundation server has no SLA and may refuse heavy commercial traffic. Before traffic grows, contract a tile provider (Google Map Tiles, Mapbox, MapTiler, Stadia) and set `EHAIL_TILES_URL`, `EHAIL_TILES_ATTRIBUTION`, `EHAIL_TILES_KIND=` anything but `osm` (which adds the OSM "report a map issue" link); restrict the key to this site by HTTP referrer at the provider (tile URLs are visible in the browser). The enforced Content-Security-Policy takes the tile host from `EHAIL_TILES_URL` (`App\Domain\Geo\Support\GeoCsp`), so a new provider needs no code change; check a map renders after `config:cache`.
 
 3. **Become the platform operator.** Sign in once through InfoDot (that creates your account), then on the host:
    `php artisan ehail:operator you@yourdomain.co.za` (`--revoke` withdraws it; both are audit-logged). In `/ops/team` give each other operator the narrowest role that fits (ops agent, dispatcher, verification reviewer, safety officer, support agent, finance, pricing manager, admin; matrix in `docs/R46_UI_OPS.md` section 2). An operator with no role rows has full access until an admin assigns one.
@@ -103,7 +103,7 @@ The host has no monitoring stack. These are the signals that exist, with the thr
 | Providers | preflight; `grep -E 'routing_failed|geocoding' storage/logs/laravel.log` | routing failures several times an hour: the provider key, quota or outage |
 | Backups | last line of `storage/logs/backup.log`; monthly drill | not today's `backup ok` |
 | Disk | preflight `Free disk space` | under 1 GB: prune old rollback copies in `~` first |
-| CSP | `grep csp.violation storage/logs/laravel*.log` while the policy is report-only | review before enforcing (`SECURITY_CSP_REPORT_ONLY=false`) |
+| CSP | the policy is enforced; `grep csp.violation storage/logs/laravel*.log` | a violation from a real page (something was blocked). `SECURITY_CSP_REPORT_ONLY=true` + `config:cache` is the escape hatch while it is fixed (docs/R46_SECURITY.md) |
 
 Weekly: `php artisan ehail:preflight --strict` (exits 1 on any warning; useful in a scheduled check).
 

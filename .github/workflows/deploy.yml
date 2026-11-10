@@ -57,7 +57,7 @@ name: Deploy to Production
 #      (the file every Dot app on this cPanel account writes to):
 #        `schedule:run` every minute: the dispatch tick and ride expiry, safety,
 #        money, business and comms sweeps, retention purges, verification
-#        expiry, payout drafts, statements, the Analytics snapshot (17 tasks;
+#        expiry, payout drafts, statements, the Analytics snapshot (18 tasks;
 #        ehail:preflight lists them). Without it offers only move on while
 #        someone polls, rides never expire and failed charges are never retried.
 #        `queue:work` -- cron-driven (--stop-when-empty --max-time=50, every

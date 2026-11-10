@@ -103,7 +103,7 @@ DOT_INFODOT_URL=https://infodot.co.za
    <parity>-59/2 * * * * cd <app> && exec <php> artisan queue:work --stop-when-empty --tries=3 --timeout=60 --max-time=50 > storage/logs/cron-queue.log 2>&1 # dot-ehail
    ```
 
-   `schedule:run` drives 17 tasks (dispatch tick, ride expiry, safety, money, business and comms sweeps every minute or few; retention purges; verification expiry 05:00; payout drafts; statements; the Analytics snapshot). `ehail:preflight` lists them and fails if one is not registered.
+   `schedule:run` drives 18 tasks (dispatch tick, ride expiry, safety, money, business and comms sweeps every minute or few; retention purges; verification expiry 05:00; payout drafts; statements; the Analytics snapshot). `ehail:preflight` lists them and fails if one is not registered.
 9. **Smoke check from the runner** (each request retried on a firewall 403 / timeout): `/`, `/login`, `/fares`, `/up` 200; `/fare-estimate/categories` JSON; `/up/realtime` honest (503 `degraded` without Reverb, never a 500); `/ride` redirects a guest to the login; a bogus `/t/<token>` gives the neutral 404 with no cookie and `noindex`; security headers present and the CSP mode reported (a warning while report-only); every built CSS/JS file, every font (woff2 magic bytes, not HTML), the web manifest (JSON with icons), `/sw.js` (this release's file, a JavaScript type, at the root) and one file of every static folder from the **docroot**; private storage and `.env` not served; `POST /up` is not a debug page; the app folder's `.env`, `artisan`, SQLite file, logs, `vendor/autoload.php` and `composer.*` not served.
 
 Never touched: `.env` (except forcing `APP_DEBUG` and `APP_ENV`), `storage/`, the database file, uploads, other apps' cron lines.
