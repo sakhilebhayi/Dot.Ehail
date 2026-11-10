@@ -47,9 +47,34 @@ scripts/load/serve.sh "$WORKERS" "$PORT" "$ENGINE" "$DBNAME" > "$OUT/server-$TAG
 SERVER_PID=$!
 for _ in $(seq 1 50); do curl -s -o /dev/null "http://127.0.0.1:$PORT/up" && break; sleep 0.2; done
 
+# Side load while the run goes (both optional):
+#   TICKS=1        two `ehail:dispatch-tick` processes at the same moment every 3 s (double ticks, as two cron
+#                  minutes overlapping or a manual run would cause), on top of the ticks every poll makes;
+#   DB_OUTAGE_AT=s DB_OUTAGE_FOR=s   the database refuses connections for a while (PostgreSQL: ALLOW_CONNECTIONS
+#                  false and in-flight sessions terminated; SQLite: the file made unreadable), then comes back.
+if [ "${TICKS:-0}" = "1" ]; then
+  ( while true; do env "${ENVV[@]}" php artisan ehail:dispatch-tick > /dev/null 2>&1 & env "${ENVV[@]}" php artisan ehail:dispatch-tick > /dev/null 2>&1; wait; sleep 3; done ) &
+  TICKER_PID=$!
+fi
+if [ -n "${DB_OUTAGE_AT:-}" ]; then
+  (
+    sleep "$DB_OUTAGE_AT"
+    echo "[outage] database unavailable for ${DB_OUTAGE_FOR:-10} s"
+    if [ "$ENGINE" = "pgsql" ]; then
+      psql -h 127.0.0.1 -d postgres -qc "ALTER DATABASE $DBNAME ALLOW_CONNECTIONS false" -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DBNAME'" > /dev/null
+    else
+      chmod 000 "$DBNAME"
+    fi
+    sleep "${DB_OUTAGE_FOR:-10}"
+    if [ "$ENGINE" = "pgsql" ]; then psql -h 127.0.0.1 -d postgres -qc "ALTER DATABASE $DBNAME ALLOW_CONNECTIONS true" > /dev/null; else chmod 644 "$DBNAME"; fi
+    echo "[outage] database back"
+  ) &
+fi
+
 node scripts/load/run.mjs --world "$OUT/world-$ENGINE.json" --base "http://127.0.0.1:$PORT" --protocol "$PROTOCOL" \
   --osrm http://127.0.0.1:8790 --out "$OUT/result-$TAG.json" "$@" | tee "$OUT/run-$TAG.txt"
 
+[ -n "${TICKER_PID:-}" ] && { kill "$TICKER_PID" 2>/dev/null; wait "$TICKER_PID" 2>/dev/null; } || true
 echo "--- queue backlog after the run (one cron minute: queue:work --stop-when-empty --max-time=50)"
 START=$(date +%s)
 env "${ENVV[@]}" php artisan queue:work --stop-when-empty --max-time=50 --quiet || true

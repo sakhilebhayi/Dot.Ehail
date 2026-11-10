@@ -4,12 +4,14 @@ namespace App\Providers;
 
 use App\Domain\Health\Console\HealthCommand;
 use App\Domain\Health\HealthReport;
+use App\Domain\Perf\DatabaseOutage;
 use App\Domain\Perf\LazyTouchDatabaseSessionHandler;
 use App\Domain\Perf\LeanPollResponses;
 use App\Domain\Perf\QueryProbe;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Events\CommandFinished;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -46,6 +48,13 @@ class EhailPerfServiceProvider extends ServiceProvider
 
         // One request carries the driver's positions and asks for the feed (polls every 2-6 s plus retries).
         RateLimiter::for('ehail-driver-sync', fn (Request $request) => Limit::perMinute(90)->by('sync:'.($request->user()?->id ?: $request->ip())));
+
+        // A lost or refused database connection is a temporary outage (503 + Retry-After), not a 500 (D-1510).
+        $handler = $this->app->make(ExceptionHandler::class);
+
+        if (method_exists($handler, 'renderable')) {
+            $handler->renderable(fn (\Throwable $e, Request $request) => DatabaseOutage::render($e, $request));
+        }
 
         // First in the global stack, so it sees the response after every other middleware added its headers.
         $this->app->make(Kernel::class)->prependMiddleware(LeanPollResponses::class);

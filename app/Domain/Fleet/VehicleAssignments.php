@@ -82,6 +82,10 @@ final class VehicleAssignments
 
         try {
             return DB::transaction(function () use ($fleet, $vehicle, $profile, $actor) {
+                // Serialise assignments per driver first: two vehicles given to one driver at once must see each
+                // other's "active vehicle" decision. Without this row lock PostgreSQL (READ COMMITTED) let both
+                // activate and the second failed on the one-active-vehicle constraint (found by the R-46 perf run).
+                DriverProfile::withoutGlobalScope('user')->whereKey($profile->id)->lockForUpdate()->first();
                 $locked = Vehicle::query()->whereKey($vehicle->id)->lockForUpdate()->firstOrFail();
                 $this->assertFleetVehicle($fleet, $locked);
 

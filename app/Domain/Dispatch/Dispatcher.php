@@ -488,18 +488,22 @@ class Dispatcher
         $category = $ride->category_code ?? $ride->vehicle_type;
         $vehicleIds = array_filter(array_map(fn (DriverPosition $p) => $p->vehicleId, $positions));
         $vehicles = Vehicle::whereIn('id', $vehicleIds)->where('is_active', true)->get()->keyBy('id');
-        $approved = DriverProfile::withoutGlobalScope('user')
+        // One query for every candidate's profile (the category check reads it from the relation: no N+1, D-1511).
+        $profiles = DriverProfile::withoutGlobalScope('user')
             ->whereIn('user_id', array_map(fn (DriverPosition $p) => $p->userId, $positions))
-            ->where('status', 'approved')->pluck('id', 'user_id');
+            ->where('status', 'approved')->get()->keyBy('user_id');
 
-        return array_values(array_filter($positions, function (DriverPosition $p) use ($vehicles, $approved, $category, $ride) {
+        return array_values(array_filter($positions, function (DriverPosition $p) use ($vehicles, $profiles, $category, $ride) {
             $vehicle = $p->vehicleId ? ($vehicles[$p->vehicleId] ?? null) : null;
+            $profile = $profiles[$p->userId] ?? null;
 
-            return $p->userId !== $ride->passenger_id
-                && isset($approved[$p->userId])
-                && $vehicle !== null
-                && $vehicle->driver_profile_id === $approved[$p->userId]
-                && $this->categories->vehicleCanServe($vehicle, $category);
+            if ($p->userId === $ride->passenger_id || $profile === null || $vehicle === null || $vehicle->driver_profile_id !== $profile->id) {
+                return false;
+            }
+
+            $vehicle->setRelation('driverProfile', $profile);
+
+            return $this->categories->vehicleCanServe($vehicle, $category);
         }));
     }
 
