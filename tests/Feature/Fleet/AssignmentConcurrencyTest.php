@@ -39,7 +39,11 @@ class AssignmentConcurrencyTest extends TestCase
 
         $this->path = sys_get_temp_dir().'/ehail-fleet-race-'.getmypid().'-'.bin2hex(random_bytes(4)).'.sqlite';
         touch($this->path);
+        // A race on one SQLite file, whatever the suite's default connection: under phpunit.pgsql.xml the forked
+        // contenders would otherwise share the parent's PostgreSQL socket and hang (PostgreSQL row locking is raced in
+        // Dispatch\ConcurrencyTest, which opens one connection per contender).
         config([
+            'database.default' => 'sqlite',
             'database.connections.sqlite.database' => $this->path,
             'database.connections.sqlite.busy_timeout' => 10000,
             'database.connections.sqlite.journal_mode' => 'wal',
