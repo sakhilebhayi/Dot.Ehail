@@ -95,7 +95,9 @@ class RideFeed
             (int) RideOffer::where('driver_id', $driver->id)->max('version'),
         );
 
-        if ($version <= $sinceVersion) {
+        // A caller without a version (0) always gets the full view, even for a driver with no history yet
+        // (version 0): the action endpoints answer with this body (QA: a "null + array" 500 otherwise).
+        if ($sinceVersion > 0 && $version <= $sinceVersion) {
             return ['version' => $version, 'body' => null];
         }
 
