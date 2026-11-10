@@ -64,6 +64,9 @@
                 <x-eh.list-row title="Notification settings" meta="Push, email and SMS, and what each one reached" icon="settings" :href="route('drive.notifications.settings')" />
             @endif
             <x-eh.list-row title="Profile and password" icon="account" :href="route('profile.show')" />
+            @if (Route::has('account.data-export'))
+                <x-eh.list-row title="Download my data" meta="A copy of what Dot.Ehail holds about you" icon="download" :href="route('account.data-export')" />
+            @endif
         </ul>
     </div>
 </x-driver-layout>

@@ -218,4 +218,11 @@ class PrivacyTest extends TestCase
         $devices->signedIn($user, Request::create('/'));
         Notification::assertSentTo($user, SecurityNoticeNotification::class, fn ($n) => $n->kind === 'new_device');
     }
+
+    public function test_passengers_and_drivers_find_the_data_export_in_their_account(): void
+    {
+        [$driver] = $this->makeVerifiedDriver();
+        $this->actingAs($driver)->get(route('drive.account'))->assertOk()->assertSee('Download my data')->assertSee(route('account.data-export'), false);
+        $this->actingAs(User::factory()->withPersonalTeam()->create())->get(route('ride.account'))->assertOk()->assertSee(route('account.data-export'), false);
+    }
 }
