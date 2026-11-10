@@ -24,6 +24,7 @@ return [
     EhailSafetyServiceProvider::class,
     EhailMoneyServiceProvider::class,
     EhailDispatchServiceProvider::class,
+    App\Providers\EhailDriverServiceProvider::class,
     EhailDesignServiceProvider::class,
     EhailBusinessServiceProvider::class,
     App\Providers\EhailFleetServiceProvider::class,
