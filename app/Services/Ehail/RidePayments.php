@@ -2,6 +2,8 @@
 
 namespace App\Services\Ehail;
 
+use App\Domain\Payments\Models\Payment;
+use App\Domain\Payments\Settlement;
 use App\Enums\PaymentStatus;
 use App\Exceptions\Payments\PaymentGatewayException;
 use App\Models\AuditLog;
@@ -30,7 +32,8 @@ use Illuminate\Support\Str;
  *  - Callback and webhook can arrive together, twice, or in either order. Each takes the ride row lock
  *    first and the payment row lock second, re-reads, and does nothing if the payment is already
  *    settled; unique(reference) and unique(provider, provider_transaction_id) are the backstop.
- *  - Money lands in the platform's Paystack balance. Nothing here pays a driver or a fleet.
+ *  - Money lands in the platform's Paystack balance. Nothing here pays a driver or a fleet: a paid
+ *    fare is posted to the ledger (App\Domain\Payments\Settlement) and paid out in payout batches.
  */
 class RidePayments
 {
@@ -189,9 +192,13 @@ class RidePayments
 
         $payment = RidePayment::where('reference', $transaction->reference)->first();
 
-        return $payment === null
-            ? $this->recordUnknown($transaction)
-            : $this->settle($payment->id, $transaction, 'webhook');
+        if ($payment === null) {
+            return $this->recordUnknown($transaction);
+        }
+
+        // R-46: the webhook only says "look at this reference". What is recorded comes from Paystack's
+        // verify endpoint; an outage throws and the queued webhook job retries.
+        return $this->settle($payment->id, $this->client->verifyTransaction($payment->reference), 'webhook');
     }
 
     /**
@@ -221,6 +228,8 @@ class RidePayments
             RidePayment::where('ride_id', $locked->id)
                 ->where('status', RidePayment::STATUS_INITIATED)
                 ->update(['status' => RidePayment::STATUS_EXPIRED]);
+
+            DB::afterCommit(fn () => app(Settlement::class)->fareWaived($locked->fresh(), $operator, $reason));
 
             AuditLog::record('ride.fare_waived', $operator, $locked, [
                 'previous_payment_status' => $previous->value,
@@ -340,6 +349,11 @@ class RidePayments
 
         $this->notifyPaid($ride->load(['passenger', 'driver']), $payment);
 
+        // R-46 ledger: settlement journal, driver earnings available, receipt. After commit, so a
+        // rolled-back settle never posts.
+        $paymentId = $payment->id;
+        DB::afterCommit(fn () => app(Settlement::class)->paymentSucceeded(Payment::findOrFail($paymentId)));
+
         return self::PAID;
     }
 
@@ -414,7 +428,7 @@ class RidePayments
             "Your payment of {$amount} for ride #{$ride->id} was received. Thank you.");
 
         $this->notify($ride->driver, $ride, 'ride_paid', 'Passenger paid the fare',
-            "The passenger paid the {$amount} fare for ride #{$ride->id}. Payout to drivers is not available yet: the fare is recorded and settlement to drivers is manual.");
+            "The passenger paid the {$amount} fare for ride #{$ride->id}. The fare is in your earnings statement; settlement to drivers is manual, in the operator's payout batches.");
     }
 
     private function notify(?User $user, Ride $ride, string $type, string $title, string $message): void

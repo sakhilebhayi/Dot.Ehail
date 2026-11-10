@@ -27,7 +27,9 @@ class PaystackWebhookTest extends TestCase
         parent::setUp();
 
         $this->enablePaystack();
-        Http::preventStrayRequests();
+        // R-46: a webhook is only a pointer; what is recorded comes from Paystack's verify endpoint, so
+        // every test answers verify (defaults from the stored payment row, overridden per test).
+        $this->fakePaystack();
         $this->passenger = User::factory()->withPersonalTeam()->create();
         $this->ride = $this->completedRide($this->passenger, '125.50', 'pending');
         $this->payment = $this->paymentFor($this->ride);
@@ -46,11 +48,13 @@ class PaystackWebhookTest extends TestCase
         $this->assertNotNull($payment->paid_at);
     }
 
-    public function test_the_webhook_needs_no_csrf_token_or_login_and_makes_no_http_call(): void
+    public function test_the_webhook_needs_no_csrf_token_or_login_and_only_calls_paystack_verify(): void
     {
+        // R-46 changed this: the only outbound call is Paystack's own verify for the referenced charge.
         $this->postWebhook($this->chargeSuccess($this->payment))->assertOk();
 
-        Http::assertNothingSent();
+        $sent = collect(Http::recorded())->map(fn ($pair) => $pair[0]->method().' '.parse_url($pair[0]->url(), PHP_URL_HOST).parse_url($pair[0]->url(), PHP_URL_PATH));
+        $this->assertSame(['GET api.paystack.co/transaction/verify/'.$this->payment->reference], $sent->all());
     }
 
     public function test_every_bad_signature_gets_the_same_generic_401_and_changes_nothing(): void
@@ -158,9 +162,21 @@ class PaystackWebhookTest extends TestCase
 
     public function test_a_charge_success_that_is_not_successful_does_not_pay(): void
     {
+        $this->verifyOverrides = ['status' => 'failed'];
         $this->postWebhook($this->chargeSuccess($this->payment, ['status' => 'failed']))->assertOk();
 
         $this->assertSame('pending', $this->ride->fresh()->payment_status);
+    }
+
+    public function test_a_webhook_body_is_never_trusted_over_verify(): void
+    {
+        // The signed body says success; Paystack's verify says it is still pending: nothing is paid.
+        $this->verifyOverrides = ['status' => 'ongoing'];
+        $this->postWebhook($this->chargeSuccess($this->payment))->assertOk();
+
+        $this->assertSame('pending', $this->ride->fresh()->payment_status);
+        $this->assertSame(RidePayment::STATUS_INITIATED, $this->payment->fresh()->status);
+        $this->assertCount(1, $this->paystackRequests('/transaction/verify'));
     }
 
     // ─── Replays and races ───────────────────────────────────────────────
@@ -209,12 +225,12 @@ class PaystackWebhookTest extends TestCase
     public function test_a_callback_after_the_webhook_changes_nothing(): void
     {
         $this->postWebhook($this->chargeSuccess($this->payment))->assertOk();
-        $this->fakePaystack();
+        $verifiesAfterWebhook = $this->paystackRequests('/transaction/verify')->count();
 
         $this->actingAs($this->passenger)->get(route('rides.pay.callback', $this->ride))->assertRedirect();
 
         $this->assertSame(1, RidePayment::where('status', RidePayment::STATUS_PAID)->count());
-        $this->assertSame([], $this->paystackRequests('/transaction/verify')->all(), 'a settled ride needs no verification');
+        $this->assertSame($verifiesAfterWebhook, $this->paystackRequests('/transaction/verify')->count(), 'a settled ride needs no further verification');
         $this->assertCount(1, $this->notificationsOfType($this->passenger, 'ride_paid'));
     }
 
@@ -236,6 +252,7 @@ class PaystackWebhookTest extends TestCase
     #[DataProvider('mismatches')]
     public function test_a_mismatching_charge_is_flagged_for_operators_and_does_not_pay(array $override, string $reason): void
     {
+        $this->verifyOverrides = $override;
         $this->postWebhook($this->chargeSuccess($this->payment, $override))->assertOk();
 
         $this->assertSame('pending', $this->ride->fresh()->payment_status);
