@@ -76,7 +76,11 @@ class ShellPagesTest extends TestCase
         $this->assertSame(['Drive', 'Account'], $labels, 'earnings and trips are for drivers only');
         $this->assertSame('night', $xpath->query('//html')->item(0)->getAttribute('data-theme-default'));
 
-        $online = $this->makeApprovedDriver(online: true);
+        // Driver app (R-46 wave 2): "online" is dispatch's availability (the state offers come from), not the pre-R-46
+        // profile flag, so the driver goes online through dispatch here. Documents are not part of this shell test.
+        config(['ehail_safety.verification.require_documents' => false]);
+        $online = $this->makeApprovedDriver(online: false);
+        app(\App\Domain\Dispatch\AvailabilityService::class)->goOnline($online);
         $xpath = $this->xpath($this->actingAs($online)->get(route('drive.home'))->assertOk()->assertSee('You are online'));
         $this->assertSame(1, $xpath->query('//section[contains(@class, "eh-statebar")][@data-state="online"]')->length);
         $this->assertSame(1, $xpath->query('//main//a[@href="'.route('rides.available').'"]')->length, 'the working driver desk stays reachable');

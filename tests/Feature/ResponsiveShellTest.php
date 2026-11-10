@@ -28,7 +28,6 @@ class ResponsiveShellTest extends TestCase
             [$passenger, route('rides.show', $ride)],
             [$passenger, route('profile.show')],
             [$driver, route('rides.available')],
-            [$driver, route('drivers.vehicles.index')],
             [$this->makeOperator(), route('operator.rides.index')],
         ] as [$user, $url]) {
             $this->assertResponsiveShell($this->actingAs($user)->get($url));

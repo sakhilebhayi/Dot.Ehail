@@ -35,6 +35,17 @@ class DriverApplicationController extends Controller
             return back()->withErrors(['license_number' => 'You already have a driver application on file.']);
         }
 
+        // Driver app (R-46): "drive independently" registers a one-driver fleet in the applicant's name (pending
+        // operator review, exactly like a new fleet); "join a fleet" ignores any own-fleet name left in the form.
+        if ($request->input('mode') === 'independent') {
+            $request->merge([
+                'existing_fleet_id' => null,
+                'new_fleet_name' => trim((string) $request->input('new_fleet_name')) !== '' ? $request->input('new_fleet_name') : $request->user()->name.' (independent)',
+            ]);
+        } elseif ($request->input('mode') === 'fleet') {
+            $request->merge(['new_fleet_name' => null]);
+        }
+
         $validator = Validator::make($request->all(), [
             // Unique through the blind index: the stored values are encrypted,
             // so a plain `unique:` rule could never match.
@@ -131,9 +142,10 @@ class DriverApplicationController extends Controller
             $reviewer->notify(new DriverApplicationSubmittedNotification($profile));
         }
 
-        return redirect()->route('drivers.show', $profile)
+        // Next step in the driver app: the documents checklist.
+        return redirect()->route('drive.onboarding')
             ->with('status', $fleet->isApproved()
-                ? 'Application submitted. The fleet owner will review it.'
-                : 'Application submitted. A platform operator will review your new fleet and your application.');
+                ? 'Application sent. The fleet owner will review it. Now upload your documents.'
+                : 'Application sent. Dot.Ehail operations will review it. Now upload your documents.');
     }
 }
