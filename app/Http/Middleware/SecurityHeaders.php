@@ -81,13 +81,13 @@ class SecurityHeaders
         $content = $this->isHtml($response) ? (string) $response->getContent() : '';
         $livewire = $content !== '' && str_contains($content, '/livewire/livewire');
 
+        // The Reverb socket the front-end bundle connects to (built from the same REVERB_* values), when configured.
         $connect = ["'self'"];
-        $reverbHost = (string) config('reverb.apps.apps.0.options.host', '');
-        if (config('broadcasting.default') === 'reverb' && $reverbHost !== '') {
-            $connect[] = 'wss://'.$reverbHost;
-            if (app()->isLocal()) {
-                $connect[] = 'ws://'.$reverbHost.':'.config('reverb.apps.apps.0.options.port', 8080);
-            }
+        $reverb = (array) config('reverb.apps.apps.0', []);
+        $reverbHost = (string) ($reverb['options']['host'] ?? '');
+        if (($reverb['key'] ?? '') !== '' && $reverbHost !== '') {
+            $tls = ($reverb['options']['scheme'] ?? 'https') === 'https';
+            $connect[] = ($tls ? 'wss://' : 'ws://').$reverbHost.':'.(int) ($reverb['options']['port'] ?? ($tls ? 443 : 80));
         }
 
         $formTargets = ["'self'", 'https://checkout.paystack.com'];
