@@ -15,7 +15,7 @@
         <div class="eh-form__row">
             <label class="eh-check" for="remember_me"><input type="checkbox" id="remember_me" name="remember"> Keep me signed in</label>
             @if (Route::has('password.request'))
-                <a class="eh-link" href="{{ route('password.request') }}">Forgot your password?</a>
+                <a class="eh-link eh-tap" href="{{ route('password.request') }}">Forgot your password?</a>
             @endif
         </div>
         <x-eh.button type="submit" size="lg" block>Sign in</x-eh.button>

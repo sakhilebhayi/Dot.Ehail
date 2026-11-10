@@ -304,7 +304,11 @@ a.pax-trip-row:hover { background: var(--eh-surface-2); }
 .pax-trip-row__route { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pax-trip-row__meta { grid-column: 1; font-size: var(--eh-text-sm); color: var(--eh-ink-2); display: flex; flex-wrap: wrap; gap: var(--eh-space-1) var(--eh-space-3); align-items: center; }
 .pax-trip-row__money { grid-column: 2; grid-row: 1 / span 2; align-self: center; text-align: right; display: grid; gap: 2px; justify-items: end; }
-.pax-trip-row__money a { font-size: var(--eh-text-xs); }
+/* The whole row opens the trip (the route link stretches over it); the receipt link sits above it at 44 px. */
+.pax-trip-row { position: relative; }
+.pax-trip-row__route::after { content: ""; position: absolute; inset: 0; }
+.pax-trip-row:hover { background: var(--eh-surface-2); }
+.pax-trip-row__money a { font-size: var(--eh-text-xs); position: relative; z-index: 1; display: inline-flex; align-items: center; min-height: var(--eh-target); }
 .pax-form { display: grid; gap: var(--eh-space-4); }
 .pax-form .eh-field { margin: 0; }
 .pax-inline-form { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); align-items: flex-end; }

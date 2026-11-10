@@ -10,7 +10,7 @@
 //   node scripts/dev/a11y/sweep.mjs --ci        # exit 1 on any serious or critical violation
 //
 // Report: storage/a11y/sweep.json (git-ignored) and a summary on stdout.
-import { search, BASE, PEOPLE, PICKUP, DEST, START, IMPACT, arg, has, axe, browser, driverPhone, facts, log, person, php, setTheme, sleep, writeJson, HEIGHT } from './lib.mjs';
+import { clearRides, search, BASE, PEOPLE, PICKUP, DEST, START, IMPACT, arg, has, axe, browser, driverPhone, facts, log, person, php, setTheme, sleep, writeJson, HEIGHT } from './lib.mjs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT } from './lib.mjs';
@@ -54,12 +54,7 @@ async function journey(b) {
     await drv.api('PUT', '/money/driver/settings', { accepts_cash: true });
     await drv.api('POST', '/api/ehail/driver/offline');
     // Clear anything left from an earlier run.
-    const left = JSON.parse(php('scripts/dev/a11y/ids.php')).active || [];
-    if (left.length) {
-        const ops = await person(b, PEOPLE.ops);
-        for (const id of left) log('force-cancel left-over ride', id, (await ops.api('POST', `/api/ehail/ops/rides/${id}/force-cancel`, { reason: 'Accessibility sweep: clearing a dev ride left by an earlier run.' })).status);
-        await ops.ctx.close();
-    }
+    await clearRides(b);
 
     await drv.page.goto(`${BASE}/drive`); await sleep(800);
     await capture('drv-offline', drv.page);

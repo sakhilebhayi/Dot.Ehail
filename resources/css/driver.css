@@ -302,3 +302,20 @@ html[data-moving="true"] .eh-statebar__sub { display: none; }
 .dr-page, .dr-console { min-width: 0; overflow-wrap: anywhere; }
 .dr-form.dr-more__body { justify-items: stretch; }
 .dr-trip-row .eh-money--negative { color: inherit; }
+
+/* Sunlight (R-46 a11y, D-1717). A phone on a windscreen in daylight needs more than the AA floor: in the light theme
+   the driver app holds its text to WCAG AAA (7:1). Night keeps its own measured pairs. Light is the default, the
+   pinned light theme, or the system light preference; a pinned or system dark theme is left alone. */
+:root:not([data-theme="dark"]) .eh-drive {
+    --dr-sun-link: #08552f;  /* 8.93:1 on surface, 8.06:1 on ground (accent text was 6.68 and 6.02) */
+    --dr-sun-go: #0a4a2b;    /* 8.71:1 on the go tint (go on its tint was 5.32) */
+    --dr-sun-quiet: var(--eh-ink-2); /* 9.37:1 on surface (ink-3 was 6.07) */
+    --dr-sun-sos: #a3221b;   /* white 7.49:1 (the stop fill was 6.53) */
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .eh-drive { --dr-sun-link: initial; --dr-sun-go: initial; --dr-sun-quiet: initial; --dr-sun-sos: initial; }
+}
+.eh-drive .dr-textlink, .eh-drive .eh-link { color: var(--dr-sun-link, var(--eh-accent)); }
+.eh-drive .eh-badge--go { color: var(--dr-sun-go, var(--eh-go)); }
+.eh-drive [data-dr-switch-state] { color: var(--dr-sun-quiet, var(--eh-ink-3)); }
+.eh-drive .dr-sos-btn { background: var(--dr-sun-sos, var(--eh-stop-fill)); }

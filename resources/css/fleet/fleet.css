@@ -61,7 +61,7 @@ a.fl-plate { text-decoration: none; }
 a.fl-plate:hover { background: var(--eh-signal); }
 
 /* Tables: rules and alignment, no header band */
-.fl-table-wrap { overflow-x: auto; }
+.fl-table-wrap { overflow-x: auto; position: relative; }
 .fl-table { width: 100%; border-collapse: collapse; font-size: var(--eh-text-sm); }
 .fl-table caption { text-align: left; }
 .fl-table th { text-align: left; font-weight: 500; font-size: var(--eh-text-xs); color: var(--eh-ink-2); padding: 0 var(--eh-space-3) var(--eh-space-2); white-space: nowrap; }
@@ -162,4 +162,12 @@ a.fl-name:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 @media (prefers-reduced-motion: no-preference) {
     .fl-seg a, a.fl-plate, .fl-table tbody tr td { transition: background-color 160ms var(--eh-ease, ease-out), color 160ms var(--eh-ease, ease-out); }
+}
+
+/* Touch targets on phones and touch screens (R-46 a11y, D-1712): plates, names, period switches, disclosures and
+   figure links reach 44 px. */
+@media (max-width: 767.98px), (pointer: coarse) {
+    a.fl-plate, a.fl-name, .fl-strip dd > a, .fl-items__who > a { display: inline-flex; align-items: center; min-height: var(--eh-target); }
+    .fl-seg a { min-height: var(--eh-target); }
+    .fl-disclose > summary { min-height: var(--eh-target); }
 }

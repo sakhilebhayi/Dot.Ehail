@@ -4,7 +4,7 @@
 // visible focus indicator and not hidden under the sticky bars (WCAG 2.4.11). Live: the booking sheet by keyboard,
 // the driver offer (focus on Accept, nothing behind it reachable, countdown spoken at marks, decline reachable),
 // the PIN keypad by keyboard digits, SOS opened, counted down aloud and stopped by keyboard on both apps.
-import { BASE, PEOPLE, PICKUP, START, arg, browser, driverPhone, log, person, search, sleep, writeJson } from './lib.mjs';
+import { clearRides, BASE, PEOPLE, PICKUP, START, arg, browser, driverPhone, log, person, search, sleep, writeJson } from './lib.mjs';
 
 const vp = Number(arg('vp', 390));
 const only = arg('only', 'pages,live').split(',');
@@ -22,7 +22,7 @@ const ACTIVE = `(() => { const a = document.activeElement; if (!a || a === docum
 const label = (a) => `${a.tag}${a.id ? '#' + a.id : ''}${a.cls ? '.' + a.cls : ''}[${a.name || ''}]`;
 
 async function walk(page, id) {
-    await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
+    await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); const b = document.body; b.tabIndex = -1; b.focus(); b.removeAttribute('tabindex'); });
     await page.keyboard.press('Tab');
     const first = await page.evaluate(ACTIVE);
     check(`${id}: first Tab stop is the skip link`, first.cls === 'eh-skip' || /skip/i.test(first.name), label(first));
@@ -31,11 +31,13 @@ async function walk(page, id) {
         const after = await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName);
         check(`${id}: skip link moves focus to the content`, after === 'main', after);
     }
-    await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
+    await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); const b = document.body; b.tabIndex = -1; b.focus(); b.removeAttribute('tabindex'); });
     const stops = [];
     for (let i = 0; i < 160; i++) {
         await page.keyboard.press('Tab');
-        const a = await page.evaluate(ACTIVE);
+        let a = await page.evaluate(ACTIVE);
+        // A panel may open to show the focused control (the booking sheet): judge it once it has moved.
+        if (!a.visible && a.tag !== 'body') { await sleep(450); a = await page.evaluate(ACTIVE); }
         if (a.tag === 'body') { stops.push(a); break; }
         if (stops.length > 2 && label(a) === label(stops[0])) break;
         stops.push(a);
@@ -72,6 +74,7 @@ try {
         }
     }
     if (only.includes('live')) {
+        await clearRides(b);
         const drv = await person(b, PEOPLE.driver, { width: vp, theme: 'dark', geo: START });
         const pax = await person(b, PEOPLE.passenger, { width: vp, geo: PICKUP });
         const phone = driverPhone(drv.api);

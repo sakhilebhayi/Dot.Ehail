@@ -64,3 +64,30 @@ test('the map in words: stops, the driver distance and arrival, the stale positi
     assert.equal(mapSummary({ ...ride, status: 'searching' }, near), 'Pickup: Kloof Street. Drop-off: Bree Street.');
     assert.equal(mapSummary(null), '');
 });
+
+test('an operator hears new work arrive, not every poll', async () => {
+    const { risesSentence } = await import('../../resources/js/eh/announce.js');
+    const labels = { needs_review: 'Needs review', incidents: 'Open incidents' };
+    assert.equal(risesSentence(null, { needs_review: 1 }, labels), null, 'the first reading is the page itself');
+    assert.equal(risesSentence({ needs_review: 1, incidents: 0 }, { needs_review: 1, incidents: 0 }, labels), null);
+    assert.equal(risesSentence({ needs_review: 2, incidents: 1 }, { needs_review: 1, incidents: 1 }, labels), null, 'falls are quiet');
+    assert.equal(risesSentence({ needs_review: 1, incidents: 0 }, { needs_review: 2, incidents: 1 }, labels), 'New work. Needs review: 2. Open incidents: 1.');
+});
+
+test('with reduced motion every map move lands at once, whoever calls it', async () => {
+    const { stillMap } = await import('../../resources/js/geo/still.js');
+    const calls = [];
+    const record = (name) => function (...args) { calls.push([name, args]); return this; };
+    const map = { setView: record('setView'), panTo: record('panTo'), fitBounds: record('fitBounds'), panBy: record('panBy'), setZoom: record('setZoom') };
+    stillMap(map);
+    map.panTo([1, 2]);
+    map.fitBounds([[0, 0], [1, 1]], { padding: [40, 40] });
+    map.setView([1, 2], 14, { animate: true });
+    map.flyTo([3, 4], 12);
+    assert.deepEqual(calls.map(([n, a]) => [n, a[n === 'setView' ? 2 : 1]]), [
+        ['panTo', { animate: false }],
+        ['fitBounds', { padding: [40, 40], animate: false }],
+        ['setView', { animate: false }],
+        ['setView', { animate: false }],
+    ]);
+});

@@ -400,3 +400,18 @@ button.eh-row { width: 100%; border: 0; background: none; text-align: left; curs
 @media (max-width: 767.98px) {
     .eh-app .eh-tabbar ~ .eh-sheet, .eh-app:has(.eh-tabbar) .eh-sheet { bottom: calc(var(--eh-tabbar) + env(safe-area-inset-bottom, 0px)); height: calc(100dvh - var(--eh-topbar) - var(--eh-tabbar) - var(--eh-space-4)); }
 }
+
+/* Touch targets (R-46 a11y, D-1712). On phones and any coarse pointer every control reaches 44 px: the small button,
+   the segmented options, the sheet handle, the logo link, and standalone text links marked .eh-tap. Desktop with a
+   mouse keeps the denser 36 px small size. */
+.eh-tap { display: inline-flex; align-items: center; justify-content: center; min-height: var(--eh-target); min-width: var(--eh-target); }
+@media (max-width: 767.98px), (pointer: coarse) {
+    .eh-btn--sm { --eh-btn-h: var(--eh-target); }
+    .eh-chip { min-height: var(--eh-target); }
+    :where(.eh) details > summary { min-height: var(--eh-target); display: flex; align-items: center; }
+    .eh-segmented__opt span { min-height: var(--eh-target); }
+    .eh-sheet__handle { height: var(--eh-target); }
+    .eh-sheet { --eh-sheet-peek: 180px; } /* the taller handle keeps the same peek content */
+    a.eh-logo { min-height: var(--eh-target); }
+    input[type="file"].eh-input, .eh-field input[type="file"] { min-height: var(--eh-target); padding-block: var(--eh-space-2); }
+}

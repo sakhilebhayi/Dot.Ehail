@@ -240,3 +240,10 @@ html.eh-drawer-open .eh-side__scrim { opacity: 1; visibility: visible; transitio
 .eh-error__foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--eh-space-3); padding: var(--eh-space-5) var(--eh-gutter); font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
 .eh-error__foot p { margin: 0; }
 .eh-error__foot a { color: var(--eh-ink); font-weight: 600; }
+
+/* Focus not obscured (WCAG 2.4.11, R-46 a11y D-1713): when the browser scrolls a focused control into view it
+   keeps it clear of the sticky top bar and, on phones, of the fixed tab bar. */
+html:has(.eh-topbar) { scroll-padding-top: calc(var(--eh-topbar) + env(safe-area-inset-top, 0px) + var(--eh-space-2)); }
+@media (max-width: 767.98px) {
+    html:has(.eh-tabbar) { scroll-padding-bottom: calc(var(--eh-tabbar) + env(safe-area-inset-bottom, 0px) + var(--eh-space-2)); }
+}

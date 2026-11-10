@@ -37,7 +37,7 @@
         <section class="fl-panel fl-panel--flush" aria-labelledby="yard-title">
             <div class="fl-panel__head">
                 <h2 id="yard-title">Vehicles today</h2>
-                <a class="eh-link fl-panel__meta" href="{{ route('fleet.vehicles') }}">All vehicles</a>
+                <a class="eh-link eh-tap fl-panel__meta" href="{{ route('fleet.vehicles') }}">All vehicles</a>
             </div>
             @if ($yard->isEmpty())
                 <div style="padding: 0 var(--eh-space-5) var(--eh-space-4)">
@@ -112,7 +112,7 @@
                                         <p class="fl-items__title">{{ $alert['title'] }}</p>
                                         <p class="fl-items__who">
                                             @if ($alert['link'] && isset($areaRoute[$alert['link']['area']]))
-                                                <a class="eh-link" href="{{ route($areaRoute[$alert['link']['area']], $alert['link']['id']) }}">{{ $alert['subject'] }}</a>
+                                                <a class="eh-link eh-tap" href="{{ route($areaRoute[$alert['link']['area']], $alert['link']['id']) }}">{{ $alert['subject'] }}</a>
                                             @else
                                                 {{ $alert['subject'] }}
                                             @endif

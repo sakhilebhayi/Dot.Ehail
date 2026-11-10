@@ -3,6 +3,10 @@
 // may see them; otherwise the map shows rides alone and says so.
 import { mountMap } from '../geo/index.js';
 import { formatDuration } from './helpers.js';
+import { createAnnouncer, risesSentence } from '../eh/announce.js';
+
+// Said aloud (politely) when one of these goes up; the figures themselves stay quiet (R-46 a11y, D-1715).
+const RISES = { needs_review: 'Needs review', stuck: 'Stuck', incidents: 'Open incidents', searching: 'Waiting for a driver' };
 
 const VISIBLE_MS = 5000;
 const HIDDEN_MS = 30000;
@@ -104,11 +108,17 @@ export async function startLive(root) {
         if (status) {
             const message = payload.positions_allowed ? (layers.size ? '' : 'No online driver or open ride has a position right now.') : 'Driver positions are not part of your role; open rides are shown.';
             status.hidden = !message;
-            status.textContent = message;
+            // A status region speaks on every write: write only when the words change.
+            if (status.textContent !== message) status.textContent = message;
         }
     };
 
+    const voice = createAnnouncer(document);
+    let lastCounts = null;
     const apply = (payload) => {
+        const rise = risesSentence(lastCounts, payload.counts, RISES);
+        if (rise) voice.say(rise, { topic: 'ops-rises', minGapMs: 15000 });
+        lastCounts = payload.counts || lastCounts;
         Object.entries(payload.counts || {}).forEach(([key, value]) => setText(root, `[data-live-count="${key}"]`, String(value)));
         setText(root, '[data-live-stamp]', `Updated ${new Date(payload.generated_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
         Object.entries(payload.queues || {}).forEach(([key, items]) => {

@@ -141,3 +141,12 @@ export async function search(page, field, text) {
     await input.press('Enter');
     await sleep(700);
 }
+
+/** Rides left going by an earlier run (dev database) are cancelled by the operator, as operations would. */
+export async function clearRides(b) {
+    const left = JSON.parse(php('scripts/dev/a11y/ids.php')).active || [];
+    if (!left.length) return;
+    const ops = await person(b, PEOPLE.ops);
+    for (const id of left) log('force-cancel left-over ride', id, (await ops.api('POST', `/api/ehail/ops/rides/${id}/force-cancel`, { reason: 'Accessibility checks: clearing a dev ride left by an earlier run.' })).status);
+    await ops.ctx.close();
+}

@@ -1,8 +1,8 @@
 <div class="topbar-bell" x-data @click.outside="$wire.open = false" @keydown.escape.window="$wire.open = false">
-    <button wire:click="toggle" type="button" class="topbar-btn" title="Notifications" aria-label="Notifications" aria-haspopup="true" aria-expanded="{{ $open ? 'true' : 'false' }}" style="position:relative;">
+    <button wire:click="toggle" type="button" class="topbar-btn" title="Notifications" aria-label="Notifications{{ $this->unreadCount > 0 ? ', '.($this->unreadCount > 9 ? '9+' : $this->unreadCount).' unread' : '' }}" aria-haspopup="true" aria-expanded="{{ $open ? 'true' : 'false' }}" style="position:relative;">
         <x-eh.icon name="bell" />
         @if($this->unreadCount > 0)
-            <span style="position:absolute;top:-2px;right:-2px;min-width:15px;height:15px;padding:0 3px;border-radius:100px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;">
+            <span aria-hidden="true" style="position:absolute;top:-2px;right:-2px;min-width:15px;height:15px;padding:0 3px;border-radius:100px;background:#b91c1c;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;">
                 {{ $this->unreadCount > 9 ? '9+' : $this->unreadCount }}
             </span>
         @endif

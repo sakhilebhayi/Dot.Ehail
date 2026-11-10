@@ -16,21 +16,34 @@ const PAGES = {
     passenger: ['/ride?new=1', '/ride/trips', '/ride/safety', '/ride/account', '/ride/help', '/ride/help/new', '/ride/notifications', '/user/profile'],
     driver: ['/drive', '/drive/earnings', '/drive/earnings/payouts', '/drive/documents', '/drive/trips', '/drive/safety', '/drive/account', '/drive/vehicles'],
     ops: ['/ops', '/ops/live', '/ops/rides', '/ops/drivers', '/ops/verification', '/ops/safety', '/ops/support', '/ops/tariffs', '/ops/finance', '/ops/insights'],
-    business: ['/business', '/business/trips', '/business/book', '/business/people', '/business/policies', '/business/invoices'],
-    fleet: ['/fleet', '/fleet/vehicles', '/fleet/drivers', '/fleet/earnings', '/fleet/documents', '/fleet/maintenance'],
+    business: ['/business', '/business/trips', '/business/book', '/business/people', '/business/policies', '/business/invoices', '/business/approvals', '/business/settings'],
+    fleet: ['/fleet', '/fleet/vehicles', '/fleet/drivers', '/fleet/earnings', '/fleet/documents', '/fleet/maintenance', '/fleet/alerts', '/fleet/trips', '/fleet/settings'],
     newcomer: ['/drive', '/drive/apply'],
 };
 const WHO = { guest: null, passenger: PEOPLE.passenger, driver: PEOPLE.driver, ops: PEOPLE.ops, business: PEOPLE.passenger, fleet: PEOPLE.passenger, newcomer: PEOPLE.newcomer };
-const FIELDS = { '/ride?new=1': '#pax-pickup', '/ride/help/new': 'textarea', '/login': 'input[name=password]', '/drive/apply': 'input:not([type=hidden])', '/business/book': 'input:not([type=hidden])' };
+const FIELDS = { '/ride?new=1': '#pax-pickup', '/ride/help/new': 'textarea', '/login': 'input[name=password]', '/drive/apply': 'input[type=text], input:not([type])', '/business/book': 'input[name=pickup_query]' };
 
 const MEASURE = `(() => {
     const visible = (e) => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !e.closest('[hidden],[inert],dialog:not([open]),details:not([open]) > :not(summary)'); };
-    const inline = (e) => e.tagName === 'A' && e.closest('p, li p, td, dd, .eh-prose, .eh-legal, label') && !e.className;
+    // Inline in a sentence (WCAG 2.5.8 exception): a link inside running text that holds more than the link.
+    const inline = (e) => { if (e.tagName !== 'A') return false; const block = e.closest('p, td, dd, .eh-prose, label'); return !!block && block.textContent.trim().length > e.textContent.trim().length + 3; };
     const all = [...document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=tab], [role=switch]')].filter(visible).filter((e) => !e.closest('.leaflet-control-attribution'));
     const driverPrimary = [...document.querySelectorAll('.dr-primary, .dr-golive, .dr-accept, .dr-decline, .eh-btn--driver')].filter(visible);
     const tag = (e) => { const r = e.getBoundingClientRect(); return e.tagName.toLowerCase() + (typeof e.className === 'string' && e.className ? '.' + e.className.split(' ')[0] : '') + '[' + (e.getAttribute('aria-label') || e.textContent || e.name || '').trim().replace(/\\s+/g, ' ').slice(0, 22) + '] ' + Math.round(r.width) + 'x' + Math.round(r.height); };
-    const small = all.filter((e) => !inline(e) && !e.matches('input[type=radio], input[type=checkbox]') && !(e.closest('label') && e.closest('label').getBoundingClientRect().height >= 44)).filter((e) => { const r = e.getBoundingClientRect(); return Math.min(r.width, r.height) < 44 - 0.5; });
-    const radios = all.filter((e) => e.matches('input[type=radio], input[type=checkbox]')).filter((e) => { const box = (e.closest('label') || e).getBoundingClientRect(); return box.height < 44 - 0.5; });
+    // The real target: what a tap at a point hits (pseudo-elements that extend a target and an input's own label
+    // count), measured by hit-testing outward from the centre, not the drawn box.
+    const owns = (e, hit) => hit && (hit === e || e.contains(hit) || (e.labels && [...e.labels].some((l) => l === hit || l.contains(hit))));
+    const reach = (e) => {
+        const box = (e.closest('label') && e.matches('input') ? e.closest('label') : e);
+        box.scrollIntoView({ block: 'center', inline: 'center' });
+        const r = box.getBoundingClientRect(); const cx = r.left + r.width / 2; const cy = r.top + r.height / 2;
+        const run = (dx, dy) => { let n = 0; while (n < 40 && owns(e, document.elementFromPoint(cx + dx * (n + 1), cy + dy * (n + 1)))) n++; return n; };
+        return { h: run(0, -1) + run(0, 1) + 1, w: run(-1, 0) + run(1, 0) + 1 };
+    };
+    const tooSmall = (e) => { const r = e.getBoundingClientRect(); if (Math.min(r.width, r.height) >= 44 - 0.5) return false; const t = reach(e); return Math.min(t.w, t.h) < 44 - 0.5; };
+    const small = all.filter((e) => !inline(e) && !e.matches('input[type=radio], input[type=checkbox]') && !(e.closest('label') && e.closest('label').getBoundingClientRect().height >= 44)).filter(tooSmall);
+    const radios = all.filter((e) => e.matches('input[type=radio], input[type=checkbox]')).filter((e) => { const box = (e.closest('label') || e).getBoundingClientRect(); return box.height < 44 - 0.5 && tooSmall(e); });
+    window.scrollTo(0, 0);
     const dsmall = driverPrimary.filter((e) => e.getBoundingClientRect().height < 56 - 0.5);
     const heavy = [...document.querySelectorAll('body *')].filter((e) => { const s = getComputedStyle(e); return (s.backdropFilter && s.backdropFilter !== 'none') || /blur\\(/.test(s.filter); }).map(tag);
     return { overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1, scrollW: document.documentElement.scrollWidth, small: small.map(tag), radios: radios.map(tag), dsmall: dsmall.map(tag), heavy };

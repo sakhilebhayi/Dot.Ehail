@@ -39,6 +39,19 @@ export function etaCue(lastSaid, etaSeconds, now, { prefix = 'Arrives in', minGa
     return { text: `${prefix} ${minutes} min.`, minutes, at: now, urgent };
 }
 
+/**
+ * The queues that went up since the last reading, as one sentence (an operator's screen reader hears new work
+ * arrive without hearing every poll). `labels` maps a count key to its words; counts that fall or stay are quiet.
+ */
+export function risesSentence(previous, next, labels) {
+    if (!previous || !next) return null;
+    const parts = Object.entries(labels)
+        .filter(([key]) => Number.isFinite(next[key]) && Number.isFinite(previous[key]) && next[key] > previous[key])
+        .map(([key, words]) => `${words}: ${next[key]}`);
+
+    return parts.length ? `New work. ${parts.join('. ')}.` : null;
+}
+
 /** Straight-line distance in a few plain words ("850 m", "1.2 km"). */
 export function distanceWords(metres) {
     if (!Number.isFinite(metres)) return null;
