@@ -39,7 +39,7 @@ class BusinessAccounts
             $team = $this->linkableTeams($user)->firstWhere('id', (int) $data['team_id']);
 
             if ($team === null) {
-                throw BusinessRefusal::one('team_not_linkable', 'You can link only a company team you own or administer.', 403);
+                throw BusinessRefusal::one('team_not_linkable', 'You can link only a company team you own or administer.');
             }
 
             if (BusinessAccount::where('team_id', $team->id)->whereNotIn('status', [BusinessAccount::DECLINED, BusinessAccount::CLOSED])->exists()) {
@@ -228,7 +228,7 @@ class BusinessAccounts
         }
 
         if (strtolower((string) $user->email) !== strtolower($member->email)) {
-            throw BusinessRefusal::one('invitation_other_email', 'This invitation is for a different email address. Sign in with '.$member->email.'.', 403);
+            throw BusinessRefusal::one('invitation_other_email', 'This invitation is for a different email address. Sign in with '.$member->email.'.', 409);
         }
 
         if (BusinessMember::where('business_account_id', $member->business_account_id)->where('user_id', $user->id)->where('status', BusinessMember::ACTIVE)->exists()) {

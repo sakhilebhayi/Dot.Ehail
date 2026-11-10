@@ -69,12 +69,12 @@ class Approvals
             throw BusinessRefusal::one('own_request', 'You cannot decide your own request.', 403);
         }
 
+        // A late decision first records the expiry (outside the decision transaction, so it sticks).
+        BusinessApproval::whereKey($approval->id)->where('status', BusinessApproval::PENDING)->where('decide_by', '<=', now())
+            ->update(['status' => BusinessApproval::EXPIRED, 'updated_at' => now()]);
+
         $decided = DB::transaction(function () use ($approval, $approver, $approve, $note) {
             $locked = BusinessApproval::whereKey($approval->id)->lockForUpdate()->firstOrFail();
-
-            if ($locked->status === BusinessApproval::PENDING && $locked->decide_by->isPast()) {
-                $locked->forceFill(['status' => BusinessApproval::EXPIRED])->save();
-            }
 
             if ($locked->status !== BusinessApproval::PENDING) {
                 throw BusinessRefusal::one('already_decided', 'This request is no longer waiting for a decision ('.strtolower($locked->statusLabel()).').', 409);

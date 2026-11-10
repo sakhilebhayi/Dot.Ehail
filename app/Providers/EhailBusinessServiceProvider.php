@@ -6,6 +6,7 @@ use App\Domain\Business\BusinessRefusal;
 use App\Domain\Business\Console\BusinessSweep;
 use App\Domain\Business\Console\IssueStatements;
 use App\Domain\Business\Listeners\ReleaseOnRideEnd;
+use App\Domain\Business\PortalAccess;
 use App\Domain\Business\Seams\AccountBusinessBilling;
 use App\Domain\Business\Seams\BusinessChoiceGuard;
 use App\Domain\Business\Seams\BusinessPaymentMethodResolver;
@@ -39,6 +40,7 @@ class EhailBusinessServiceProvider extends ServiceProvider
     {
 
         $this->app->bind(BusinessBilling::class, AccountBusinessBilling::class);
+        $this->app->scoped(PortalAccess::class);
 
         $this->app->extend(PaymentMethodResolver::class, fn (PaymentMethodResolver $inner, $app) => $inner instanceof BusinessPaymentMethodResolver
             ? $inner
@@ -54,6 +56,14 @@ class EhailBusinessServiceProvider extends ServiceProvider
             $handler->renderable(function (BusinessRefusal $e, Request $request) {
                 if ($request->expectsJson() || $request->is('business/profiles', 'business/trips/prepare') || ($request->is('business/approvals') && $request->isMethod('post'))) {
                     return response()->json(['error' => 'business_'.$e->reasonCode, 'message' => $e->getMessage(), 'reasons' => $e->reasons], $e->status);
+                }
+
+                if (in_array($e->status, [403, 404, 410], true) && ! $request->isMethod('post')) {
+                    abort($e->status, $e->getMessage());
+                }
+
+                if ($e->status === 403) {
+                    abort(403, $e->getMessage());
                 }
 
                 return back()->withInput()->with('error', $e->getMessage())->withErrors(['business' => $e->getMessage()]);
