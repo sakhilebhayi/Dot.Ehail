@@ -2,13 +2,17 @@
 
 namespace Tests\Feature\Polish;
 
+use App\Domain\Business\BusinessClock;
 use App\Domain\Comms\CommsMessage;
 use App\Domain\Comms\Inbox;
 use App\Domain\Comms\NotificationRouter;
 use App\Domain\Ops\Insights\InsightsQuery;
+use App\Domain\Ops\Live\IncidentPresenter;
 use App\Domain\Ops\Support\TimelineWords;
 use App\Domain\Rides\Models\RideEvent;
+use App\Domain\Safety\IncidentService;
 use App\Domain\Safety\TrustSignals;
+use App\Http\Controllers\Driver\Support\Local as DriverLocal;
 use App\Livewire\NotificationBell;
 use App\Models\DriverProfile;
 use App\Models\User;
@@ -248,6 +252,42 @@ class DataLabelsTest extends TestCase
 
         $this->actingAs($admin)->get(route('ops.safety.show', $w['incident']->id))->assertOk()
             ->assertDontSee('by user '.$w['passenger']->id);
+    }
+
+    public function test_the_incident_page_names_who_acted_and_shows_south_african_times(): void
+    {
+        // 05:30 UTC is 07:30 in Johannesburg: the incident page and the live board's incident rail must say 07:30.
+        Carbon::setTestNow('2026-11-10 05:30:00');
+        $w = $this->seedOpsWorld();
+        $admin = $this->operatorWith(['admin']);
+        $admin->forceFill(['name' => 'Nomsa Dlamini'])->save();
+        app(IncidentService::class)->acknowledge($w['incident']->fresh(), $admin);
+
+        $html = (string) $this->actingAs($admin)->get(route('ops.safety.show', $w['incident']->id))->assertOk()->getContent();
+        $visible = $this->visibleText($html);
+
+        $this->assertStringContainsString('by Nomsa Dlamini', $visible);
+        $this->assertStringContainsString('by Thandi Passenger', $visible);
+        $this->assertDoesNotMatchRegularExpression('/by user \d+/', $visible);
+        $this->assertStringContainsString('10 Nov 2026 07:30:00 SAST', $visible);
+        $this->assertStringContainsString('10 Nov 07:30:00', $visible);
+        $this->assertStringContainsString('times in SAST', $visible);
+        $this->assertStringNotContainsString('05:30', $visible);
+
+        $card = app(IncidentPresenter::class)->rail($w['incident']->fresh(['reporter', 'owner']));
+        $this->assertStringStartsWith('Raised 07:30 SAST, ', $card['opened_text']);
+    }
+
+    public function test_business_and_driver_pages_use_the_same_display_zone(): void
+    {
+        $this->assertSame(LocalTime::timezone(), BusinessClock::timezone());
+        $this->assertSame('07:30', DriverLocal::at('2026-11-10 05:30:00')->format('H:i'));
+        $this->assertSame('07:30', BusinessClock::local(Carbon::parse('2026-11-10 05:30:00', 'UTC'))->format('H:i'));
+
+        // A broken setting never leaks UTC or throws: the platform zone is used.
+        config(['ehail_business.timezone' => 'Mars/Olympus', 'ehail_driver.timezone' => '']);
+        $this->assertSame('Africa/Johannesburg', BusinessClock::timezone());
+        $this->assertSame('07:30', DriverLocal::at('2026-11-10 05:30:00')->format('H:i'));
     }
 
     // ------------------------------------------------------------------ fleet "applying" (D-1911)
