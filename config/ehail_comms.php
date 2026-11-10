@@ -150,6 +150,19 @@ return [
         'scheduled_driver_confirmed' => 'ride.accepted',
     ],
 
+    // Dot.Notify events (dots as underscores) and the comms category whose email choice governs them.
+    // Only an explicit "off" stops them (NotifyClient::queue).
+    'notify_event_categories' => [
+        'ride_accepted' => 'trip',
+        'ride_cancelled' => 'trip',
+        'ride_expired' => 'trip',
+        'driver_application_decided' => 'driver_account',
+        'driver_document_reviewed' => 'driver_account',
+        'driver_document_expiring' => 'driver_account',
+        'driver_document_expired' => 'driver_account',
+        'safety_incident_alert' => 'safety',
+    ],
+
     // "Driver approaching": once per assignment, when the driver's reported position is this close
     // (great-circle metres) to the pickup point.
     'approaching_m' => (int) env('EHAIL_COMMS_APPROACHING_M', 500),

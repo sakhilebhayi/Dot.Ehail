@@ -92,6 +92,12 @@ final class FanOut
             return false; // the other domain's own email is recorded by MailNotificationListener
         }
 
+        // Dot.Notify sends its catalogue's emails unless the person explicitly switched email off
+        // (NotifyClient checks the same rule), so the record says what will really happen.
+        if ($channel === 'email' && $this->status->notifyEnabled() && NotifyPrecedence::handledByNotify($type, $user, $source)) {
+            return $this->preferences->explicitlyOff($user, $category, 'email') ? 'preference_off' : 'sent_by_dot_notify';
+        }
+
         if (! $this->preferences->allows($user, $category, $channel)) {
             return 'preference_off';
         }
@@ -102,7 +108,7 @@ final class FanOut
 
         return match ($channel) {
             'push' => $this->pushDecision($user),
-            'email' => $this->emailDecision($user, $type, $source),
+            'email' => $this->emailDecision($user),
             'sms' => $this->smsDecision($user, $category),
             default => false,
         };
@@ -117,14 +123,10 @@ final class FanOut
         return PushSubscription::active()->where('user_id', $user->id)->exists() ? true : 'no_push_subscription';
     }
 
-    private function emailDecision(User $user, string $type, ?Notification $source): bool|string
+    private function emailDecision(User $user): bool|string
     {
         if (trim((string) $user->email) === '') {
             return 'no_email_address';
-        }
-
-        if ($this->status->notifyEnabled() && NotifyPrecedence::handledByNotify($type, $user, $source)) {
-            return 'sent_by_dot_notify';
         }
 
         return $this->status->mailDelivers() ? true : 'mail_transport_not_delivering';

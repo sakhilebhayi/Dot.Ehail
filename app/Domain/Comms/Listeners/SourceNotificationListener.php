@@ -8,8 +8,8 @@ use App\Domain\Comms\Models\NotificationDelivery;
 use App\Domain\Comms\Notifications\CommsNotification;
 use App\Domain\Payments\Receipts\ReceiptIssuedNotification;
 use App\Domain\Comms\Preferences;
+use App\Models\Ride;
 use App\Models\User;
-use App\Notifications\Channels\NotifyChannel;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Events\NotificationSending;
@@ -22,7 +22,7 @@ use Throwable;
  * Brings every in-app notification other domains write (ride notices, payments, safety, support,
  * verification) under the same rules as comms' own: one in_app delivery row, then FanOut makes
  * the push / email / SMS copies the person's choices allow. Also applies those choices to the
- * other domains' own email paths (the receipt email, Dot.Notify) and records what happened to them.
+ * other domains' own email (the receipt email) and records what happened to it.
  * Never throws: the notification that triggered it has already been written.
  */
 final class SourceNotificationListener
@@ -46,29 +46,18 @@ final class SourceNotificationListener
                 return null;
             }
 
+            // Dot.Notify events are gated in NotifyClient::queue (one place for every path).
             $type = $this->mailType($event->notification);
-            $isMail = $event->channel === 'mail' && $type !== null;
-            $isNotify = $event->channel === NotifyChannel::class;
 
-            if (! $isMail && ! $isNotify) {
+            if ($event->channel !== 'mail' || $type === null) {
                 return null;
             }
 
-            $type ??= $this->typeOf($event->notification, $event->notifiable);
-            $category = $this->categories->categoryFor($type);
-
-            // Dot.Notify sent these emails before comms existed: only an explicit "off" stops them.
-            $off = $isNotify
-                ? $this->preferences->explicitlyOff($event->notifiable, $category, 'email')
-                : ! $this->preferences->allows($event->notifiable, $category, 'email');
-
-            if (! $off) {
+            if ($this->preferences->allows($event->notifiable, $this->categories->categoryFor($type), 'email')) {
                 return null;
             }
 
-            if ($isMail) {
-                $this->recordMail($event->notifiable, $event->notification, $type, NotificationDelivery::SKIPPED, 'preference_off');
-            }
+            $this->recordMail($event->notifiable, $event->notification, $type, NotificationDelivery::SKIPPED, 'preference_off');
 
             return false;
         } catch (Throwable $e) {
@@ -145,9 +134,13 @@ final class SourceNotificationListener
             'updated_at' => $now,
         ]);
 
-        // A notification raised by the person's own request (they cancelled, they paid) is not
-        // pushed back to them.
-        $actorIsRecipient = auth()->hasUser() && (int) auth()->id() === (int) $user->id;
+        // The other domains already address their notices to the other party (a passenger's
+        // cancellation tells the driver). The one notice that also reaches the person who acted is
+        // the completion notice: the driver completed the trip, so it is not pushed back to them.
+        // (Not "whoever made the request": dispatch moves rides on during anyone's poll, so an
+        // expiry can happen inside the passenger's own request without being their action.)
+        $actorIsRecipient = $type === 'ride_completed' && isset($data['ride_id'])
+            && (int) Ride::query()->whereKey((int) $data['ride_id'])->value('driver_id') === (int) $user->id;
 
         $this->fanOut->plan($user, (string) $record->id, $type, $eventKey, $collapse, $actorIsRecipient, $notification instanceof \Illuminate\Notifications\Notification ? $notification : null);
     }
