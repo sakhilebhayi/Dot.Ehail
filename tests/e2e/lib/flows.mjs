@@ -1,6 +1,7 @@
 // The things people do, the way they do them in the browser (selectors are the apps' own data attributes).
 import assert from 'node:assert/strict';
 import { sleep, one, until, driveAlong, sql } from './harness.mjs';
+import { metres } from './geo.mjs';
 
 export const PASS = 'a-long-pass-2026';
 
@@ -34,7 +35,8 @@ export async function searchPlace(page, selector, text) {
     await input.press('Enter');
     await page.locator('[role=option]').first().waitFor({ timeout: 10000 });
     await input.press('Enter');
-    await sleep(300);
+    // Chosen: the combobox closes (aria-expanded false) once the place is applied.
+    await page.waitForFunction((sel) => document.querySelector(sel)?.getAttribute('aria-expanded') === 'false', selector, { timeout: 10000 });
 }
 
 /** Booking sheet up to the priced options. Returns the options' visible names and totals. */
@@ -67,6 +69,7 @@ export async function paxPin(page) {
 
 /** Driver console: Go online (location granted in the context) and wait for the online view and a first fix. */
 export async function goOnline(page, driverId) {
+    page.context().__driverId = driverId; // driveTo waits for this driver's positions to reach the server
     await page.goto('/drive');
     await page.click('[data-dr-go-online]');
     await page.waitForSelector('[data-dr-view="online"]:not([hidden])', { timeout: 20000 });
@@ -88,8 +91,16 @@ export async function accept(page) {
 /** Drive to a point, then wait until the console has noticed the car stopped (minimal-distraction mode off). */
 export async function driveTo(ctx, page, from, to, speed = 25) {
     await driveAlong(ctx, from, to, { speed });
-    await page.waitForFunction(() => document.documentElement.dataset.moving !== 'true', null, { timeout: 30000 }).catch(() => {});
-    await sleep(4500); // the last fixes reach the server (posts every 4 s)
+    // The console notices the car stopped (minimal-distraction mode off) ...
+    await page.waitForFunction(() => document.documentElement.dataset.moving !== 'true', null, { timeout: 30000 });
+    // ... and the server holds the last fix (the app posts a batch every few seconds): polled, not slept.
+    const driverId = ctx.__driverId;
+    if (driverId) {
+        await until(() => {
+            const at = one('select lat, lng from driver_locations where driver_id = ?', [driverId]);
+            return at && metres([Number(at.lat), Number(at.lng)], to) < 12;
+        }, { what: `driver ${driverId}'s position at ${to}`, timeout: 20000 });
+    }
 }
 
 export async function arrive(page) {

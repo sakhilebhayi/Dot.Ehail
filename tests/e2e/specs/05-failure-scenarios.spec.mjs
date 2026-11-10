@@ -243,9 +243,15 @@ test('the same request twice with one Idempotency-Key makes one ride; a double t
     // Double tap on Request in the booking sheet.
     await priceTrip(page);
     await page.locator('.pax-option').first().locator('.pax-option__pick').check();
+    // Every request the double tap sends is followed to its answer before counting rides (no fixed wait).
+    const sent = [];
+    const onRequest = (r) => { if (r.method() === 'POST' && /\/api\/ehail\/rides$/.test(r.url())) sent.push(r); };
+    page.on('request', onRequest);
     await page.locator('[data-pax-request]').dblclick();
     await page.waitForURL(/\/ride\/trips\/\d+/, { timeout: 20000 });
-    await sleep(1500);
+    page.off('request', onRequest);
+    await until(async () => (await Promise.all(sent.map((r) => r.response().catch(() => 'failed')))).every(Boolean), { what: 'every request of the double tap answered' });
+    assert.ok(sent.length >= 1);
     assert.equal(one("select count(*) n from rides where passenger_id = ? and status in ('requested','searching')", [pax.id]).n, 1, 'one ride from a double tap');
     await page.click('[data-pax-cancel]');
     await page.click('[data-pax-cancel-confirm]');
@@ -307,7 +313,8 @@ test('connection loss on the driver: stale indicators, then recovery; PIN brute 
     const wrong = pin === '0000' ? '1111' : '0000';
     for (let i = 0; i < 5; i++) {
         await typePin(drv.page, wrong);
-        await sleep(700);
+        // The refusal came back (the pad empties) before the next PIN is typed.
+        await drv.page.waitForFunction(() => /^0 of/.test(document.querySelector('[data-dr-pin-boxes]')?.getAttribute('aria-label') || ''), null, { timeout: 15000 });
     }
     const locked = one('select pin_attempts, pin_locked_until from rides where id = ?', [rideId]);
     assert.ok(locked.pin_locked_until, 'locked');

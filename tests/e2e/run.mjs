@@ -100,6 +100,10 @@ async function main() {
     const ini = join(work, 'ini');
     mkdirSync(ini);
     writeFileSync(join(ini, 'e2e.ini'), [
+        // EGPCS: PHP's built-in server (cli-server) otherwise leaves $_ENV empty, Laravel then ignores
+        // LARAVEL_STORAGE_PATH and the web workers use the repository's storage (cache, sessions, logs) while the
+        // queue worker uses the suite's: a unique-job lock taken by the app is then never released by the worker.
+        'variables_order=EGPCS',
         'upload_max_filesize=12M', 'post_max_size=14M', 'memory_limit=512M', 'max_execution_time=60',
         `curl.cainfo=${certFile}`, `openssl.cafile=${certFile}`,
     ].join('\n') + '\n');
@@ -146,6 +150,11 @@ async function main() {
     // The host runs the queue from cron every minute; here a worker drains it continuously (same jobs, less waiting).
     background(['php', 'artisan', 'queue:work', '--sleep=0.25', '--tries=5', '--timeout=60', '--no-interaction'], base, 'queue');
     await waitFor(`${state.appUrl}/up`);
+    // Guard: the web workers must write into the suite's storage (sessions here after one page load).
+    await fetch(`${state.appUrl}/login`);
+    if (!readdirSync(join(storage, 'framework/sessions')).some((f) => !f.startsWith('.'))) {
+        throw new Error('the app server is not using the suite storage folder (LARAVEL_STORAGE_PATH not seen by the web workers)');
+    }
 
     if (args.includes('--serve')) {
         console.log(`SERVING app=${state.appUrl} edge=${edgeUrl} paystack=${paystack.port} smtp=${smtp.port} db=${db} storage=${storage}`);

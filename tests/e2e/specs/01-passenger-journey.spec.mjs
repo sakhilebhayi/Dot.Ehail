@@ -91,15 +91,12 @@ test('passenger journey: register to rating, paid by card', async () => {
     assert.match(await p.locator('main').innerText(), /White Toyota Corolla/);
 
     // 8. Track the driver: positions from the driver's phone reach the passenger's feed and page.
-    const positions = [];
     await step(d, 'drive to pickup', () => driveTo(dctx, d, DRIVER_START, PICKUP));
-    for (let i = 0; i < 3; i++) {
+    const pos = await until(async () => {
         const feed = await api(p, 'GET', `/api/ehail/rides/${rideId}/feed`);
-        if (feed.data?.driver_position) positions.push(feed.data.driver_position);
-        await sleep(400);
-    }
-    assert.ok(positions.length > 0, 'the passenger feed carries the driver position');
-    const pos = positions.at(-1);
+        const at = feed.data?.driver_position;
+        return at && Math.abs(at.lat - PICKUP[0]) < 0.0005 && Math.abs(at.lng - PICKUP[1]) < 0.0005 ? at : null;
+    }, { what: 'the passenger feed showing the driver at the pickup', every: 500 });
     assert.ok(Math.abs(pos.lat - PICKUP[0]) < 0.0005 && Math.abs(pos.lng - PICKUP[1]) < 0.0005, `driver shown at the pickup (${pos.lat}, ${pos.lng})`);
     assert.ok(sql('select count(*) n from driver_locations where driver_id = ?', [driver.id])[0].n === 1);
 
