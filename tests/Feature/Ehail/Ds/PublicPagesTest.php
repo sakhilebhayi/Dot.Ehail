@@ -35,15 +35,9 @@ class PublicPagesTest extends TestCase
         $xpath = $this->xpath($response);
         $host = parse_url(config('app.url'), PHP_URL_HOST);
         $urls = [];
-        foreach ($xpath->query('//script[@src]') as $n) {
-            $urls[] = $n->getAttribute('src');
-        }
-        foreach ($xpath->query('//link[@href]') as $n) {
-            $urls[] = $n->getAttribute('href');
-        }
-        foreach ($xpath->query('//img[@src] | //source[@src]') as $n) {
-            $urls[] = $n->getAttribute('src');
-        }
+        foreach ($xpath->query('//script[@src]') as $n) { $urls[] = $n->getAttribute('src'); }
+        foreach ($xpath->query('//link[@href]') as $n) { $urls[] = $n->getAttribute('href'); }
+        foreach ($xpath->query('//img[@src] | //source[@src]') as $n) { $urls[] = $n->getAttribute('src'); }
         foreach ($xpath->query('//*[@srcset] | //*[@imagesrcset]') as $n) {
             foreach (explode(',', $n->getAttribute('srcset').','.$n->getAttribute('imagesrcset')) as $candidate) {
                 $urls[] = trim(explode(' ', trim($candidate))[0] ?? '');
