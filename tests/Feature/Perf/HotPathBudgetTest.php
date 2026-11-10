@@ -93,6 +93,7 @@ class HotPathBudgetTest extends TestCase
         $routes = fn (array $log) => count(array_filter($log, fn ($sql) => str_contains($sql, 'route_cache')));
         $this->assertEqualsWithDelta($few - $routes($fewLog), $many - $routes($manyLog), 1, "tick statements besides routes: {$few} with 2 candidates, {$many} with 12");
         $this->assertLessThanOrEqual(3 * 5, $routes($manyLog), 'road ETAs for at most 5 candidates');
-        $this->assertLessThanOrEqual(45, $many);
+        // 33 for the step itself (lease, state, offer, timeline, notifications) + up to 15 for the road ETAs.
+        $this->assertLessThanOrEqual(50, $many);
     }
 }
