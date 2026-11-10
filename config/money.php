@@ -106,6 +106,9 @@ return [
     */
     'vat' => [
         'registered' => (bool) env('EHAIL_VAT_REGISTERED', false),
+        // Whether the operator has stated a VAT position at all (true or false). Unset = "not configured": money
+        // documents then make no VAT statement and preflight warns (D-1905).
+        'declared' => env('EHAIL_VAT_REGISTERED') !== null,
         'number' => env('EHAIL_VAT_NUMBER'),
         'rate_percent' => (float) env('EHAIL_VAT_RATE', 15),
     ],
@@ -114,8 +117,30 @@ return [
         'prefix' => env('EHAIL_RECEIPT_PREFIX', 'EHR'),
         'operator_name' => env('EHAIL_OPERATOR_LEGAL_NAME', env('APP_NAME', 'Dot.Ehail')),
         'support_url' => env('EHAIL_SUPPORT_URL'),
-        'support_email' => env('EHAIL_SUPPORT_EMAIL', env('MAIL_FROM_ADDRESS')),
+        // A real inbox people can write to. No fallback to MAIL_FROM_ADDRESS (a no-reply sender, D-1905).
+        'support_email' => env('EHAIL_SUPPORT_EMAIL'),
         'email' => (bool) env('EHAIL_EMAIL_RECEIPTS', true),
+    ],
+
+    /*
+    | The operating company as it appears on receipts and business statements (App\Domain\Payments\OperatorIdentity,
+    | D-1905). Every value comes from here and is never invented: a missing value is left off the document for
+    | passengers and businesses, and `php artisan ehail:preflight` lists it for operations as "not configured".
+    | Address lines are separated with "|". EFT details are printed on business statements that ask for EFT.
+    */
+    'operator' => [
+        'legal_name' => env('EHAIL_OPERATOR_LEGAL_NAME'),
+        'trading_name' => env('EHAIL_OPERATOR_TRADING_NAME', env('APP_NAME', 'Dot.Ehail')),
+        'registration_number' => env('EHAIL_OPERATOR_REGISTRATION'),
+        'address' => env('EHAIL_OPERATOR_ADDRESS'),
+        'support_phone' => env('EHAIL_SUPPORT_PHONE'),
+        'eft' => [
+            'account_name' => env('EHAIL_EFT_ACCOUNT_NAME'),
+            'bank' => env('EHAIL_EFT_BANK'),
+            'account_number' => env('EHAIL_EFT_ACCOUNT_NUMBER'),
+            'branch_code' => env('EHAIL_EFT_BRANCH_CODE'),
+            'account_type' => env('EHAIL_EFT_ACCOUNT_TYPE'),
+        ],
     ],
 
 ];

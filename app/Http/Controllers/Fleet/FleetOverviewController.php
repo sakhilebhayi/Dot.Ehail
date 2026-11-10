@@ -13,6 +13,7 @@ use App\Models\DriverProfile;
 use App\Models\Fleet;
 use App\Models\Ride;
 use App\Models\Vehicle;
+use App\Support\Ui\LocalTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -56,6 +57,8 @@ class FleetOverviewController extends FleetController
             'applications' => $this->access->can($user, $fleet, 'drivers')
                 ? DriverProfile::withoutGlobalScope('user')->where('fleet_id', $fleet->id)->where('status', 'pending')->with('user:id,name')->oldest()->limit(5)->get()
                 : collect(),
+            // The strip's "applying" counts every pending application (the rail lists the five oldest): D-1911.
+            'applicationsCount' => DriverProfile::withoutGlobalScope('user')->where('fleet_id', $fleet->id)->where('status', 'pending')->count(),
             'access' => $this->access,
         ]);
     }
@@ -92,7 +95,7 @@ class FleetOverviewController extends FleetController
                 DriverAvailability::ON_TRIP => 'On a trip',
                 DriverAvailability::PAUSED => 'Paused',
                 default => 'Online',
-            }, 'tone' => 'go', 'note' => 'Since '.($availability->since?->format('H:i') ?? 'earlier')];
+            }, 'tone' => 'go', 'note' => 'Since '.($availability->since?->copy()->setTimezone(LocalTime::timezone())->format('H:i') ?? 'earlier')];
         } else {
             $result = $holderUser ? $eligibility->canGoOnline($holderUser, $vehicle) : null;
             $state = $result !== null && $result->allowed()

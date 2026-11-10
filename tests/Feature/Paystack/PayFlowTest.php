@@ -50,7 +50,7 @@ class PayFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Pay fare')
             ->assertSee(route('rides.pay', $this->ride), false)
-            ->assertSee('R 125.50')
+            ->assertSee('R125.50')
             ->assertSee('TEST MODE');
     }
 

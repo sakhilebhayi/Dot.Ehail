@@ -42,7 +42,7 @@
                                     @elseif ($ride->final_fare !== null){{ \App\Services\Ehail\FareCalculator::format($ride->final_fare) }} <span class="sub">recorded</span>
                                     @else<span class="ops-dash" aria-label="none">-</span>@endif
                                 </td>
-                                <td class="num">{{ ($ride->requested_at ?? $ride->created_at)?->format('d M H:i') }}</td>
+                                <td class="num">{{ ($ride->requested_at ?? $ride->created_at)?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i') }}</td>
                             </tr>
                         @endforeach
                     </tbody>

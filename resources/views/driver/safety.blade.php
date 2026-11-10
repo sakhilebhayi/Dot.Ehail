@@ -65,7 +65,7 @@
                 <form class="dr-form dr-more__body" method="POST" action="{{ route('support.cases.store') }}" data-dr-json data-reload="1" data-done="Your case is open.">
                     @csrf
                     <x-eh.select label="Topic" name="category" :options="collect($categories)->mapWithKeys(fn ($c) => [$c['value'] => $c['label']])->all()" />
-                    <x-eh.select label="Trip (if it is about one)" name="ride_id" :options="['' => 'Not about a trip'] + $recentRides->mapWithKeys(fn ($r) => [$r->id => '#'.$r->id.' '.\Illuminate\Support\Str::limit($r->dropoff_address, 40)])->all()" />
+                    <x-eh.select label="Trip (if it is about one)" name="ride_id" :options="['' => 'Not about a trip'] + $recentRides->mapWithKeys(fn ($r) => [$r->id => '#'.$r->id.' '.\App\Http\Controllers\Driver\Support\Place::short($r->dropoff_address)])->all()" />
                     <x-eh.field label="Subject" name="subject" maxlength="160" required />
                     <x-eh.field label="Message" name="body" type="textarea" maxlength="5000" required />
                     <x-eh.button type="submit" size="driver" variant="secondary">Open case</x-eh.button>

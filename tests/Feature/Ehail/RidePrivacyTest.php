@@ -246,7 +246,7 @@ class RidePrivacyTest extends TestCase
         $this->actingAs($this->operator())
             ->get('/dashboard')
             ->assertOk()
-            ->assertSee('R 0.00');
+            ->assertSee('R0.00');
     }
 
     // ─── Available queue ─────────────────────────────────────────────────

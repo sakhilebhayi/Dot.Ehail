@@ -35,7 +35,7 @@
                 <p class="ops-head__finding">{{ $finding }}</p>
             </div>
             <div class="ops-head__actions">
-                <span class="ops-stamp">{{ $from->format('d M Y') }} to {{ $to->format('d M Y') }} · read {{ \Illuminate\Support\Carbon::parse($data['generated_at'])->format('H:i:s') }} (kept 60 s)</span>
+                <span class="ops-stamp">{{ $from->format('d M Y') }} to {{ $to->format('d M Y') }} · read {{ \Illuminate\Support\Carbon::parse($data['generated_at'])->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i:s') }} (kept 60 s)</span>
                 <x-eh.button size="sm" variant="secondary" :href="route('ops.insights.export', ['from' => $from->toDateString(), 'to' => $to->toDateString(), 'grain' => $grain])" icon="download">CSV</x-eh.button>
             </div>
         </header>
@@ -112,7 +112,7 @@
                             <dt>Share with a ride</dt><dd class="num"><strong>{{ $pct($util['rate_bp']) }}</strong></dd>
                         </dl>
                     @endif
-                    @if ($util['measured_since'])<p class="ops-note ops-note--small">Measured since {{ \Illuminate\Support\Carbon::parse($util['measured_since'])->format('d M Y H:i') }}; time before that is not counted.</p>@endif
+                    @if ($util['measured_since'])<p class="ops-note ops-note--small">Measured since {{ \Illuminate\Support\Carbon::parse($util['measured_since'])->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') }}; time before that is not counted.</p>@endif
                 </section>
             </div>
         </div>

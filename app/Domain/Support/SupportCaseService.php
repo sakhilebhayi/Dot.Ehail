@@ -250,7 +250,7 @@ class SupportCaseService
         }
 
         $case->forceFill(['owner_id' => $owner->id])->save();
-        $this->addMessage($case, null, 'system', 'internal', 'Assigned to user #'.$owner->id.' by user #'.$actor->id.'.', null);
+        $this->addMessage($case, null, 'system', 'internal', 'Assigned to '.($owner->name ?: 'user #'.$owner->id).' by '.($actor->name ?: 'user #'.$actor->id).'.', null);
 
         return $case;
     }
@@ -262,7 +262,7 @@ class SupportCaseService
             'first_response_due_at' => $case->first_responded_at ? $case->first_response_due_at : $case->created_at->copy()->addMinutes($priority->firstResponseMinutes()),
             'resolution_due_at' => $case->created_at->copy()->addMinutes($priority->resolutionMinutes()),
         ])->save();
-        $this->addMessage($case, null, 'system', 'internal', "Priority set to {$priority->value} by user #{$actor->id}.", null);
+        $this->addMessage($case, null, 'system', 'internal', 'Priority set to '.$priority->value.' by '.($actor->name ?: 'user #'.$actor->id).'.', null);
 
         return $case;
     }

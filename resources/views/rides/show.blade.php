@@ -32,7 +32,7 @@
             <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.2rem;letter-spacing:-0.01em;">
                 Ride #{{ $ride->id }}
             </h1>
-            <p style="font-size:0.78rem;color:#a1a1aa;margin:0;">Requested {{ $ride->created_at->format('l, F j, Y \a\t g:i A') }}</p>
+            <p style="font-size:0.78rem;color:#a1a1aa;margin:0;">Requested {{ $ride->created_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('l, F j, Y \a\t g:i A') }}</p>
         </div>
         <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
             <x-ride-status :status="$ride->status" />
@@ -165,7 +165,7 @@
             </p>
         @elseif($payState === \App\Enums\PaymentStatus::Paid)
             <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">
-                Fare paid @if($paidPayment)(<span class="metric-val" style="color:#4ade80;">{{ \App\Services\Ehail\FareCalculator::formatCents($paidPayment->amount_cents) }}</span> on {{ $paidPayment->paid_at?->format('j F Y \a\t g:i A') }})@endif.
+                Fare paid @if($paidPayment)(<span class="metric-val" style="color:#4ade80;">{{ \App\Services\Ehail\FareCalculator::formatCents($paidPayment->amount_cents) }}</span> on {{ $paidPayment->paid_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j F Y \a\t g:i A') }})@endif.
             </p>
         @elseif($payState === \App\Enums\PaymentStatus::Waived)
             <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">This fare was waived by a platform operator. Nothing is due.</p>

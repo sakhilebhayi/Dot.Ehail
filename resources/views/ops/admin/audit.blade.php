@@ -21,7 +21,7 @@
                         @foreach ($rows as $row)
                             @php($meta = collect(is_array($row->meta) ? $row->meta : [])->except(['terms', 'polygon', 'before', 'after'])->map(fn ($v) => is_scalar($v) || $v === null ? (string) $v : json_encode($v))->filter(fn ($v) => $v !== ''))
                             <tr>
-                                <td class="num" style="text-align:left">{{ $row->created_at?->format('d M Y H:i:s') }}</td>
+                                <td class="num" style="text-align:left">{{ $row->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i:s') }}</td>
                                 <td>{{ $row->actor?->name ?? 'System' }}@if($row->actor_user_id)<span class="sub">user {{ $row->actor_user_id }}</span>@endif</td>
                                 <td>{{ $row->action }}</td>
                                 <td>{{ class_basename($row->subject_type) }} {{ $row->subject_id }}</td>

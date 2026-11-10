@@ -4,6 +4,7 @@ namespace App\Domain\Ops\Support;
 
 use App\Domain\Rides\Models\RideEvent;
 use App\Enums\RideStatus;
+use App\Support\Ui\PersonNames;
 
 /** Plain words for a ride_events row on the operations timeline: what happened, the detail, and its kind of stop. */
 final class TimelineWords
@@ -25,9 +26,9 @@ final class TimelineWords
         $what = match ($event->type) {
             'transition' => $to ?? 'State changed',
             'created' => 'Ride created',
-            'offer_sent' => 'Offer sent'.(isset($context['driver_id']) ? ' to driver '.$context['driver_id'] : ''),
-            'offer_declined' => 'Offer declined'.(isset($context['driver_id']) ? ' by driver '.$context['driver_id'] : ''),
-            'offer_expired' => 'Offer timed out'.(isset($context['driver_id']) ? ' (driver '.$context['driver_id'].')' : ''),
+            'offer_sent' => 'Offer sent'.(isset($context['driver_id']) ? ' to '.PersonNames::of($context['driver_id']) : ''),
+            'offer_declined' => 'Offer declined'.(isset($context['driver_id']) ? ' by '.PersonNames::of($context['driver_id']) : ''),
+            'offer_expired' => 'Offer timed out'.(isset($context['driver_id']) ? ' ('.PersonNames::of($context['driver_id']).')' : ''),
             'pin_rejected' => 'Wrong trip PIN entered',
             'requote_required' => 'New fare needed before dispatch',
             'requote_accepted' => 'Passenger accepted the new fare',
@@ -37,7 +38,8 @@ final class TimelineWords
         };
 
         $detailParts = array_filter([
-            'by '.$actor.($event->actor_id ? ' '.$event->actor_id : ''),
+            // Names, not ids (D-1913): "by driver Thabo Nkosi".
+            'by '.$actor.($event->actor_id ? ' '.PersonNames::of($event->actor_id) : ''),
             $event->reason_code ? str_replace('_', ' ', (string) $event->reason_code) : null,
             is_string($note) && $note !== '' ? '"'.$note.'"' : null,
         ]);

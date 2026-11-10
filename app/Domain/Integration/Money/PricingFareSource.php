@@ -44,7 +44,9 @@ class PricingFareSource implements FareSource
         $platformFees = $split === null ? 0 : max(0, $gross - $tax - $split->commissionableMinor - $split->passThroughMinor);
 
         $components = array_values(array_filter(
-            array_map(fn (array $c) => ['code' => (string) $c['code'], 'label' => (string) $c['label'], 'amount_minor' => (int) $c['amount_minor']], $fare->final_components ?? []),
+            // Metered lines keep their quantity and rate (D-1900) so the receipt can show "5.7 km x R7.50/km".
+            array_map(fn (array $c) => ['code' => (string) $c['code'], 'label' => (string) $c['label'], 'amount_minor' => (int) $c['amount_minor']]
+                + array_filter(['detail' => $c['detail'] ?? null, 'quantity' => $c['quantity'] ?? null, 'quantity_tenths' => $c['quantity_tenths'] ?? null, 'unit' => $c['unit'] ?? null, 'rate_minor' => $c['rate_minor'] ?? null], fn ($v) => $v !== null), $fare->final_components ?? []),
             fn (array $c) => $c['code'] !== 'promotion' && $c['amount_minor'] !== 0,
         ));
 
@@ -60,6 +62,7 @@ class PricingFareSource implements FareSource
             distanceM: $fare->actual_distance_m,
             durationS: $fare->actual_duration_s,
             source: 'ride_fares',
+            basis: $fare->basis,
         );
     }
 }

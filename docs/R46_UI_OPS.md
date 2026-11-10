@@ -87,3 +87,18 @@ Empty periods say so ("No completed trips in this period"); averages with no row
 - The report-only CSP floods `/csp-report` (429) with map-tile reports in development (geo D-214, owner of SecurityHeaders to act).
 - For the driver app: a suspended driver can appeal with `POST /drive/suspensions/{id}/appeal {text}`; `App\Domain\Ops\Drivers\SuspensionService::activeFor($user)` gives the active suspension and its reason.
 - For the business agent: an `ops.business` page, if added under the `operator` middleware, must be mapped in `RoutePermissions` (unmapped means admin only, and the matrix test fails).
+
+## 6. Jury polish (pops, 2026-11-10)
+
+What changed, by jury item (decisions D-2200 to D-2211):
+
+- **SOS (8):** live-board takeover rail, red map marker, opt-in alarm sound; incident page leads with owner and escalation, one audited ownership action, a map with trail, and place names with GPS kept as a secondary line.
+- **Places (6, 12):** `PlaceNames` on business approvals, business overview and the incident page; small maps on approvals and overview.
+- **Identity (13):** route-line header mark, plate chips, night safety banner.
+- **Fleet (72, 73):** stacked rows and total row at 390; the navigation rule runs the full page height.
+- **Ops (14):** "Service areas" header, tariff title on one line, native date inputs in kit style.
+- **Copy (17):** sign-in, 404 (three destinations), virus-scan note for reviewers only, plurals.
+
+Checked in a real browser (Chromium, local server, seeded jury data): live board 1440 light and night, 768, 390 night; incident 1440 light and night, 390; approvals 1440 light, 390 night; business overview 1440 night; fleet drivers 390, 768 night, 1440 night; fleet earnings and overview 390; tariff detail 1440; service areas 1440; sign-in 1440 and 390; 404 1440.
+
+Not checked or not done: business overview at 768 and insights were captured but not reviewed; the impeccable detector was not run; the empty-state line mark is on ops empty states only, not yet placed in business or fleet views; items in D-2211 wait on pmoney. Four small after images are in `docs/R46_screens/polish-ops/` (incident 1440, live takeover 768, business approvals 1440, fleet drivers 390); the before set is the jury's own and is not copied here.

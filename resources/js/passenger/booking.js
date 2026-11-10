@@ -6,6 +6,7 @@ import { announce, api, ApiError, idempotencyKey, island } from './api.js';
 import { formatKm, formatMinutes, renderBreakdown } from './breakdown.js';
 import { clock, quoteState } from './countdown.js';
 import { countdownCue } from '../eh/announce.js';
+import { wallTimeToIso } from '../eh/time.js';
 import { businessReasons, categoryIcon, defaultPayment, etaText, laterBounds, laterError, paymentOptions, requestLabel, unavailableText } from './labels.js';
 import { formatMinor } from './money.js';
 import { el, icon, setSnap, showStep, watchConnection } from './dom.js';
@@ -522,7 +523,7 @@ async function prepareBusiness() {
     updateRequest();
     try {
         const body = { profile_id: choice.profile.id, quote_id: option.quote_id, purpose: state.business.purpose || undefined, approval_id: state.business.approvalId || undefined };
-        if (state.when === 'later') body.scheduled_for = new Date(state.laterAt).toISOString();
+        if (state.when === 'later') body.scheduled_for = wallTimeToIso(state.laterAt);
         const { data: checked } = await api(data.urls.businessPrepare, { method: 'POST', body });
         if (mine !== prepareSeq) return;
         state.business.status = checked.allowed ? { state: 'allowed' } : checked.needs_approval ? { state: 'approval', reasons: checked.reasons, approval: checked.approval } : { state: 'refused', ...businessReasons({ reasons: checked.reasons }) };
@@ -641,12 +642,16 @@ function updateRequest() {
     const biz = chosenPayment()?.profile ? state.business.status?.state : null;
     const payable = state.payment !== null && (biz === null || biz === 'allowed');
     button.querySelector('.eh-btn__label').textContent = requestLabel(option, state.when === 'later' ? state.laterAt : null);
-    button.disabled = !option || expired || blocked || !payable || state.submitting;
+    // Prices show without drivers online (D-1902); a ride for now needs one nearby, a scheduled ride does not.
+    const noSupplyNow = state.when !== 'later' && option?.requestable_now === false;
+    button.disabled = !option || expired || blocked || !payable || noSupplyNow || state.submitting;
     const fine = body.querySelector('[data-pax-request-fine]');
     const free = option?.category?.policies?.cancellation_free_minutes;
     fine.textContent = blocked
         ? 'Requests open again once the unpaid amount is settled.'
-        : state.when === 'later'
+        : noSupplyNow
+          ? `No ${option.category.name} drivers are nearby right now. The price stays the same: try again shortly, pick another ride type, or schedule it.`
+          : state.when === 'later'
           ? `Free to cancel or change until ${data.schedule.free_change_until_minutes} minutes before pickup.`
           : `Free to cancel while we find a driver${Number.isFinite(free) ? ` and for ${free} minutes after one accepts` : ''}.`;
 }
@@ -675,7 +680,7 @@ async function submit() {
     if (choice?.profile) {
         payload.business = Object.fromEntries(Object.entries({ purpose: state.business.purpose || null, approval_id: state.business.approvalId || null }).filter(([, v]) => v !== null));
     }
-    if (state.when === 'later') payload.scheduled_for = new Date(state.laterAt).toISOString();
+    if (state.when === 'later') payload.scheduled_for = wallTimeToIso(state.laterAt);
 
     // The same tap retried (a timeout, a lost answer) carries the same key, so it can never book twice.
     const signature = JSON.stringify(payload);

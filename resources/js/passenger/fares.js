@@ -69,7 +69,7 @@ async function estimate() {
 
 function draw(result) {
     if (result.available === false || !result.options?.length) {
-        out.replaceChildren(el('div', { class: 'eh-banner eh-banner--caution', role: 'status' }, [icon('warning'), el('div', { class: 'eh-banner__body' }, [el('p', { class: 'eh-banner__title' }, 'No fare for this trip'), el('div', { class: 'eh-banner__text' }, result.available === false ? unavailableText(result, config?.routing?.unavailableMessage) : 'These ride types could not be priced for this trip:'), result.available === false ? null : el('ul', { class: 'pax-unavailable' }, (result.unavailable || []).map((u) => el('li', {}, u.message)))])]));
+        out.replaceChildren(el('div', { class: 'eh-banner eh-banner--caution', role: 'status' }, [icon('warning'), el('div', { class: 'eh-banner__body' }, [el('p', { class: 'eh-banner__title' }, 'No fare for this trip'), el('div', { class: 'eh-banner__text' }, result.available === false ? unavailableText(result, config?.routing?.unavailableMessage) : 'No ride type could be priced for this pickup:'), result.available === false ? null : el('ul', { class: 'pax-unavailable' }, (result.unavailable || []).map((u) => el('li', {}, u.message)))])]));
         announce('No fare could be worked out for this trip.');
         return;
     }
@@ -90,12 +90,13 @@ function draw(result) {
                 el('h2', { class: 'pax-option__name', style: 'margin:0' }, [icon(categoryIcon(option.category.icon_key)), option.category.name]),
                 el('span', { class: 'pax-option__total eh-num' }, model.total?.text || ''),
                 el('p', { class: 'pax-option__meta', style: 'margin:0' }, [option.category.description, ` ${option.category.capacity} seats.`]),
+                option.supply_note ? el('p', { class: 'pax-option__meta', style: 'margin:0', 'data-pax-supply': option.supply || 'unknown' }, option.supply_note) : null,
                 el('details', { class: 'pax-option__detail' }, [el('summary', { class: 'pax-option__more' }, 'Every line of this fare'), list, el('div', { class: 'pax-fare-notes' }, [...model.notes, option.wording].map((n) => el('p', {}, n)))]),
             ]),
         );
     }
     if (result.unavailable?.length) children.push(el('ul', { class: 'pax-unavailable' }, result.unavailable.map((u) => el('li', {}, [icon('info'), u.message]))));
-    children.push(el('div', { class: 'pax-actions' }, [el('a', { class: 'eh-btn eh-btn--primary eh-btn--lg eh-btn--block', href: data.canSearch ? data.urls.book : data.urls.login }, el('span', { class: 'eh-btn__label' }, data.canSearch ? 'Book a ride' : 'Sign in to book')), el('p', { class: 'pax-rule' }, 'Estimates only, and a driver is not guaranteed: who is free nearby is checked when you book. When you book, you get a quote held for five minutes that you accept before the ride is requested.')]));
+    children.push(el('div', { class: 'pax-actions' }, [el('a', { class: 'eh-btn eh-btn--primary eh-btn--lg eh-btn--block', href: data.canSearch ? data.urls.book : data.urls.login }, el('span', { class: 'eh-btn__label' }, data.canSearch ? 'Book a ride' : 'Sign in to book')), el('p', { class: 'pax-rule' }, 'Estimates only. When you book, you get a quote held for five minutes that you accept before the ride is requested.')]));
     out.replaceChildren(...children);
     announce(`Fares ready for ${result.options.length} ride types.`);
 }

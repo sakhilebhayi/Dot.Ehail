@@ -16,12 +16,19 @@
     </x-slot:head>
     <x-slot:header>
         <div class="dr-head">
-            <h1>{{ \Illuminate\Support\Str::limit($s['dropoff'], 60) }}</h1>
-            <p>From {{ $s['pickup'] }}. <x-eh.status :status="$s['status']" />@if($s['completed_at']) {{ \App\Http\Controllers\Driver\Support\Local::at($s['completed_at'])->isoFormat('D MMMM YYYY, HH:mm') }}@endif</p>
+            <h1>{{ \App\Http\Controllers\Driver\Support\Place::short($s['dropoff']) }}</h1>
+            <p>From {{ \App\Http\Controllers\Driver\Support\Place::short($s['pickup']) }}. <x-eh.status :status="$s['status']" />@if($s['completed_at']) {{ \App\Http\Controllers\Driver\Support\Local::at($s['completed_at'])->isoFormat('D MMMM YYYY, HH:mm') }}@endif</p>
         </div>
     </x-slot:header>
 
     <div class="dr-page">
+        <details class="dr-more">
+            <summary>Full addresses</summary>
+            <dl class="dr-ledger dr-more__body dr-addresses">
+                <div><dt>Pickup</dt><dd>{{ $s['pickup'] }}</dd></div>
+                <div><dt>Drop-off</dt><dd>{{ $s['dropoff'] }}</dd></div>
+            </dl>
+        </details>
         <section class="dr-panel" aria-labelledby="fare-h">
             <h2 id="fare-h">Fare and earnings</h2>
             <dl class="dr-ledger">
@@ -36,8 +43,10 @@
             </dl>
             @if ($e)
                 <dl class="dr-ledger">
-                    <div><dt>Commission</dt><dd>@if($e['commission_minor'] !== null)<x-eh.money :minor="-$e['commission_minor']" :currency="$cur" />@else not configured @endif</dd></div>
-                    @if ($e['deductions_minor'])<div><dt>Platform fees, tax and other</dt><dd><x-eh.money :minor="-$e['deductions_minor']" :currency="$cur" /></dd></div>@endif
+                    @if (! empty($e['fee_lines']))
+                        @foreach ($e['fee_lines'] as $line)<div><dt>{{ $line['label'] }}</dt><dd><x-eh.money :minor="(int) $line['amount_minor']" :currency="$cur" /></dd></div>@endforeach
+                    @elseif ($e['deductions_minor'])<div><dt>Platform fees, tax and other</dt><dd><x-eh.money :minor="-$e['deductions_minor']" :currency="$cur" /></dd></div>@endif
+                    <div><dt>Commission @if(! empty($e['commission_detail']))<span class="dr-note">({{ $e['commission_detail'] }})</span>@endif</dt><dd>@if($e['commission_minor'] !== null)<x-eh.money :minor="-$e['commission_minor']" :currency="$cur" />@else not configured @endif</dd></div>
                     <div class="is-total"><dt>You earn</dt><dd>@if($e['net_minor'] !== null)<x-eh.money :minor="$e['net_minor']" :currency="$cur" />@else not configured @endif</dd></div>
                     @if ($e['cash_collected_minor'] !== null)<div><dt>Cash you collected</dt><dd><x-eh.money :minor="$e['cash_collected_minor']" :currency="$cur" /></dd></div>@endif
                 </dl>

@@ -8,7 +8,7 @@
         <div class="bz-title">
             <div class="bz-title__text">
                 <h1 class="eh-h1" style="margin:0">{{ $account->displayName() }}</h1>
-                <p class="bz-title__sub"><x-eh.badge :tone="$account->statusTone()">{{ $account->statusLabel() }}</x-eh.badge> Applied {{ $account->created_at->format('j M Y') }}@if ($account->reviewed_at), reviewed {{ $account->reviewed_at->format('j M Y') }}@endif. @if ($account->status_note) {{ $account->status_note }} @endif</p>
+                <p class="bz-title__sub"><x-eh.badge :tone="$account->statusTone()">{{ $account->statusLabel() }}</x-eh.badge> Applied {{ $account->created_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}@if ($account->reviewed_at), reviewed {{ $account->reviewed_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}@endif. @if ($account->status_note) {{ $account->status_note }} @endif</p>
             </div>
             <a class="eh-link" href="{{ route('ops.business') }}">All business accounts</a>
         </div>
@@ -37,11 +37,11 @@
                     @else
                         <div class="bz-tablewrap"><table class="bz-table">
                             <thead><tr><th scope="col">Statement</th><th scope="col">Due</th><th scope="col">State</th><th scope="col" class="num">Total</th><th scope="col" class="num">Still owed</th></tr></thead>
-                            <tbody>@foreach ($statements as $s)<tr><td>{{ $s->number }}</td><td>{{ $s->due_at->format('j M Y') }}</td><td><x-eh.badge :tone="$s->statusTone()">{{ $s->statusLabel() }}</x-eh.badge></td><td class="num"><x-eh.money :minor="$s->closing_minor" :currency="$cur" /></td><td class="num"><x-eh.money :minor="$owed($s)" :currency="$cur" /></td></tr>@endforeach</tbody>
+                            <tbody>@foreach ($statements as $s)<tr><td>{{ $s->number }}</td><td>{{ $s->due_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}</td><td><x-eh.badge :tone="$s->statusTone()">{{ $s->statusLabel() }}</x-eh.badge></td><td class="num"><x-eh.money :minor="$s->closing_minor" :currency="$cur" /></td><td class="num"><x-eh.money :minor="$owed($s)" :currency="$cur" /></td></tr>@endforeach</tbody>
                         </table></div>
                     @endif
                     @if ($payments->isNotEmpty())
-                        <div style="padding:var(--eh-space-5)"><dl class="bz-facts">@foreach ($payments as $p)<div><dt>{{ ($p->paid_at ?? $p->created_at)->format('j M Y') }} · {{ strtoupper($p->method) }} · {{ $p->reference }} · {{ $p->status }}</dt><dd><x-eh.money :minor="$p->amount_minor" :currency="$p->currency" /></dd></div>@endforeach</dl></div>
+                        <div style="padding:var(--eh-space-5)"><dl class="bz-facts">@foreach ($payments as $p)<div><dt>{{ ($p->paid_at ?? $p->created_at)->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }} · {{ strtoupper($p->method) }} · {{ $p->reference }} · {{ $p->status }}</dt><dd><x-eh.money :minor="$p->amount_minor" :currency="$p->currency" /></dd></div>@endforeach</dl></div>
                     @endif
                 </section>
             </div>

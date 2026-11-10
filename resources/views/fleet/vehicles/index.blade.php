@@ -39,7 +39,7 @@
                                 <td class="num" data-label="Odometer">{!! $v->odometer_km !== null ? e(number_format($v->odometer_km, 0, '.', ' ')).' km' : '<span class="fl-dash">&#8212;</span>' !!}</td>
                                 <td data-label="Service">
                                     @if ($next['on'] || $next['km'])
-                                        <span class="fl-nowrap {{ $next['overdue'] ? 'fl-sev--stop' : ($next['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $next['on']?->format('j M Y') }}{{ $next['on'] && $next['km'] ? ', ' : '' }}{{ $next['km'] ? number_format($next['km'], 0, '.', ' ').' km' : '' }}</span>
+                                        <span class="fl-nowrap {{ $next['overdue'] ? 'fl-sev--stop' : ($next['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $next['on']?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}{{ $next['on'] && $next['km'] ? ', ' : '' }}{{ $next['km'] ? number_format($next['km'], 0, '.', ' ').' km' : '' }}</span>
                                     @else<span class="fl-dash">Not recorded</span>@endif
                                 </td>
                             </tr>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Passenger;
 
+use App\Domain\Comms\Inbox;
 use App\Domain\Dispatch\RideFeed;
 use App\Domain\Geo\Support\GeoClientConfig;
 use App\Domain\Passenger\RideOverview;
@@ -32,7 +33,9 @@ class TripController extends Controller
         return view('passenger.trips', [
             'scheduled' => $scheduled->sortBy('scheduled_for')->values(),
             'active' => $active,
-            'history' => $history->reject(fn (Ride $ride) => $active !== null && $ride->is($active))->values(),
+            // Newest first by the time the list shows (the ride's own time, not its row id): D-1908.
+            'history' => $history->reject(fn (Ride $ride) => $active !== null && $ride->is($active))
+                ->sortByDesc(fn (Ride $ride) => ($ride->completed_at ?? $ride->requested_at ?? $ride->created_at)?->getTimestamp() ?? 0)->values(),
             'receipts' => $receipts,
             'schedule' => ScheduleRules::toArray(),
         ]);
@@ -42,6 +45,8 @@ class TripController extends Controller
     {
         // Somebody else's ride does not exist as far as this person is concerned.
         abort_unless($ride->passenger_id === $request->user()->id, 404);
+        // Looking at the ride is seeing its progress notifications (D-1909).
+        Inbox::markRideSeen($request->user(), $ride->id);
 
         return view('passenger.trip', [
             'ride' => $ride,

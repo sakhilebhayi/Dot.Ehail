@@ -1,5 +1,7 @@
 {{-- Approval requests to decide: rider, amount, route, purpose, time left, approve or decline with an optional note. --}}
-@php($tz = config('ehail_business.timezone'))
+@php
+    $tz = \App\Domain\Business\BusinessClock::timezone();
+@endphp
 <ul class="bz-queue">
     @foreach ($items as $approval)
         <li>
@@ -14,10 +16,23 @@
                     <span class="bz-queue__lapse">Lapses at {{ $approval->decide_by->setTimezone($tz)->format('H:i') }}</span>
                 </div>
             </div>
-            <p class="bz-queue__route">
-                <span><i class="bz-stop bz-stop--pickup" aria-hidden="true"></i><span class="eh-sr-only">From </span>{{ $approval->pickup_address ?? 'Pickup' }}</span>
-                <span><i class="bz-stop bz-stop--dropoff" aria-hidden="true"></i><span class="eh-sr-only">To </span>{{ $approval->dropoff_address ?? 'Drop-off' }}</span>
-            </p>
+            @php
+                // Waiting approvals are few: a pinned point gets one looked-up name (cached by the geocoder).
+                $from = \App\Support\Ui\PlaceNames::for($approval->pickup_address, $approval->pickup_lat, $approval->pickup_lng, lookup: true);
+                $to = \App\Support\Ui\PlaceNames::for($approval->dropoff_address, $approval->dropoff_lat, $approval->dropoff_lng, lookup: true);
+                $stops = ['pickup' => ['lat' => (float) $approval->pickup_lat, 'lng' => (float) $approval->pickup_lng], 'dropoff' => ['lat' => (float) $approval->dropoff_lat, 'lng' => (float) $approval->dropoff_lng]];
+            @endphp
+            <div class="bz-queue__place">
+                <p class="bz-queue__route">
+                    <span><i class="bz-stop bz-stop--pickup" aria-hidden="true"></i><span class="eh-sr-only">From </span>{{ $from }}</span>
+                    <span><i class="bz-stop bz-stop--dropoff" aria-hidden="true"></i><span class="eh-sr-only">To </span>{{ $to }}</span>
+                </p>
+                {{-- A small map of the two stops (R-46 polish, D-2203), mounted when it scrolls into view. --}}
+                <div class="eh-stopmap bz-queue__map" data-eh-stopmap data-map='@json($stops)'>
+                    <div data-eh-map-canvas role="img" aria-label="Map of the trip from {{ $from }} to {{ $to }}"></div>
+                    <p class="eh-stopmap__status" data-eh-stopmap-status role="status"></p>
+                </div>
+            </div>
             <div class="bz-queue__actions">
                 <form method="POST" action="{{ route('business.approvals.approve', $approval->id) }}">
                     @csrf

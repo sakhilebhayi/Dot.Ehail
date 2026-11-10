@@ -1,3 +1,4 @@
+import { timeLocal } from '../eh/time.js';
 /*
  * Business booking page: the same public APIs the passenger app uses.
  * geo search -> pricing quote compare -> /business/trips/prepare (policy check) -> /api/ehail/rides.
@@ -179,7 +180,7 @@ if (form) {
         askBtn.disabled = false;
         if (ok) {
             askBtn.hidden = true;
-            showReasons(`Asked. An approver has until ${new Date(body.approval.decide_by).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false })} to decide; you get an email. Then get a fresh fare here and request.`, [], 'go');
+            showReasons(`Asked. An approver has until ${timeLocal(body.approval.decide_by)} to decide; you get an email. Then get a fresh fare here and request.`, [], 'go');
         } else {
             showReasons(body.message || 'The request could not be sent.', body.reasons || [], 'stop');
         }

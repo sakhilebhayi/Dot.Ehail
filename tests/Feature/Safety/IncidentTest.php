@@ -81,7 +81,7 @@ class IncidentTest extends TestCase
         $payload = $this->actingAs($passenger)->postJson(route('safety.rides.sos', $ride))->json('what_we_did');
         $actions = collect($payload['actions'])->keyBy('what');
 
-        $this->assertSame('sent', $actions['In-app alert to 1 operations team member(s)']['status']);
+        $this->assertSame('sent', $actions['In-app alert to 1 operations team member']['status']);
         $this->assertSame('skipped', $actions['No confirmed trusted contacts']['status']);
         $this->assertSame('You have no confirmed trusted contacts.', $actions['No confirmed trusted contacts']['why']);
     }

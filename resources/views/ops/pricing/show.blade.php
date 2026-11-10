@@ -14,7 +14,7 @@
         <header class="ops-head">
             <div class="ops-head__text">
                 <h1>{{ $set->name }} v{{ $set->version }} @include('ops.pricing.status', ['v' => $set])</h1>
-                <p class="ops-head__finding">{{ $set->category?->name ?? 'Every category' }} · {{ $set->service_area_id ? ($areas[$set->service_area_id] ?? 'area '.$set->service_area_id) : 'whole market ('.$set->country.')' }}{{ $set->zone_slug ? ' · pickup zone '.$set->zone_slug : '' }} · {{ $set->currency }}{{ $set->effective_from ? ' · in force from '.$set->effective_from->format('d M Y H:i') : '' }}{{ $set->retired_at ? ' to '.$set->retired_at->format('d M Y H:i') : '' }}</p>
+                <p class="ops-head__finding">{{ $set->category?->name ?? 'Every category' }} · {{ $set->service_area_id ? ($areas[$set->service_area_id] ?? 'area '.$set->service_area_id) : 'whole market ('.$set->country.')' }}{{ $set->zone_slug ? ' · pickup zone '.$set->zone_slug : '' }} · {{ $set->currency }}{{ $set->effective_from ? ' · in force from '.$set->effective_from->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') : '' }}{{ $set->retired_at ? ' to '.$set->retired_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') : '' }}</p>
             </div>
             <div class="ops-head__actions">
                 <x-eh.button size="sm" variant="secondary" :href="route('ops.pricing.simulator', ['rule_set' => $set->id])" icon="sliders">Simulate</x-eh.button>
@@ -103,7 +103,7 @@
                         <tbody>
                             @foreach ($versions as $v)
                                 <tr @if($v->id === $set->id) aria-current="true" style="background:var(--eh-accent-tint)" @endif>
-                                    <td><a href="{{ route('ops.pricing.show', $v->id) }}">v{{ $v->version }}</a><span class="sub">{{ $v->effective_from ? $v->effective_from->format('d M Y') : 'not in force' }}{{ $v->retired_at ? ' to '.$v->retired_at->format('d M Y') : '' }}</span></td>
+                                    <td><a href="{{ route('ops.pricing.show', $v->id) }}">v{{ $v->version }}</a><span class="sub">{{ $v->effective_from ? $v->effective_from->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') : 'not in force' }}{{ $v->retired_at ? ' to '.$v->retired_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') : '' }}</span></td>
                                     <td>@include('ops.pricing.status', ['v' => $v])</td>
                                 </tr>
                             @endforeach

@@ -20,9 +20,9 @@ class FareCalculatorTest extends TestCase
 
     public function test_cents_and_legacy_decimals_format_identically(): void
     {
-        $this->assertSame('R 80.00', FareCalculator::format('80.00'));
-        $this->assertSame('R 80.00', FareCalculator::formatCents(8000));
-        $this->assertSame('R 0.05', FareCalculator::formatCents(5));
+        $this->assertSame('R80.00', FareCalculator::format('80.00'));
+        $this->assertSame('R80.00', FareCalculator::formatCents(8000));
+        $this->assertSame('R0.05', FareCalculator::formatCents(5));
     }
 
     public function test_the_shipped_defaults_match_the_previous_hardcoded_tariff(): void
@@ -37,10 +37,10 @@ class FareCalculatorTest extends TestCase
 
     public function test_money_is_formatted_with_the_configured_currency(): void
     {
-        $this->assertSame('R 1,234.50', FareCalculator::format(1234.5));
+        $this->assertSame("R1\u{202F}234.50", FareCalculator::format(1234.5));
 
         config(['ehail.currency.symbol' => '$']);
-        $this->assertSame('$ 9.00', FareCalculator::format(9));
+        $this->assertSame('$9.00', FareCalculator::format(9));
     }
 
     public function test_every_vehicle_type_has_a_multiplier_and_a_tier_mapping(): void

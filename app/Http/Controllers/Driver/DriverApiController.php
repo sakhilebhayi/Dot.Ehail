@@ -10,6 +10,9 @@ use App\Domain\Dispatch\Geo;
 use App\Domain\Dispatch\Models\RideOffer;
 use App\Domain\Dispatch\RideFeed;
 use App\Domain\Pricing\Earnings\EarningsSplitter;
+use App\Domain\Pricing\Earnings\Split;
+use App\Domain\Pricing\Models\CommissionPlan;
+use App\Domain\Pricing\Models\RideFare;
 use App\Enums\RideStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Driver\Support\TripSummary;
@@ -53,14 +56,57 @@ class DriverApiController extends Controller
             'fare_minor' => $split->fareMinor,
             'driver_gross_minor' => $split->driverGrossMinor,
             'tolls_minor' => $split->passThroughMinor,
+            // The base the commission is charged on and the parts of the fare the platform keeps (booking fee, zone
+            // fees, tax, platform-funded promotions as negatives), so the offer card can list every line and they
+            // add up: fare - kept - commission = net (D-2101).
+            'commissionable_minor' => $split->commissionableMinor,
+            'kept_by_platform' => $this->keptByPlatform($ride, $split),
+            'commission_rule' => $split->plan === null ? null : [
+                'percent_bp' => (int) $split->plan->percent_bp,
+                'fixed_minor' => (int) $split->plan->fixed_minor,
+                'min_minor' => $split->plan->min_commission_minor,
+                'max_minor' => $split->plan->max_commission_minor,
+            ],
             'commission_minor' => $split->commissionMinor,
             'deductions' => array_values(array_map(fn (array $d) => [
                 'code' => $d['code'], 'label' => $d['label'], 'amount_minor' => (int) $d['amount_minor'], 'detail' => $d['detail'] ?? null,
             ], $split->deductions)),
             'net_minor' => $split->driverNetMinor,
+            // The walk from fare to net (D-1901): fare_minor + sum(lines.amount_minor) = net_minor, fees included.
+            'lines' => array_values(array_map(fn (array $l) => [
+                'code' => $l['code'], 'label' => $l['label'], 'amount_minor' => (int) $l['amount_minor'], 'detail' => $l['detail'] ?? null,
+            ], $split->lines)),
+            'commission_base' => $split->commissionBase,
             'plan' => $split->plan === null ? null : ['name' => $split->plan->name, 'is_example' => (bool) $split->plan->is_example],
             'note' => $split->plan === null ? 'No commission plan is configured for this market yet, so your net earnings cannot be shown.' : null,
         ]);
+    }
+
+    /**
+     * The fare components that are neither commissionable nor tolls (the platform's share before commission), each
+     * with the pricing label. When the components do not explain the whole difference (rounding in an old snapshot),
+     * the rest is one more line, so the list always sums to fare - driver gross.
+     *
+     * @return list<array{code: string, label: string, amount_minor: int}>
+     */
+    private function keptByPlatform(Ride $ride, Split $split): array
+    {
+        $codes = [...($split->plan?->commissionableCodes() ?? CommissionPlan::DEFAULT_COMMISSIONABLE), 'tolls'];
+        $components = RideFare::query()->where('ride_id', $ride->id)->value('estimated_components') ?? [];
+        $matches = fn (string $code) => collect($codes)->contains(fn (string $c) => $code === $c || str_starts_with($code, $c.':'));
+
+        $lines = collect(is_array($components) ? $components : [])
+            ->filter(fn ($c) => is_array($c) && (int) ($c['amount_minor'] ?? 0) !== 0 && ! $matches((string) ($c['code'] ?? '')))
+            ->map(fn (array $c) => ['code' => (string) $c['code'], 'label' => (string) ($c['label'] ?? $c['code']), 'amount_minor' => (int) $c['amount_minor']])
+            ->values()->all();
+
+        $rest = $split->fareMinor - $split->driverGrossMinor - array_sum(array_column($lines, 'amount_minor'));
+
+        if ($rest !== 0) {
+            $lines[] = ['code' => 'other', 'label' => 'Other platform amounts', 'amount_minor' => $rest];
+        }
+
+        return $lines;
     }
 
     /**

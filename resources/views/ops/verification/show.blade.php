@@ -12,7 +12,7 @@
         <header class="ops-head">
             <div class="ops-head__text">
                 <h1>{{ $label }} <x-eh.badge :tone="match($status){'approved'=>'go','pending'=>'caution','rejected','expired'=>'stop',default=>'neutral'}">{{ ucfirst(str_replace('_', ' ', $status)) }}</x-eh.badge></h1>
-                <p class="ops-head__finding">{{ $document->owner?->name }}{{ $document->vehicle ? ', vehicle '.$document->vehicle->plate_number : '' }} · uploaded {{ ($document->submitted_at ?? $document->created_at)?->format('d M Y H:i') }}. Opening the file is recorded in the audit log.</p>
+                <p class="ops-head__finding">{{ $document->owner?->name }}{{ $document->vehicle ? ', vehicle '.$document->vehicle->plate_number : '' }} · uploaded {{ ($document->submitted_at ?? $document->created_at)?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') }}. Opening the file is recorded in the audit log.</p>
             </div>
             <div class="ops-head__actions">
                 @can('ops.drivers.view')<x-eh.button size="sm" variant="secondary" :href="route('ops.drivers.show', $document->user_id)" icon="steering-wheel">Driver record</x-eh.button>@endcan
@@ -29,7 +29,7 @@
                         <p class="ops-note" style="padding:var(--eh-space-6);text-align:center">PDF files open in a separate tab, in the browser's own viewer.<br><x-eh.button size="sm" :href="$fileUrl" target="_blank" rel="noopener" icon="external" style="margin-top:var(--eh-space-3)">Open the PDF</x-eh.button></p>
                     @endif
                 </div>
-                <p class="ops-note ops-note--small" style="margin-top:var(--eh-space-2)">Images were re-encoded at upload (location and camera metadata removed). Files are not virus-scanned (no scanner on the host).</p>
+                <p class="ops-note ops-note--small" style="margin-top:var(--eh-space-2)">Open files with care: uploads are checked for type and size but not scanned for viruses. Photos were re-saved at upload, which removed their location and camera details.</p>
             </section>
 
             <div class="ops-stack">
@@ -82,7 +82,7 @@
                                 <li data-kind="{{ in_array($review->to_status, ['rejected', 'resubmission_requested', 'expired'], true) ? 'stop' : 'main' }}" @if($loop->last) data-current @endif>
                                     <span class="ops-route__stop" aria-hidden="true"></span>
                                     <span class="ops-route__what">{{ ucfirst(str_replace('_', ' ', (string) $review->action)) }}</span>
-                                    <time class="ops-route__when">{{ $review->created_at?->format('d M Y H:i') }}</time>
+                                    <time class="ops-route__when">{{ $review->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') }}</time>
                                     <span class="ops-route__detail">{{ $review->reason ? ($reasons[$review->reason] ?? $review->reason) : '' }}{{ $review->note ? ' "'.$review->note.'"' : '' }}</span>
                                 </li>
                             @endforeach
@@ -94,7 +94,7 @@
                     <div class="ops-panel__head"><h2 id="others-h">Other documents from this driver</h2></div>
                     @forelse ($others as $other)
                         @php($otherStatus = $other->status instanceof \BackedEnum ? $other->status->value : (string) $other->status)
-                        <ul class="ops-queue"><li><a class="ops-queue__title" href="{{ route('ops.verification.show', $other->id) }}">{{ ((array) config('ehail_safety.markets.ZA.document_types'))[$other->type]['label'] ?? $other->type }}</a><span class="ops-queue__meta">{{ ucfirst(str_replace('_', ' ', $otherStatus)) }}{{ $other->expires_on ? ' · expires '.$other->expires_on->format('d M Y') : '' }}</span></li></ul>
+                        <ul class="ops-queue"><li><a class="ops-queue__title" href="{{ route('ops.verification.show', $other->id) }}">{{ ((array) config('ehail_safety.markets.ZA.document_types'))[$other->type]['label'] ?? $other->type }}</a><span class="ops-queue__meta">{{ ucfirst(str_replace('_', ' ', $otherStatus)) }}{{ $other->expires_on ? ' · expires '.$other->expires_on->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') : '' }}</span></li></ul>
                     @empty
                         <p class="ops-none">None.</p>
                     @endforelse

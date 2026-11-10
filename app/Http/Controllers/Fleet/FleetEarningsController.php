@@ -41,12 +41,12 @@ class FleetEarningsController extends FleetController
         $statement = $earnings->statement($request->user(), $fleet, $period, $date);
         $names = User::query()->whereIn('id', $statement['rows']->pluck('driver_id'))->pluck('name', 'id');
 
-        $rows = [['earned_at', 'driver', 'kind', 'ride_id', 'vehicle_id', 'currency', 'fare', 'commission', 'deductions', 'net', 'cash_collected', 'status', 'payee']];
+        $rows = [['earned_at_sast', 'driver', 'kind', 'ride_id', 'vehicle_id', 'currency', 'fare', 'commission', 'deductions', 'net', 'cash_collected', 'status', 'payee']];
 
         foreach ($statement['rows']->sortBy('earned_at') as $e) {
             /** @var DriverEarning $e */
             $rows[] = [
-                $e->earned_at->toIso8601String(), $names[$e->driver_id] ?? $e->driver_id, $e->kind, $e->ride_id, $e->ride?->vehicle_id, $e->currency,
+                \App\Support\Ui\LocalTime::at($e->earned_at)->toIso8601String(), $names[$e->driver_id] ?? $e->driver_id, $e->kind, $e->ride_id, $e->ride?->vehicle_id, $e->currency,
                 Money::toDecimalString($e->fare_minor), Money::toDecimalString($e->commission_minor), Money::toDecimalString($e->deductions_minor),
                 Money::toDecimalString($e->net_minor), Money::toDecimalString($e->cash_collected_minor), $e->status, $e->payee_type,
             ];

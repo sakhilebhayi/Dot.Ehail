@@ -200,16 +200,16 @@ class OperatorPaymentsTest extends TestCase
         $response = $this->desk()->assertOk();
 
         $response->assertSee('Fares collected through Paystack')
-            ->assertSee('data-figure="fares-collected">R 125.50<', false)
+            ->assertSee('data-figure="fares-collected">R125.50<', false)
             ->assertSee('Estimated fare total, not collected')
-            ->assertSee('data-figure="fare-total">R 625.50<', false);
+            ->assertSee('data-figure="fare-total">R625.50<', false);
     }
 
     public function test_collected_is_zero_when_nothing_was_paid(): void
     {
         $this->completedRide(null, '80.00');
 
-        $this->desk()->assertSee('data-figure="fares-collected">R 0.00<', false);
+        $this->desk()->assertSee('data-figure="fares-collected">R0.00<', false);
     }
 
     public function test_the_collected_row_says_test_money_in_test_mode(): void
@@ -231,7 +231,7 @@ class OperatorPaymentsTest extends TestCase
         $this->completedRide(null, '100.00', 'paid');
         $this->completedRide(null, '55.50');
 
-        $this->desk()->assertSee('data-figure="fare-total">R 155.50<', false);
+        $this->desk()->assertSee('data-figure="fare-total">R155.50<', false);
     }
 
     public function test_a_non_operator_cannot_see_payment_sections(): void

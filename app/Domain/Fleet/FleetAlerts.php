@@ -70,7 +70,7 @@ final class FleetAlerts
                 if ($vehicle->out_of_service_at !== null) {
                     $alerts[] = [
                         'kind' => 'out_of_service', 'severity' => 'info',
-                        'title' => 'Out of service since '.$vehicle->out_of_service_at->format('j M'),
+                        'title' => 'Out of service since '.$vehicle->out_of_service_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M'),
                         'detail' => $vehicle->out_of_service_reason ?: 'No reason recorded.',
                         'subject' => $vehicle->plate_number,
                         'link' => ['area' => 'vehicles', 'id' => $vehicle->id],
@@ -81,7 +81,7 @@ final class FleetAlerts
 
                 if ($next['overdue'] || $next['due_soon']) {
                     $parts = array_filter([
-                        $next['on'] ? 'due '.$next['on']->format('j M Y') : null,
+                        $next['on'] ? 'due '.$next['on']->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') : null,
                         $next['km'] !== null ? 'at '.number_format($next['km'], 0, '.', ' ').' km'.($next['km_left'] !== null ? ' ('.number_format(abs($next['km_left']), 0, '.', ' ').' km '.($next['km_left'] < 0 ? 'over' : 'left').')' : '') : null,
                     ]);
                     $alerts[] = [
@@ -109,7 +109,7 @@ final class FleetAlerts
                         $alerts[] = [
                             'kind' => 'idle', 'severity' => 'info',
                             'title' => 'Offline with a fleet vehicle',
-                            'detail' => ($a->driverProfile?->user?->name ?? 'The driver').' has '.$a->vehicle?->plate_number.' and has been offline since '.$since->format('j M H:i').'.',
+                            'detail' => ($a->driverProfile?->user?->name ?? 'The driver').' has '.$a->vehicle?->plate_number.' and has been offline since '.$since->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M H:i').'.',
                             'subject' => (string) ($a->driverProfile?->user?->name ?? 'Driver'),
                             'link' => ['area' => 'drivers', 'id' => $a->driver_profile_id],
                         ];

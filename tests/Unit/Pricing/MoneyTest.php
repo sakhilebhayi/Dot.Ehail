@@ -85,13 +85,13 @@ class MoneyTest extends TestCase
 
     public function test_formatting(): void
     {
-        $this->assertSame('R 1,234.50', Money::of(123450, 'ZAR')->format());
-        $this->assertSame('R 0.05', Money::of(5, 'ZAR')->format());
-        $this->assertSame('-R 12.00', Money::of(-1200, 'ZAR')->format());
-        $this->assertSame('R 1,000,000.00', Money::of(100_000_000, 'ZAR')->format());
+        $this->assertSame("R1\u{202F}234.50", Money::of(123450, 'ZAR')->format());
+        $this->assertSame('R0.05', Money::of(5, 'ZAR')->format());
+        $this->assertSame("\u{2212}R12.00", Money::of(-1200, 'ZAR')->format());
+        $this->assertSame("R1\u{202F}000\u{202F}000.00", Money::of(100_000_000, 'ZAR')->format());
         $this->assertSame('80.00', Money::of(8000, 'ZAR')->toDecimalString());
         $this->assertSame('-0.05', MoneyFormatter::decimal(-5));
-        $this->assertSame(['amount_minor' => 8000, 'currency' => 'ZAR', 'formatted' => 'R 80.00'], Money::of(8000, 'ZAR')->jsonSerialize());
+        $this->assertSame(['amount_minor' => 8000, 'currency' => 'ZAR', 'formatted' => 'R80.00'], Money::of(8000, 'ZAR')->jsonSerialize());
     }
 
     public function test_parsing_legacy_decimals_exactly(): void

@@ -91,7 +91,7 @@
                         @php($ride = $row['ride_id'] ? $rides->get($row['ride_id']) : null)
                         <li>
                             <a class="dr-trip-row" href="{{ $ride ? route('drive.trips.show', $ride) : '#' }}" @unless($ride) aria-disabled="true" @endunless>
-                                <span class="dr-trip-row__title">{{ $ride ? \Illuminate\Support\Str::limit($ride->dropoff_address, 48) : $kinds[$row['kind']] ?? $row['kind'] }}</span>
+                                <span class="dr-trip-row__title">{{ $ride ? \App\Http\Controllers\Driver\Support\Place::short($ride->dropoff_address) : $kinds[$row['kind']] ?? $row['kind'] }}</span>
                                 <span class="dr-trip-row__meta">{{ $kinds[$row['kind']] ?? $row['kind'] }}, {{ \App\Http\Controllers\Driver\Support\Local::at($row['earned_at'])->isoFormat('D MMM HH:mm') }}. Fare {{ \App\Support\Ui\MoneyFormatter::format((int) $row['fare_minor'], $row['currency']) }}@if($row['commission_minor']), commission {{ \App\Support\Ui\MoneyFormatter::format((int) $row['commission_minor'], $row['currency']) }}@endif{{ $row['cash_collected_minor'] ? ', cash '.\App\Support\Ui\MoneyFormatter::format((int) $row['cash_collected_minor'], $row['currency']) : '' }}</span>
                                 <span class="dr-trip-row__amount"><x-eh.money :minor="$row['net_minor']" :currency="$row['currency']" /><x-eh.badge :tone="$statusTone[$row['status']] ?? 'neutral'">{{ $statusWord[$row['status']] ?? $row['status'] }}</x-eh.badge></span>
                             </a>

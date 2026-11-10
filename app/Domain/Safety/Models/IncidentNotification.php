@@ -36,4 +36,13 @@ class IncidentNotification extends Model
     {
         return $this->belongsTo(SafetyIncident::class, 'safety_incident_id');
     }
+
+    /**
+     * The recipient label as people read it. Rows written before R-46 polish say "7 operations team member(s)";
+     * the count decides the word now (D-2208).
+     */
+    public function displayLabel(): string
+    {
+        return (string) preg_replace_callback('/\b(\d+) (.+?) member\(s\)/', fn ($m) => $m[1].' '.$m[2].' '.((int) $m[1] === 1 ? 'member' : 'members'), (string) $this->recipient_label);
+    }
 }

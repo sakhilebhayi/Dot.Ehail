@@ -12,6 +12,8 @@ namespace App\Domain\Payments\Seams;
  * platformFeesMinor fees inside gross kept by the platform and not commissioned (booking fee)
  * components     [{code, label, amount_minor}] lines for the receipt
  * reasons        [{code, label}] why the final fare differs from the estimate
+ * basis          how the final fare was reached (pricing: quoted_fare_stands | recalculated | ...), so a receipt can say
+ *                which distance and time were billed (D-1904)
  */
 final readonly class FareBreakdown
 {
@@ -31,6 +33,7 @@ final readonly class FareBreakdown
         public ?int $distanceM = null,
         public ?int $durationS = null,
         public ?string $source = null,
+        public ?string $basis = null,
     ) {}
 
     public function payableMinor(): int

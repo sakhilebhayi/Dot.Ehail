@@ -95,3 +95,29 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | Skill | Status | Used for | What was applied |
 |---|---|---|---|
 | all design skills | not used | | No UI was built or restyled: the driver console's polling loop changed behind the same screens (one sync request instead of three; same states, alerts and wording), and the ops status work is a JSON data source only (no panel). Nothing visual to put through impeccable or the taste checks. |
+
+## pdrive agent (jury polish, driver app, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | polish of the driver app (Operate mode, refinement inside the locked Route Line world) | `impeccable context` loaded PRODUCT.md and DESIGN.md (no driver surface brief exists; none created). Read `reference/polish.md` (classify drift, fix in triage order, verify the whole path) and `reference/craft-floor.md` before UI edits. Applied: identity, tokens and copy voice kept; fixes at the narrowest level (driver.css and driver views, no kit change); tone step instead of a rule between the offer's scroll band and its pinned answers; theme-aware safety card; browser-surface detail (date picker button). `impeccable detect` on driver.css and the changed views: 2 advisories (offer money sizes off the type ramp) fixed to ramp endpoints, then clean. |
+| `design-taste-frontend` | invoked | app-screen run, as a review lens | Read the app-screens phone section (section 12) and the house rules. Applied: one action row pinned in thumb reach, the answer figure leads (the net in display type, siblings in body size), every relative figure names its base (commission "20% of R61.00"), figures that must agree are checked in code (`offerLines().reconciles`, asserted in tests), no new ornaments. `lint.mjs` on driver.css and the console views: 3 hairline FAILs, 1 fixed (offer actions now separate by a tone step), 2 kept (pre-existing ledger and checklist row rules: real tabular rows), 100vh fallback marked. No draw (system locked). `inspect.mjs` not run (signed-in pages); its measures (overflow, h1 count) are in the capture script's notes. |
+| `gsap-*`, `hallmark`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `open-design`, `design-md`, `awesome-design-md`, `dataviz` | not used | | Refinement of an existing app surface; no motion, chart or new world. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Checked: dangling symlinks into `~/.agents/skills/` (targets missing); not claimed. |
+
+## pops agent (jury polish: ops, business, fleet, shared public pages, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | polish of the work surfaces inside the locked Route Line world | `impeccable context` loaded PRODUCT.md and DESIGN.md. Read `reference/polish.md` and the craft floor: fix drift in triage order (meaning, hierarchy, then finish), one primary action per screen (incident ownership), state in words not colour alone (owner, alarm sound), reduced motion respected (rail pulse), night parity checked per changed surface. The detector script was not run. |
+| `design-taste-frontend` | invoked | review lens for dense app screens | Read the app-screens reference. Applied: keep density, give identity through one repeated system mark (route line, plate chip) not decoration; the answer leads (ownership bar before facts); no card inside card. |
+| `dataviz` | not used | | No chart was added or changed; insights labels are pmoney's payload fix. |
+| `hallmark`, `gsap-*`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `open-design`, `design-md`, `awesome-design-md` | not used | | Refinement of existing surfaces; no new world, motion library or brand system. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Not in the installed list this session; not claimed. |
+
+## Polish: data and money (pmoney, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | the few view edits this branch made (receipt, statement, bell badge, status badge, fleet strip, incident timeline) | Loaded the product context; kept to the existing Route Line components and tokens, tabular figures for money, no new patterns. The work is data and wording, so the craft rule applied was "the numbers on screen must agree with each other". |
+| other design skills | not used | | No new page, motion or brand system; UI edits were kept minimal by brief. |

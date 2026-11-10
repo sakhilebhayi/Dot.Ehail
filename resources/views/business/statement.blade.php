@@ -3,7 +3,7 @@
     @php
         $s = $statement->snapshot;
         $cur = $statement->currency;
-        $tz = config('ehail_business.timezone');
+        $tz = \App\Domain\Business\BusinessClock::timezone();
     @endphp
     <div class="bz-doc__bar">
         <a class="eh-link" href="{{ route('business.invoices') }}">All statements</a>
@@ -36,7 +36,11 @@
             </div>
             <div>
                 <h2>From</h2>
-                <p><strong>{{ $s['operator']['name'] }}</strong>@if ($s['operator']['vat_number'])<br>VAT number {{ $s['operator']['vat_number'] }}@endif @if ($s['operator']['support_email'])<br>{{ $s['operator']['support_email'] }}@endif</p>
+                @php($op = $s['operator'])
+                <p><strong>{{ $op['name'] }}</strong>@if (! empty($op['trading_name']))<br>Trading as {{ $op['trading_name'] }}@endif @if (! empty($op['registration_number']))<br>Registration {{ $op['registration_number'] }}@endif @if ($op['vat_number'])<br>VAT number {{ $op['vat_number'] }}@endif
+                    @foreach ($op['address_lines'] ?? [] as $l)<br>{{ $l }}@endforeach
+                    @php($opEmail = ! empty($op['support_email']) && ! \App\Domain\Payments\OperatorIdentity::isNoReply((string) $op['support_email']) ? $op['support_email'] : null)
+                    @if ($opEmail)<br>{{ $opEmail }}@endif @if (! empty($op['support_phone']))<br>{{ $op['support_phone'] }}@endif</p>
             </div>
         </div>
 
@@ -84,8 +88,19 @@
             <dl class="bz-facts">@foreach ($s['credits'] as $c)<div><dt>{{ \Carbon\CarbonImmutable::parse($c['date'])->setTimezone($tz)->format('j M') }} · {{ $c['description'] }}</dt><dd><x-eh.money :minor="$c['amount_minor']" :currency="$cur" /></dd></div>@endforeach</dl>
         @endif
         <p class="bz-doc__note">
-            @if ($statement->billing_mode === 'card') The balance is charged to the company card on file. @else Pay by EFT within {{ $s['terms_days'] }} days and quote {{ $statement->number }} as the reference. @endif
-            Amounts are what each trip cost after the trip, as on the riders' receipts. @unless ($s['vat_shown'] ?? false) No VAT line is shown because the operator is not VAT registered or the fares carried no VAT. @endunless
+            @if ($statement->billing_mode === 'card') The balance is charged to the company card on file. @elseif (! empty($op['eft'])) Pay by EFT within {{ $s['terms_days'] }} days and quote {{ $statement->number }} as the reference. @else Pay within {{ $s['terms_days'] }} days and quote {{ $statement->number }} as the reference; ask {{ $opEmail ?? 'the operator' }} for the bank details. @endif
+            Amounts are what each trip cost after the trip, as on the riders' receipts. Times are South African Standard Time (SAST).
+            @if (! empty($s['vat_sentence'])) {{ $s['vat_sentence'] }} @endif
         </p>
+        @if ($statement->billing_mode !== 'card' && ! empty($op['eft']))
+            <dl class="bz-facts" aria-label="Bank details for EFT" style="max-width:28rem">
+                <div><dt>Account name</dt><dd>{{ $op['eft']['account_name'] }}</dd></div>
+                <div><dt>Bank</dt><dd>{{ $op['eft']['bank'] }}</dd></div>
+                <div><dt>Account number</dt><dd>{{ $op['eft']['account_number'] }}</dd></div>
+                <div><dt>Branch code</dt><dd>{{ $op['eft']['branch_code'] }}</dd></div>
+                @if (! empty($op['eft']['account_type']))<div><dt>Account type</dt><dd>{{ $op['eft']['account_type'] }}</dd></div>@endif
+                <div><dt>Reference</dt><dd>{{ $statement->number }}</dd></div>
+            </dl>
+        @endif
     </article>
 </x-business-layout>

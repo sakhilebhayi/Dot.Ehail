@@ -70,14 +70,22 @@ class OpsIncidentController extends Controller
 
     public function acknowledge(Request $request, SafetyIncident $incident): JsonResponse
     {
-        return response()->json(['data' => $this->incidents->acknowledge($incident, $request->user())->only(['id', 'status', 'owner_id', 'acknowledged_at'])]);
+        $updated = $this->incidents->acknowledge($incident, $request->user());
+        // Ownership changes are audited as well as kept on the incident timeline (R-46 polish, D-2202).
+        AuditLog::record('safety_incident.acknowledged', $request->user(), $updated, ['owner_id' => $updated->owner_id, 'escalation_level' => $updated->escalation_level]);
+
+        return response()->json(['data' => $updated->only(['id', 'status', 'owner_id', 'acknowledged_at'])]);
     }
 
     public function assign(Request $request, SafetyIncident $incident): JsonResponse
     {
         $validated = $request->validate(['owner_id' => ['required', 'integer', 'exists:users,id']]);
 
-        return response()->json(['data' => $this->incidents->assign($incident, User::findOrFail($validated['owner_id']), $request->user())->only(['id', 'status', 'owner_id'])]);
+        $previous = $incident->owner_id;
+        $updated = $this->incidents->assign($incident, User::findOrFail($validated['owner_id']), $request->user());
+        AuditLog::record('safety_incident.assigned', $request->user(), $updated, ['owner_id' => $updated->owner_id, 'previous_owner_id' => $previous]);
+
+        return response()->json(['data' => $updated->only(['id', 'status', 'owner_id'])]);
     }
 
     public function escalate(Request $request, SafetyIncident $incident): JsonResponse
