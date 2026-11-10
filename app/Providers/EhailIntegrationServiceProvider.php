@@ -31,6 +31,7 @@ use App\Domain\Integration\Geo\AvailabilityDriverPresence;
 use App\Domain\Integration\Geo\MirroringLocationStore;
 use App\Domain\Integration\Geo\OpenIncidentTrailHold;
 use App\Domain\Integration\Listeners\SettleFareOnRideEnd;
+use App\Domain\Integration\Listeners\TakeDriverOffline;
 use App\Domain\Integration\Money\DispatchDriverActivity;
 use App\Domain\Integration\Money\PricingCancellationFeeSource;
 use App\Domain\Integration\Money\PricingEarningsSplitSource;
@@ -55,6 +56,7 @@ use App\Domain\Safety\Seams\RidePinSource;
 use App\Domain\Safety\Seams\SafetyLocationSource;
 use App\Domain\Safety\Seams\TripProgressSource;
 use App\Domain\Support\Seams\FareAdjustmentRequest;
+use App\Domain\Verification\Events\DriverForcedOffline;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -106,5 +108,8 @@ class EhailIntegrationServiceProvider extends ServiceProvider
     {
         // The ride lifecycle closes the pricing record (and charges a no-show) after each transition commits.
         Event::listen([RideCancelled::class, RideExpired::class, RideFailed::class, RideNoShow::class], [SettleFareOnRideEnd::class, 'handle']);
+
+        // Verification taking a driver offline takes them out of dispatch too.
+        Event::listen(DriverForcedOffline::class, [TakeDriverOffline::class, 'handle']);
     }
 }
