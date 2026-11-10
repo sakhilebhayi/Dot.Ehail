@@ -42,10 +42,10 @@ test('routing provider down: honest "unavailable", nothing priced', async () => 
     await stub({ routingDown: true });
     try {
         await page.goto('/ride?new=1');
-        const { searchPlace } = await import('../lib/flows.mjs');
+        const { searchPlace, seePrices } = await import('../lib/flows.mjs');
         await searchPlace(page, '#pax-pickup', 'Kloof');
         await searchPlace(page, '#pax-dropoff', 'Bree');
-        await page.click('[data-pax-see-prices]');
+        await seePrices(page);
         await page.getByText(/unavailable|could not|not available/i).first().waitFor({ timeout: 20000 });
         const text = (await page.locator('main').innerText()).replace(/\s+/g, ' ');
         assert.match(text, /rout/i, 'the message names routing');
@@ -184,7 +184,7 @@ test('payment declined: retries, then payment_due blocks the next request; pay n
         await block.waitFor({ timeout: 15000 });
         assert.ok(await page.locator('[data-pax-request]').isDisabled(), 'Request is disabled while money is owed');
         // The server refuses too (a client that ignores the sheet).
-        const quoteId = one("select id from fare_quotes where passenger_id = ? and consumed_at is null order by created_at desc limit 1", [pax.id]).id;
+        const quoteId = one("select q.id from fare_quotes q join ride_categories c on c.id = q.ride_category_id where q.passenger_id = ? and q.consumed_at is null and c.key = 'economy' order by q.created_at desc limit 1", [pax.id]).id;
         const refused = await api(page, 'POST', '/api/ehail/rides', { quote_id: quoteId }, { 'Idempotency-Key': `due-${Date.now()}` });
         assert.ok(refused.status >= 400 && /payment|due|owe|unpaid/i.test(JSON.stringify(refused.data)), `refused: ${refused.status} ${JSON.stringify(refused.data).slice(0, 200)}`);
         const finalFare = one('select final_fare_minor from rides where id = ?', [rideId]).final_fare_minor;
@@ -239,7 +239,7 @@ test('the same request twice with one Idempotency-Key makes one ride; a double t
     const drv = await onlineDriver(); // supply for bookable prices
     const { page, pax, ctx } = await passenger();
     await priceTrip(page);
-    const quote = one("select id from fare_quotes where passenger_id = ? and consumed_at is null order by created_at desc limit 1", [pax.id]);
+    const quote = one("select q.id from fare_quotes q join ride_categories c on c.id = q.ride_category_id where q.passenger_id = ? and q.consumed_at is null and c.key = 'economy' order by q.created_at desc limit 1", [pax.id]);
     const body = { quote_id: quote.id, pickup_address: 'Kloof Street', dropoff_address: 'Bree Street' };
     const key = `e2e-key-${Date.now()}`;
     const [a, b] = await Promise.all([api(page, 'POST', '/api/ehail/rides', body, { 'Idempotency-Key': key }), api(page, 'POST', '/api/ehail/rides', body, { 'Idempotency-Key': key })]);
@@ -327,7 +327,7 @@ test('connection loss on the driver: stale indicators, then recovery; PIN brute 
     for (let i = 0; i < 5; i++) {
         await typePin(drv.page, wrong);
         // The refusal came back (the pad empties) before the next PIN is typed.
-        await drv.page.waitForFunction(() => /^0 of/.test(document.querySelector('[data-dr-pin-boxes]')?.getAttribute('aria-label') || ''), null, { timeout: 15000 });
+        await drv.page.waitForFunction(() => /^0 of/.test(document.querySelector('[data-dr-pin-said]')?.textContent || document.querySelector('[data-dr-pin-boxes]')?.getAttribute('aria-label') || ''), null, { timeout: 15000 });
     }
     const locked = one('select pin_attempts, pin_locked_until from rides where id = ?', [rideId]);
     assert.ok(locked.pin_locked_until, 'locked');

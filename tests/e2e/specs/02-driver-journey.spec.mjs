@@ -71,7 +71,7 @@ test('driver journey: register, documents, verification, online, trip, earnings,
     await step(d, 'upload documents', async () => {
         await d.goto('/drive/documents');
         for (let i = 0; i < 20; i++) {
-            const open = d.locator('details.dr-docform[open] form[data-dr-upload]');
+            const open = d.locator('div.dr-docform form[data-dr-upload], details.dr-docform[open] form[data-dr-upload]');
             if ((await open.count()) === 0) break;
             const f = open.first();
             const exp = f.locator('input[name=expires_on]');

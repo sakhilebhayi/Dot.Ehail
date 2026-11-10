@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { newContext, watch, step, sql, one, until, stub, interceptCheckout, makePerson, world, api, sleep, shot, externalHosts, closeBrowser, uniq } from '../lib/harness.mjs';
-import { register, addCard, searchPlace, requestCategory, paxTitle, paxPin, goOnline, waitOffer, accept, driveTo, arrive, startTrip, complete, ledgerBalanced } from '../lib/flows.mjs';
+import { register, addCard, openPickup, searchPlace, seePrices, requestCategory, paxTitle, paxPin, goOnline, waitOffer, accept, driveTo, arrive, startTrip, complete, ledgerBalanced } from '../lib/flows.mjs';
 import { PICKUP, DEST, DRIVER_START, roadPath, pathMetres } from '../lib/geo.mjs';
 
 test.before(() => world('offline-all'));
@@ -37,14 +37,15 @@ test('passenger journey: register to rating, paid by card', async () => {
     // 2. Pickup from the phone's location; 3. destination by search.
     await step(p, 'pickup by location', async () => {
         await p.goto('/ride?new=1');
+        await openPickup(p);
         await p.click('[data-pax-locate]');
-        await until(async () => (await p.locator('#pax-pickup').inputValue()).length > 0, { what: 'pickup filled from location' });
+        await until(async () => (await p.locator('#pax-pickup').inputValue()).length > 0 || !/Set your pickup/.test(await p.locator('[data-pax-pickup-value]').innerText()), { what: 'pickup filled from location' });
     });
     await step(p, 'destination by search', () => searchPlace(p, '#pax-dropoff', 'Bree'));
 
     // 4. Estimate from the (stub) road route; 5. transparent breakdown.
     await step(p, 'see prices', async () => {
-        await p.click('[data-pax-see-prices]');
+        await seePrices(p);
         await p.locator('.pax-option').first().waitFor({ timeout: 20000 });
     });
     const roadM = pathMetres(roadPath(PICKUP, DEST));
@@ -57,7 +58,7 @@ test('passenger journey: register to rating, paid by card', async () => {
         const sum = components.reduce((s, c) => s + c.amount_minor, 0);
         assert.equal(sum, q.total_minor, `components sum to the total (${q.id})`);
     }
-    const tripLine = await p.locator('.pax-trip, [data-pax-trip]').first().innerText();
+    const tripLine = await p.locator('[data-pax-sum="trip"], .pax-trip, [data-pax-trip]').first().innerText();
     assert.match(tripLine, /2\.4 km/, 'the sheet shows the road distance');
 
     const economy = p.locator('.pax-option', { has: p.locator('.pax-option__name, h2, h3', { hasText: 'Economy' }) }).first();

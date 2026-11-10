@@ -106,7 +106,7 @@ test('pricing journey: recomputation, destination change, delay within tolerance
     await waitOffer(d);
     await accept(d);
     await d.locator('[data-dr-view="trip"]').waitFor();
-    await driveTo(dctx, d, PICKUP, PICKUP); // already at the pickup
+    await driveTo(dctx, d, FURTHER_EAST, PICKUP); // back from trip 1's new destination (a teleport is screened as a jump)
     await arrive(d);
     await startTrip(d, await paxPin(p));
     await driveTo(dctx, d, PICKUP, DEST);

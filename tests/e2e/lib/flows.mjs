@@ -27,9 +27,27 @@ export async function addCard(page) {
     await page.getByText(/Visa •••• 4081/).first().waitFor({ timeout: 15000 });
 }
 
+/** The booking home shows the pickup as a chip; its search field opens on a tap (map-first home, ppass). */
+export async function openPickup(page) {
+    const chip = page.locator('[data-pax-pickup-chip]');
+    const field = page.locator('#pax-pickup');
+    // A tap before the page script is bound does nothing: tap again until the field shows.
+    for (let i = 0; i < 10 && (await chip.count()) && !(await field.isVisible()); i++) {
+        if ((await chip.getAttribute('aria-expanded')) !== 'true') await chip.click();
+        await field.waitFor({ state: 'visible', timeout: 1000 }).catch(() => {});
+    }
+}
+
 /** Geo's place search: type, Enter to search, the first result, Enter to choose it. */
 export async function searchPlace(page, selector, text) {
     const input = page.locator(selector);
+    if (selector === '#pax-pickup' && !(await input.isVisible())) {
+        // The home fills the pickup from the phone's location by itself; that place is already the one asked for.
+        await page.waitForTimeout(500);
+        const chosen = page.locator('[data-pax-pickup-value]');
+        if ((await chosen.count()) && (await chosen.innerText()).toLowerCase().includes(text.toLowerCase())) return;
+        await openPickup(page);
+    }
     await input.click();
     await input.fill(text);
     await input.press('Enter');
@@ -39,12 +57,19 @@ export async function searchPlace(page, selector, text) {
     await page.waitForFunction((sel) => document.querySelector(sel)?.getAttribute('aria-expanded') === 'false', selector, { timeout: 10000 });
 }
 
+/** With both places set the booking home moves on to prices by itself; "See prices" is pressed only if still shown. */
+export async function seePrices(page) {
+    const button = page.locator('[data-pax-see-prices]');
+    await page.waitForTimeout(300);
+    if (await button.isVisible() && await button.isEnabled()) await button.click();
+}
+
 /** Booking sheet up to the priced options. Returns the options' visible names and totals. */
 export async function priceTrip(page, { from = 'Kloof', to = 'Bree' } = {}) {
     await page.goto('/ride?new=1');
     await searchPlace(page, '#pax-pickup', from);
     await searchPlace(page, '#pax-dropoff', to);
-    await page.click('[data-pax-see-prices]');
+    await seePrices(page);
     await page.locator('.pax-option').first().waitFor({ timeout: 20000 });
 }
 
