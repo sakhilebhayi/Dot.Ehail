@@ -7,7 +7,7 @@
 @php($heading = in_array($heading ?? 'h2', ['h2', 'h3'], true) ? $heading : 'h2')
 <section class="pax-section pax-share" data-pax-share-box hidden aria-labelledby="pax-share-title">
     <{{ $heading }} class="pax-h3" id="pax-share-title">Share your trip live</{{ $heading }}>
-    <p class="pax-rule">Anyone with this link sees your first name, your driver's first name, the car and its plate, where you are heading and the car's approximate position, until the trip ends. Revoke it any time.</p>
+    <p class="pax-rule">Anyone with this link sees your first name, your driver's first name, the car and its plate, the two areas you are travelling between (never the addresses) and the car's approximate position on a map, until the trip ends. Revoke it any time.</p>
     <div class="pax-share__link">
         <label class="eh-sr-only" for="pax-share-url">Trip link</label>
         <input class="pax-share__url" id="pax-share-url" readonly data-pax-share-url>

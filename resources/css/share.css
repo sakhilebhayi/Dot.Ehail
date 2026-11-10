@@ -1,0 +1,94 @@
+/*
+ * Public trip-share page (R-46 ppass, D-2011). Route Line tokens only; prefix shr-. Read by someone without an
+ * account, often worried, usually on a phone: the map on top, then the state, when, which car, who to call.
+ * Wide screens put the map on the left and the details in a fixed column on the right.
+ */
+.shr { margin: 0; min-height: 100dvh; display: flex; flex-direction: column; background: var(--eh-ground); color: var(--eh-ink); font-family: var(--eh-font-ui); }
+
+.shr-top {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-4);
+    min-height: 3.25rem; padding: env(safe-area-inset-top, 0px) max(var(--eh-gutter), env(safe-area-inset-right, 0px)) 0 max(var(--eh-gutter), env(safe-area-inset-left, 0px));
+    background: var(--eh-surface); border-bottom: 1px solid var(--eh-rule);
+}
+.shr-top__tag { font-size: var(--eh-text-sm); font-weight: 600; color: var(--eh-ink-2); white-space: nowrap; }
+
+.shr-main { flex: 1; display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+.shr-map { height: clamp(15rem, 44svh, 26rem); min-height: 0; }
+.shr-map .eh-mapframe__canvas.eh-map { position: absolute; inset: 0; height: auto; min-height: 0; }
+.shr-map__noscript { position: absolute; inset: auto var(--eh-space-4) var(--eh-space-4); z-index: 3; margin: 0; padding: var(--eh-space-3) var(--eh-space-4); border-radius: var(--eh-radius); background: var(--eh-surface); font-size: var(--eh-text-sm); }
+
+.shr-panel {
+    display: grid; align-content: start; gap: var(--eh-space-5);
+    width: 100%; max-width: 34rem; margin: 0 auto; box-sizing: border-box;
+    padding: var(--eh-space-5) max(var(--eh-gutter), env(safe-area-inset-right, 0px)) calc(var(--eh-space-8) + env(safe-area-inset-bottom, 0px)) max(var(--eh-gutter), env(safe-area-inset-left, 0px));
+}
+.shr-panel p { margin: 0; }
+
+.shr-head { display: grid; gap: var(--eh-space-1); }
+.shr-who { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.shr-state { margin: 0; font-family: var(--eh-font-display); font-size: var(--eh-text-3xl); font-weight: 700; line-height: 1.05; letter-spacing: -0.005em; text-wrap: balance; }
+.shr-eta { font-size: var(--eh-text-lg); font-weight: 600; color: var(--eh-accent-tint-ink); font-variant-numeric: tabular-nums; }
+.shr-eta[hidden] { display: none; }
+
+/* The trip as a route line with two stops, named by area only. */
+.shr-route { list-style: none; margin: 0; padding: var(--eh-space-4); display: grid; gap: var(--eh-space-4); border-radius: var(--eh-radius); background: var(--eh-surface); }
+.shr-route[hidden] { display: none; }
+.shr-route__stop { position: relative; display: grid; grid-template-columns: 14px 2.75rem minmax(0, 1fr); align-items: center; column-gap: var(--eh-space-3); }
+.shr-route__dot { width: 14px; height: 14px; border-radius: 50%; background: var(--eh-map-pickup); box-shadow: inset 0 0 0 2px var(--eh-ink); }
+.shr-route__stop--drop .shr-route__dot { border-radius: 3px; background: var(--eh-map-dropoff); box-shadow: none; }
+.shr-route__stop + .shr-route__stop::before { content: ""; position: absolute; left: 6px; bottom: calc(50% + 9px); width: 2px; height: calc(var(--eh-space-4) + 4px); background: var(--eh-accent); }
+.shr-route__label { font-size: var(--eh-text-xs); font-weight: 600; color: var(--eh-ink-3); }
+.shr-route__area { font-size: var(--eh-text-lg); font-weight: 600; overflow-wrap: anywhere; }
+
+.shr-car { display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-3) var(--eh-space-4); }
+.shr-car__text { min-width: 0; display: grid; gap: 2px; }
+.shr-car__vehicle { font-weight: 600; }
+.shr-car__driver { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.shr-car__driver span { color: var(--eh-ink); font-weight: 600; }
+/* A South African number plate: dark letters on white with a dark frame, white in both themes, like the real thing. */
+.shr-plate {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--eh-space-4);
+    border-radius: var(--eh-radius-sm); background: #ffffff; color: #0f1f19; box-shadow: inset 0 0 0 2.5px #0f1f19; /* taste-skill-ignore: the number plate frame, drawn as the plate border */
+    font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-weight: 700; letter-spacing: 0.06em; line-height: 1;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.shr-plate[hidden] { display: none; }
+
+.shr-note { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+
+.shr-worry { display: grid; gap: var(--eh-space-3); padding: var(--eh-space-4); border-radius: var(--eh-radius); background: var(--eh-surface-2); }
+.shr-worry__title { margin: 0; font-size: var(--eh-text-md); font-weight: 700; }
+.shr-worry p { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.shr-calls { display: grid; gap: var(--eh-space-2); }
+.shr-call {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-4);
+    min-height: 48px; padding: var(--eh-space-2) var(--eh-space-4); border-radius: var(--eh-radius-pill);
+    background: var(--eh-surface); color: var(--eh-ink); border: 1px solid var(--eh-rule-strong);
+    font-size: var(--eh-text-sm); font-weight: 600; text-decoration: none;
+    transition: background-color var(--eh-duration-fast) var(--eh-ease);
+}
+.shr-call:hover { background: var(--eh-ground); }
+.shr-call:active { transform: scale(0.98); }
+.shr-call strong { font-size: var(--eh-text-lg); font-weight: 700; letter-spacing: 0.02em; }
+
+.shr-fine { font-size: var(--eh-text-xs); color: var(--eh-ink-3); font-variant-numeric: tabular-nums; }
+.shr-stale { display: block; margin-top: var(--eh-space-1); color: var(--eh-caution); font-weight: 600; }
+.shr-stale:empty { display: none; }
+
+/* The link no longer works: one calm column, the numbers still to hand. */
+.shr-gone { display: grid; align-content: start; gap: var(--eh-space-4); width: 100%; max-width: 34rem; margin: 0 auto; box-sizing: border-box; padding: var(--eh-space-10) var(--eh-gutter) var(--eh-space-12); }
+.shr-gone p { margin: 0; color: var(--eh-ink-2); }
+.shr-main--ended { grid-template-rows: 1fr; }
+.shr-main--ended .shr-panel { padding-top: var(--eh-space-10); }
+
+@media (min-width: 960px) {
+    .shr-main:not(.shr-main--ended) { grid-template-rows: 1fr; grid-template-columns: minmax(0, 1fr) 27rem; height: calc(100dvh - 3.25rem - 1px); }
+    .shr-main:not(.shr-main--ended) .shr-map { height: auto; }
+    .shr-main:not(.shr-main--ended) .shr-panel { max-width: none; overflow-y: auto; padding: var(--eh-space-8) var(--eh-space-8) var(--eh-space-10); background: var(--eh-ground); border-left: 1px solid var(--eh-rule); }
+    .shr-state { font-size: var(--eh-text-4xl); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .shr-call { transition: none; }
+    .shr-call:active { transform: none; }
+}

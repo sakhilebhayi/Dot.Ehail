@@ -21,7 +21,7 @@ class TripSharePageController extends Controller
         $share = $this->shares->resolve($token);
 
         if ($share === null) {
-            return $this->noStore(response()->view('safety.trip-share', ['payload' => null, 'statusUrl' => null], 404));
+            return $this->noStore(response()->view('safety.trip-share', ['payload' => null, 'statusUrl' => null, 'map' => null], 404));
         }
 
         $this->shares->recordView($share);
@@ -29,6 +29,7 @@ class TripSharePageController extends Controller
         return $this->noStore(response()->view('safety.trip-share', [
             'payload' => $this->shares->publicPayload($share),
             'statusUrl' => route('trip-share.status', $token),
+            'map' => $this->shares->publicMap($share),
         ]));
     }
 

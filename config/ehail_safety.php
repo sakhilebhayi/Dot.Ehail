@@ -87,6 +87,9 @@ return [
         'after_trip_minutes' => 30,
         // Driver position is rounded to this many decimals (3 is about 110 m).
         'position_decimals' => 3,
+        // The page's map draws the planned road line with this many metres cut off each end, so the line shows
+        // the way without marking the door at either end. A route shorter than three times this draws no line.
+        'route_trim_m' => (int) env('EHAIL_TRIP_SHARE_ROUTE_TRIM_M', 300),
     ],
 
     'check_ins' => [
