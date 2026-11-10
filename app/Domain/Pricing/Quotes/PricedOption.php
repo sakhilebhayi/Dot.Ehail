@@ -66,7 +66,7 @@ final class PricedOption
             'drivers_nearby' => $this->driversNearby,
             'requestable_now' => $this->requestableNow(),
             'supply_note' => match ($this->supply) {
-                'none' => 'No '.$this->category->name.' drivers are nearby right now. The price stands; a ride now cannot be requested until one is, and a scheduled ride is matched closer to its time. Drivers are never guaranteed.',
+                'none' => 'No '.$this->category->name.' drivers are nearby right now. The price stands; a ride now cannot be requested until one is, and a scheduled ride is matched closer to its time. A driver is not guaranteed.',
                 'available' => 'Drivers nearby now: '.$this->driversNearby.'. Not guaranteed: a driver still has to accept.',
                 default => 'Drivers nearby now: not known. Not guaranteed.',
             },

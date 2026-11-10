@@ -1,11 +1,13 @@
 // Times as people in the service area read them (D-1906): every user-facing time is shown in the service area's
 // timezone (South African Standard Time by default), never the device's or UTC, so a list and a detail page agree.
-// The server renders the same zone (App\Support\Ui\LocalTime). Pure apart from reading <html data-eh-tz>.
+// The server renders the same zone (App\Support\Ui\LocalTime). Pure apart from reading the page's eh-tz meta tag.
 
 export const DEFAULT_TZ = 'Africa/Johannesburg';
 
 export function displayTimezone() {
-    const fromPage = typeof document !== 'undefined' ? document.documentElement?.dataset?.ehTz : null;
+    if (typeof document === 'undefined') return DEFAULT_TZ;
+    // The server names the zone it rendered in: <meta name="eh-tz"> in the shared head (or <html data-eh-tz>).
+    const fromPage = document.documentElement?.dataset?.ehTz || document.querySelector?.('meta[name="eh-tz"]')?.content;
 
     return fromPage || DEFAULT_TZ;
 }
