@@ -182,9 +182,9 @@ Thresholds (`config/ehail_perf.php`, env overridable): queue lag 120 s degraded 
 
 | Suite | Before (branch point) | After (trunk merged, this branch) |
 |---|---|---|
-| PHP, SQLite | 1,294 tests: 1,286 passed, 8 skipped | **1,388 tests: 1,380 passed, 8 skipped, 0 failed** (trunk's passenger and security work included) |
-| PHP, PostgreSQL (`bin/test-pgsql.sh`, throwaway `ehail_integ_*`) | hung in two forked race tests (fleet, business: the children shared the parent's socket) | 1,388 tests: 1,380 passed, 7 skipped, 1 failed: dispatch's `FairnessTest` idle-credit assertion (60.1 s vs 60.0 s) while the 30-minute browser soak loaded the machine; it passes when re-run (5/5) |
-| JS | 54 | 80 (2 new: sync batching in `driver-throttle.test.mjs`; the rest arrived with the passenger merge) |
+| PHP, SQLite | 1,294 tests: 1,286 passed, 8 skipped | **1,429 tests: 1,421 passed, 8 skipped, 0 failed** (after merging the trunk with passenger, security, a11y and deploy) |
+| PHP, PostgreSQL (`bin/test-pgsql.sh`, throwaway `ehail_integ_*`, dropped after) | hung in two forked race tests (fleet, business: the children shared the parent's socket) | **1,429 tests: 1,422 passed, 7 skipped, 0 failed**. (One earlier full run under the 30-minute browser soak saw dispatch's timing-sensitive `FairnessTest` idle-credit assertion read 60.1 s for 60.0 s; it passes on re-runs.) |
+| JS | 54 | 92, all passing (2 new: sync batching in `driver-throttle.test.mjs`; the rest arrived with the trunk merges) |
 
 New PHP tests (`tests/Feature/Perf`, 31): `DriverSyncTest` (9: positions recorded and mirrored, unchanged feed null while the position moves, offer and saver poll hints, offline refused without creating rows, heartbeat writes at most every 20 s, trail on a trip, validation shape, guests), `RequestCostBudgetTest` (7), `HotPathBudgetTest` (2), `HealthTest` (8: polling-mode report, cron heartbeat, queue lag and failed jobs, silent drivers, overdue searching rides, open circuit, webhook lag, notification failures, alert once per worsening and on recovery, no pretend alerting, ops data source permissions), `ReliabilityScenariosTest` (4), `WebhookBurstConcurrencyTest` (1, forked processes). Changed tests: `RealtimeHealthCheckTest` (mode field; polling-mode cases replace "degraded when the driver is not reverb", D-1508), `RolePermissionMatrixTest` (`ops.status` row), fleet and business race harnesses (own connection per contender on PostgreSQL). `route:cache` and `view:cache` pass; `npm run build` passes.
 
