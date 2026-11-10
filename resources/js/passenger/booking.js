@@ -399,6 +399,8 @@ function optionCard(option) {
     const model = renderBreakdown(fareList, option.fare, { caption: `Total for ${option.category.name}` });
     const notes = model.notes.map((n) => el('p', {}, n));
     notes.push(el('p', {}, option.wording));
+    // The server's own sentence on drivers nearby (never a promise of one); the row above carries the short form.
+    if (option.supply_note) notes.push(el('p', { 'data-pax-supply': option.supply || 'unknown' }, option.supply_note));
     if (option.promotion_note) notes.push(el('p', {}, option.promotion_note));
     if (!model.adds_up) notes.push(el('p', {}, 'These lines do not add up to the total, so this price is not shown as final. Refresh prices.'));
     detail.append(fareList, el('div', { class: 'pax-fare-notes' }, notes));
@@ -769,7 +771,19 @@ async function submit() {
                 if (why.reasons.length) error.append(' ', why.reasons.join(' '));
             }
             announce(failure.message, { assertive: true });
-            if (failure.status === 402) {
+            if (failure.status === 409 && failure.code === 'no_supply') {
+                // Nobody of this kind is nearby after all: say so on the row and keep the price. Nothing was booked.
+                state.key = null;
+                option.supply = 'none';
+                option.requestable_now = false;
+                option.drivers_nearby = 0;
+                const row = body.querySelector(`.pax-option[data-key="${option.category.key}"] .pax-option__eta`);
+                if (row) {
+                    const eta = etaText(null, 'none');
+                    row.dataset.state = eta.state;
+                    row.textContent = eta.text;
+                }
+            } else if (failure.status === 402) {
                 try {
                     const { data: wallet } = await api(data.urls.wallet);
                     state.wallet = wallet;
@@ -824,7 +838,7 @@ function setWhen(when) {
     chip?.setAttribute('aria-expanded', String(when === 'later'));
     if (when === 'later') {
         const bounds = laterBounds(data.schedule);
-        picker.setBounds(bounds.minDate, bounds.maxDate);
+        picker.setBounds(bounds.min, bounds.max);
         state.laterAt = picker.value;
         setSnap(sheet, 'full');
         box.querySelector('input[type="radio"]:checked')?.focus();

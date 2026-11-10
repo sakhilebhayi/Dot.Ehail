@@ -17,15 +17,21 @@
     $op = $s['operator'] ?? ['brand' => config('app.name'), 'legal_name' => $s['operator_name'] ?? null, 'vat_status' => ! empty($s['vat_number']) ? OperatorIdentity::VAT_REGISTERED : OperatorIdentity::VAT_NOT_CONFIGURED, 'vat_number' => $s['vat_number'] ?? null, 'address_lines' => [], 'registration_number' => null, 'trading_name' => null];
     $vatSentence = $s['vat_sentence'] ?? OperatorIdentity::vatSentence($op, (int) ($s['tax_minor'] ?? 0));
     $supportEmail = ! empty($s['support_email']) && ! OperatorIdentity::isNoReply((string) $s['support_email']) ? $s['support_email'] : null;
+    // Route Line finish (ppass, D-2012): the shared head (fonts, the person's own light or night choice, SAST meta),
+    // places as a name and its area (no postcode or country), and a way back to the trip for the passenger.
+    $brand = $op['brand'] ?? config('app.name');
+    $operatorLine = implode(', ', array_filter([($op['legal_name'] ?? null) !== $brand ? ($op['legal_name'] ?? null) : null, ! empty($op['vat_number']) ? 'VAT '.$op['vat_number'] : null]));
+    $place = fn (?string $label) => \App\Domain\Passenger\PlaceLabel::split($label);
+    $from = $place($s['pickup_address'] ?? '');
+    $to = $place($s['dropoff_address'] ?? '');
+    $mine = auth()->id() === $receipt->passenger_id;
+    $rideId = $s['ride_id'] ?? $receipt->ride_id;
 @endphp
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-ZA" class="eh">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('layouts.partials.eh-head', ['title' => 'Receipt '.$receipt->number, 'viteEntries' => ['resources/css/app.css']])
     <meta name="robots" content="noindex, nofollow">
-    <title>Receipt {{ $receipt->number }}</title>
-    @vite(['resources/css/app.css'])
     <style>
         :root {
             --r-paper: var(--eh-surface, #ffffff);
@@ -70,11 +76,16 @@
         .paid .amount { font-family: var(--r-display); font-size: 2.5rem; font-weight: 650; letter-spacing: -0.02em; line-height: 1; }
         .paid .state { color: var(--r-accent); font-weight: 600; font-size: .9375rem; display: inline-flex; align-items: center; gap: .375rem; }
         .paid .state svg { width: 1rem; height: 1rem; }
-        .route { list-style: none; margin: 0 0 1.25rem; padding: 0; }
-        .route li { display: grid; grid-template-columns: 1.25rem 1fr; gap: .75rem; padding: .25rem 0; }
-        .route .dot { width: .625rem; height: .625rem; border-radius: 50%; border: 2px solid var(--r-ink); margin-top: .45rem; }
-        .route li:last-child .dot { background: var(--r-ink); }
-        .route .when { color: var(--r-ink-2); font-size: .8125rem; }
+        .route { list-style: none; margin: 0 0 1.25rem; padding: 0; display: grid; gap: 1rem; }
+        .route li { position: relative; display: grid; grid-template-columns: .875rem minmax(0, 1fr); gap: .875rem; }
+        .route .dot { width: .875rem; height: .875rem; border-radius: 50%; background: var(--eh-map-pickup, var(--r-paper)); box-shadow: inset 0 0 0 2px var(--r-ink); margin-top: .3rem; }
+        .route li:last-child .dot { border-radius: 3px; background: var(--eh-map-dropoff, var(--r-ink)); box-shadow: none; }
+        .route li:first-child::after { content: ""; position: absolute; left: calc(.4375rem - 1px); top: 1.3rem; bottom: -1.2rem; width: 2px; background: var(--r-accent); }
+        .route .name { font-weight: 600; overflow-wrap: anywhere; }
+        .route .area, .route .when { color: var(--r-ink-2); font-size: .8125rem; }
+        .back { display: inline-flex; align-items: center; gap: .375rem; min-height: 44px; margin: -.75rem 0 .5rem; font-size: .875rem; font-weight: 600; text-decoration: none; }
+        .back:hover { text-decoration: underline; }
+        .back svg { width: 1rem; height: 1rem; }
         .facts { display: flex; flex-wrap: wrap; gap: .25rem 1.5rem; color: var(--r-ink-2); font-size: .875rem; margin: 0 0 1.5rem; }
         .facts dt { display: inline; }
         .facts dd { display: inline; margin: 0 0 0 .25rem; color: var(--r-ink); font-weight: 500; }
@@ -121,11 +132,14 @@
 </head>
 <body>
 <main class="slip">
+    @if($mine && Route::has('ride.trip'))
+        <a class="back no-print" href="{{ route('ride.trip', $rideId) }}"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3 5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to the trip</a>
+    @endif
     <header>
         <div>
             <x-eh.logo :size="28" />
             <h1>{{ $isRide ? 'Trip receipt' : 'Cancellation fee receipt' }}</h1>
-            @if(!empty($op['legal_name']) || !empty($op['vat_number']))<p class="operator">{{ implode(' · ', array_filter([$op['legal_name'] ?? null, !empty($op['vat_number']) ? 'VAT '.$op['vat_number'] : null])) }}</p>@endif
+            @if($operatorLine !== '')<p class="operator">{{ $operatorLine }}</p>@endif
         </div>
         <div class="number">Receipt<strong>{{ $receipt->number }}</strong>{{ $when($receipt->issued_at->toIso8601String()) }} {{ $zone }}</div>
     </header>
@@ -134,13 +148,13 @@
         <span class="amount">{{ $fmt($receipt->total_minor) }}</span>
         <span class="state">
             <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Paid &middot; {{ $s['payment_method'] ?? '' }}
+            Paid{{ ! empty($s['payment_method']) ? ', '.$s['payment_method'] : '' }}
         </span>
     </div>
 
     <ol class="route" aria-label="Route">
-        <li><span class="dot" aria-hidden="true"></span><div>{{ $s['pickup_address'] ?? '' }}@if($when($s['started_at'] ?? null))<div class="when">Picked up {{ $when($s['started_at']) }}</div>@endif</div></li>
-        <li><span class="dot" aria-hidden="true"></span><div>{{ $s['dropoff_address'] ?? '' }}@if($isRide && $when($s['completed_at'] ?? null))<div class="when">Dropped off {{ $when($s['completed_at']) }}</div>@elseif(!$isRide && $when($s['cancelled_at'] ?? null))<div class="when">Cancelled {{ $when($s['cancelled_at']) }}</div>@endif</div></li>
+        <li><span class="dot" aria-hidden="true"></span><div><div class="name">{{ $from['name'] }}</div>@if($from['detail'] !== '')<div class="area">{{ $from['detail'] }}</div>@endif @if($when($s['started_at'] ?? null))<div class="when">Picked up {{ $when($s['started_at']) }}</div>@endif</div></li>
+        <li><span class="dot" aria-hidden="true"></span><div><div class="name">{{ $to['name'] }}</div>@if($to['detail'] !== '')<div class="area">{{ $to['detail'] }}</div>@endif @if($isRide && $when($s['completed_at'] ?? null))<div class="when">Dropped off {{ $when($s['completed_at']) }}</div>@elseif(!$isRide && $when($s['cancelled_at'] ?? null))<div class="when">Cancelled {{ $when($s['cancelled_at']) }}</div>@endif</div></li>
     </ol>
 
     @if($billed['distance'] || $billed['time'])
@@ -175,7 +189,7 @@
     </table>
 
     <dl class="meta">
-        <dt>Ride</dt><dd>#{{ $s['ride_id'] ?? $receipt->ride_id }}</dd>
+        <dt>Trip reference</dt><dd>{{ $rideId }}</dd>
         @if(!empty($s['driver_first_name']))<dt>Driver</dt><dd>{{ $s['driver_first_name'] }}</dd>@endif
         @if(!empty($s['vehicle']))<dt>Vehicle</dt><dd>{{ $s['vehicle'] }}</dd>@endif
         <dt>Paid</dt><dd>{{ $when($s['paid_at'] ?? null) }}</dd>

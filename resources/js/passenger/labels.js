@@ -1,7 +1,7 @@
 // Words the passenger app shows, computed from API data. Pure (tested in node): no DOM here.
 
 import { formatMinor } from './money.js';
-import { displayTimezone, formatLocal, wallTimeToIso } from '../eh/time.js';
+import { formatLocal, wallTime, wallTimeToIso } from '../eh/time.js';
 
 const ICONS = { car: 'car', 'car-comfort': 'car-sedan', 'car-premium': 'car-sedan', 'car-xl': 'car-xl', accessible: 'accessibility', plane: 'luggage', road: 'route' };
 
@@ -109,11 +109,7 @@ export function unavailableText(result, routingMessage = null) {
 export function laterBounds(rules, now = new Date()) {
     const min = new Date(now.getTime() + (rules.min_lead_minutes + 1) * 60000);
     const max = new Date(now.getTime() + rules.max_lead_days * 86400000);
-    const local = (d) => {
-        const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: displayTimezone(), hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(d).map((x) => [x.type, x.value]));
-        return `${p.year}-${p.month}-${p.day}T${String(Number(p.hour) % 24).padStart(2, '0')}:${p.minute}`;
-    };
-    return { min: local(min), max: local(max), minDate: min, maxDate: max };
+    return { min: wallTime(min), max: wallTime(max), minDate: min, maxDate: max };
 }
 
 export function laterError(value, rules, now = new Date()) {

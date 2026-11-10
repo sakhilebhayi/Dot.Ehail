@@ -51,3 +51,20 @@ export function wallTimeToIso(local, tz = displayTimezone()) {
 
     return new Date(guess - offset * 60000).toISOString();
 }
+
+/**
+ * The inverse: an instant as the wall-clock time people in the display timezone read, "2026-11-11T07:30". Parsed
+ * with new Date() it gives a Date whose own hours and days are that wall clock, which is what the day-and-time
+ * picker works in.
+ */
+export function wallTime(value = new Date(), tz = displayTimezone()) {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const p = Object.fromEntries(
+        new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+            .formatToParts(date)
+            .map((x) => [x.type, x.value]),
+    );
+
+    return `${p.year}-${p.month}-${p.day}T${String(Number(p.hour) % 24).padStart(2, '0')}:${p.minute}`;
+}

@@ -11,6 +11,7 @@ use App\Domain\Safety\Seams\TripProgressSource;
 use App\Models\Ride;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Support\Ui\LocalTime;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
@@ -172,7 +173,7 @@ class TripShareService
             'expires_time' => $this->local($expires, 'H:i, j M'),
             'checked_at' => now()->toIso8601String(),
             'checked_time' => $this->local(now(), 'H:i:s'),
-            'time_zone' => $this->local(now(), 'T'),
+            'time_zone' => LocalTime::label(),
         ];
     }
 
@@ -203,7 +204,7 @@ class TripShareService
     /** A moment in the service's display time zone (South African Standard Time unless the market says otherwise). */
     private function local(\DateTimeInterface|string $at, string $format): string
     {
-        return Carbon::parse($at)->setTimezone((string) config('ehail_pricing.default_timezone', 'Africa/Johannesburg'))->format($format);
+        return (string) LocalTime::format($at, $format);
     }
 
     private function stateLabel(string $state): string

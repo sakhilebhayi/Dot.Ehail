@@ -1,8 +1,18 @@
 // Day-and-time picker (<x-eh.datetime>): a row of days and a grid of times, drawn in the kit instead of the browser's
-// date input. The chosen moment lives in a hidden input as local "YYYY-MM-DDTHH:MM" (what datetime-local gave
-// before), which fires input and change events like the native field did. Pure helpers are exported for tests.
+// date input. The chosen moment lives in a hidden input as "YYYY-MM-DDTHH:MM" (what datetime-local gave before),
+// which fires input and change events like the native field did. Pure helpers are exported for tests.
+//
+// The picker works in the service area's wall clock (D-1906, D-2013), not the device's: its bounds, its "Today" and
+// the value it holds are all times as people in the service area read them. A wall time is carried as a Date whose
+// own fields hold that clock (new Date("2026-11-11T07:30")); turn the chosen value into an instant with
+// wallTimeToIso() from eh/time.js, never with new Date(value).toISOString().
+import { wallTime } from './time.js';
 
 const pad = (n) => String(n).padStart(2, '0');
+/** Now, on the service area's wall clock. */
+const wallNow = () => new Date(wallTime());
+/** A bound given as a wall-time string or as a Date already holding the wall clock. */
+const asWall = (v) => (v instanceof Date ? v : new Date(v));
 
 /** Local "YYYY-MM-DD" for a Date. */
 export function dayKey(date) {
@@ -21,7 +31,7 @@ export function ceilToStep(date, step) {
 }
 
 /** Every calendar day from min to max (inclusive) that still has a slot: [{key, date, label, day, month}]. */
-export function whenDays(min, max, step = 15, now = new Date()) {
+export function whenDays(min, max, step = 15, now = wallNow()) {
     const first = ceilToStep(min, step);
     const days = [];
     const cursor = new Date(first.getFullYear(), first.getMonth(), first.getDate());
@@ -58,7 +68,7 @@ export function whenSlots(key, min, max, step = 15) {
 }
 
 /** "Tue 11 Nov, 07:30" for the summary line. */
-export function whenLabel(value, now = new Date()) {
+export function whenLabel(value, now = wallNow()) {
     if (!value) return '';
     const at = new Date(value);
     if (Number.isNaN(at.getTime())) return '';
@@ -68,17 +78,17 @@ export function whenLabel(value, now = new Date()) {
 }
 
 /**
- * Binds one picker. options: {min: Date, max: Date, step: minutes, value: "YYYY-MM-DDTHH:MM" | null}.
- * Returns {setBounds(min, max), setValue(v), get value()}.
+ * Binds one picker. options: {min, max: wall-time strings or wall-clock Dates, step: minutes}.
+ * Returns {setBounds(min, max), setValue(v), get value()}; the value is a wall time in the service area's zone.
  */
-export function bindWhen(root, { min = new Date(), max = new Date(Date.now() + 30 * 86400000), step = Number(root?.dataset.step || 15), value = null } = {}) {
+export function bindWhen(root, { min = wallNow(), max = new Date(wallNow().getTime() + 30 * 86400000), step = Number(root?.dataset.step || 15), value = null } = {}) {
     if (!root) return { setBounds() {}, setValue() {}, value: '' };
     const hidden = root.querySelector('input[type="hidden"]');
     const daysEl = root.querySelector('[data-eh-when-days]');
     const timesEl = root.querySelector('[data-eh-when-times]');
     const summary = root.querySelector('[data-eh-when-summary]');
     const name = hidden.id || 'eh-when';
-    let bounds = { min, max };
+    let bounds = { min: asWall(min), max: asWall(max) };
     let chosenDay = null;
 
     const emit = () => {
@@ -155,11 +165,11 @@ export function bindWhen(root, { min = new Date(), max = new Date(Date.now() + 3
 
     const api = {
         setBounds(nextMin, nextMax) {
-            bounds = { min: nextMin, max: nextMax };
+            bounds = { min: asWall(nextMin), max: asWall(nextMax) };
             const at = hidden.value ? new Date(hidden.value) : null;
-            if (!at || at < nextMin || at > nextMax) {
-                const first = ceilToStep(nextMin, step);
-                hidden.value = first <= nextMax ? localValue(first) : '';
+            if (!at || at < bounds.min || at > bounds.max) {
+                const first = ceilToStep(bounds.min, step);
+                hidden.value = first <= bounds.max ? localValue(first) : '';
             }
             chosenDay = hidden.value ? hidden.value.slice(0, 10) : null;
             draw();

@@ -10,7 +10,7 @@ export function positionNote(payload) {
 
     const seen = spot.time ? ` Last seen ${spot.time}${payload.time_zone ? ` ${payload.time_zone}` : ''}.` : '';
 
-    return `The car's position on the map is approximate, to about 100 m.${seen}`;
+    return `The car's position on the map is approximate, to about 100\u00a0m.${seen}`;
 }
 
 /** True when the open page no longer matches the trip: it ended, or its route changed, so the server page is the truth. */

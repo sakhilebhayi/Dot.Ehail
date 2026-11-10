@@ -5,12 +5,12 @@ import { announce, api, island } from './api.js';
 import { renderBreakdown } from './breakdown.js';
 import { clock, freeCancelLeft, searchProgress, secondsSince, secondsUntil, waitState } from './countdown.js';
 import { el, watchConnection } from './dom.js';
-import { bindWhen, ceilToStep, localValue } from '../eh/datetime.js';
+import { bindWhen, ceilToStep } from '../eh/datetime.js';
 import { laterBounds } from './labels.js';
 import { FeedClient } from './feed.js';
 import { formatMinor } from './money.js';
 import { bindCheckIns, bindShare, bindSos } from './safety.js';
-import { formatLocal } from '../eh/time.js';
+import { formatLocal, wallTime, wallTimeToIso } from '../eh/time.js';
 import { createAnnouncer, etaCue } from '../eh/announce.js';
 import { announcement, mapSummary, holdsDriver, isPreTrip, isSearching, isTerminal, rideText, stageIndex } from './status.js';
 
@@ -455,8 +455,8 @@ function bindActions() {
     $('[data-pax-reschedule-box]')?.addEventListener('toggle', (event) => {
         if (!event.target.open || !data.schedule) return;
         const bounds = laterBounds(data.schedule);
-        when?.setBounds(bounds.minDate, bounds.maxDate);
-        if (scheduledAt && scheduledAt >= bounds.minDate && scheduledAt <= bounds.maxDate) when?.setValue(localValue(ceilToStep(scheduledAt, 15)));
+        when?.setBounds(bounds.min, bounds.max);
+        if (scheduledAt && scheduledAt >= bounds.minDate && scheduledAt <= bounds.maxDate) when?.setValue(wallTime(ceilToStep(scheduledAt, 15)));
     });
     reschedule?.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -464,7 +464,7 @@ function bindActions() {
         if (!input.value) return;
         const out = reschedule.querySelector('[data-pax-reschedule-status]');
         try {
-            const { data: body } = await api(data.urls.reschedule, { method: 'PATCH', body: { scheduled_for: new Date(input.value).toISOString() } });
+            const { data: body } = await api(data.urls.reschedule, { method: 'PATCH', body: { scheduled_for: wallTimeToIso(input.value) } });
             snapshot = { ...snapshot, ...body };
             out.textContent = 'Pickup time changed.';
             render();

@@ -77,7 +77,7 @@
             @if($live)
                 <p class="shr-note" data-field="position">
                     @if($payload['approximate_position'])
-                        The car's position on the map is approximate, to about 100 m. Last seen {{ $payload['approximate_position']['time'] }} {{ $payload['time_zone'] }}.
+                        The car's position on the map is approximate, to about 100&nbsp;m. Last seen {{ $payload['approximate_position']['time'] }} {{ $payload['time_zone'] }}.
                     @else
                         The car's position is not available right now.
                     @endif

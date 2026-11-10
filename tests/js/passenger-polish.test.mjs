@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import { shortPlace, splitPlace } from '../../resources/js/passenger/places.js';
 import { ceilToStep, dayKey, localValue, whenDays, whenLabel, whenSlots } from '../../resources/js/eh/datetime.js';
 import { whatsappUrl } from '../../resources/js/passenger/safety.js';
+import { laterBounds, laterError } from '../../resources/js/passenger/labels.js';
+import { wallTime, wallTimeToIso } from '../../resources/js/eh/time.js';
 import { positionNote, shouldReload } from '../../resources/js/share/state.js';
 
 // ------------------------------------------------------------------ place names
@@ -60,6 +62,30 @@ test('the chosen time is summarised in words', () => {
     assert.equal(whenLabel('not a date', now), '');
 });
 
+test('the picker runs on the service area clock, whatever zone the phone is set to', () => {
+    // 22:30 UTC on the 10th is 00:30 on the 11th in Johannesburg.
+    const now = new Date('2026-11-10T22:30:00Z');
+    assert.equal(wallTime(now), '2026-11-11T00:30');
+    assert.equal(wallTimeToIso(wallTime(now)), now.toISOString());
+
+    const rules = { min_lead_minutes: 30, max_lead_days: 7 };
+    const bounds = laterBounds(rules, now);
+    assert.equal(bounds.min, '2026-11-11T01:01');
+    assert.equal(bounds.max, '2026-11-18T00:30');
+
+    // The days and times offered are Johannesburg days and times; the first slot is 01:15 today (the 11th there).
+    const wallNow = new Date(wallTime(now));
+    const days = whenDays(new Date(bounds.min), new Date(bounds.max), 15, wallNow);
+    assert.equal(days[0].key, '2026-11-11');
+    assert.equal(days[0].label, 'Today');
+    assert.equal(whenSlots('2026-11-11', new Date(bounds.min), new Date(bounds.max), 15)[0], '01:15');
+
+    // What is picked goes to the server as that Johannesburg time, and passes the lead-time rule.
+    assert.equal(wallTimeToIso('2026-11-11T01:15'), '2026-11-10T23:15:00.000Z');
+    assert.equal(laterError('2026-11-11T01:15', rules, now), null);
+    assert.match(laterError('2026-11-11T00:45', rules, now), /at least 30 minutes/);
+});
+
 // ------------------------------------------------------------------ WhatsApp hand-off
 test('the WhatsApp link carries a plain message and the trip link, encoded, and no phone number', () => {
     const link = whatsappUrl('https://ehail.example/t/abc123');
@@ -71,9 +97,9 @@ test('the WhatsApp link carries a plain message and the trip link, encoded, and 
 test('the share page says how exact the car position is and when it was last seen', () => {
     assert.equal(
         positionNote({ approximate_position: { lat: -26.146, lng: 28.041, time: '14:30:05' }, time_zone: 'SAST' }),
-        "The car's position on the map is approximate, to about 100 m. Last seen 14:30:05 SAST.",
+        "The car's position on the map is approximate, to about 100\u00a0m. Last seen 14:30:05 SAST.",
     );
-    assert.equal(positionNote({ approximate_position: { lat: -26.146, lng: 28.041 } }), "The car's position on the map is approximate, to about 100 m.");
+    assert.equal(positionNote({ approximate_position: { lat: -26.146, lng: 28.041 } }), "The car's position on the map is approximate, to about 100\u00a0m.");
     assert.equal(positionNote({ approximate_position: null }), "The car's position is not available right now.");
     assert.equal(positionNote(null), "The car's position is not available right now.");
 });
