@@ -24,3 +24,20 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | `hallmark` | not invoked | | DESIGN.md is locked by ds; no new page world was needed. |
 | `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Dangling symlinks (as recorded by ds). Not claimed. |
 | `gsap-*` and other motion skills | not used | | Operate surface; only the details-row chevron turns (160 ms, off under reduced motion). |
+## comms agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | inbox, settings, bell (Operate mode) | `impeccable context` loaded PRODUCT.md and DESIGN.md (no surface brief for these pages; no question channel in this unattended run, inferred from the brief); worked inside the locked Route Line world; craft floor and operate reference read before UI code; `impeccable detect` on `resources/views/comms` and `comms.css`: one advisory (2px radius) fixed, then clean. Finish-reviewer subagent not spawned (bounded run). |
+| `design-taste-frontend` | invoked | app-screen run | Read `references/app-screens.md` (settings layout: label column beside a panel, one save model per view, "show what the setting produces" applied as the last real notification per category; empty states that teach; honest states). Draw skipped: the design system is locked (`--keep palette,type` would deal composition only, and the shells fix it). `lint.mjs`: shadow on the badge replaced by an outline; list dividers kept with `taste-skill-ignore` (same as the kit's `.eh-list`, allowed for app screens); then 0 FAIL. `inspect.mjs` not run: the pages need a signed-in session; checked by eye in the browser at 390 and 1440, light and night. |
+| `gsap-*` | not used | | No motion needed beyond the kit's switch transition. |
+| `ui-ux-pro-max`, `emil-design-eng` | not invoked | | Recorded as dangling symlinks by ds; not claimed. |
+
+## fleet agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | fleet portal (Operate mode) | `impeccable context --target resources/views/fleet` (PRODUCT.md, DESIGN.md; no surface brief; no question channel in this unattended run, so the brief stood in); read `reference/operate.md` and `reference/craft-floor.md` before UI code; applied: restrained colour on state and the one primary action, flat panels by tone step, every component with empty/disabled/error states, inline disclosures instead of modals, no eyebrows or numbered sections, tabular figures. `impeccable detect --json` on the fleet views and CSS: 2 advisories (plate radius 4px, plate size 1.0625rem off the ramp), both fixed to tokens; re-run clean. Finish-reviewer subagent not spawned (one inspection round plus one fix round within budget). |
+| `design-taste-frontend` | invoked | app-screen run | Read `references/app-screens.md`; `draw.mjs --app --kind smb-admin --keep palette,type` dealt framed-sheet and accent-ladder; chose accent-ladder (matches DESIGN.md's tint-led nav and badges); face: the number plate; each screen's one question written into its title line (overview: "N of M vehicles can work now. K cannot: ..."). `lint.mjs --app` on rendered pages: 1 FAIL from the Laravel Boost dev logger's console emoji (not shipped, dev only); `inspect.mjs --app` on saved renders: 0 FAIL; WARNs defended: fonts are cross-origin in the saved copy (they load on the real host, see screenshots), h1 at 36px is the ds page head contract, a 37px difference between two tables that shrink to their rows, "charts" counted are number plates. |
+| `gsap-*` | not used | | No motion needed: state changes only (hover tints, 160 ms). |
+| `hallmark`, `emil-design-eng`, `ui-ux-pro-max` | not invoked | | Not a new world (Route Line is fixed); emil/ui-ux-pro-max recorded earlier as unavailable symlinks; not claimed. |

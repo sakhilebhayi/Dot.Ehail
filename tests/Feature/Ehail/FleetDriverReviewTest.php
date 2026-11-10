@@ -39,6 +39,17 @@ class FleetDriverReviewTest extends TestCase
         $fleet = Fleet::create(['status' => 'approved', 'name' => 'Test Fleet', 'owner_user_id' => $owner->id]);
         $profile = $this->pendingApplication($fleet);
 
+        // R-46 (D-1205): by default the fleet owner sees the applicant and their status, not their identity
+        // numbers; once operations grant identity-review rights, the masked numbers appear.
+        $this->actingAs($owner)
+            ->get(route('fleets.show', $fleet))
+            ->assertOk()
+            ->assertSee($profile->user->name)
+            ->assertDontSee($profile->license_number)
+            ->assertDontSee(DriverIdentifiers::mask($profile->license_number));
+
+        $fleet->forceFill(['identity_review_granted_at' => now()])->save();
+
         $this->actingAs($owner)
             ->get(route('fleets.show', $fleet))
             ->assertOk()

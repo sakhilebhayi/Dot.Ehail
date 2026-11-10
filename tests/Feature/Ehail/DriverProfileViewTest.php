@@ -119,6 +119,9 @@ class DriverProfileViewTest extends TestCase
 
         // DriverProfilePolicy::view always allowed these two; the scoped route
         // binding used to 404 them before the policy ran.
+        // R-46 (D-1205): the fleet owner needs identity-review rights for this page (full identifiers).
+        $this->actingAs($fleet->owner)->get(route('drivers.show', $profile))->assertNotFound();
+        $fleet->forceFill(['identity_review_granted_at' => now()])->save();
         $this->actingAs($fleet->owner)->get(route('drivers.show', $profile))->assertOk();
         $this->actingAs($operator)->get(route('drivers.show', $profile))->assertOk();
     }

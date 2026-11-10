@@ -22,15 +22,18 @@ use Throwable;
  * there), so these tests prove the guards that do not depend on row locks:
  * the compare-and-swap offer update, the dispatch lease, the nullable-unique
  * guard columns, the transaction retry on "database is locked", and the
- * idempotency key's unique row. The PostgreSQL run of the same scenarios
- * (where lockForUpdate takes real row locks) belongs to the wave-3
- * performance agent; docs/R46_DISPATCH.md "Concurrency" says how.
+ * idempotency key's unique row. On PostgreSQL (bin/test-pgsql.sh) the same
+ * scenarios run against the throwaway test database, each contender with its
+ * own connection, where lockForUpdate takes real row locks (integration D-715).
  */
 class ConcurrencyTest extends TestCase
 {
     use CreatesDispatchFixtures;
 
     private string $path;
+
+    /** The connection under test: SQLite (file) by default, or the suite's PostgreSQL database. */
+    private string $db;
 
     private const ROUNDS = 4;
 
@@ -43,27 +46,39 @@ class ConcurrencyTest extends TestCase
         }
 
         $this->path = sys_get_temp_dir().'/ehail-concurrency-'.getmypid().'-'.bin2hex(random_bytes(4)).'.sqlite';
-        touch($this->path);
+        $this->db = (string) config('database.default');
+        config(['ehail_dispatch.open_board_after_seconds' => 0]);
 
-        config([
-            'database.connections.sqlite.database' => $this->path,
-            'database.connections.sqlite.busy_timeout' => 10000,
-            'database.connections.sqlite.journal_mode' => 'wal',
-            // BEGIN IMMEDIATE: a write transaction takes SQLite's write lock up front and waits
-            // (busy_timeout) instead of failing on a stale snapshot. Recommended for any SQLite
-            // deployment with concurrent writers; test_correctness_holds_in_deferred_mode_too
-            // shows the guards do not depend on it.
-            'database.connections.sqlite.transaction_mode' => 'IMMEDIATE',
-            'ehail_dispatch.open_board_after_seconds' => 0,
-        ]);
-        DB::purge('sqlite');
+        if ($this->db === 'sqlite') {
+            touch($this->path);
+
+            config([
+                'database.connections.sqlite.database' => $this->path,
+                'database.connections.sqlite.busy_timeout' => 10000,
+                'database.connections.sqlite.journal_mode' => 'wal',
+                // BEGIN IMMEDIATE: a write transaction takes SQLite's write lock up front and waits
+                // (busy_timeout) instead of failing on a stale snapshot. Recommended for any SQLite
+                // deployment with concurrent writers; test_correctness_holds_in_deferred_mode_too
+                // shows the guards do not depend on it.
+                'database.connections.sqlite.transaction_mode' => 'IMMEDIATE',
+            ]);
+        }
+
+        DB::purge($this->db);
         $this->artisan('migrate:fresh')->assertExitCode(0);
         $this->fakeQuotes();
     }
 
     protected function tearDown(): void
     {
-        DB::disconnect('sqlite');
+        if (($this->db ?? 'sqlite') !== 'sqlite') {
+            // The contenders committed for real: leave the shared test database clean and migrated for the next
+            // test (RefreshDatabase migrates only once per run).
+            DB::purge($this->db);
+            $this->artisan('migrate:fresh')->assertExitCode(0);
+        }
+
+        DB::disconnect($this->db ?? 'sqlite');
 
         foreach (['', '-wal', '-shm'] as $suffix) {
             @unlink(($this->path ?? '/nonexistent').$suffix);
@@ -80,7 +95,7 @@ class ConcurrencyTest extends TestCase
      */
     private function race(array $contenders): array
     {
-        DB::disconnect('sqlite');
+        DB::disconnect($this->db);
         $start = microtime(true) + 0.25;
         $pids = [];
 
@@ -89,7 +104,8 @@ class ConcurrencyTest extends TestCase
             $this->assertNotSame(-1, $pid, 'fork failed');
 
             if ($pid === 0) {
-                DB::purge('sqlite');
+                // A fresh connection per process (never the parent's socket).
+                DB::purge($this->db);
 
                 while (microtime(true) < $start) {
                     usleep(100);
@@ -119,7 +135,7 @@ class ConcurrencyTest extends TestCase
             unlink($file);
         }
 
-        DB::purge('sqlite');
+        DB::purge($this->db);
 
         if (getenv('EHAIL_RACE_DEBUG')) {
             fwrite(STDERR, json_encode($results).PHP_EOL);
@@ -181,7 +197,7 @@ class ConcurrencyTest extends TestCase
     public function test_correctness_holds_in_deferred_mode_too(): void
     {
         config(['database.connections.sqlite.transaction_mode' => 'DEFERRED']);
-        DB::purge('sqlite');
+        DB::purge($this->db);
 
         for ($round = 0; $round < self::ROUNDS; $round++) {
             $offered = $this->onlineDriverAt(...$this->northOfPickup(100));
