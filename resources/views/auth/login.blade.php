@@ -1,7 +1,7 @@
 <x-guest-layout title="Sign in">
     <header>
         <h1 class="eh-guest__title">Sign in</h1>
-        <p class="eh-guest__lead">Use your Dot account. If you signed up through InfoDot, the same email and password work here.</p>
+        <p class="eh-guest__lead">Use the email and password of your Dot account, the same one you use in the other Dot apps.</p>
     </header>
 
     @session('status')

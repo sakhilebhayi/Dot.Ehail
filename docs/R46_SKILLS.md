@@ -101,3 +101,13 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | `design-taste-frontend` | invoked | app-screen run, as a review lens | Read the app-screens phone section (section 12) and the house rules. Applied: one action row pinned in thumb reach, the answer figure leads (the net in display type, siblings in body size), every relative figure names its base (commission "20% of R61.00"), figures that must agree are checked in code (`offerLines().reconciles`, asserted in tests), no new ornaments. `lint.mjs` on driver.css and the console views: 3 hairline FAILs, 1 fixed (offer actions now separate by a tone step), 2 kept (pre-existing ledger and checklist row rules: real tabular rows), 100vh fallback marked. No draw (system locked). `inspect.mjs` not run (signed-in pages); its measures (overflow, h1 count) are in the capture script's notes. |
 | `gsap-*`, `hallmark`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `open-design`, `design-md`, `awesome-design-md`, `dataviz` | not used | | Refinement of an existing app surface; no motion, chart or new world. |
 | `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Checked: dangling symlinks into `~/.agents/skills/` (targets missing); not claimed. |
+
+## pops agent (jury polish: ops, business, fleet, shared public pages, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | polish of the work surfaces inside the locked Route Line world | `impeccable context` loaded PRODUCT.md and DESIGN.md. Read `reference/polish.md` and the craft floor: fix drift in triage order (meaning, hierarchy, then finish), one primary action per screen (incident ownership), state in words not colour alone (owner, alarm sound), reduced motion respected (rail pulse), night parity checked per changed surface. The detector script was not run. |
+| `design-taste-frontend` | invoked | review lens for dense app screens | Read the app-screens reference. Applied: keep density, give identity through one repeated system mark (route line, plate chip) not decoration; the answer leads (ownership bar before facts); no card inside card. |
+| `dataviz` | not used | | No chart was added or changed; insights labels are pmoney's payload fix. |
+| `hallmark`, `gsap-*`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `open-design`, `design-md`, `awesome-design-md` | not used | | Refinement of existing surfaces; no new world, motion library or brand system. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Not in the installed list this session; not claimed. |

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ops;
 use App\Domain\Ops\Access\OpsAccess;
 use App\Domain\Ops\Access\OpsPermission;
 use App\Domain\Ops\Audit\OpsAudit;
+use App\Domain\Ops\Live\IncidentPresenter;
 use App\Domain\Safety\Http\OpsIncidentController;
 use App\Domain\Safety\Models\SafetyCheckIn;
 use App\Domain\Safety\Models\SafetyIncident;
@@ -12,6 +13,7 @@ use App\Domain\Safety\Models\UserReport;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Support\Ui\PlaceNames;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -55,13 +57,21 @@ class SafetyController extends Controller
         ]);
     }
 
-    public function show(Request $request, SafetyIncident $incident, OpsAccess $access, OpsAudit $audit): View
+    public function show(Request $request, SafetyIncident $incident, OpsAccess $access, OpsAudit $audit, IncidentPresenter $present): View
     {
         $incident->load(['events', 'notifications', 'reporter:id,name', 'owner:id,name', 'ride.passenger:id,name', 'ride.driver:id,name']);
         $audit->viewed('safety_incident', $request->user(), $incident);
 
         return view('ops.safety.show', [
             'incident' => $incident,
+            // Place names, owner and escalation words, and the map (R-46 polish, D-2202/D-2203): one looked-up name
+            // for the reported position (cached by the geocoder), everything else from stored labels.
+            'where' => $present->point($incident, lookup: true),
+            'driverWhere' => $this->driverWhere($incident, $present),
+            'incidentMap' => $present->map($incident),
+            'ownerText' => $present->ownerText($incident),
+            'levelText' => $present->levelText($incident),
+            'nextText' => $present->nextText($incident),
             'canAct' => $access->can($request->user(), OpsPermission::SAFETY_ACT),
             'resolutionCodes' => OpsIncidentController::RESOLUTION_CODES,
             'operators' => User::query()->where('is_platform_operator', true)->orderBy('name')->get(['id', 'name']),
@@ -71,6 +81,17 @@ class SafetyController extends Controller
             'reports' => $incident->ride_id ? UserReport::query()->where('ride_id', $incident->ride_id)->get() : collect(),
             'checkIns' => $incident->ride_id ? SafetyCheckIn::query()->where('ride_id', $incident->ride_id)->orderBy('id')->get() : collect(),
         ]);
+    }
+
+    /** Where the driver was when the incident was raised, in words relative to the trip's stops. */
+    private function driverWhere(SafetyIncident $incident, IncidentPresenter $present): ?string
+    {
+        $fix = is_array($incident->context['driver_position'] ?? null) ? $incident->context['driver_position'] : null;
+        if (($fix['lat'] ?? null) === null || ($fix['lng'] ?? null) === null) {
+            return null;
+        }
+
+        return app(PlaceNames::class)->relativeTo((float) $fix['lat'], (float) $fix['lng'], $present->stops($incident));
     }
 
     public function checkIns(Request $request): View
