@@ -25,6 +25,7 @@ class FinanceIssue extends Model
         'duplicate_payout_account' => 'Bank account used by more than one payee',
         'card_setup_refund' => 'Card verification charge not refunded',
         'webhook_failed' => 'Webhook could not be processed',
+        'settlement_missing' => 'Completed ride was never settled',
     ];
 
     protected $guarded = ['id'];

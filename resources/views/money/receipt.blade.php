@@ -96,6 +96,9 @@
         tr.discount td { color: var(--r-accent); }
         tr.total td { border-top: 1px solid var(--r-rule); padding-top: .75rem; font-weight: 650; font-size: 1.0625rem; }
         tr.tax td { color: var(--r-ink-2); font-size: .875rem; padding-top: .125rem; }
+        .changes { margin: 1.25rem 0 0; font-size: .875rem; color: var(--r-ink-2); }
+        .changes h2 { margin: 0 0 .375rem; font-size: .9375rem; font-weight: 600; color: var(--r-ink); }
+        .changes ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .25rem; }
         td .detail { display: block; color: var(--r-ink-2); font-size: .8125rem; }
         .facts .note { flex-basis: 100%; font-size: .8125rem; }
         .issuer { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--r-rule); font-size: .8125rem; color: var(--r-ink-2); }
@@ -187,6 +190,17 @@
         @endif
         </tbody>
     </table>
+
+    @if(!empty($s['fare_changes']))
+        <section class="changes" aria-labelledby="fare-changes">
+            <h2 id="fare-changes">Why the fare differs from the quote</h2>
+            <ul>
+                @foreach($s['fare_changes'] as $change)
+                    <li>{{ $change['text'] }}@if(($change['amount_minor'] ?? 0) !== 0) <span class="amt">({{ $change['amount_minor'] > 0 ? '+' : '−' }}{{ $fmt(abs((int) $change['amount_minor'])) }})</span>@endif</li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
 
     <dl class="meta">
         <dt>Trip reference</dt><dd>{{ $rideId }}</dd>

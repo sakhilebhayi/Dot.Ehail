@@ -76,7 +76,7 @@ final class PricedOption
             'promotion' => $this->promotion === null ? null : ['name' => $this->promotion->name, 'code' => $this->promotion->code],
             'promotion_note' => $this->promotionNote,
             'wording' => $this->isEstimate()
-                ? 'Estimate only. The price you book is confirmed when you request the ride.'
+                ? 'Estimate only. The price you book is confirmed when you request the ride. A driver is not guaranteed: who is free nearby is checked when you book.'
                 : 'This is the price for this route if you book before the quote expires. It changes only for the reasons listed in the fare rules.',
         ];
     }

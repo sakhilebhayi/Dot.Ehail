@@ -169,11 +169,30 @@ function renderDriver(ride, position) {
     // Before the trip the first thing to do is match the car: say so above the card.
     const ask = $('[data-pax-who-ask]');
     if (ask) ask.hidden = !['driver_assigned', 'driver_arriving', 'driver_arrived'].includes(ride.status);
+    renderStale(ride, position);
+}
+
+/*
+ * The feed is versioned: while the driver's phone is silent nothing changes, so no new body arrives to say the
+ * position went stale. The age is therefore carried forward here, once a second, from the last position the
+ * server sent (its age then plus the time since), against the server's staleness threshold.
+ */
+let positionSeen = { position: null, at: 0 };
+function positionAge(position) {
+    if (!position) return null;
+    if (positionSeen.position !== position) positionSeen = { position, at: Date.now() };
+    return (position.age_s ?? 0) + Math.floor((Date.now() - positionSeen.at) / 1000);
+}
+
+function renderStale(ride, position) {
     const stale = $('[data-pax-stale]');
     const staleText = $('[data-pax-stale-text]');
-    if (holdsDriver(ride.status) && position?.stale) {
+    if (!stale || !staleText) return;
+    const age = positionAge(position);
+    const isStale = Boolean(position) && (position.stale || (position.stale_after_s != null && age > position.stale_after_s));
+    if (holdsDriver(ride.status) && isStale) {
         stale.hidden = false;
-        staleText.textContent = `Last position ${position.age_s >= 120 ? `${Math.round(position.age_s / 60)} min` : `${position.age_s} s`} ago`;
+        staleText.textContent = `Last position ${age >= 120 ? `${Math.round(age / 60)} min` : `${age} s`} ago`;
     } else if (holdsDriver(ride.status) && !position && snapshot.connection?.driver_position === 'unknown') {
         stale.hidden = false;
         staleText.textContent = 'Driver position not available yet';
@@ -215,6 +234,8 @@ function cancelSentence(ride) {
 function tick() {
     const ride = snapshot?.ride;
     if (!ride) return;
+
+    renderStale(ride, snapshot.driver_position ?? null);
 
     if (isSearching(ride.status) && ride.search) {
         const progress = searchProgress(ride.search.started_at, ride.search.window_ends_at);

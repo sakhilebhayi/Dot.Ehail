@@ -105,7 +105,9 @@ class RideFeed
         // Adaptive polling (PollPolicy, docs/R46_PERF.md): from what can happen next for this driver.
         $poll = $this->poll->forDriverState($availability?->state, $offer !== null, $ride !== null, $saver);
 
-        if ($version <= $sinceVersion) {
+        // A caller without a version (0) always gets the full view, even for a driver with no history yet
+        // (version 0): the action endpoints answer with this body (QA: a "null + array" 500 otherwise, D-1609).
+        if ($sinceVersion > 0 && $version <= $sinceVersion) {
             return ['version' => $version, 'body' => null, 'poll' => $poll];
         }
 
@@ -219,6 +221,8 @@ class RideFeed
             'recorded_at' => $position->recordedAt->toIso8601String(),
             'age_s' => (int) $position->recordedAt->diffInSeconds(now(), true),
             'stale' => $position->recordedAt->lt(now()->subSeconds($staleAfter)),
+            // The client ages the position between feed bodies (a silent phone changes no version).
+            'stale_after_s' => $staleAfter,
             'eta_s' => $eta?->seconds,
             'eta_to' => $status === RideStatus::InProgress ? 'dropoff' : 'pickup',
             'eta_method' => $eta?->method,

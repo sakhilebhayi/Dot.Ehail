@@ -37,7 +37,9 @@
                     </li>
                 @endforeach
             </ul>
-            <p class="pax-lead" style="margin-top: var(--eh-space-3)">{{ $whatWeDid['incident']['acknowledged'] ? 'Our operations team has seen this.' : 'Our operations team has not acknowledged this yet. If nobody does within minutes, it escalates automatically.' }}</p>
+            <p class="pax-lead" style="margin-top: var(--eh-space-3)" data-pax-incident-state>{{ ! $active
+                ? 'Our operations team resolved this'.($incident->resolved_at ? ' on '.$incident->resolved_at->timezone(config('app.timezone'))->format('j M Y, H:i') : '').'.'
+                : ($whatWeDid['incident']['acknowledged'] ? 'Our operations team has seen this.' : 'Our operations team has not acknowledged this yet. If nobody does within minutes, it escalates automatically.') }}</p>
         </section>
 
         <section aria-labelledby="inc-wa" class="pax-wa">

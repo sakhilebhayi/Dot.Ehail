@@ -39,4 +39,17 @@ class OpsPagesTest extends TestCase
             $this->assertSame(200, $response->status(), $url."\n".mb_substr((string) $response->getContent(), 0, 3000));
         }
     }
+
+    public function test_an_escalated_incident_can_still_be_acknowledged_from_its_page(): void
+    {
+        // QA (D-1617): the button showed only for "open"; after the timer escalated it nobody could own it here.
+        $w = $this->seedOpsWorld();
+        $officer = $this->operatorWith(['safety_officer']);
+        $w['incident']->forceFill(['status' => 'escalated', 'escalation_level' => 1])->save();
+
+        $this->actingAs($officer)->get(route('ops.safety.show', $w['incident']->id))->assertOk()
+            ->assertSee(route('safety.ops.incidents.acknowledge', $w['incident']->id), false);
+        $this->actingAs($officer)->post(route('safety.ops.incidents.acknowledge', $w['incident']->id))->assertSessionHasNoErrors();
+        $this->assertSame('acknowledged', $w['incident']->fresh()->status->value);
+    }
 }

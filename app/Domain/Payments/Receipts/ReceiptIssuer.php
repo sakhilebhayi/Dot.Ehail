@@ -7,6 +7,7 @@ use App\Domain\Payments\Models\Receipt;
 use App\Domain\Payments\OperatorIdentity;
 use App\Domain\Payments\Money;
 use App\Domain\Payments\Seams\FareSource;
+use App\Domain\Pricing\Models\RideFare;
 use App\Models\Ride;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -72,6 +73,26 @@ class ReceiptIssuer
     }
 
     /**
+     * Why a recalculated fare differs from the quote (pricing's reasons, e.g. a changed destination), so the
+     * receipt explains what the passenger paid. Empty when the quote stood.
+     *
+     * @return list<array{text: string, amount_minor: int}>
+     */
+    private function fareChanges(Ride $ride): array
+    {
+        $fare = RideFare::query()->where('ride_id', $ride->id)->first();
+
+        if ($fare === null || $fare->basis !== 'recalculated') {
+            return [];
+        }
+
+        return array_values(array_map(
+            fn (array $a) => ['text' => (string) $a['text'], 'amount_minor' => (int) ($a['amount_minor'] ?? 0)],
+            array_filter((array) $fare->adjustments, fn ($a) => is_array($a) && filled($a['text'] ?? null)),
+        ));
+    }
+
+    /**
      * @param  array<int, array<string, mixed>>  $components
      * @return array{distance: ?string, time: ?string}
      */
@@ -124,6 +145,7 @@ class ReceiptIssuer
             // which differ from the measured trip when the quoted fare stood.
             'billed' => self::billed($components),
             'components' => $components,
+            'fare_changes' => $kind === 'ride' ? $this->fareChanges($ride) : [],
             'promotion_minor' => $fare?->promotionMinor ?? 0,
             'tax_minor' => $vatRegistered ? $tax : 0,
             'tax_label' => $vatRegistered && $tax > 0 ? 'VAT included ('.rtrim(rtrim(number_format((float) config('money.vat.rate_percent'), 2, '.', ''), '0'), '.').'%)' : null,

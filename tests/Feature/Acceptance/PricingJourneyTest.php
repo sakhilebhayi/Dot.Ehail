@@ -5,6 +5,7 @@ namespace Tests\Feature\Acceptance;
 use App\Domain\Earnings\Models\DriverEarning;
 use App\Domain\Ledger\Account;
 use App\Domain\Payments\Models\Payment;
+use App\Domain\Payments\Models\Receipt;
 use App\Domain\Pricing\Models\FareQuote;
 use App\Domain\Pricing\Models\RideFare;
 use App\Models\Ride;
@@ -71,6 +72,11 @@ class PricingJourneyTest extends TestCase
         $this->assertStringContainsString('You changed the destination', $change['text']);
         $this->assertSame($detour['final']['amount_minor'] - $total, array_sum(array_column(array_column($detour['changes'], 'amount'), 'amount_minor')), 'the reasons account for every cent');
         $this->assertSame($detour['final']['amount_minor'], Payment::where('ride_id', $rideId)->where('purpose', Payment::PURPOSE_RIDE_FARE)->sole()->amountMinor(), 'the card is charged the final fare');
+        // The receipt says why the fare differs from the quote (QA, D-1616).
+        $receipt = Receipt::where('ride_id', $rideId)->sole();
+        $this->assertStringContainsString('You changed the destination', collect($receipt->snapshot['fare_changes'])->pluck('text')->implode(' '));
+        $this->actingAs($passenger)->get(route('money.receipts.show', $receipt))->assertOk()
+            ->assertSee('Why the fare differs from the quote')->assertSee('You changed the destination');
 
         // A second trip on the original route in slow traffic (+20 % time): inside the tolerance, the quote stands.
         $this->travel(5)->minutes();
