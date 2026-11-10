@@ -27,7 +27,9 @@ class AvailabilityTest extends TestCase
     {
         $user = User::factory()->withPersonalTeam()->create();
         $profile = DriverProfile::factory()->for($user)->create(['status' => $status, 'is_online' => false]);
-        Vehicle::factory()->for($profile, 'driverProfile')->create(['is_active' => true, 'type' => 'standard']);
+        $vehicle = Vehicle::factory()->for($profile, 'driverProfile')->create(['is_active' => true, 'type' => 'standard']);
+        // Documents verified (the safety gate); approval of the profile is what these tests vary.
+        $this->approveAllDocuments($profile, $vehicle);
 
         return $user;
     }
@@ -50,7 +52,8 @@ class AvailabilityTest extends TestCase
 
         $this->actingAs($driver)->postJson(route('ehail.dispatch.driver.online'))
             ->assertForbidden()
-            ->assertJsonPath('error', 'profile_not_approved');
+            // The code comes from the safety verification gate (bound at integration, D-700).
+            ->assertJsonPath('error', 'driver_not_approved');
 
         $this->assertNotSame('online', DriverAvailability::where('user_id', $driver->id)->value('state'));
     }

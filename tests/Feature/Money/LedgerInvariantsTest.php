@@ -109,7 +109,8 @@ class LedgerInvariantsTest extends TestCase
         $passenger = User::factory()->create();
         $rideIds = [];
         for ($r = 1; $r <= 40; $r++) {
-            $rideIds[] = $this->makeRide([], $passenger)->id; // real ids (sequences differ per database)
+            // Real ids (sequences differ per database); completed, so one passenger may hold many (dispatch D-402).
+            $rideIds[] = $this->makeRide(['status' => 'completed'], $passenger)->id;
         }
 
         mt_srand(4646);

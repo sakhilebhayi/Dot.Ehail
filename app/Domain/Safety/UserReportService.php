@@ -32,7 +32,7 @@ class UserReportService
         }
 
         try {
-            return UserReport::create([
+            return DB::transaction(fn () => UserReport::create([
                 'reporter_id' => $reporter->id,
                 'reported_user_id' => $other,
                 'ride_id' => $ride->id,
@@ -42,7 +42,7 @@ class UserReportService
                 'status' => 'open',
                 // One report per category per ride per reporter.
                 'dedupe_key' => "r:{$ride->id}:{$reporter->id}:{$category}",
-            ]);
+            ]));
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['category' => 'You already reported this on this ride. Operations will review it.']);
         }
@@ -54,7 +54,7 @@ class UserReportService
     public function flag(User $subject, string $role, string $category, string $description, array $evidence, string $dedupeKey): ?UserReport
     {
         try {
-            return UserReport::create([
+            return DB::transaction(fn () => UserReport::create([
                 'reporter_id' => null,
                 'reported_user_id' => $subject->id,
                 'reporter_role' => 'system',
@@ -63,7 +63,7 @@ class UserReportService
                 'status' => 'open',
                 'evidence' => $evidence + ['subject_role' => $role],
                 'dedupe_key' => $dedupeKey,
-            ]);
+            ]));
         } catch (UniqueConstraintViolationException) {
             return null;
         }
