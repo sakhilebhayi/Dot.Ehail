@@ -5,6 +5,7 @@ namespace App\Domain\Payments\Webhooks;
 use App\Domain\Payments\Jobs\ProcessPaystackWebhook;
 use App\Domain\Payments\Models\WebhookEvent;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -36,14 +37,15 @@ class PaystackWebhookInbox
         ]));
 
         try {
-            $stored = WebhookEvent::create([
+            // Savepoint: a duplicate's unique violation must not abort an enclosing transaction (PostgreSQL).
+            $stored = DB::transaction(fn () => WebhookEvent::create([
                 'provider' => 'paystack',
                 'event_key' => $key,
                 'event' => $event,
                 'reference' => is_scalar($reference) ? mb_substr((string) $reference, 0, 120) : null,
                 'payload' => ['event' => $event, 'data' => self::withoutPersonalData($data)],
                 'status' => 'received',
-            ]);
+            ]));
         } catch (UniqueConstraintViolationException) {
             return 'duplicate';
         }

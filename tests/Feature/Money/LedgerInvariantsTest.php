@@ -85,6 +85,21 @@ class LedgerInvariantsTest extends TestCase
         $journal->entries()->first()->update(['debit_minor' => 1]);
     }
 
+    public function test_postgresql_refuses_to_commit_an_unbalanced_journal(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('The deferred balance trigger exists on PostgreSQL only (SQLite: application check + reconciliation).');
+        }
+
+        $journal = app(Ledger::class)->post((new JournalEntry('t', 'pg-balance', 'ZAR', 'x'))->debit(Account::PLATFORM_BANK, 100)->credit(Account::REFUNDS, 100));
+
+        $this->expectException(QueryException::class);
+        DB::transaction(function () use ($journal) {
+            DB::table('ledger_entries')->insert(['journal_id' => $journal->id, 'account' => 'refunds', 'account_type' => 'refunds', 'debit_minor' => 0, 'credit_minor' => 5, 'currency' => 'ZAR']);
+            DB::statement('SET CONSTRAINTS ALL IMMEDIATE');
+        });
+    }
+
     /**
      * Property: for random fares, promotions, taxes, fees, commission rates and settlement paths, every
      * journal the posting rules build balances, and the whole ledger sums to zero.
@@ -92,8 +107,9 @@ class LedgerInvariantsTest extends TestCase
     public function test_property_every_posting_rule_balances_for_random_inputs(): void
     {
         $passenger = User::factory()->create();
+        $rideIds = [];
         for ($r = 1; $r <= 40; $r++) {
-            $this->makeRide([], $passenger);
+            $rideIds[] = $this->makeRide([], $passenger)->id; // real ids (sequences differ per database)
         }
 
         mt_srand(4646);
@@ -113,12 +129,13 @@ class LedgerInvariantsTest extends TestCase
             $fare = new FareBreakdown($gross, 'ZAR', [], $promo, $tax, $fees);
             $split = new EarningsSplit($commission, $base - $commission, $deduction > 0 ? [['code' => 'x', 'label' => 'x', 'amount_minor' => $deduction]] : [], $net, 'p');
             $driver = mt_rand(1, 50);
+            $ride = $rideIds[($i - 1) % 40];
 
             $journals = [
-                $rules->tripRevenue($i, $fare, $split, Account::driverPayable($driver)),
-                $rules->paymentSettled($i, $i, mt_rand(0, 1) ? Account::GATEWAY_CLEARING : Account::cashWithDriver($driver), max(1, $fare->payableMinor()), 'ZAR', 'card'),
-                $rules->refund($i, $i, mt_rand(1, 1000), 'ZAR', Account::GATEWAY_CLEARING, 'r'),
-                $rules->cancellationFee($i, $fee = mt_rand(1, 5000), mt_rand(0, $fee), 'ZAR', Account::driverPayable($driver)),
+                $rules->tripRevenue($ride, $fare, $split, Account::driverPayable($driver)),
+                $rules->paymentSettled($i, $ride, mt_rand(0, 1) ? Account::GATEWAY_CLEARING : Account::cashWithDriver($driver), max(1, $fare->payableMinor()), 'ZAR', 'card'),
+                $rules->refund($i, $ride, mt_rand(1, 1000), 'ZAR', Account::GATEWAY_CLEARING, 'r'),
+                $rules->cancellationFee($ride, $fee = mt_rand(1, 5000), mt_rand(0, $fee), 'ZAR', Account::driverPayable($driver)),
                 $rules->incentiveEarned("p{$i}", mt_rand(1, 100000), 'ZAR', Account::driverPayable($driver), 'Weekly', $i),
             ];
 
