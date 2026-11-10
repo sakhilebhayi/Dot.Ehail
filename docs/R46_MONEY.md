@@ -110,7 +110,7 @@ Isolation (tested): drivers see only their earnings and payouts; fleet owners on
 | Automatic | Manual (operator) |
 |---|---|
 | Card charge after a trip, verify, retries, payment-due block | Refunds (every one), refund reasons |
-| Webhook processing, pending verification (`money:sweep`, every minute) | Cash discrepancy resolution (adjustment / write-off) |
+| Webhook processing, pending verification (`money:sweep`, every minute); never-settled completed rides re-queued and listed (`ehail:settlement-sweep`, every five minutes, D-1607) | Cash discrepancy resolution (adjustment / write-off) |
 | Ledger posting for every money event | Payout batch: export, bank payment, mark paid / failed / reversed |
 | Earnings availability on settlement | Paystack transfers: pressing "send" (when enabled) |
 | Weekly payout batch **draft** | Bank account checks when Paystack validation is not configured |
