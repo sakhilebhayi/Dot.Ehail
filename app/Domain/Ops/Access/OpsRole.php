@@ -41,7 +41,7 @@ enum OpsRole: string
             self::VerificationReviewer => 'Reviews driver and vehicle documents, applications and fleets. No money.',
             self::SafetyOfficer => 'Owns incidents and reports, suspends drivers, reads the audit trail.',
             self::SupportAgent => 'Answers support cases and lost property; adjusts fares on disputes.',
-            self::Finance => 'Payments, refunds, payouts, reconciliation and the ledger. No identity documents.',
+            self::Finance => 'Payments, refunds, payouts, reconciliation, the ledger and business accounts. No identity documents.',
             self::PricingManager => 'Tariffs, promotions, categories, commission plans and service areas.',
             self::Admin => 'Everything, including granting roles.',
         };
@@ -51,12 +51,12 @@ enum OpsRole: string
     public function permissions(): array
     {
         return match ($this) {
-            self::OpsAgent => [P::LIVE_VIEW, P::RIDES_VIEW, P::DRIVERS_VIEW, P::SAFETY_VIEW, P::SUPPORT_VIEW, P::INSIGHTS_VIEW],
+            self::OpsAgent => [P::LIVE_VIEW, P::RIDES_VIEW, P::DRIVERS_VIEW, P::SAFETY_VIEW, P::SUPPORT_VIEW, P::BUSINESS_VIEW, P::INSIGHTS_VIEW],
             self::Dispatcher => [P::LIVE_VIEW, P::RIDES_VIEW, P::RIDES_INTERVENE, P::DRIVERS_VIEW, P::DRIVERS_POSITIONS, P::INSIGHTS_VIEW],
             self::VerificationReviewer => [P::DRIVERS_VIEW, P::VERIFICATION_REVIEW, P::FLEETS_REVIEW],
             self::SafetyOfficer => [P::LIVE_VIEW, P::RIDES_VIEW, P::DRIVERS_VIEW, P::DRIVERS_POSITIONS, P::DRIVERS_SUSPEND, P::SAFETY_VIEW, P::SAFETY_ACT, P::SUPPORT_VIEW, P::AUDIT_VIEW],
             self::SupportAgent => [P::RIDES_VIEW, P::RIDES_FARE_ADJUST, P::DRIVERS_VIEW, P::SAFETY_VIEW, P::SUPPORT_VIEW, P::SUPPORT_ACT],
-            self::Finance => [P::RIDES_VIEW, P::RIDES_FARE_ADJUST, P::DRIVERS_VIEW, P::DRIVERS_EARNINGS, P::FINANCE_VIEW, P::FINANCE_REFUND, P::FINANCE_PAYOUTS, P::FINANCE_MANAGE, P::INSIGHTS_VIEW],
+            self::Finance => [P::RIDES_VIEW, P::RIDES_FARE_ADJUST, P::DRIVERS_VIEW, P::DRIVERS_EARNINGS, P::FINANCE_VIEW, P::FINANCE_REFUND, P::FINANCE_PAYOUTS, P::FINANCE_MANAGE, P::BUSINESS_VIEW, P::BUSINESS_MANAGE, P::INSIGHTS_VIEW],
             self::PricingManager => [P::PRICING_VIEW, P::PRICING_MANAGE, P::ZONES_MANAGE, P::INSIGHTS_VIEW],
             self::Admin => P::all(),
         };

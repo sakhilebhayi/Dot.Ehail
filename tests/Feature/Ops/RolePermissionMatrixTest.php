@@ -54,6 +54,10 @@ class RolePermissionMatrixTest extends TestCase
         'ops.audit*' => ['safety_officer'],
         'ops.roles*' => [],
         'ops.fleets*' => ['verification_reviewer'],
+        'ops.business' => ['ops_agent', 'finance'],
+        'ops.business.show' => ['ops_agent', 'finance'],
+        'ops.business.*' => ['finance'],
+        'fleet.ops.*' => ['verification_reviewer'],
 
         'ehail.dispatch.ops.rides.index' => ['ops_agent', 'dispatcher', 'safety_officer', 'support_agent', 'finance'],
         'ehail.dispatch.ops.rides.timeline' => ['ops_agent', 'dispatcher', 'safety_officer', 'support_agent', 'finance'],

@@ -50,6 +50,10 @@ final class OpsPermission
 
     public const FINANCE_MANAGE = 'finance.manage';
 
+    public const BUSINESS_VIEW = 'business.view';
+
+    public const BUSINESS_MANAGE = 'business.manage';
+
     public const INSIGHTS_VIEW = 'insights.view';
 
     public const AUDIT_VIEW = 'audit.view';
@@ -82,6 +86,8 @@ final class OpsPermission
         self::FINANCE_REFUND => 'Refund payments and write off unpaid fares',
         self::FINANCE_PAYOUTS => 'Draft, export and settle payout batches',
         self::FINANCE_MANAGE => 'Post ledger adjustments, resolve finance issues, run incentives',
+        self::BUSINESS_VIEW => 'See business accounts and their review state',
+        self::BUSINESS_MANAGE => 'Approve, decline, suspend business accounts; set credit and terms; record their payments and statements',
         self::INSIGHTS_VIEW => 'See operational insights and export them',
         self::AUDIT_VIEW => 'Read the audit log',
         self::ROLES_MANAGE => 'Grant and remove operator roles',

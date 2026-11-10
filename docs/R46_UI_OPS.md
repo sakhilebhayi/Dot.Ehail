@@ -45,6 +45,7 @@ Old addresses `/operator/rides` and `/operator/fleets` redirect here. `/ops` sen
 | Support (read / act) | read | | | read | both | | | both |
 | Pricing (read / manage), zones | | | | | | | both | both |
 | Finance (view, refund, payouts, manage) | | | | | | all | | all |
+| Business accounts (read / manage) | read | | | | | both | | both |
 | Insights | yes | yes | | | | yes | yes | yes |
 | Audit log, who viewed what | | | | yes | | | | yes |
 | Roles | | | | | | | | yes |

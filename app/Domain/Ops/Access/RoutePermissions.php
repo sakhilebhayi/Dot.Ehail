@@ -50,7 +50,14 @@ final class RoutePermissions
         'ops.audit.*' => [P::AUDIT_VIEW],
         'ops.roles' => [P::ROLES_MANAGE],
         'ops.roles.*' => [P::ROLES_MANAGE],
+        // Business accounts (R-46 business, docs/R46_BUSINESS.md): reading for agents and finance; approving, credit,
+        // terms, suspension and recording payments are money decisions (finance), D-1015.
+        'ops.business' => [P::BUSINESS_VIEW],
+        'ops.business.show' => [P::BUSINESS_VIEW],
+        'ops.business.*' => [P::BUSINESS_MANAGE],
         'ops.fleets' => [P::FLEETS_REVIEW],
+        // Fleet (R-46 fleet, D-1205): granting a fleet owner identity-review rights is an identity-data decision.
+        'fleet.ops.*' => [P::VERIFICATION_REVIEW],
         'ops.fleets.*' => [P::FLEETS_REVIEW],
 
         // Dispatch operations API (docs/R46_DISPATCH.md section 8)

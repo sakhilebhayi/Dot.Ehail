@@ -2,14 +2,22 @@
 
 namespace Tests\Feature\Fleet;
 
+use App\Domain\Catalog\Services\CategoryEligibility;
 use App\Domain\Dispatch\Models\DriverAvailability;
+use App\Domain\Fleet\FleetAlerts;
 use App\Domain\Fleet\FleetPerformance;
+use App\Domain\Fleet\FleetRegistration;
 use App\Domain\Fleet\Models\DriverOnlineSession;
 use App\Domain\Fleet\Models\FleetMember;
+use App\Domain\Rides\Models\RideEvent;
+use App\Models\AuditLog;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
+use App\Models\Ride;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Support\Ui\Navigation;
+use App\Support\Ui\RoleHome;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\CreatesEhailFixtures;
 use Tests\Concerns\FleetFixtures;
@@ -57,10 +65,10 @@ class FleetPortalTest extends TestCase
         $this->actingAs($owner)->post(route('fleet.vehicles.store'), $vehicle + ['features' => ['made_up_feature']])->assertSessionHasErrors('features.0');
         $this->actingAs($owner)->post(route('fleet.vehicles.store'), $vehicle + ['features' => ['wheelchair_access']])->assertRedirect();
 
-        $vehicle = \App\Models\Vehicle::where('plate_number', 'ND 123-456')->sole();
+        $vehicle = Vehicle::where('plate_number', 'ND 123-456')->sole();
         $this->assertSame(['wheelchair_access'], $vehicle->features);
         $this->assertSame($fleet->id, $vehicle->fleet_id);
-        $this->assertContains('accessible', app(\App\Domain\Catalog\Services\CategoryEligibility::class)->servableCategoryKeys($vehicle));
+        $this->assertContains('accessible', app(CategoryEligibility::class)->servableCategoryKeys($vehicle));
 
         $this->actingAs($owner)->get(route('fleet.vehicles.show', $vehicle))->assertOk()->assertSee('ND 123-456')->assertSee('Qualifies')->assertSee('Nobody has this vehicle');
         $this->actingAs($owner)->post(route('fleet.vehicles.store'), ['plate_number' => 'ND 123-456', 'make' => 'X', 'model' => 'Y', 'year' => 2020, 'color' => 'Red', 'type' => 'standard', 'seats' => 4])
@@ -82,7 +90,7 @@ class FleetPortalTest extends TestCase
         $this->actingAs($manager)->get(route('fleet.vehicles'))->assertForbidden();
 
         // The manager gets the fleet surface in the account menu.
-        $this->assertContains('fleet', app(\App\Support\Ui\RoleHome::class)->surfaces($manager));
+        $this->assertContains('fleet', app(RoleHome::class)->surfaces($manager));
 
         $this->actingAs($owner)->patch(route('fleet.settings.managers.update', $member->id), ['scopes' => ['vehicles']])->assertSessionHasNoErrors();
         $this->actingAs($manager)->get(route('fleet.vehicles'))->assertOk();
@@ -142,8 +150,8 @@ class FleetPortalTest extends TestCase
         [$driver, $profile] = $this->fleetDriver($fleet, 'Cancel Prone');
         foreach (range(1, 3) as $i) {
             $ride = $this->makeRide(['status' => 'cancelled_by_driver']);
-            \App\Domain\Rides\Models\RideEvent::create(['ride_id' => $ride->id, 'sequence' => 1, 'type' => 'transition', 'from_status' => 'driver_assigned', 'to_status' => 'cancelled_by_driver', 'actor_type' => 'driver', 'actor_id' => $driver->id, 'occurred_at' => now()]);
-            \App\Models\Ride::query()->update(['active_passenger_id' => null]);
+            RideEvent::create(['ride_id' => $ride->id, 'sequence' => 1, 'type' => 'transition', 'from_status' => 'driver_assigned', 'to_status' => 'cancelled_by_driver', 'actor_type' => 'driver', 'actor_id' => $driver->id, 'occurred_at' => now()]);
+            Ride::query()->update(['active_passenger_id' => null]);
         }
         $this->makeRide(['status' => 'completed', 'driver_id' => $driver->id, 'completed_at' => now()]);
 
@@ -154,7 +162,7 @@ class FleetPortalTest extends TestCase
         $this->assertNull($row['acceptance_bp']);
         $this->assertSame('new', $row['rating']['band']);
 
-        $alerts = collect(app(\App\Domain\Fleet\FleetAlerts::class)->forFleet(User::find($fleet->owner_user_id), $fleet))->where('kind', 'cancellations');
+        $alerts = collect(app(FleetAlerts::class)->forFleet(User::find($fleet->owner_user_id), $fleet))->where('kind', 'cancellations');
         $this->assertSame(['Cancel Prone'], $alerts->pluck('subject')->all());
         $this->actingAs(User::find($fleet->owner_user_id))->get(route('fleet.drivers'))->assertOk()->assertSee('25%');
     }
@@ -172,9 +180,11 @@ class FleetPortalTest extends TestCase
         $this->actingAs($owner)->post(route('fleets.drivers.approve', [$fleet, $profile->id]))->assertRedirect();
         $this->assertSame('approved', $profile->fresh()->status);
         $this->actingAs($owner)->post(route('fleets.drivers.approve', [$fleet, $profile->id]))->assertSessionHasErrors('status');
-        $this->assertSame(1, \App\Models\AuditLog::where('action', 'fleet.driver_application_approved')->count());
+        $this->assertSame(1, AuditLog::where('action', 'fleet.driver_application_approved')->count());
 
-        $this->actingAs($this->makeOperator())->get(route('operator.fleets.index'))->assertOk();
+        // The operator's legacy fleet queue moved into the operations centre (R-46 ops, D-1008): it redirects there.
+        $this->actingAs($this->makeOperator())->get(route('operator.fleets.index'))->assertRedirect(route('ops.fleets'));
+        $this->actingAs($this->makeOperator())->followingRedirects()->get(route('operator.fleets.index'))->assertOk();
     }
 
     public function test_applications_are_decided_in_the_portal_by_owner_or_a_drivers_manager_never_the_applicant(): void
@@ -184,7 +194,7 @@ class FleetPortalTest extends TestCase
         $a = DriverProfile::factory()->create(['fleet_id' => $fleet->id, 'status' => 'pending']);
         $b = DriverProfile::factory()->create(['fleet_id' => $fleet->id, 'status' => 'pending']);
         $manager = User::factory()->withPersonalTeam()->create(['email' => 'm@example.test']);
-        app(\App\Domain\Fleet\FleetRegistration::class)->addManager($fleet, 'm@example.test', ['drivers'], $owner);
+        app(FleetRegistration::class)->addManager($fleet, 'm@example.test', ['drivers'], $owner);
 
         $this->actingAs($owner)->post(route('fleet.applications.approve', $a->id))->assertSessionHasNoErrors();
         $this->actingAs($manager)->post(route('fleet.applications.reject', $b->id), ['reason' => 'No PrDP yet'])->assertSessionHasNoErrors();
@@ -195,7 +205,7 @@ class FleetPortalTest extends TestCase
         $self = DriverProfile::factory()->create(['fleet_id' => $fleet->id, 'status' => 'pending']);
         $selfUser = User::find($self->user_id);
         $selfUser->forceFill(['email' => 'self@example.test'])->save();
-        app(\App\Domain\Fleet\FleetRegistration::class)->addManager($fleet, 'self@example.test', ['drivers'], $owner);
+        app(FleetRegistration::class)->addManager($fleet, 'self@example.test', ['drivers'], $owner);
         $this->actingAs($selfUser)->post(route('fleet.applications.approve', $self->id))->assertForbidden();
         $this->assertSame('pending', $self->fresh()->status);
     }
