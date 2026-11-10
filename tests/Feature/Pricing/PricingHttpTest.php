@@ -59,7 +59,7 @@ class PricingHttpTest extends TestCase
 
         $this->postJson(route('pricing.estimate'), ['pickup_lat' => 200])->assertUnprocessable();
         $this->postJson(route('pricing.estimate'), $this->trip)->assertOk();
-        $this->postJson(route('pricing.estimate'), $this->trip)->assertStatus(429);
+        $this->postJson(route('pricing.estimate'), $this->trip)->assertStatus(429)->assertJsonPath('message', 'Too many requests. Wait a minute and try again.');
     }
 
     public function test_public_catalogue_lists_active_ride_categories_only(): void

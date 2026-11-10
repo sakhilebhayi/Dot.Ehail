@@ -4,7 +4,7 @@
 
 ### Method
 
-Web search and page fetches on 2026-11-10. Sources were company help pages (Uber, Bolt, inDrive, DiDi, Lyft), a SARS practice note, government statements (gov.za, SAnews), one academic paper, and South African and international news. Several pages could not be fetched (403 errors: SAIT, IOL/Mercury, Oxford news page, Computer Weekly), so those points rest on search-result snippets and are marked "as reported". Help pages vary by city and change often, and most of the ones I found are for markets other than South Africa. I could not find official South African cancellation or waiting-fee rules for Uber or Bolt, any current ACSA e-hailing fee schedule, or a published Bolt rule on capping or showing surge. Numbers in square brackets point to the source list.
+Web search and page fetches on 2026-11-10, done by a research sub-agent for the pricing agent and checked against the cited sources' summaries (not re-fetched). Sources were company help pages (Uber, Bolt, inDrive, DiDi, Lyft), a SARS practice note, government statements (gov.za, SAnews), one academic paper, and South African and international news. Several pages could not be fetched (403 errors: SAIT, IOL/Mercury, Oxford news page, Computer Weekly), so those points rest on search-result snippets and are marked "as reported". Help pages vary by city and change often, and most of the ones I found are for markets other than South Africa. I could not find official South African cancellation or waiting-fee rules for Uber or Bolt, any current ACSA e-hailing fee schedule, or a published Bolt rule on capping or showing surge. Numbers in square brackets point to the source list.
 
 ### 1. How the major platforms price rides
 

@@ -24,7 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 /**
  * R-46 pricing and catalogue wiring (docs/R46_PRICING.md). Seams to other domains are bound here:
@@ -76,8 +76,12 @@ class EhailPricingServiceProvider extends ServiceProvider
             $handler->renderable(function (AuthenticationException $e, Request $request) use ($isPricingApi) {
                 return $isPricingApi($request) ? response()->json(['message' => 'Sign in to continue.'], 401) : null;
             });
-            $handler->renderable(function (NotFoundHttpException $e, Request $request) use ($isPricingApi) {
-                return $isPricingApi($request) ? response()->json(['message' => 'Not found.'], 404) : null;
+            $handler->renderable(function (HttpExceptionInterface $e, Request $request) use ($isPricingApi) {
+                $messages = [403 => 'Not allowed.', 404 => 'Not found.', 419 => 'Your session expired. Reload the page and try again.', 429 => 'Too many requests. Wait a minute and try again.'];
+
+                return $isPricingApi($request)
+                    ? response()->json(['message' => $messages[$e->getStatusCode()] ?? 'Request failed.'], $e->getStatusCode(), $e->getHeaders())
+                    : null;
             });
         }
 
