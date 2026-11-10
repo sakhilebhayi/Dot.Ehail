@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Ehail;
 
+use App\Domain\Safety\Seams\RidePinSource;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Ride;
@@ -71,6 +72,8 @@ class RideController extends Controller
                 ? RidePayment::where('ride_id', $ride->id)->where('status', RidePayment::STATUS_PAID)->latest('paid_at')->first()
                 : null,
             'paymentsEnabled' => $paystack->canTakePayments(),
+            // The trip PIN for the passenger only, from driver assignment until the trip starts (same rule as the feed).
+            'tripPin' => request()->user()?->id === $ride->passenger_id ? app(RidePinSource::class)->forPassenger($ride)['pin'] : null,
             'testMode' => $paystack->isTestMode(),
         ]);
     }

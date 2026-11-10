@@ -74,6 +74,12 @@
     </div>
     @endif
 
+    @if(! empty($tripPin))
+    <div class="dot-card" style="padding:1rem 1.5rem;margin-bottom:1.25rem;">
+        <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">Your trip PIN is <strong style="font-family:monospace;font-size:1.1rem;color:#f4f4f5;letter-spacing:0.2em;">{{ $tripPin }}</strong>. Give it to the driver once you are in the car; the trip cannot start without it.</p>
+    </div>
+    @endif
+
     @if($ride->status === 'expired')
     <div class="dot-card" style="padding:1rem 1.5rem;margin-bottom:1.25rem;">
         <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">No driver took this request in time. <a href="{{ route('rides.create') }}" style="color:#38bdf8;text-decoration:none;">Request the ride again</a>.</p>

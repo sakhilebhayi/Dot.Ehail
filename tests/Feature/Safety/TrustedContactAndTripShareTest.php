@@ -7,6 +7,7 @@ use App\Domain\Safety\Mail\TrustedContactConfirmationMail;
 use App\Domain\Safety\Models\TripShare;
 use App\Domain\Safety\Models\TrustedContact;
 use App\Domain\Safety\TripShareService;
+use App\Http\Middleware\RequireRecentSignIn;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,13 @@ class TrustedContactAndTripShareTest extends TestCase
 {
     use CreatesSafetyFixtures;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Adding a trusted contact needs a recent sign-in (R-46 security S-15).
+        $this->withSession([RequireRecentSignIn::SIGNED_IN_AT => time()]);
+    }
 
     /** Adds a contact and returns it with the confirmation token taken from the email. */
     private function addContact(User $owner, string $email = 'sipho@example.com', ?string $phone = null): array

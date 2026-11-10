@@ -29,7 +29,7 @@ Route::prefix('verification')->name('verification.')->group(function () {
 
 Route::prefix('safety')->name('safety.')->group(function () {
     Route::get('/contacts', [TrustedContactController::class, 'index'])->name('contacts.index');
-    Route::post('/contacts', [TrustedContactController::class, 'store'])->middleware('throttle:ehail-contacts')->name('contacts.store');
+    Route::post('/contacts', [TrustedContactController::class, 'store'])->middleware(['throttle:ehail-contacts', 'ehail.recent-auth'])->name('contacts.store');
     Route::post('/contacts/{contact}/resend', [TrustedContactController::class, 'resend'])->middleware('throttle:ehail-contacts')->name('contacts.resend');
     Route::delete('/contacts/{contact}', [TrustedContactController::class, 'destroy'])->name('contacts.destroy');
 
