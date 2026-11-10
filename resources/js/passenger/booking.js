@@ -5,7 +5,7 @@ import { createPlaceSearch, loadGeoConfig, locateOnce, locationPermission, mount
 import { announce, api, ApiError, idempotencyKey, island } from './api.js';
 import { formatKm, formatMinutes, renderBreakdown } from './breakdown.js';
 import { clock, quoteState } from './countdown.js';
-import { categoryIcon, defaultPayment, etaText, laterBounds, laterError, paymentOptions, requestLabel, unavailableText } from './labels.js';
+import { businessReasons, categoryIcon, defaultPayment, etaText, laterBounds, laterError, paymentOptions, requestLabel, unavailableText } from './labels.js';
 import { formatMinor } from './money.js';
 import { el, icon, setSnap, showStep, watchConnection } from './dom.js';
 
@@ -34,6 +34,8 @@ const state = {
     submitting: false,
     pinPoint: null,
     places: data.places || [],
+    profiles: null,
+    business: { purpose: '', status: null, approvalId: null },
 };
 
 let config = null;
@@ -238,11 +240,14 @@ async function loadOptions({ keepSelection = true } = {}) {
     const points = { pickup_lat: state.pickup.lat, pickup_lng: state.pickup.lng, dropoff_lat: state.dropoff.lat, dropoff_lng: state.dropoff.lng };
     const quoteCall = api(data.urls.quotes, { method: 'POST', body: { ...points, promo_code: state.promo || undefined } });
     const walletCall = state.wallet ? Promise.resolve({ data: state.wallet }) : api(data.urls.wallet);
+    const profileCall = state.profiles !== null || !data.urls.profiles ? Promise.resolve({ data: { profiles: state.profiles || [] } }) : api(data.urls.profiles).catch(() => ({ data: { profiles: [] } }));
     const etaCall = api(data.urls.etas, { method: 'POST', body: { lat: state.pickup.lat, lng: state.pickup.lng } }).catch(() => null);
     drawRoute(points);
 
     try {
-        const [{ data: compare }, wallet, etas] = await Promise.all([quoteCall, walletCall.catch(() => null), etaCall]);
+        const [{ data: compare }, wallet, etas, profiles] = await Promise.all([quoteCall, walletCall.catch(() => null), etaCall, profileCall]);
+        state.profiles = profiles?.data?.profiles || [];
+        state.business.status = null;
         state.compare = compare;
         state.wallet = wallet?.data || null;
         state.etas = etas?.data?.categories || null;
@@ -262,9 +267,10 @@ async function drawRoute(points) {
     if (!map || !config?.routing?.configured) return;
     try {
         const q = new URLSearchParams({ from_lat: points.pickup_lat, from_lng: points.pickup_lng, to_lat: points.dropoff_lat, to_lng: points.dropoff_lng });
-        const { data: route } = await api(`${data.urls.route}?${q}`);
-        if (route?.polyline) {
-            map.drawRoute(route.polyline);
+        const { data: answer } = await api(`${data.urls.route}?${q}`);
+        const polyline = answer?.route?.polyline;
+        if (polyline) {
+            map.drawRoute(polyline);
             fitVisible();
         }
     } catch {
@@ -359,6 +365,7 @@ function optionCard(option) {
     input.addEventListener('change', () => {
         state.selected = key;
         state.key = null;
+        state.business.status = null;
         renderPayment();
         updateRequest();
     });
@@ -432,19 +439,21 @@ function renderPayment() {
         return;
     }
 
-    const options = paymentOptions(wallet, state.selected);
-    if (!options.some((o) => o.value === state.payment)) state.payment = defaultPayment(options);
+    const options = paymentOptions(wallet, state.selected, state.profiles);
+    if (!options.some((o) => o.value === state.payment && !o.disabled)) state.payment = defaultPayment(options);
 
     const set = el('fieldset', { class: 'pax-pay' }, [el('legend', {}, 'Pay with')]);
     if (!options.length) {
         set.appendChild(el('p', { class: 'pax-rule' }, wallet.card_payments?.notice || 'Rides cannot be paid for right now: card payments and cash are both switched off.'));
     }
     for (const option of options) {
-        const radio = el('input', { type: 'radio', name: 'pax-payment', value: option.value });
+        const radio = el('input', { type: 'radio', name: 'pax-payment', value: option.value, disabled: option.disabled || null });
         radio.checked = option.value === state.payment;
         radio.addEventListener('change', () => {
             state.payment = option.value;
             state.key = null;
+            state.business.status = null;
+            renderBusiness();
             updateRequest();
         });
         set.appendChild(el('label', { class: 'pax-pay__opt' }, [radio, icon(option.icon), el('span', { class: 'pax-pay__text' }, [el('span', {}, option.label), el('span', { class: 'pax-pay__meta' }, option.meta)])]));
@@ -457,7 +466,95 @@ function renderPayment() {
         extras.push(add);
         extras.push(el('p', { class: 'pax-rule' }, `Adding a card makes a ${formatMinor(wallet.card_setup_charge_minor || 100)} check that is refunded straight away.${wallet.card_payments.test_mode ? ' Payments are in test mode.' : ''}`));
     }
-    host.replaceChildren(set, ...extras);
+    host.replaceChildren(set, el('div', { 'data-pax-business': '' }), ...extras);
+    renderBusiness();
+}
+
+// ------------------------------------------------------------------ business rides (docs/R46_BUSINESS.md section 5)
+function chosenPayment() {
+    return paymentOptions(state.wallet, state.selected, state.profiles || []).find((o) => o.value === state.payment) || null;
+}
+
+/** The company's checks for this quote: allowed, needs approval (ask for it), or refused with reasons. */
+function renderBusiness() {
+    const host = body.querySelector('[data-pax-business]');
+    if (!host) return;
+    const choice = chosenPayment();
+    if (!choice?.profile) {
+        host.replaceChildren();
+        return;
+    }
+    const profile = choice.profile;
+    const needsPurpose = Boolean(profile.needs_purpose || profile.policy?.purpose_required);
+    const purpose = el('input', { class: 'eh-input', id: 'pax-biz-purpose', maxlength: '120', value: state.business.purpose, placeholder: 'Client meeting, airport, site visit' });
+    purpose.addEventListener('change', () => {
+        state.business.purpose = purpose.value.trim();
+        state.business.status = null;
+        prepareBusiness();
+    });
+    const status = el('div', { class: 'pax-section', 'data-pax-biz-status': '', role: 'status' });
+    host.replaceChildren(
+        el('div', { class: 'eh-field pax-section' }, [el('label', { class: 'eh-field__label', for: 'pax-biz-purpose' }, ['Purpose of the trip', needsPurpose ? null : el('span', { class: 'eh-field__optional' }, ' optional')]), purpose]),
+        status,
+    );
+    if (!state.business.status) prepareBusiness();
+    else drawBusinessStatus();
+}
+
+let prepareSeq = 0;
+async function prepareBusiness() {
+    const choice = chosenPayment();
+    const option = selectedOption();
+    if (!choice?.profile || !option) return;
+    const mine = ++prepareSeq;
+    state.business.status = { state: 'checking' };
+    drawBusinessStatus();
+    updateRequest();
+    try {
+        const body = { profile_id: choice.profile.id, quote_id: option.quote_id, purpose: state.business.purpose || undefined, approval_id: state.business.approvalId || undefined };
+        if (state.when === 'later') body.scheduled_for = new Date(state.laterAt).toISOString();
+        const { data: checked } = await api(data.urls.businessPrepare, { method: 'POST', body });
+        if (mine !== prepareSeq) return;
+        state.business.status = checked.allowed ? { state: 'allowed' } : checked.needs_approval ? { state: 'approval', reasons: checked.reasons, approval: checked.approval } : { state: 'refused', ...businessReasons({ reasons: checked.reasons }) };
+        if (checked.approval?.id && checked.approval.status === 'approved') state.business.approvalId = checked.approval.id;
+    } catch (failure) {
+        if (mine !== prepareSeq) return;
+        state.business.status = { state: 'refused', ...businessReasons(failure.body || { message: failure.message }) };
+    }
+    drawBusinessStatus();
+    updateRequest();
+}
+
+function drawBusinessStatus() {
+    const host = body.querySelector('[data-pax-biz-status]');
+    const st = state.business.status;
+    if (!host || !st) return;
+    const list = (items) => (items?.length ? el('ul', { class: 'pax-unavailable' }, items.map((r) => el('li', {}, typeof r === 'string' ? r : r.message))) : null);
+    if (st.state === 'checking') host.replaceChildren(el('p', { class: 'pax-rule' }, 'Checking the company policy for this ride.'));
+    else if (st.state === 'allowed') host.replaceChildren(el('p', { class: 'pax-rule' }, [icon('info'), ' Within the company policy. The fare is billed to the account.']));
+    else if (st.state === 'approval') {
+        const pending = st.approval && st.approval.status === 'pending';
+        const ask = el('button', { type: 'button', class: 'eh-btn eh-btn--secondary eh-btn--sm', disabled: pending || null }, el('span', { class: 'eh-btn__label' }, pending ? 'Approval requested' : 'Ask for approval'));
+        ask.addEventListener('click', () => askApproval(ask));
+        host.replaceChildren(el('p', { class: 'pax-note' }, [icon('info'), pending ? 'Waiting for an approver. You can request the ride once it is approved; this page checks again when you refresh prices.' : 'This ride needs approval from your company before you can request it.']), list(st.reasons), ask);
+    } else {
+        host.replaceChildren(el('div', { class: 'eh-banner eh-banner--caution', role: 'alert' }, [icon('warning'), el('div', { class: 'eh-banner__body' }, [el('p', { class: 'eh-banner__title' }, st.message), list(st.reasons)])]));
+    }
+}
+
+async function askApproval(button) {
+    const choice = chosenPayment();
+    const option = selectedOption();
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    try {
+        const { data: made } = await api(data.urls.businessApprovals, { method: 'POST', body: { profile_id: choice.profile.id, quote_id: option.quote_id, purpose: state.business.purpose || undefined } });
+        state.business.status = { ...state.business.status, approval: made.approval || { status: 'pending' } };
+        announce('Approval requested. You will be able to request the ride once it is approved.');
+    } catch (failure) {
+        state.business.status = { state: 'refused', ...businessReasons(failure.body || { message: failure.message }) };
+    }
+    drawBusinessStatus();
 }
 
 async function addCard(button) {
@@ -531,7 +628,8 @@ function updateRequest() {
     const option = selectedOption();
     const expired = quoteState(option?.expires_at).state === 'expired';
     const blocked = Boolean(data.paymentDue?.blocked);
-    const payable = state.payment !== null;
+    const biz = chosenPayment()?.profile ? state.business.status?.state : null;
+    const payable = state.payment !== null && (biz === null || biz === 'allowed');
     button.querySelector('.eh-btn__label').textContent = requestLabel(option, state.when === 'later' ? state.laterAt : null);
     button.disabled = !option || expired || blocked || !payable || state.submitting;
     const fine = body.querySelector('[data-pax-request-fine]');
@@ -556,7 +654,7 @@ async function submit() {
     if (state.submitting) return;
     const option = selectedOption();
     if (!option) return;
-    const choice = paymentOptions(state.wallet, state.selected).find((o) => o.value === state.payment);
+    const choice = chosenPayment();
     const payload = {
         quote_id: option.quote_id,
         pickup_address: state.pickup.label.slice(0, 255),
@@ -564,6 +662,9 @@ async function submit() {
     };
     if (choice?.kind) payload.payment_method = choice.kind;
     if (choice?.ref) payload.payment_ref = choice.ref;
+    if (choice?.profile) {
+        payload.business = Object.fromEntries(Object.entries({ purpose: state.business.purpose || null, approval_id: state.business.approvalId || null }).filter(([, v]) => v !== null));
+    }
     if (state.when === 'later') payload.scheduled_for = new Date(state.laterAt).toISOString();
 
     // The same tap retried (a timeout, a lost answer) carries the same key, so it can never book twice.
@@ -601,6 +702,10 @@ async function submit() {
             state.submitting = false;
             button.removeAttribute('aria-busy');
             error.textContent = failure.message;
+            if (String(failure.code).startsWith('business_')) {
+                const why = businessReasons(failure.body);
+                if (why.reasons.length) error.append(' ', why.reasons.join(' '));
+            }
             announce(failure.message, { assertive: true });
             if (failure.status === 402) {
                 try {

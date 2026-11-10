@@ -144,6 +144,9 @@
             'route' => route('geo.route'),
             'reverse' => route('geo.reverse'),
             'trips' => route('ride.trips'),
+            'profiles' => Route::has('business.api.profiles') ? route('business.api.profiles') : null,
+            'businessPrepare' => Route::has('business.api.prepare') ? route('business.api.prepare') : null,
+            'businessApprovals' => Route::has('business.api.approvals.store') ? route('business.api.approvals.store') : null,
         ],
     ]; @endphp
     <script type="application/json" id="pax-booking-data">@json($paxIsland)</script>

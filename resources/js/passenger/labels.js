@@ -25,10 +25,11 @@ export function etaText(entry, supply) {
 }
 
 /**
- * Payment choices for the request, from GET /money/wallet. Each: {value, kind, ref, label, meta, icon}.
+ * Payment choices for the request, from GET /money/wallet and GET /business/profiles. Each: {value, kind, ref, label,
+ * meta, icon, disabled?, profile?}.
  * value is what the radio carries; kind/ref are what POST /api/ehail/rides receives.
  */
-export function paymentOptions(wallet, categoryKey = null) {
+export function paymentOptions(wallet, categoryKey = null, profiles = []) {
     if (!wallet) return [];
     const options = [];
     const cardsOn = Boolean(wallet.card_payments?.available);
@@ -52,12 +53,19 @@ export function paymentOptions(wallet, categoryKey = null) {
         options.push({ value: 'cash', kind: 'cash', ref: null, icon: 'cash', label: 'Cash', meta: 'Pay the driver the fare shown at the end of the trip.' });
     }
 
-    if (wallet.business_accounts?.available) {
-        for (const method of wallet.methods || []) {
-            if (method.type === 'business_account') {
-                options.push({ value: `business:${method.id}`, kind: 'business_account', ref: String(method.id), icon: 'briefcase', label: method.label, meta: 'Billed to your company.' });
-            }
-        }
+    // Business profiles come from GET /business/profiles (only people on a business account have any).
+    for (const profile of profiles || []) {
+        const account = profile.account || {};
+        const left = profile.allowance?.left_minor;
+        const meta = [
+            account.bookable === false ? account.blocked_reason || 'This account cannot book rides right now.' : 'Billed to the company account.',
+            profile.role_label || null,
+            Number.isFinite(left) ? `${formatMinor(left, account.currency || 'ZAR')} of your monthly allowance left` : null,
+        ].filter(Boolean).join(' ');
+        options.push({
+            value: `business:${profile.id}`, kind: 'business_account', ref: String(profile.id), icon: 'briefcase', label: account.name || 'Business account', meta,
+            disabled: account.bookable === false, profile,
+        });
     }
 
     return options;
@@ -65,7 +73,7 @@ export function paymentOptions(wallet, categoryKey = null) {
 
 /** The default choice: the default card, else the first option. */
 export function defaultPayment(options) {
-    return (options.find((o) => o.isDefault) || options[0] || null)?.value ?? null;
+    return (options.find((o) => o.isDefault) || options.find((o) => !o.disabled) || null)?.value ?? null;
 }
 
 /** The request button's words: what it does and for how much. */
@@ -111,4 +119,11 @@ export function laterError(value, rules, now = new Date()) {
     if (at < new Date(minDate.getTime() - 60000)) return `Pick a time at least ${rules.min_lead_minutes} minutes from now.`;
     if (at > maxDate) return `Pick a time within ${rules.max_lead_days} days.`;
     return null;
+}
+
+/** The business refusal as one sentence plus its reasons (business API: {error: business_<code>, message, reasons[]}). */
+export function businessReasons(body) {
+    const all = (body?.reasons || []).map((r) => (typeof r === 'string' ? r : r?.message)).filter(Boolean);
+    const message = body?.message || all[0] || 'The company policy does not allow this ride.';
+    return { message, reasons: all.filter((r) => r !== message) };
 }

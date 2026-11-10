@@ -270,6 +270,7 @@
             'payNow' => route('money.rides.pay-now', $ride),
             'wallet' => route('money.wallet'),
             'driverLocation' => route('geo.rides.driver-location', $ride),
+            'route' => route('geo.route'),
         ],
     ]; @endphp
     <script type="application/json" id="pax-trip-data">@json($paxIsland)</script>

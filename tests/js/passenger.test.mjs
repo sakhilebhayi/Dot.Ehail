@@ -6,7 +6,7 @@ import { FeedClient, MAX_BACKOFF_S, mergeFeed, nextDelay, reduce } from '../../r
 import { formatMinor, parseAmountToMinor, spokenMinor } from '../../resources/js/passenger/money.js';
 import { breakdownRows, formatKm, formatMinutes } from '../../resources/js/passenger/breakdown.js';
 import { clock, freeCancelLeft, quoteState, searchProgress, secondsUntil, waitState } from '../../resources/js/passenger/countdown.js';
-import { defaultPayment, etaText, laterError, paymentOptions, requestLabel, unavailableText } from '../../resources/js/passenger/labels.js';
+import { businessReasons, defaultPayment, etaText, laterError, paymentOptions, requestLabel, unavailableText } from '../../resources/js/passenger/labels.js';
 import { announcement, holdsDriver, isPreTrip, isTerminal, rideText, stageIndex } from '../../resources/js/passenger/status.js';
 import { countdownSteps } from '../../resources/js/passenger/safety.js';
 
@@ -300,4 +300,23 @@ test('the feed client does not poll while the tab is hidden and polls at once wh
     assert.equal(fetched, 1);
     assert.equal(client.state, 'live');
     client.stop();
+});
+
+test('business profiles become payment choices; an account that cannot book is shown but not chosen', () => {
+    const profiles = [
+        { id: 7, account: { name: 'Ubuntu Freight', currency: 'ZAR', bookable: true }, role_label: 'Traveller', allowance: { left_minor: 150000 } },
+        { id: 8, account: { name: 'Closed Co', bookable: false, blocked_reason: 'This account is suspended.' } },
+    ];
+    const options = paymentOptions({ ...wallet, methods: [], card_payments: { available: false }, cash: { enabled: false } }, 'economy', profiles);
+    assert.deepEqual(options.map((o) => [o.value, o.kind, o.ref, Boolean(o.disabled)]), [['business:7', 'business_account', '7', false], ['business:8', 'business_account', '8', true]]);
+    assert.match(options[0].meta, /R1\u202F500\.00 of your monthly allowance left/);
+    assert.equal(options[1].meta, 'This account is suspended.');
+    assert.equal(defaultPayment(options), 'business:7');
+    assert.equal(defaultPayment([options[1]]), null, 'a blocked account is never preselected');
+});
+
+test('business refusals read as one sentence plus the other reasons, never twice', () => {
+    assert.deepEqual(businessReasons({ reasons: [{ code: 'purpose_required', message: 'Add a purpose.' }] }), { message: 'Add a purpose.', reasons: [] });
+    assert.deepEqual(businessReasons({ message: 'Not allowed.', reasons: [{ message: 'Not allowed.' }, { message: 'Over the fare limit.' }] }), { message: 'Not allowed.', reasons: ['Over the fare limit.'] });
+    assert.match(businessReasons(null).message, /company policy/);
 });

@@ -465,12 +465,26 @@ function fitRide() {
     map.map.fitBounds(pts.map((p) => [p.lat, p.lng]), { paddingTopLeft: [wide ? 448 : 32, 48], paddingBottomRight: [32, cover + 32], maxZoom: 16 });
 }
 
+/** The road route from pickup to drop-off, drawn once (the geo route cache answers the quote's route). */
+async function drawPlannedRoute(config) {
+    const ride = snapshot?.ride;
+    if (!map || !config?.routing?.configured || !ride?.pickup?.lat || !ride?.dropoff?.lat || isTerminal(ride.status)) return;
+    try {
+        const q = new URLSearchParams({ from_lat: ride.pickup.lat, from_lng: ride.pickup.lng, to_lat: ride.dropoff.lat, to_lng: ride.dropoff.lng });
+        const { data: answer } = await api(`${data.urls.route}?${q}`);
+        if (answer?.route?.polyline) map.drawRoute(answer.route.polyline);
+    } catch {
+        // The ride does not depend on the drawn line.
+    }
+}
+
 async function startMap() {
     try {
         const config = await loadGeoConfig();
         map = await mountMap(frame.querySelector('[data-eh-map-canvas]'), { config });
         frame.dataset.mapState = 'ready';
         render();
+        drawPlannedRoute(config);
         fitRide();
     } catch {
         frame.dataset.mapState = 'unavailable';

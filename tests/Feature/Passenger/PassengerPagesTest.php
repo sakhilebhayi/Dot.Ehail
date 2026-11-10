@@ -92,7 +92,9 @@ class PassengerPagesTest extends TestCase
         $ride = $this->makeRide(['status' => 'searching'], $user);
 
         $this->actingAs($user)->get(route('ride.home'))->assertRedirect(route('ride.trip', $ride));
-        $this->actingAs($user)->get(route('ride.home', ['new' => 1]))->assertOk()->assertSee('Where to?');
+        $this->actingAs($user)->get(route('ride.home', ['new' => 1]))->assertOk()->assertSee('Where to?')
+            // The payment chooser asks the business domain for profiles and its policy check (D-817).
+            ->assertSee(json_encode(route('business.api.profiles')), false)->assertSee(json_encode(route('business.api.prepare')), false);
     }
 
     public function test_saved_places_one_home_one_work_and_a_limit_on_others(): void
