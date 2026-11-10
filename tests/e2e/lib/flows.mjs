@@ -57,6 +57,25 @@ export async function requestCategory(page, name, { payment = null } = {}) {
     return Number(page.url().match(/trips\/(\d+)/)[1]);
 }
 
+/** Opens the passenger's Cancel dialog; it opens once the server's current cost is in it. Returns that sentence. */
+export async function openCancel(page) {
+    await page.click('[data-pax-cancel]');
+    await page.locator('#pax-cancel-dialog[open]').waitFor({ timeout: 15000 });
+    return (await page.locator('[data-pax-cancel-cost]').innerText()).trim();
+}
+
+/** Confirms the cancellation and waits for the dialog to close (the server answered). */
+export async function confirmCancel(page) {
+    await page.click('[data-pax-cancel-confirm]');
+    await page.locator('#pax-cancel-dialog[open]').waitFor({ state: 'detached', timeout: 15000 });
+}
+
+export async function cancelRide(page) {
+    const cost = await openCancel(page);
+    await confirmCancel(page);
+    return cost;
+}
+
 export async function paxTitle(page, re, timeout = 30000) {
     await page.waitForFunction((src) => new RegExp(src).test(document.querySelector('[data-pax-title]')?.textContent || ''), re.source, { timeout });
 }

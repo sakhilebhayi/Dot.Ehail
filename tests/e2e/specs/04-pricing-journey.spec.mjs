@@ -63,9 +63,10 @@ test('pricing journey: recomputation, destination change, delay within tolerance
     const honest = one("select total_minor from fare_quotes where id = ?", [tampered.data.quote_id]);
     assert.ok(honest.total_minor > 100, 'the quote is priced by the server');
     assert.equal(tampered.data.fare.total.amount_minor, honest.total_minor);
-    const booked = await api(p, 'POST', '/api/ehail/rides', { quote_id: tampered.data.quote_id, payment_method: 'card', quoted_total_minor: 100, final_fare_minor: 100, estimated_fare: 1, pickup_address: 'Kloof Street', dropoff_address: 'Bree Street' }, { 'Idempotency-Key': `tamper-${Date.now()}` });
+    const booked = await api(p, 'POST', '/api/ehail/rides', { quote_id: tampered.data.quote_id, quoted_total_minor: 100, final_fare_minor: 100, estimated_fare: 1, pickup_address: 'Kloof Street', dropoff_address: 'Bree Street' }, { 'Idempotency-Key': `tamper-${Date.now()}` });
     assert.equal(booked.status, 201, JSON.stringify(booked.data).slice(0, 300));
     const ride1 = booked.data.ride.id;
+    assert.equal(one('select payment_method_kind from rides where id = ?', [ride1]).payment_method_kind, 'card', 'no method sent: the saved default card');
     assert.equal(one('select quoted_total_minor from rides where id = ?', [ride1]).quoted_total_minor, honest.total_minor, 'the ride carries the server price');
     const snap = one('select * from ride_fares where ride_id = ?', [ride1]);
     assert.equal(lineSum(snap.estimated_components), snap.estimated_total_minor, 'the bound snapshot adds up');

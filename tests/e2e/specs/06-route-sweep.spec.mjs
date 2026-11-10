@@ -13,7 +13,8 @@ import { PASS } from '../lib/flows.mjs';
 
 const SKIP = [/^livewire\//, /^storage\//, /^sanctum\//, /^up$/, /^up\/realtime$/, /^two-factor-challenge$/, /^user\/two-factor/, /^user\/confirmed-password-status$/,
     /^team-invitations\//, /^reset-password\//, /^auth\/ecosystem$/, /^register$/, /^forgot-password$/, /^login$/, /^user\/confirm-password$/, /^_/, /\{token\}/, /\{path\}/, /\{filename\}/,
-    /\{contact\}/, /\{message\}/, /\{invitation\}/, /^logout$/];
+    /\{contact\}/, /\{message\}/, /\{invitation\}/, /^logout$/,
+    /^broadcasting\/auth$/]; // an endpoint for the WebSocket client, not a page
 
 function routes() {
     const out = execFileSync('php', ['artisan', 'route:list', '--json'], { cwd: env.root, env: process.env, encoding: 'utf8' });
@@ -116,12 +117,22 @@ async function sweep(role, width, urls) {
         if (status >= 500) failures.push(`${role}@${width} ${url}: HTTP ${status}`);
         if (type === 'text/html') {
             await page.waitForLoadState('networkidle', { timeout: 2500 }).catch(() => {});
-            const m = await page.evaluate(() => ({ h1: document.querySelectorAll('h1').length, overflow: document.documentElement.scrollWidth - window.innerWidth, csp: window.__csp || [] }));
+            const m = await page.evaluate(() => {
+                const overflow = document.documentElement.scrollWidth - window.innerWidth;
+                // For the report: the outermost elements that stick out past the viewport (what to fix).
+                const culprits = overflow > 1 ? [...document.querySelectorAll('body *')].filter((e) => e.getBoundingClientRect().right > window.innerWidth + 1 && !(e.parentElement && e.parentElement.getBoundingClientRect().right > window.innerWidth + 1))
+                    .slice(0, 3).map((e) => `${e.tagName.toLowerCase()}${e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/).join('.') : ''}`) : [];
+                return { h1: document.querySelectorAll('h1').length, overflow, culprits, csp: window.__csp || [] };
+            });
             Object.assign(row, { h1: m.h1, overflow: m.overflow });
             if (m.h1 !== 1) failures.push(`${role}@${width} ${url} -> ${row.final}: ${m.h1} h1 (HTTP ${status})`);
-            if (m.overflow > 1) failures.push(`${role}@${width} ${url} -> ${row.final}: horizontal overflow ${m.overflow}px`);
+            if (m.overflow > 1) failures.push(`${role}@${width} ${url} -> ${row.final}: horizontal overflow ${m.overflow}px (${m.culprits.join(', ')})`);
             if (m.csp.length) failures.push(`${role}@${width} ${url}: CSP ${[...new Set(m.csp)].join(', ').slice(0, 200)}`);
-            const errs = errors.filter((e) => !/status of (401|403|404|409|419|422|429)/.test(e));
+            // Chrome's own viewer for an image or PDF served earlier with a CSP sandbox (private document files)
+            // reports "Blocked script execution in '<that file>'" late, into the next navigation: not this page's.
+            const here = page.url();
+            const errs = errors.filter((e) => !/status of (401|403|404|409|419|422|429)/.test(e))
+                .filter((e) => { const m2 = e.match(/^Blocked script execution in '([^']+)' because the document's frame is sandboxed/); return !m2 || m2[1] === here; });
             if (errs.length) failures.push(`${role}@${width} ${url}: console ${JSON.stringify(errs).slice(0, 300)}`);
             const ext = externalHosts(requests.slice(start));
             if (ext.length) failures.push(`${role}@${width} ${url}: external hosts ${ext.join(', ')}`);

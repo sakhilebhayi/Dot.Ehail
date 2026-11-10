@@ -206,7 +206,7 @@ test('driver journey: register, documents, verification, online, trip, earnings,
     assert.equal(one('select payout_id from driver_earnings where id = ?', [earning.id]).payout_id, payout.id, 'the trip is in the payout');
     await step(f, 'mark paid', async () => {
         await f.goto(`/ops/finance/payouts/${payout.payout_batch_id}`);
-        await f.locator('form[action$="/paid"] button[type=submit]').first().click();
+        await f.locator('form[action$="/mark-paid"] button[type=submit]').first().click();
         await f.getByText('Batch marked paid.').waitFor({ timeout: 15000 });
     });
     assert.equal(one('select status from payouts where id = ?', [payout.id]).status, 'paid');

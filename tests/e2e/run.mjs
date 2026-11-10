@@ -171,7 +171,8 @@ async function main() {
         console.log(`\n=== ${spec}`);
         // Asynchronous on purpose: the stubs live in THIS process and must keep answering while a spec runs.
         const code = await new Promise((res) => {
-            const child = spawn(process.execPath, ['--test', '--test-force-exit', '--test-concurrency=1', '--test-timeout=900000', join(specDir, spec)], { cwd: root, env, stdio: 'inherit' });
+            const grep = process.env.E2E_GREP ? [`--test-name-pattern=${process.env.E2E_GREP}`] : [];
+            const child = spawn(process.execPath, ['--test', '--test-force-exit', '--test-concurrency=1', '--test-timeout=900000', ...grep, join(specDir, spec)], { cwd: root, env, stdio: 'inherit' });
             child.on('exit', (c) => res(c));
             child.on('error', () => res(1));
         });

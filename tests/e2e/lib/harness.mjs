@@ -104,6 +104,22 @@ export function makePerson(cmd = 'user', label = 'Person', extra = {}) {
     return { email, password: PASSWORD, name: `${label} ${uniq('').slice(0, 4)}`, ...world(cmd, { name: label, email, password: PASSWORD, ...extra }) };
 }
 
+const openContexts = new Set();
+
+/**
+ * After a test: screenshots every page still open (a test that failed did not close its contexts) to
+ * out/left-<label>-<n>.png, then closes them so the next test starts clean. Returns how many were left open.
+ */
+export async function closeLeftovers(label) {
+    let n = 0;
+    for (const ctx of [...openContexts]) {
+        for (const page of ctx.pages()) await shot(page, `left-${label.replace(/\W+/g, '-').slice(0, 50)}-${n++}`);
+        await ctx.close().catch(() => {});
+        openContexts.delete(ctx);
+    }
+    return n;
+}
+
 /** A new context (390 phone by default) with geolocation granted; optionally signed in through the real login form. */
 export async function newContext({ user = null, width = 390, height = 844, geo = null, dark = false } = {}) {
     const b = await browser();
@@ -112,6 +128,8 @@ export async function newContext({ user = null, width = 390, height = 844, geo =
         baseURL: env.base, ignoreHTTPSErrors: true, viewport: { width, height }, colorScheme: dark ? 'dark' : 'light', timezoneId: 'Africa/Johannesburg', locale: 'en-ZA',
         geolocation: geo ? { latitude: geo[0], longitude: geo[1], accuracy: 8 } : undefined, permissions: ['geolocation'],
     });
+    openContexts.add(ctx);
+    ctx.on('close', () => openContexts.delete(ctx));
     if (user) await signIn(ctx, user);
     return ctx;
 }

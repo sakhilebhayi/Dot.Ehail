@@ -92,11 +92,15 @@ test('safety journey: SOS mid-trip to resolution', async () => {
     assert.match(await share.locator('body').innerText(), /CA \d+/, 'the share page shows the car');
 
     // "What we did" = the notification rows, nothing more.
-    const rows = sql('select * from incident_notifications where safety_incident_id = ?', [incidentId]);
-    const contactEmailRow = rows.find((r) => r.channel === 'email' && r.recipient_kind === 'trusted_contact');
-    assert.equal(contactEmailRow?.status, 'sent', 'contact email sent (SMTP accepted it)');
-    assert.equal(rows.find((r) => r.channel === 'sms')?.status, 'sent');
-    assert.ok(rows.some((r) => r.recipient_kind === 'operator' || r.channel === 'in_app'), 'operators alerted');
+    // Rows are written pending and finished by the queued send: wait for both to be final.
+    const rows = await until(() => {
+        const all = sql('select * from incident_notifications where safety_incident_id = ?', [incidentId]);
+        const contact = all.filter((r) => r.recipient_kind === 'trusted_contact' && ['mail', 'sms'].includes(r.channel));
+        return contact.length >= 2 && contact.every((r) => !['pending', 'queued'].includes(r.status)) ? all : null;
+    }, { what: 'the contact notifications to finish' });
+    assert.equal(rows.find((r) => r.channel === 'mail' && r.recipient_kind === 'trusted_contact')?.status, 'sent', 'contact email sent (SMTP accepted it)');
+    assert.equal(rows.find((r) => r.channel === 'sms' && r.recipient_kind === 'trusted_contact')?.status, 'sent');
+    assert.ok(rows.some((r) => r.recipient_kind === 'operations' && r.channel === 'database' && r.status === 'sent'), 'operators alerted in the app');
     const whatWeDid = (await p.locator('main').innerText()).replace(/\s+/g, ' ');
     assert.match(whatWeDid, /10111/);
     assert.match(whatWeDid, /does not|do not/i, 'states what Dot.Ehail does not do');

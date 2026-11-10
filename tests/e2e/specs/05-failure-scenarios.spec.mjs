@@ -3,14 +3,15 @@
 // in the database and running the scheduler's command, as the host's cron does.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newContext, watch, step, sql, one, until, stub, interceptCheckout, makePerson, world, artisan, api, sleep, shot, closeBrowser } from '../lib/harness.mjs';
-import { addCard, priceTrip, requestCategory, paxTitle, paxPin, goOnline, waitOffer, accept, driveTo, arrive, startTrip, complete, typePin, ledgerBalanced } from '../lib/flows.mjs';
+import { newContext, watch, step, sql, one, until, stub, interceptCheckout, makePerson, world, artisan, api, sleep, shot, closeBrowser, closeLeftovers } from '../lib/harness.mjs';
+import { addCard, priceTrip, requestCategory, paxTitle, paxPin, goOnline, waitOffer, accept, driveTo, arrive, startTrip, complete, typePin, ledgerBalanced, openCancel, confirmCancel, cancelRide } from '../lib/flows.mjs';
 import { PICKUP, DEST, DRIVER_START } from '../lib/geo.mjs';
 
 const FAR_START = [-33.952, 18.41]; // 1.3 km south of the pickup
 const rand = (minor) => `R${(minor / 100).toFixed(2)}`;
 
 test.beforeEach(() => world('offline-all'));
+test.afterEach(async (t) => { await closeLeftovers(t.name); });
 test.after(async () => { world('offline-all'); await stub({ routingDown: false, chargeOutcome: 'success' }); await closeBrowser(); });
 
 async function passenger({ card = true } = {}) {
@@ -34,6 +35,8 @@ async function onlineDriver(at = DRIVER_START, opts = {}) {
 
 test('routing provider down: honest "unavailable", nothing priced', async () => {
     const { page, pax, ctx } = await passenger({ card: false });
+    // Earlier specs priced this trip: the planner's route cache would answer without asking the provider.
+    artisan('cache:clear');
     await stub({ routingDown: true });
     try {
         await page.goto('/ride?new=1');
@@ -48,15 +51,22 @@ test('routing provider down: honest "unavailable", nothing priced', async () => 
         assert.equal(one('select count(*) n from fare_quotes where passenger_id = ?', [pax.id]).n, 0, 'no quote stored');
         assert.ok((await stub()).routeRequests > 0, 'the provider was asked');
         assert.equal(await page.locator('[data-pax-request]:enabled').count(), 0, 'nothing can be requested');
-    } finally { await stub({ routingDown: false }); }
+    } finally {
+        await stub({ routingDown: false });
+        // The failures opened the routing circuit breaker (60 s cooldown): the cooldown passing, as cron time would.
+        artisan('cache:clear');
+    }
     await ctx.close();
 });
 
-test('no drivers: the ride expires with the honest message, nothing charged', async () => {
+test('no driver accepts: the ride expires with the honest message, nothing charged', async () => {
+    // Bookable prices need a driver online nearby (pricing checks supply); this one never answers its offers.
+    const silent = await onlineDriver();
     const { page, pax, ctx } = await passenger();
     await priceTrip(page);
     const rideId = await requestCategory(page, 'Economy');
     await paxTitle(page, /looking|search|finding/i, 20000);
+    await silent.ctx.close(); // the phone is put away: its offers lapse unanswered
     world('shift', { table: 'rides', id: rideId, columns: ['requested_at', 'search_started_at', 'created_at'], seconds: 11 * 60 });
     await until(() => one("select id from rides where id = ? and status = 'expired'", [rideId]), { what: 'expiry on the next poll', timeout: 20000 });
     await page.getByText(/No driver found/i).first().waitFor({ timeout: 15000 });
@@ -65,6 +75,7 @@ test('no drivers: the ride expires with the honest message, nothing charged', as
     const fare = one('select * from ride_fares where ride_id = ?', [rideId]);
     assert.equal(fare.final_total_minor, 0, 'fare record closed at zero');
     assert.equal(one('select active_passenger_id from rides where id = ?', [rideId]).active_passenger_id, null, 'the passenger can book again');
+    assert.equal(sql("select count(*) n from ride_offers where ride_id = ? and status = 'accepted'", [rideId])[0].n, 0, 'nobody accepted');
     await ctx.close();
 });
 
@@ -87,10 +98,8 @@ test('driver declines, next driver offered at once; an unanswered offer times ou
     assert.equal(offers1[1].driver_id, far.driver.id);
     await accept(far.page);
     // The passenger cancels this one (free: inside the window) to free both drivers.
-    await page.click('[data-pax-cancel]');
-    await page.locator('[data-pax-cancel-cost]').waitFor();
-    assert.match(await page.locator('[data-pax-cancel-cost]').innerText(), /free/i);
-    await page.click('[data-pax-cancel-confirm]');
+    assert.match(await openCancel(page), /free/i);
+    await confirmCancel(page);
     await until(() => one("select id from rides where id = ? and status = 'cancelled_by_passenger'", [ride1]), { what: 'cancelled' });
     assert.equal(one('select cancellation_fee_minor from rides where id = ?', [ride1]).cancellation_fee_minor ?? 0, 0);
 
@@ -108,8 +117,7 @@ test('driver declines, next driver offered at once; an unanswered offer times ou
     assert.equal(offers2[0].reason, 'timeout');
     assert.equal(offers2[1].driver_id, second.driver.id);
     assert.equal(offers2[1].status, 'pending');
-    await page.click('[data-pax-cancel]');
-    await page.click('[data-pax-cancel-confirm]');
+    await cancelRide(page);
     for (const c of [near.ctx, far.ctx, ctx]) await c.close();
 });
 
@@ -124,10 +132,9 @@ test('passenger cancels after assignment: free in the window, the policy fee aft
     // The free window (2 min in the example tariff) has passed.
     world('shift', { table: 'rides', id: rideId, columns: ['accepted_at', 'driver_arriving_at'], seconds: 180 });
     await page.reload();
-    await page.click('[data-pax-cancel]');
-    const cost = await page.locator('[data-pax-cancel-cost]').innerText();
+    const cost = await openCancel(page);
     assert.match(cost, /R25\.00/, `the cost is said first: ${cost}`);
-    await page.click('[data-pax-cancel-confirm]');
+    await confirmCancel(page);
     const ride = await until(() => one("select * from rides where id = ? and status = 'cancelled_by_passenger'", [rideId]), { what: 'cancelled' });
     assert.equal(ride.cancellation_fee_minor, 2500);
     const pay = await until(() => one("select * from ride_payments where ride_id = ? and purpose = 'cancellation_fee' and status = 'paid'", [rideId]), { what: 'fee charged' });
@@ -167,13 +174,17 @@ test('payment declined: retries, then payment_due blocks the next request; pay n
         const due = await api(page, 'GET', '/money/payment-due');
         assert.equal(due.data.blocked ?? due.data.payment_due?.blocked, true, `blocked: ${JSON.stringify(due.data).slice(0, 300)}`);
 
-        // The next request is refused with the amount and a way to pay.
+        // The booking sheet says so before anything is requested: the amount, a way to pay, Request disabled.
         await priceTrip(page);
         const option = page.locator('.pax-option').first();
         await option.locator('.pax-option__pick').check();
-        await page.click('[data-pax-request]');
         const block = page.locator('[data-pax-due]');
         await block.waitFor({ timeout: 15000 });
+        assert.ok(await page.locator('[data-pax-request]').isDisabled(), 'Request is disabled while money is owed');
+        // The server refuses too (a client that ignores the sheet).
+        const quoteId = one("select id from fare_quotes where passenger_id = ? and consumed_at is null order by created_at desc limit 1", [pax.id]).id;
+        const refused = await api(page, 'POST', '/api/ehail/rides', { quote_id: quoteId }, { 'Idempotency-Key': `due-${Date.now()}` });
+        assert.ok(refused.status >= 400 && /payment|due|owe|unpaid/i.test(JSON.stringify(refused.data)), `refused: ${refused.status} ${JSON.stringify(refused.data).slice(0, 200)}`);
         const finalFare = one('select final_fare_minor from rides where id = ?', [rideId]).final_fare_minor;
         assert.ok((await block.innerText()).includes(rand(finalFare)), 'the unpaid amount is shown');
         assert.equal(one("select count(*) n from rides where passenger_id = ? and id > ?", [pax.id, rideId]).n, 0, 'no new ride was created');
@@ -187,8 +198,7 @@ test('payment declined: retries, then payment_due blocks the next request; pay n
         await Promise.all([page.waitForURL(/\/ride\/trips\/\d+/, { timeout: 20000 }), page.click('[data-pax-request]')]);
         const next = Number(page.url().match(/trips\/(\d+)/)[1]);
         assert.ok(next > rideId);
-        await page.click('[data-pax-cancel]');
-        await page.click('[data-pax-cancel-confirm]');
+        await cancelRide(page);
     } finally { await stub({ chargeOutcome: 'success' }); }
     assert.ok(ledgerBalanced());
     for (const c of [drv.ctx, ctx]) await c.close();
@@ -224,10 +234,11 @@ test('an expired document takes an online driver offline', async () => {
 });
 
 test('the same request twice with one Idempotency-Key makes one ride; a double tap makes one ride', async () => {
+    const drv = await onlineDriver(); // supply for bookable prices
     const { page, pax, ctx } = await passenger();
     await priceTrip(page);
     const quote = one("select id from fare_quotes where passenger_id = ? and consumed_at is null order by created_at desc limit 1", [pax.id]);
-    const body = { quote_id: quote.id, payment_method: 'card', pickup_address: 'Kloof Street', dropoff_address: 'Bree Street' };
+    const body = { quote_id: quote.id, pickup_address: 'Kloof Street', dropoff_address: 'Bree Street' };
     const key = `e2e-key-${Date.now()}`;
     const [a, b] = await Promise.all([api(page, 'POST', '/api/ehail/rides', body, { 'Idempotency-Key': key }), api(page, 'POST', '/api/ehail/rides', body, { 'Idempotency-Key': key })]);
     const statuses = [a.status, b.status].sort();
@@ -253,9 +264,8 @@ test('the same request twice with one Idempotency-Key makes one ride; a double t
     await until(async () => (await Promise.all(sent.map((r) => r.response().catch(() => 'failed')))).every(Boolean), { what: 'every request of the double tap answered' });
     assert.ok(sent.length >= 1);
     assert.equal(one("select count(*) n from rides where passenger_id = ? and status in ('requested','searching')", [pax.id]).n, 1, 'one ride from a double tap');
-    await page.click('[data-pax-cancel]');
-    await page.click('[data-pax-cancel-confirm]');
-    await ctx.close();
+    await cancelRide(page);
+    for (const c of [drv.ctx, ctx]) await c.close();
 });
 
 test('two drivers accept at the same moment: exactly one wins', async () => {
@@ -284,8 +294,7 @@ test('two drivers accept at the same moment: exactly one wins', async () => {
     assert.equal(holding.length, 1, `one driver holds the ride (offer accept ${r1.status}, claim ${r2.status})`);
     assert.equal(holding[0].user_id, ride.driver_id);
     assert.equal(one("select count(*) n from ride_events where ride_id = ? and to_status = 'driver_assigned'", [rideId])?.n ?? 1, 1);
-    await page.click('[data-pax-cancel]');
-    await page.click('[data-pax-cancel-confirm]');
+    await cancelRide(page);
     for (const c of [a.ctx, b.ctx, ctx]) await c.close();
 });
 
@@ -303,6 +312,8 @@ test('connection loss on the driver: stale indicators, then recovery; PIN brute 
     await page.locator('[data-pax-stale]:not([hidden])').waitFor({ timeout: 70000 });
     assert.match(await page.locator('[data-pax-stale]').innerText(), /Last position/i);
     await drv.ctx.setOffline(false);
+    // The phone's next fix after the signal returns (a stationary emulated phone reports no new fix by itself).
+    await drv.ctx.setGeolocation({ latitude: DRIVER_START[0] + 0.00002, longitude: DRIVER_START[1], accuracy: 8 });
     await drv.page.getByText(/No connection to Dot\.Ehail/).waitFor({ state: 'detached', timeout: 20000 });
     await page.locator('[data-pax-stale]').waitFor({ state: 'hidden', timeout: 30000 });
 
