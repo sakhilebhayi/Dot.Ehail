@@ -274,6 +274,8 @@ class RideFeed
             'payment_method' => $ride->payment_method_kind,
             'trip_distance_m' => $ride->route_distance_m,
             'trip_duration_s' => $ride->route_duration_s,
+            // Turn-by-turn is handed to the device's maps app (D-5): links to the next stop only.
+            'navigation' => NavigationLinks::to($status === RideStatus::InProgress ? $ride->dropoff_lat : $ride->pickup_lat, $status === RideStatus::InProgress ? $ride->dropoff_lng : $ride->pickup_lng, $status === RideStatus::InProgress ? 'dropoff' : 'pickup'),
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Payments\Http;
 
+use App\Domain\Integration\Http\JsonErrorPolicy;
 use App\Domain\Payments\PaymentDueGuard;
 use Closure;
 use Illuminate\Http\Request;
@@ -29,8 +30,8 @@ class EnsureNoPaymentDue
             return $next($request);
         }
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => $status['reason'], 'payment_due' => $status['rides']], 402);
+        if (JsonErrorPolicy::wantsJson($request)) {
+            return response()->json(['error' => 'payment_due', 'message' => $status['reason'], 'payment_due' => $status['rides']], 402);
         }
 
         return back()->withErrors(['payment' => $status['reason']]);

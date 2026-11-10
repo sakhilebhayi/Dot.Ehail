@@ -30,4 +30,12 @@ interface FareQuoteGateway
      * dispatch time); null when pricing cannot quote right now.
      */
     public function requote(Ride $ride): ?LockedQuote;
+
+    /**
+     * Lock the quote to the ride being created. Called INSIDE the ride-creation
+     * transaction (pricing's QuoteBinder: re-checks signature, expiry, route and
+     * promotion, consumes the quote, writes the fare snapshot); throw
+     * DispatchRefused to roll the ride back (D-701).
+     */
+    public function bind(LockedQuote $quote, User $passenger, Ride $ride): void;
 }

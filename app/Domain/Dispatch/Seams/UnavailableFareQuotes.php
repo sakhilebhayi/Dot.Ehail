@@ -28,4 +28,6 @@ class UnavailableFareQuotes implements FareQuoteGateway
     {
         return null;
     }
+
+    public function bind(LockedQuote $quote, User $passenger, Ride $ride): void {}
 }

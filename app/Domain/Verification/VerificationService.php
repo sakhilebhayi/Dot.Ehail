@@ -2,6 +2,7 @@
 
 namespace App\Domain\Verification;
 
+use App\Domain\Verification\Events\DriverForcedOffline;
 use App\Domain\Verification\Files\SecureFileStore;
 use App\Domain\Verification\Models\VerificationDocument;
 use App\Domain\Verification\Models\VerificationReview;
@@ -444,6 +445,7 @@ class VerificationService
         if ($result === null || ! $result->allowed()) {
             DriverProfile::withoutGlobalScope('user')->whereKey($profile->id)->update(['is_online' => false]);
             AuditLog::record('driver.forced_offline', null, $profile, ['reason' => 'verification', 'codes' => $result?->codes() ?? ['no_active_vehicle']]);
+            DriverForcedOffline::dispatch($driver->id, $result?->codes() ?? ['no_active_vehicle']);
         }
     }
 
