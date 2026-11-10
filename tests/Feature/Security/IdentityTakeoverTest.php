@@ -70,4 +70,26 @@ class IdentityTakeoverTest extends TestCase
         $this->assertSame($attacker->id, $user->id);
         $this->assertNotSame($oldHash, $user->fresh()->password);
     }
+
+    public function test_sign_in_attempts_are_limited_per_address_as_well_as_per_account(): void
+    {
+        // One address spraying many accounts: the per-address limit stops it (S-32).
+        $statuses = [];
+        foreach (range(1, 32) as $n) {
+            $statuses[] = $this->post('/login', ['email' => "user{$n}@example.test", 'password' => 'wrong'])->status();
+        }
+
+        $this->assertContains(429, $statuses);
+        $this->assertSame(429, $this->post('/login', ['email' => 'fresh@example.test', 'password' => 'wrong'])->status());
+    }
+
+    public function test_one_account_attacked_from_many_addresses_is_limited(): void
+    {
+        $statuses = [];
+        foreach (range(1, 32) as $n) {
+            $statuses[] = $this->withServerVariables(['REMOTE_ADDR' => "10.0.0.{$n}"])->post('/login', ['email' => 'victim@example.test', 'password' => 'wrong'])->status();
+        }
+
+        $this->assertSame(429, end($statuses));
+    }
 }
