@@ -43,6 +43,15 @@ ENVV=(APP_ENV=local SESSION_DRIVER=database CACHE_STORE=database QUEUE_CONNECTIO
 
 env "${ENVV[@]}" php -d memory_limit=1G scripts/load/world.php setup "$DRIVERS" "$PASSENGERS" "$OUT/world-$ENGINE.json"
 
+# OPTIMIZE=1: config, route and event caches built for this environment, as a production deploy does
+# (`php artisan optimize`); cleared again on exit.
+if [ "${OPTIMIZE:-0}" = "1" ]; then
+  env "${ENVV[@]}" SESSION_DRIVER=database EHAIL_PERF_PROBE=true APP_DEBUG=false LOG_LEVEL=warning BROADCAST_CONNECTION=log \
+    ${DB_JOURNAL_MODE:+DB_JOURNAL_MODE=$DB_JOURNAL_MODE DB_TRANSACTION_MODE=$DB_TRANSACTION_MODE DB_BUSY_TIMEOUT=$DB_BUSY_TIMEOUT} \
+    ${CACHE_LIMITER:+CACHE_LIMITER=$CACHE_LIMITER} php artisan optimize > /dev/null
+  trap 'cleanup; php artisan optimize:clear > /dev/null' EXIT
+fi
+
 scripts/load/serve.sh "$WORKERS" "$PORT" "$ENGINE" "$DBNAME" > "$OUT/server-$TAG.log" 2>&1 &
 SERVER_PID=$!
 for _ in $(seq 1 50); do curl -s -o /dev/null "http://127.0.0.1:$PORT/up" && break; sleep 0.2; done

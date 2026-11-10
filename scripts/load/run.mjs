@@ -26,6 +26,10 @@ const DECLINE = Number(args.decline ?? 0.15);
 const OSRM = args.osrm || null;
 const OUTAGE_AT = args['outage-at'] ? Number(args['outage-at']) * 1000 : null;
 const OUTAGE_FOR = Number(args['outage-for'] ?? 15) * 1000;
+// How long a trip lasts once started (default 15-25 s); a long value keeps rides live for front-end soak tests.
+const TRIP_MS = args['trip-ms'] ? Number(args['trip-ms']) : null;
+// Drive to the pickup instead of jumping there after 15 s (front-end soak: the passenger watches the car approach).
+const APPROACH_MS = Number(args['approach-ms'] ?? 15000);
 
 // One shared pool: at most this many requests in flight at once (the rest queue in the client, which is where a
 // phone's request would wait for a free PHP worker anyway). Latencies below include that wait.
@@ -40,6 +44,7 @@ let stopping = false;
 // ---------------------------------------------------------------- metrics
 const stats = {};
 const errors = [];
+const errorKinds = {}; // "endpoint status error_code" -> count: what people saw when something failed
 function record(name, { ms, status, bytes, headers }) {
     const s = (stats[name] ??= { n: 0, ms: [], status: {}, bytes: 0, q: 0, w: 0, serverMs: 0, probed: 0 });
     s.n++;
@@ -100,7 +105,11 @@ async function call(name, who, path, { method = 'GET', body, etag } = {}) {
         } catch {
             data = null;
         }
-        if (res.status >= 500) errors.push({ at: elapsed(), name, status: res.status, body: res.text.slice(0, 200) });
+        if (res.status >= 500) {
+            errors.push({ at: elapsed(), name, status: res.status, body: res.text.slice(0, 200) });
+            const kind = `${name} ${res.status} ${data?.error ?? 'no_code'}`;
+            errorKinds[kind] = (errorKinds[kind] || 0) + 1;
+        }
         return { status: res.status, data, headers: h };
     } catch (e) {
         record(name, { ms: performance.now() - started, status: 'neterr', bytes: 0, headers: headerReader({}) });
@@ -128,6 +137,11 @@ function fix(drv, toward = null) {
         if (dist > step) {
             drv.lat += (dLat / dist) * step * 3;
             drv.lng += (dLng / dist) * step * 3;
+        } else {
+            // Arrived but the trip goes on (soak tests): keep driving around the block.
+            drv.lat += Math.cos((drv.heading * Math.PI) / 180) * 0.0003;
+            drv.lng += Math.sin((drv.heading * Math.PI) / 180) * 0.0003;
+            drv.heading = (drv.heading + 25) % 360;
         }
     } else if (drv.moving) {
         drv.lat += Math.cos((drv.heading * Math.PI) / 180) * 0.0003;
@@ -183,7 +197,7 @@ async function advanceTrip(drv) {
         } else if (ride.status === 'driver_arriving') {
             // Drive to the pickup (the phone posts fixes along the way in the main loop).
             drv.target = [ride.pickup.lat, ride.pickup.lng];
-            if (Math.hypot(drv.lat - ride.pickup.lat, drv.lng - ride.pickup.lng) < 0.0008 || drv.stageSince && Date.now() - drv.stageSince > 15000) {
+            if (Math.hypot(drv.lat - ride.pickup.lat, drv.lng - ride.pickup.lng) < 0.0008 || drv.stageSince && Date.now() - drv.stageSince > APPROACH_MS) {
                 drv.lat = ride.pickup.lat;
                 drv.lng = ride.pickup.lng;
                 await postFixNow(drv);
@@ -199,7 +213,7 @@ async function advanceTrip(drv) {
         } else if (ride.status === 'in_progress') {
             drv.target = [ride.dropoff.lat, ride.dropoff.lng];
             drv.tripStart ??= Date.now();
-            if (Date.now() - drv.tripStart > rnd(15000, 25000)) {
+            if (Date.now() - drv.tripStart > (TRIP_MS ?? rnd(15000, 25000))) {
                 drv.lat = ride.dropoff.lat;
                 drv.lng = ride.dropoff.lng;
                 await postFixNow(drv);
@@ -353,7 +367,7 @@ const result = {
     // HTTP payload only (no TLS or TCP overhead): download = response headers + body; upload = body + ~600 B of request headers.
     driver_download_kb_per_hour: Number((driverBytes / drivers.length / (seconds / 3600) / 1024).toFixed(0)),
     driver_upload_kb_per_hour: Number((driverUp / drivers.length / (seconds / 3600) / 1024).toFixed(0)),
-    outcome, errors_total: errors.length, errors_sample: errors.slice(0, 10), endpoints: table,
+    outcome, errors_total: errors.length, error_kinds: errorKinds, errors_sample: errors.slice(0, 10), endpoints: table,
 };
 console.table(table.map(({ status, ...r }) => ({ ...r, status: JSON.stringify(status) })));
 console.log(JSON.stringify({ ...result, endpoints: undefined }, null, 2));
