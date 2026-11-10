@@ -95,6 +95,8 @@ class DriverApiTest extends TestCase
     public function test_arrival_within_tolerance_goes_straight_through(): void
     {
         [$driver, $ride] = $this->assigned();
+        // Geo screens fixes (a jump of hundreds of metres in a second is refused): the car drives there first.
+        $this->travel(2)->minutes();
         $this->heartbeat($driver, $this->northOfPickup(60));
 
         $this->actingAs($driver)->postJson(route('drive.api.arrived', $ride))
@@ -107,6 +109,8 @@ class DriverApiTest extends TestCase
     public function test_arrival_far_away_needs_a_confirmation_that_is_audited(): void
     {
         [$driver, $ride] = $this->assigned();
+        // Geo screens fixes (a jump of hundreds of metres in a second is refused): the car drives there first.
+        $this->travel(2)->minutes();
         $this->heartbeat($driver, $this->northOfPickup(1500));
 
         $this->actingAs($driver)->postJson(route('drive.api.arrived', $ride))
@@ -125,6 +129,8 @@ class DriverApiTest extends TestCase
     public function test_arrival_tolerance_includes_the_fix_accuracy_up_to_the_cap(): void
     {
         [$driver, $ride] = $this->assigned();
+        // Geo screens fixes (a jump of hundreds of metres in a second is refused): the car drives there first.
+        $this->travel(2)->minutes();
         $this->heartbeat($driver, $this->northOfPickup(320));
 
         $this->actingAs($driver)->postJson(route('drive.api.arrived', $ride), ['accuracy_m' => 30])->assertStatus(409);
