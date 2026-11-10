@@ -59,6 +59,9 @@ Route::post('/webhooks/paystack', PaystackWebhookController::class)
     ->middleware('throttle:60,1')
     ->name('paystack.webhook');
 
+// R-46 public routes (trip share links, public fare calculator): outside the auth group.
+require __DIR__.'/ehail/public.php';
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -109,6 +112,11 @@ Route::middleware([
 
     Route::get('/drive/apply', [DriverApplicationController::class, 'create'])->name('drive.apply');
     Route::post('/drive/apply', [DriverApplicationController::class, 'store'])->name('drive.apply.store');
+
+    // R-46 domain routes (docs/R46_ARCHITECTURE.md section 1): one file per owner.
+    foreach (['geo', 'pricing', 'dispatch', 'safety', 'money', 'passenger', 'driver', 'ops', 'business', 'fleet', 'comms'] as $ehailRoutes) {
+        require __DIR__.'/ehail/'.$ehailRoutes.'.php';
+    }
 
     Route::middleware('operator')->prefix('operator')->name('operator.')->group(function () {
         Route::get('/fleets', [OperatorFleetController::class, 'index'])->name('fleets.index');
