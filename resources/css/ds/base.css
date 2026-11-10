@@ -1,0 +1,103 @@
+/*
+ * Base for every page that carries class="eh" on <html>. Element rules are scoped to .eh so the Tailwind
+ * preflight that follows in app.css cannot undo them, and Jetstream pages inherit the same ground and ink.
+ */
+html.eh {
+    background: var(--eh-ground);
+    color: var(--eh-ink);
+    font-family: var(--eh-font-ui);
+    font-size: 100%;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: clip;
+    scrollbar-color: var(--eh-rule-strong) transparent;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.eh body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--eh-ground);
+    color: var(--eh-ink);
+    font-family: var(--eh-font-ui);
+    font-size: var(--eh-text-md);
+    font-weight: 400;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+}
+
+.eh ::selection { background: var(--eh-signal); color: var(--eh-signal-ink); }
+:where(.eh) :focus { outline: none; }
+/* Chrome does not match :focus-visible on file and date inputs reached by keyboard (focus sits in their inner
+   parts), so they show the ring on any focus (R-46 a11y). */
+:where(.eh) input:is([type="file"], [type="date"], [type="datetime-local"], [type="time"]):focus-within { outline: 3px solid var(--eh-focus); outline-offset: 2px; }
+:where(.eh) :focus-visible {
+    outline: 3px solid var(--eh-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+:where(.eh) :where(input, select, textarea, button) { font: inherit; color: inherit; }
+:where(.eh) :where(input, textarea) { caret-color: var(--eh-accent); }
+:where(.eh) a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+:where(.eh) :where(img, svg) { max-width: 100%; }
+.eh [hidden] { display: none !important; }
+.eh [x-cloak] { display: none !important; }
+
+/* Text helpers (component-level type uses these roles) */
+.eh-display {
+    font-family: var(--eh-font-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    overflow-wrap: break-word;
+    min-width: 0;
+    text-wrap: balance;
+}
+.eh-h1 { font-family: var(--eh-font-ui); font-size: var(--eh-text-2xl); font-weight: 700; line-height: 1.15; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.eh-h2 { font-family: var(--eh-font-ui); font-size: var(--eh-text-xl); font-weight: 700; line-height: 1.2; margin: 0; text-wrap: balance; }
+.eh-h3 { font-family: var(--eh-font-ui); font-size: var(--eh-text-lg); font-weight: 600; line-height: 1.3; margin: 0; }
+.eh-lead { font-size: var(--eh-text-lg); color: var(--eh-ink-2); line-height: 1.5; max-width: 60ch; margin: 0; }
+.eh-text { font-size: var(--eh-text-md); line-height: 1.55; max-width: 68ch; margin: 0; }
+.eh-small { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.eh-muted { color: var(--eh-ink-3); }
+.eh-num { font-variant-numeric: tabular-nums lining-nums; }
+.eh-link { color: var(--eh-accent); font-weight: 600; text-decoration: underline; text-underline-offset: 0.2em; }
+.eh-link:hover { color: var(--eh-accent-hover); }
+.eh-stack > * + * { margin-top: var(--eh-stack-gap, var(--eh-space-4)); }
+
+.eh-sr-only {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border: 0;
+}
+
+/* Skip link: first focusable element on every page */
+.eh-skip {
+    position: absolute;
+    left: var(--eh-space-4);
+    top: var(--eh-space-2);
+    z-index: 100;
+    padding: var(--eh-space-3) var(--eh-space-4);
+    background: var(--eh-ink);
+    color: var(--eh-ground);
+    border-radius: var(--eh-radius-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transform: translateY(-200%);
+}
+.eh-skip:focus-visible { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .eh *, .eh *::before, .eh *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

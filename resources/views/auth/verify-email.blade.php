@@ -1,45 +1,22 @@
-<x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
+<x-guest-layout title="Verify your email">
+    <header>
+        <h1 class="eh-guest__title">Check your email</h1>
+        <p class="eh-guest__lead">We sent a link to confirm your email address. Open it to continue. If it has not arrived, we can send another.</p>
+    </header>
 
-        <div class="mb-4 text-sm text-[var(--ink-soft)]">
-            {{ __('Before continuing, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
-        </div>
+    @if (session('status') == 'verification-link-sent')
+        <x-eh.banner tone="go">A new verification link has been sent to the email address in your profile.</x-eh.banner>
+    @endif
 
-        @if (session('status') == 'verification-link-sent')
-            <div class="mb-4 font-medium text-sm text-[var(--sage)]">
-                {{ __('A new verification link has been sent to the email address you provided in your profile settings.') }}
-            </div>
-        @endif
-
-        <div class="mt-4 flex items-center justify-between">
-            <form method="POST" action="{{ route('verification.send') }}">
-                @csrf
-
-                <div>
-                    <x-button type="submit">
-                        {{ __('Resend Verification Email') }}
-                    </x-button>
-                </div>
-            </form>
-
-            <div>
-                <a
-                    href="{{ route('profile.show') }}"
-                    class="underline text-sm text-[var(--ink-soft)] hover:text-[var(--ink)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--gold)]"
-                >
-                    {{ __('Edit Profile') }}</a>
-
-                <form method="POST" action="{{ route('logout') }}" class="inline">
-                    @csrf
-
-                    <button type="submit" class="underline text-sm text-[var(--ink-soft)] hover:text-[var(--ink)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--gold)] ms-2">
-                        {{ __('Log Out') }}
-                    </button>
-                </form>
-            </div>
-        </div>
-    </x-authentication-card>
+    <form method="POST" action="{{ route('verification.send') }}">
+        @csrf
+        <x-eh.button type="submit" size="lg" block>Send the link again</x-eh.button>
+    </form>
+    <div class="eh-form__row">
+        <a class="eh-link" href="{{ route('profile.show') }}">Edit profile</a>
+        <form method="POST" action="{{ route('logout') }}" style="margin:0">
+            @csrf
+            <x-eh.button type="submit" variant="ghost" size="sm">Sign out</x-eh.button>
+        </form>
+    </div>
 </x-guest-layout>

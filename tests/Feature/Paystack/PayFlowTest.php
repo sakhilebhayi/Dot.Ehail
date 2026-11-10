@@ -50,7 +50,7 @@ class PayFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Pay fare')
             ->assertSee(route('rides.pay', $this->ride), false)
-            ->assertSee('R 125.50')
+            ->assertSee('R125.50')
             ->assertSee('TEST MODE');
     }
 
@@ -64,16 +64,14 @@ class PayFlowTest extends TestCase
             ->assertSee('settlement to drivers is manual');
     }
 
-    public function test_a_fleet_owner_sees_the_same_payout_notice_and_no_pay_button(): void
+    public function test_a_fleet_owner_cannot_open_the_ride_page(): void
     {
         $owner = User::factory()->withPersonalTeam()->create();
         $fleet = Fleet::factory()->create(['owner_user_id' => $owner->id, 'status' => 'approved']);
         DriverProfile::withoutGlobalScope('user')->where('user_id', $this->ride->driver_id)->update(['fleet_id' => $fleet->id]);
 
-        $this->actingAs($owner)->get(route('rides.show', $this->ride))
-            ->assertOk()
-            ->assertDontSee('Pay fare')
-            ->assertSee('Payout is not available yet');
+        // R-46 security S-08: the legacy ride page is not a fleet surface (rider's full name and addresses).
+        $this->actingAs($owner)->get(route('rides.show', $this->ride))->assertForbidden();
     }
 
     public function test_without_paystack_the_page_says_payment_is_not_enabled_and_has_no_button(): void

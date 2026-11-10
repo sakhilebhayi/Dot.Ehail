@@ -19,6 +19,18 @@ class RidePrivacyTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * R-46: rides reach the open board only after ehail_dispatch.open_board_after_seconds
+     * (sequential offers come first). These tests are about what the board shows, not the
+     * delay, so it opens at once (the delay is tested in DispatcherTest).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['ehail_dispatch.open_board_after_seconds' => 0]);
+    }
+
     private function operator(): User
     {
         $operator = User::factory()->withPersonalTeam()->create();
@@ -47,7 +59,7 @@ class RidePrivacyTest extends TestCase
             'driver_id' => $driver?->id,
             'pickup_address' => 'Secret Pickup '.$passenger->id,
             'dropoff_address' => 'Secret Dropoff '.$passenger->id,
-            'status' => $driver ? 'accepted' : 'requested',
+            'status' => $driver ? 'driver_assigned' : 'requested',
             'vehicle_type' => 'standard',
             'estimated_fare' => 80,
         ], $overrides));
@@ -64,7 +76,7 @@ class RidePrivacyTest extends TestCase
         $this->actingAs($stranger)->get(route('rides.show', $ride))->assertForbidden();
     }
 
-    public function test_passenger_driver_fleet_owner_and_operator_can_view_the_ride(): void
+    public function test_passenger_driver_and_operator_can_view_the_ride_and_the_fleet_owner_uses_the_fleet_portal(): void
     {
         $owner = User::factory()->withPersonalTeam()->create();
         $fleet = Fleet::factory()->create(['status' => 'approved', 'owner_user_id' => $owner->id]);
@@ -72,9 +84,12 @@ class RidePrivacyTest extends TestCase
         $passenger = User::factory()->withPersonalTeam()->create();
         $ride = $this->ride($passenger, $driver);
 
-        foreach ([$passenger, $driver, $owner, $this->operator()] as $allowed) {
+        foreach ([$passenger, $driver, $this->operator()] as $allowed) {
             $this->actingAs($allowed)->get(route('rides.show', $ride))->assertOk();
         }
+
+        // R-46 security S-08: this page carries the rider's full name and addresses; fleets see first names only.
+        $this->actingAs($owner)->get(route('rides.show', $ride))->assertForbidden();
     }
 
     public function test_the_owner_of_a_different_fleet_cannot_view_the_ride(): void
@@ -130,7 +145,7 @@ class RidePrivacyTest extends TestCase
             ->assertDontSee($bobRide->pickup_address);
     }
 
-    public function test_a_driver_sees_rides_they_drive_and_a_fleet_owner_sees_their_drivers_rides(): void
+    public function test_a_driver_sees_rides_they_drive_and_a_fleet_owner_sees_none_here(): void
     {
         $owner = User::factory()->withPersonalTeam()->create();
         $fleet = Fleet::factory()->create(['status' => 'approved', 'owner_user_id' => $owner->id]);
@@ -138,13 +153,14 @@ class RidePrivacyTest extends TestCase
         $ride = $this->ride(User::factory()->create(), $driver);
         $unrelated = $this->ride(User::factory()->create(), $this->approvedDriver());
 
-        foreach ([$driver, $owner] as $viewer) {
-            $this->actingAs($viewer)
-                ->get(route('rides.index'))
-                ->assertOk()
-                ->assertSee($ride->pickup_address)
-                ->assertDontSee($unrelated->pickup_address);
-        }
+        $this->actingAs($driver)
+            ->get(route('rides.index'))
+            ->assertOk()
+            ->assertSee($ride->pickup_address)
+            ->assertDontSee($unrelated->pickup_address);
+
+        // R-46 security S-08: fleet owners read their drivers' trips in /fleet/trips (no addresses).
+        $this->actingAs($owner)->get(route('rides.index'))->assertOk()->assertDontSee($ride->pickup_address);
     }
 
     public function test_an_operator_sees_every_ride(): void
@@ -205,7 +221,8 @@ class RidePrivacyTest extends TestCase
         $response = $this->actingAs($owner)->get('/dashboard')->assertOk();
 
         $response->assertViewHas('totalDrivers', 1);
-        $response->assertViewHas('totalRides', 1);
+        // The ride list is not theirs (S-08); the fleet aggregates are.
+        $response->assertViewHas('totalRides', 0);
         $response->assertViewHas('totalRevenue', fn ($revenue) => (float) $revenue === 100.0);
         $response->assertDontSee('7,000.00');
     }
@@ -229,7 +246,7 @@ class RidePrivacyTest extends TestCase
         $this->actingAs($this->operator())
             ->get('/dashboard')
             ->assertOk()
-            ->assertSee('R 0.00');
+            ->assertSee('R0.00');
     }
 
     // ─── Available queue ─────────────────────────────────────────────────

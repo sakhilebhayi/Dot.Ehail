@@ -204,7 +204,7 @@ class VehicleManagementTest extends TestCase
     {
         $driver = $this->makeApprovedDriver();
         $vehicle = $this->profileOf($driver)->activeVehicle();
-        $this->makeRide(['status' => 'en_route', 'driver_id' => $driver->id, 'vehicle_id' => $vehicle->id]);
+        $this->makeRide(['status' => 'driver_arriving', 'driver_id' => $driver->id, 'vehicle_id' => $vehicle->id]);
 
         $this->actingAs($driver)->patch(route('drivers.vehicles.update', $vehicle), $this->payload(['plate_number' => $vehicle->plate_number]))
             ->assertSessionHasErrors('vehicle');
@@ -311,7 +311,7 @@ class VehicleManagementTest extends TestCase
         $this->actingAs($driver)->post(route('drivers.documents.store'), [
             'type' => 'vehicle_inspection',
             'vehicle_id' => $vehicle->id,
-            'document' => UploadedFile::fake()->create('roadworthy-certificate.pdf', 50, 'application/pdf'),
+            'document' => UploadedFile::fake()->createWithContent('roadworthy-certificate.pdf', "%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n"),
         ])->assertSessionDoesntHaveErrors();
 
         $document = DriverDocument::firstOrFail();
@@ -327,7 +327,7 @@ class VehicleManagementTest extends TestCase
         $driver = $this->makeApprovedDriver();
         $other = $this->makeApprovedDriver();
         $theirs = $this->profileOf($other)->activeVehicle();
-        $file = fn () => UploadedFile::fake()->create('doc.pdf', 20, 'application/pdf');
+        $file = fn () => UploadedFile::fake()->createWithContent('doc.pdf', "%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n");
 
         $this->actingAs($driver)->post(route('drivers.documents.store'), ['type' => 'vehicle_inspection', 'vehicle_id' => $theirs->id, 'document' => $file()])
             ->assertSessionHasErrors('vehicle_id');
@@ -343,7 +343,7 @@ class VehicleManagementTest extends TestCase
         $driver = $this->makeApprovedDriver();
 
         $this->actingAs($driver)->post(route('drivers.documents.store'), [
-            'type' => 'license', 'document' => UploadedFile::fake()->create('licence.pdf', 20, 'application/pdf'),
+            'type' => 'license', 'document' => UploadedFile::fake()->createWithContent('licence.pdf', "%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n"),
         ])->assertSessionDoesntHaveErrors();
 
         $this->assertNull(DriverDocument::firstOrFail()->vehicle_id);

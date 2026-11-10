@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Ehail;
 
+use App\Domain\Verification\Files\SecureFileStore;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
@@ -33,6 +34,17 @@ class DriverApplicationController extends Controller
 
         if ($existingProfile) {
             return back()->withErrors(['license_number' => 'You already have a driver application on file.']);
+        }
+
+        // Driver app (R-46): "drive independently" registers a one-driver fleet in the applicant's name (pending
+        // operator review, exactly like a new fleet); "join a fleet" ignores any own-fleet name left in the form.
+        if ($request->input('mode') === 'independent') {
+            $request->merge([
+                'existing_fleet_id' => null,
+                'new_fleet_name' => trim((string) $request->input('new_fleet_name')) !== '' ? $request->input('new_fleet_name') : $request->user()->name.' (independent)',
+            ]);
+        } elseif ($request->input('mode') === 'fleet') {
+            $request->merge(['new_fleet_name' => null]);
         }
 
         $validator = Validator::make($request->all(), [
@@ -116,7 +128,8 @@ class DriverApplicationController extends Controller
             $file = $request->file($field);
             $profile->documents()->create([
                 'type' => $type,
-                'file_path' => $file->store('', 'driver-documents'),
+                // EXIF/GPS stripped and re-encoded (R-46 security S-24).
+                'file_path' => app(SecureFileStore::class)->store($file, 'driver-documents', 'legacy', ['image', 'pdf'], $field)->path,
                 'original_filename' => $file->getClientOriginalName(),
             ]);
         }
@@ -131,9 +144,10 @@ class DriverApplicationController extends Controller
             $reviewer->notify(new DriverApplicationSubmittedNotification($profile));
         }
 
-        return redirect()->route('drivers.show', $profile)
+        // Next step in the driver app: the documents checklist.
+        return redirect()->route('drive.onboarding')
             ->with('status', $fleet->isApproved()
-                ? 'Application submitted. The fleet owner will review it.'
-                : 'Application submitted. A platform operator will review your new fleet and your application.');
+                ? 'Application sent. The fleet owner will review it. Now upload your documents.'
+                : 'Application sent. Dot.Ehail operations will review it. Now upload your documents.');
     }
 }

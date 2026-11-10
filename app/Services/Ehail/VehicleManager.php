@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
  */
 class VehicleManager
 {
-    private const LIVE_RIDE_STATUSES = ['accepted', 'en_route', 'arrived', 'in_progress', 'needs_review'];
+    private const LIVE_RIDE_STATUSES = ['driver_assigned', 'driver_arriving', 'driver_arrived', 'in_progress', 'needs_review'];
 
     /**
      * @param  array<string, mixed>  $attributes  make, model, year, color, plate_number, type, seats

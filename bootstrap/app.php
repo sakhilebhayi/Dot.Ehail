@@ -1,11 +1,11 @@
 <?php
 
+use App\Domain\Integration\Http\JsonErrorPolicy;
 use App\Http\Middleware\EnsurePlatformOperator;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,7 +28,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->preventRequestForgery(except: ['webhooks/paystack', 'csp-report']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
-        );
+        // One JSON error policy for every Dot.Ehail API (docs/R46_INTEGRATION.md section 4, D-711).
+        JsonErrorPolicy::register($exceptions);
     })->create();

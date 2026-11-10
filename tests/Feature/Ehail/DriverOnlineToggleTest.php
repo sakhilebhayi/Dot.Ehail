@@ -5,6 +5,7 @@ namespace Tests\Feature\Ehail;
 use App\Models\DriverProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesSafetyFixtures;
 use Tests\TestCase;
 
 /**
@@ -14,12 +15,17 @@ use Tests\TestCase;
  */
 class DriverOnlineToggleTest extends TestCase
 {
+    use CreatesSafetyFixtures;
     use RefreshDatabase;
 
+    /**
+     * R-46: going online now also needs an active vehicle and every mandatory document approved
+     * (App\Domain\Verification\DriverEligibility, guarded in EhailSafetyServiceProvider), so the
+     * driver here is a fully verified one; VerificationTest covers the refusals.
+     */
     public function test_a_driver_can_go_online_and_offline(): void
     {
-        $user = User::factory()->withPersonalTeam()->create();
-        $profile = DriverProfile::factory()->for($user)->create(['status' => 'approved', 'is_online' => false]);
+        [$user, $profile] = $this->makeVerifiedDriver();
 
         $this->actingAs($user)->patch(route('drivers.toggle-online', $profile))->assertRedirect();
         $this->assertTrue($profile->fresh()->is_online);

@@ -1,0 +1,217 @@
+/* Hallmark v2 stamp: Dot.Ehail landing, theme custom (DESIGN.md "Route Line"), genre editorial; signature: the fare line. Critique: one motif, the dot on a route line; real South African road photographs. */
+/* Landing page (/). One motif: the dot on a route line. Photographs of South African roads sit inside the page's one radius. */
+
+.lp { --lp-step-1: 0.875rem; --lp-step-2: 1.125rem; --lp-step-3: 1.5rem; --lp-step-4: clamp(2rem, 3vw, 2.75rem); --lp-gap: 12px; --lp-radius: var(--eh-radius-lg); --lp-section: clamp(5rem, 10vw, 9rem); }
+html.lp body { font-size: var(--lp-step-2); }
+.lp-wrap { width: 100%; max-width: 88rem; margin: 0 auto; padding: 0 var(--eh-gutter); }
+@media (min-width: 768px) { .lp-wrap { padding: 0 var(--eh-space-8); } }
+.lp-section { padding: var(--lp-section) 0 0; }
+.lp-h2 { font-family: var(--eh-font-display); font-weight: 700; font-size: clamp(2.5rem, 5.2vw, 4.75rem); line-height: 0.95; letter-spacing: -0.015em; margin: 0; overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
+.lp-lede { font-size: var(--lp-step-2); line-height: 1.5; color: var(--eh-ink); margin: 0; max-width: 40ch; }
+.lp-photo { margin: 0; position: relative; overflow: hidden; border-radius: var(--lp-radius); background: var(--eh-surface-3); }
+.lp-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.lp-photo figcaption { position: absolute; left: var(--eh-space-3); bottom: var(--eh-space-3); padding: var(--eh-space-1) var(--eh-space-3); border-radius: var(--eh-radius-pill); background: var(--eh-surface); color: var(--eh-ink); font-size: var(--lp-step-1); font-weight: 600; }
+
+/* Bar */
+.lp-bar { position: absolute; z-index: 5; top: 0; left: 0; right: 0; padding: 0 var(--eh-space-4) 0 var(--eh-space-6); }
+.lp-bar__in { display: flex; align-items: center; gap: var(--eh-space-4); height: 72px; }
+@media (min-width: 960px) { .lp-bar { padding: 0 var(--eh-space-4) 0 clamp(2rem, 4vw, 4.5rem); } }
+.lp-bar__links { display: none; gap: var(--eh-space-1); margin-left: auto; }
+.lp-bar__links a { display: inline-flex; align-items: center; min-height: var(--eh-target); padding: 0 var(--eh-space-3); color: var(--eh-ink); font-weight: 600; text-decoration: none; border-radius: var(--eh-radius-pill); }
+.lp-bar__links a:hover { background: var(--eh-surface-2); }
+.lp-bar .eh-btn { margin-left: auto; }
+@media (min-width: 1200px) { .lp-bar__links { display: flex; } .lp-bar .eh-btn { margin-left: var(--eh-space-2); } }
+
+/* Hero: route card beside the road */
+.lp-hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--lp-gap); padding: var(--lp-gap); min-height: 100svh; }
+.lp-hero__card {
+    position: relative; display: flex; flex-direction: column; justify-content: center; gap: var(--eh-space-6);
+    padding: 96px var(--eh-space-6) var(--eh-space-8); border-radius: var(--lp-radius); background: var(--eh-surface); color: var(--eh-ink);
+    order: 2;
+}
+.lp-hero__photo { order: 1; height: 44svh; min-height: 260px; }
+@media (max-width: 959px) { .lp-hero__photo figcaption { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .lp-hero__card .lp-route { order: 10; margin-top: var(--eh-space-2); } .lp-hero { position: relative; padding-top: 72px; } .lp-hero__card { position: static; padding-top: var(--eh-space-8); } .lp-bar { padding: 0 var(--eh-space-2) 0 var(--eh-space-4); } }
+.lp-hero__photo img { object-position: 50% 62%; }
+.lp-hero h1 { font-family: var(--eh-font-display); font-weight: 700; font-size: clamp(3rem, 6.4vw, 6rem); line-height: 0.92; letter-spacing: -0.02em; margin: 0; overflow-wrap: break-word; min-width: 0; max-width: 11ch; text-wrap: balance; }
+.lp-hero__sentence { font-size: var(--lp-step-2); line-height: 1.45; margin: 0; max-width: 32ch; }
+.lp-hero__actions { display: flex; flex-wrap: wrap; gap: var(--eh-space-3); }
+.lp-hero__links { display: flex; flex-wrap: wrap; gap: var(--eh-space-1) var(--eh-space-5); margin: 0; padding: 0; list-style: none; }
+.lp-hero__links a { display: inline-flex; align-items: center; min-height: var(--eh-target); color: var(--eh-ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--eh-rule-strong); text-underline-offset: 0.3em; }
+.lp-hero__links a:hover { text-decoration-color: var(--eh-accent); }
+@media (min-width: 960px) {
+    .lp-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); height: 100svh; min-height: 640px; max-height: 1000px; }
+    .lp-hero__card { order: 0; margin: 0; padding: 112px clamp(2rem, 4vw, 4.5rem) var(--eh-space-10); }
+    .lp-hero__photo { height: auto; }
+}
+
+/* The motif band: the tagline as three stops on a route line, the last in road-marking yellow */
+.lp-route { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); position: relative; }
+.lp-route::before { content: ""; position: absolute; left: 11px; right: calc(33.333% - 15px); top: 11px; height: 8px; border-radius: 4px; background: var(--eh-accent); }
+.lp-route__stop { position: relative; display: grid; gap: var(--eh-space-3); }
+.lp-route__stop::before { content: ""; width: 30px; height: 30px; border-radius: 50%; box-sizing: border-box; background: var(--eh-surface); border: 7px solid var(--eh-accent); }
+.lp-route__stop--end::before { background: var(--eh-signal); border-color: var(--eh-ink); }
+.lp-route__stop span { font-family: var(--eh-font-display); font-weight: 700; font-size: var(--lp-step-2); line-height: 1.05; }
+@media (min-width: 600px) { .lp-route__stop span { font-size: var(--lp-step-3); } }
+.lp-hero__card .lp-route { margin-top: auto; }
+.lp-hero__card > .lp-hero__links { margin-bottom: auto; }
+.lp-hero h1 { max-width: 13ch; }
+
+/* Fares: many lines into one total */
+.lp-fares__head { display: grid; gap: var(--eh-space-5); grid-template-columns: minmax(0, 1fr); align-items: end; }
+@media (min-width: 960px) { .lp-fares__head { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--eh-space-10); } }
+.lp-fareline { margin-top: var(--eh-space-12); }
+.lp-fareline__stops { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); position: relative; }
+.lp-fareline__stops::before { content: ""; position: absolute; left: 21px; top: 22px; bottom: 22px; width: 8px; border-radius: 4px; background: var(--eh-accent); }
+.lp-stop { position: relative; }
+.lp-stop__btn {
+    display: flex; align-items: center; gap: var(--eh-space-4); width: 100%; min-height: 56px; padding: 4px 8px 4px 4px;
+    border: 0; border-radius: var(--eh-radius-pill); background: none; color: var(--eh-ink); text-align: left; cursor: pointer;
+    font-size: var(--lp-step-2); font-weight: 600;
+    transition: background-color var(--eh-duration-fast) var(--eh-ease);
+}
+.lp-stop__btn:hover { background: var(--eh-surface-2); }
+.lp-stop__btn:active { background: var(--eh-surface-3); }
+.lp-stop__dot { flex: none; position: relative; z-index: 1; width: 38px; height: 38px; border-radius: 50%; background: var(--eh-surface); border: 7px solid var(--eh-accent); transition: transform var(--eh-duration) var(--eh-ease), background-color var(--eh-duration) var(--eh-ease); }
+.lp-stop__btn[aria-expanded="true"] .lp-stop__dot { background: var(--eh-signal); border-color: var(--eh-ink); transform: scale(1.12); }
+.lp-stop--total .lp-stop__dot { background: var(--eh-signal); border-color: var(--eh-ink); width: 44px; height: 44px; margin-left: -4px; }
+.lp-stop--total .lp-stop__btn { font-weight: 700; }
+.lp-stop--total .lp-stop__op { color: var(--eh-ink); }
+.lp-stop__op { flex: none; width: 1.25em; color: var(--eh-ink-2); font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+.lp-stop__panel { margin: 0 0 var(--eh-space-3) 56px; padding: var(--eh-space-4) var(--eh-space-5); border-radius: var(--eh-radius); background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); max-width: 48ch; font-size: var(--lp-step-2); line-height: 1.5; }
+.lp-stop__panel p { margin: 0; }
+.lp-fareline__note { margin: var(--eh-space-8) 0 0; font-weight: 700; font-size: var(--lp-step-3); line-height: 1.25; max-width: 34ch; }
+@media (min-width: 1100px) {
+    .lp-fareline { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .lp-fareline__stops { grid-template-columns: repeat(8, minmax(0, 1fr)); align-items: start; }
+    .lp-fareline__stops::before { left: 22px; right: 22px; top: 21px; bottom: auto; width: auto; height: 8px; }
+    .lp-stop__btn { flex-direction: column; align-items: flex-start; gap: var(--eh-space-3); min-height: 0; padding: 2px 8px 12px 2px; border-radius: var(--eh-radius); font-size: var(--lp-step-2); }
+    .lp-stop__op { position: absolute; top: -32px; left: 8px; text-align: left; }
+    .lp-stop__panel { position: static; margin: 0; }
+    .lp-fareline__panels { margin-top: var(--eh-space-6); min-height: 7rem; position: relative; }
+    .lp-fareline__panels .lp-stop__panel { margin-left: var(--lp-panel-at, 0); }
+}
+
+/* Safety: the ride as a line beside a photograph in the disc */
+.lp-safety { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-10); align-items: start; }
+@media (min-width: 960px) { .lp-safety { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--eh-space-16); } }
+.lp-safety__photo { aspect-ratio: 4 / 5; order: 2; }
+@media (min-width: 960px) { .lp-safety__photo { order: 0; } }
+.lp-safety__photo img { object-position: 30% 50%; }
+.lp-safety .eh-stepper { margin-top: var(--eh-space-8); }
+.lp-safety .eh-stepper__label { font-size: var(--lp-step-3); }
+.lp-safety .eh-stepper__meta { font-size: var(--lp-step-2); color: var(--eh-ink); max-width: 48ch; margin-top: var(--eh-space-1); }
+.lp-safety .eh-stepper__step { padding-bottom: var(--eh-space-8); }
+.lp-safety .eh-banner { margin-top: var(--eh-space-8); }
+.lp-safety__honest { margin: var(--eh-space-4) 0 0; color: var(--eh-ink-2); max-width: 56ch; font-size: var(--lp-step-2); }
+
+/* Drivers: index of names beside the disc */
+.lp-drive { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-8); align-items: center; }
+@media (min-width: 960px) { .lp-drive { grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: var(--eh-space-12); } }
+.lp-drive__disc { position: relative; justify-self: center; width: min(86vw, 34rem); aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: var(--eh-accent); }
+.lp-drive__disc img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The driver's offer as a route line on the sign-green disc (replaces the minibus photograph, D-2010). */
+.lp-offer { display: grid; place-items: center; color: var(--eh-accent-ink); padding: 14% 13% 20%; }
+.lp-offer__stops { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(10px, 2.2vw, 18px); position: relative; width: 100%; }
+.lp-offer__stops::before { content: ""; position: absolute; left: 11px; top: 14px; bottom: 14px; width: 4px; border-radius: 2px; background: var(--eh-accent-ink); opacity: 0.85; }
+.lp-offer__stops li { position: relative; display: grid; grid-template-columns: 26px minmax(0, 1fr); column-gap: var(--eh-space-3); align-items: baseline; }
+.lp-offer__dot { grid-row: 1 / span 2; align-self: center; position: relative; z-index: 1; width: 26px; height: 26px; border-radius: 50%; background: var(--eh-accent); border: 5px solid var(--eh-accent-ink); }
+.lp-offer__stops b { font-family: var(--eh-font-display); font-size: clamp(1.25rem, 3.4vw, 1.75rem); font-weight: 700; line-height: 1.05; }
+.lp-offer__stops span:not(.lp-offer__dot) { grid-column: 2; font-size: clamp(0.8125rem, 1.9vw, 1rem); line-height: 1.3; opacity: 0.92; }
+.lp-offer__total .lp-offer__dot { background: var(--eh-signal); border-color: var(--eh-signal-ink); width: 30px; height: 30px; margin-left: -2px; }
+.lp-offer__total b { text-decoration: underline; text-decoration-color: var(--eh-signal); text-decoration-thickness: 4px; text-underline-offset: 6px; }
+.lp-drive__disc figcaption { position: absolute; left: 50%; bottom: 9%; translate: -50% 0; white-space: nowrap; padding: var(--eh-space-1) var(--eh-space-3); border-radius: var(--eh-radius-pill); background: var(--eh-surface); color: var(--eh-ink); font-size: var(--lp-step-1); font-weight: 600; }
+.lp-index { list-style: none; margin: var(--eh-space-6) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--eh-space-2) var(--eh-space-6); }
+@media (min-width: 960px) { .lp-index { flex-direction: column; flex-wrap: nowrap; gap: 0; } }
+.lp-index button {
+    display: inline-flex; align-items: center; gap: var(--eh-space-3); min-height: var(--eh-target); padding: 0; border: 0; background: none; cursor: pointer;
+    font-family: var(--eh-font-display); font-weight: 700; font-size: var(--lp-step-4); line-height: 1.15; color: var(--eh-ink-2);
+}
+.lp-index button::before { content: ""; width: 0.42em; height: 0.42em; border-radius: 50%; border: 0.1em solid currentColor; flex: none; transition: background-color var(--eh-duration) var(--eh-ease); }
+.lp-index button[aria-selected="true"] { color: var(--eh-ink); }
+.lp-index button[aria-selected="true"]::before { background: var(--eh-signal); border-color: var(--eh-ink); }
+.lp-index button:hover { color: var(--eh-ink); }
+.lp-index button:active { transform: translateY(1px); }
+.lp-drive__fact { margin: var(--eh-space-5) 0 0; font-size: var(--lp-step-2); line-height: 1.5; max-width: 42ch; min-height: 4.5em; }
+.lp-drive .eh-btn { margin-top: var(--eh-space-6); }
+
+/* The full-width band that splits the page: real N1 signage */
+.lp-band { margin-top: var(--lp-section); }
+.lp-band .lp-photo { border-radius: 0; height: clamp(160px, 22vw, 320px); }
+.lp-band .lp-photo img { object-position: 50% 45%; }
+@media (max-width: 767px) { .lp-band .lp-photo img { object-position: 80% 45%; } }
+
+/* Business and fleets */
+.lp-accounts { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-8); }
+.lp-accounts__cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-8); margin-top: var(--eh-space-8); }
+.lp-accounts__col h3 { font-size: var(--lp-step-3); font-weight: 700; line-height: 1.15; margin: 0 0 var(--eh-space-3); display: flex; align-items: center; gap: var(--eh-space-3); }
+.lp-accounts__col h3::before { content: ""; width: 18px; height: 18px; border-radius: 50%; border: 5px solid var(--eh-accent); flex: none; }
+.lp-accounts__col p { margin: 0; font-size: var(--lp-step-2); line-height: 1.5; max-width: 48ch; }
+.lp-accounts__photo { aspect-ratio: 16 / 10; }
+@media (min-width: 960px) {
+    .lp-accounts { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: start; gap: var(--eh-space-12); }
+    .lp-accounts__cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top: var(--eh-space-10); }
+    .lp-accounts__photo { aspect-ratio: 4 / 3; }
+}
+
+/* South Africa first: minibus photograph and the plain facts */
+.lp-local { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-8); align-items: center; }
+@media (min-width: 960px) { .lp-local { grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: var(--eh-space-12); } }
+.lp-local__photo { aspect-ratio: 4 / 3; }
+.lp-facts { list-style: none; margin: var(--eh-space-6) 0 0; padding: 0; display: grid; gap: var(--eh-space-4); }
+.lp-facts li { display: grid; grid-template-columns: 18px 1fr; gap: var(--eh-space-4); font-size: var(--lp-step-2); line-height: 1.45; }
+.lp-facts li::before { content: ""; width: 14px; height: 14px; margin-top: 0.4em; border-radius: 50%; background: var(--eh-signal); box-shadow: inset 0 0 0 3px var(--eh-ink); }
+
+/* FAQ: filled tiles, one open at a time */
+.lp-faq { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-6); }
+@media (min-width: 960px) { .lp-faq { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--eh-space-10); } .lp-faq__head { position: sticky; top: 96px; align-self: start; } }
+.lp-faq__list { display: grid; gap: 8px; }
+.lp-q { border-radius: var(--eh-radius); background: var(--eh-surface); }
+.lp-q summary {
+    list-style: none; display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-4);
+    min-height: 72px; padding: var(--eh-space-4) var(--eh-space-6); cursor: pointer; font-size: var(--lp-step-3); font-weight: 600; line-height: 1.25; border-radius: var(--eh-radius);
+}
+.lp-q summary::-webkit-details-marker { display: none; }
+.lp-q summary:focus-visible { outline-offset: -3px; }
+.lp-q__sign { position: relative; flex: none; width: 16px; height: 16px; }
+.lp-q__sign::before, .lp-q__sign::after { content: ""; position: absolute; left: 0; top: 6.5px; width: 16px; height: 3px; border-radius: 2px; background: currentColor; transition: transform var(--eh-duration) var(--eh-ease); }
+.lp-q__sign::after { transform: rotate(90deg); }
+.lp-q[open] { background: var(--eh-accent); color: var(--eh-accent-ink); }
+.lp-q[open] .lp-q__sign::after { transform: rotate(0deg); }
+.lp-q__a { padding: 0 var(--eh-space-6) var(--eh-space-6); font-size: var(--lp-step-2); line-height: 1.5; max-width: 56ch; }
+.lp-q__a p { margin: 0; }
+
+/* Close */
+.lp-close { display: grid; gap: var(--eh-space-6); align-items: end; padding-bottom: var(--lp-section); }
+@media (min-width: 960px) { .lp-close { grid-template-columns: minmax(0, 1fr) auto; } }
+
+/* Footer: the mark, built large */
+.lp-foot { background: var(--eh-accent); color: var(--eh-accent-ink); padding: var(--eh-space-12) 0 var(--eh-space-8); }
+.lp-foot__mark { display: flex; align-items: center; gap: 4px; height: clamp(120px, 26svh, 300px); }
+.lp-foot__disc { height: 100%; aspect-ratio: 1; border-radius: 50%; background: var(--eh-brand-yellow); display: grid; place-items: center; }
+.lp-foot__disc svg { width: 58%; height: auto; }
+.lp-foot__chev { height: 100%; aspect-ratio: 0.62; }
+.lp-foot__word { margin-left: var(--eh-space-6); font-family: var(--eh-font-display); font-weight: 700; font-size: clamp(3rem, 10vw, 9rem); line-height: 0.85; letter-spacing: -0.02em; }
+.lp-foot__word span { color: var(--eh-signal); }
+.lp-foot__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--eh-space-6); margin-top: var(--eh-space-10); }
+@media (min-width: 960px) { .lp-foot__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.lp-foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.lp-foot a { color: inherit; display: inline-flex; align-items: center; min-height: var(--eh-target); text-decoration: underline; text-underline-offset: 0.25em; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
+.lp-foot a:hover { text-decoration-color: currentColor; }
+.lp-foot :focus-visible { outline-color: var(--eh-signal); }
+.lp-foot__fine { margin-top: var(--eh-space-10); display: grid; gap: var(--eh-space-3); font-size: var(--lp-step-1); }
+.lp-foot__fine p { margin: 0; max-width: 72ch; }
+.lp-foot__fine a { min-height: 0; display: inline; }
+@media (max-width: 599px) { .lp-foot__word { display: none; } }
+
+/* Motion: one reveal for the parts of each section, visible by default without script */
+.js [data-lp-reveal] > * { opacity: 0; transform: translateY(24px); transition: opacity 600ms var(--eh-ease), transform 600ms var(--eh-ease); }
+.js [data-lp-reveal].is-in > * { opacity: 1; transform: none; }
+.js [data-lp-reveal].is-in > *:nth-child(2) { transition-delay: 80ms; }
+.js [data-lp-reveal].is-in > *:nth-child(3) { transition-delay: 160ms; }
+.js [data-lp-reveal].is-in > *:nth-child(4) { transition-delay: 240ms; }
+.lp-hero__photo img { transition: opacity 1600ms var(--eh-ease); }
+.lp-hero__photo img + img { position: absolute; inset: 0; opacity: 0; }
+.lp-hero__photo img.is-on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+    .js [data-lp-reveal] > * { opacity: 1; transform: none; transition: none; }
+}

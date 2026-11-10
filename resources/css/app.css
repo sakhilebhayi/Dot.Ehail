@@ -1,3 +1,17 @@
+/* Hallmark v2 stamp: theme custom (locked by DESIGN.md, "Route Line"), genre editorial for the landing, app scope for the shells; signature: the ride drawn as a route line from pickup dot to drop-off. */
+/* Critique: sign green and road-marking yellow on cool map paper; pill controls like a route line with round caps; type is Barlow, highway lettering. */
+
+/* Dot.Ehail design system (ds, R-46). Tokens and components first, then Tailwind for the Jetstream and legacy views. */
+@import "./ds/tokens.css";
+@import "./ds/fonts.css";
+@import "./ds/base.css";
+@import "./ds/components.css";
+@import "./ds/controls.css";
+@import "./ds/shells.css";
+@import "./ds/work.css";
+@import "./ds/landing.css";
+@import "./ds/jetstream.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -20,3 +34,8 @@
         scroll-behavior: auto !important;
     }
 }
+
+/* Legacy ride tables: clickable rows (data-eh-href, resources/js/eh/inline-actions.js) tint on hover and keyboard
+   focus; this replaced inline onmouseover handlers, which the enforced CSP does not run (R-46 security S-29). */
+.eh-row-link { cursor: pointer; transition: background-color 0.15s; }
+.eh-row-link:hover, .eh-row-link:focus-visible { background-color: rgba(255, 255, 255, 0.03); }

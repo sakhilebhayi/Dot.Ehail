@@ -1,0 +1,458 @@
+/*
+ * Dot.Ehail passenger app (R-46 wave 2). Built inside "Route Line" (DESIGN.md): tokens only, flat surfaces that step
+ * by tone, pill controls, the ride drawn as a route line with stops (pickup yellow, drop-off ink, the total as the
+ * yellow stop at the end of the fare line). Prefix pax-. Loaded only on passenger pages and the public calculator.
+ */
+
+/* ------------------------------------------------------------------ stage: map behind, sheet in front */
+.pax-stage {
+    position: relative;
+    height: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px));
+    overflow: hidden;
+    background: var(--eh-map-land);
+}
+@media (max-width: 767.98px) {
+    .pax-stage { height: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-tabbar) - env(safe-area-inset-bottom, 0px)); }
+}
+.pax-stage > .eh-mapframe { position: absolute; inset: 0; min-height: 0; }
+.pax-stage .eh-mapframe__canvas.eh-map { position: absolute; inset: 0; height: auto; min-height: 0; }
+.pax-stage .eh-mapframe__status { inset: var(--eh-space-4) var(--eh-space-4) auto var(--eh-space-4); }
+@media (min-width: 1024px) {
+    /* Docked as a side panel: a snap point from the phone layout must not move it. */
+    .pax-stage .eh-sheet--dock-desktop[data-snap] { transform: none; }
+}
+@media (min-width: 1024px) {
+    .pax-stage .eh-mapframe__status { left: calc(26rem + var(--eh-space-8)); }
+}
+/* Under the tab bar (30): at half height the sheet's lower part hangs below the viewport and must not cover the tabs. */
+.pax-stage .eh-sheet { z-index: 25; }
+.pax-stage .eh-sheet__body { padding-bottom: var(--eh-space-8); }
+/* At half height the lower half of the sheet hangs below the screen; end the scrolling body at the visible edge so
+   everything in it can be scrolled into view without expanding the sheet. */
+@media (max-width: 1023.98px) {
+    .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-space-4)); }
+    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-tabbar) - var(--eh-space-4)); }
+    .pax-stage .eh-sheet[data-snap="half"] .eh-sheet__body { margin-bottom: calc(var(--pax-sheet-h) / 2); }
+    .pax-stage .eh-sheet[data-snap="peek"] .eh-sheet__body { margin-bottom: calc(var(--pax-sheet-h) - var(--eh-sheet-peek)); }
+}
+@media (min-width: 768px) and (max-width: 1023.98px) {
+    .eh-app:has(.eh-tabbar) .pax-stage .eh-sheet { --pax-sheet-h: calc(100dvh - var(--eh-topbar) - env(safe-area-inset-top, 0px) - var(--eh-space-4)); }
+}
+
+/* The pin people move the map under to set the pickup exactly. */
+.pax-pin {
+    position: absolute; z-index: 30; left: 50%; top: 50%;
+    width: 40px; height: 52px; margin: -52px 0 0 -20px;
+    pointer-events: none; color: var(--eh-map-pickup);
+    filter: drop-shadow(0 2px 2px rgb(15 31 25 / 0.35)); /* taste-skill-ignore: the pin floats over the map */
+}
+.pax-pin svg { width: 100%; height: 100%; display: block; }
+.pax-pin__ring { stroke: var(--eh-signal-ink); }
+@media (max-width: 1023.98px) {
+    /* The sheet covers the lower half while the pin is out; keep the pin in the visible part. */
+    .pax-stage[data-pinning="true"] .pax-pin { top: 30%; }
+}
+@media (min-width: 1024px) {
+    .pax-stage[data-pinning="true"] .pax-pin { left: calc(50% + 13rem + var(--eh-space-2)); }
+}
+
+/* ------------------------------------------------------------------ status, live regions */
+.pax-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pax-net {
+    display: flex; align-items: center; gap: var(--eh-space-2); --eh-icon: 18px;
+    margin: 0 0 var(--eh-space-3); padding: var(--eh-space-2) var(--eh-space-3);
+    border-radius: var(--eh-radius-sm); background: var(--eh-caution-bg); color: var(--eh-caution);
+    font-size: var(--eh-text-sm); font-weight: 600;
+}
+.pax-net[hidden] { display: none; }
+
+/* ------------------------------------------------------------------ the route line: pickup to drop-off */
+.pax-route { list-style: none; margin: 0 0 var(--eh-space-4); padding: 0; display: grid; gap: var(--eh-space-2); }
+.pax-route__stop {
+    position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center;
+    gap: var(--eh-space-2); min-height: var(--eh-target);
+}
+.pax-route__dot {
+    justify-self: center; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--eh-map-pickup); box-shadow: 0 0 0 3px var(--eh-surface), 0 0 0 4.5px var(--eh-signal-ink); /* taste-skill-ignore: ring around a route stop, drawn like the map markers, not elevation */
+}
+.pax-route__stop--drop .pax-route__dot, .pax-route__dot--drop { background: var(--eh-map-dropoff); border-radius: var(--eh-radius-sm); box-shadow: 0 0 0 3px var(--eh-surface); } /* taste-skill-ignore: ring around the drop-off stop */
+.pax-route__stop + .pax-route__stop::before {
+    content: ""; position: absolute; left: 13px; top: calc(-1 * var(--eh-space-2) - 14px); height: calc(var(--eh-space-2) + 22px);
+    width: 3px; border-radius: var(--eh-radius-pill); background: var(--eh-map-route);
+}
+.pax-route__text { min-width: 0; display: grid; gap: 1px; }
+.pax-route__label { font-size: var(--eh-text-xs); font-weight: 600; color: var(--eh-ink-3); }
+.pax-route__address { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pax-route__address[data-empty="true"] { color: var(--eh-ink-3); font-weight: 500; }
+
+/* ------------------------------------------------------------------ search fields in the sheet */
+.pax-field { display: grid; gap: var(--eh-space-1); margin-bottom: var(--eh-space-3); position: relative; }
+.pax-field__label { display: flex; align-items: center; gap: var(--eh-space-2); font-size: var(--eh-text-sm); font-weight: 600; }
+.pax-field__label .pax-route__dot { width: 12px; height: 12px; }
+.pax-field__row { display: flex; gap: var(--eh-space-2); align-items: center; }
+.pax-field__row .eh-input { flex: 1; min-width: 0; }
+.pax-field__hint, .pax-field__status { margin: 0; font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
+.pax-field__status:empty, .pax-field__hint:empty { display: none; }
+.pax-field__status[data-kind="error"] { color: var(--eh-stop); font-weight: 600; }
+.pax-field__tools { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); }
+.pax-results {
+    list-style: none; margin: var(--eh-space-1) 0 0; padding: var(--eh-space-1); max-height: 16rem; overflow-y: auto;
+    background: var(--eh-surface); border: 1.5px solid var(--eh-rule-strong); border-radius: var(--eh-radius);
+}
+.pax-results[hidden] { display: none; }
+.eh-search__option { display: grid; gap: 1px; padding: var(--eh-space-2) var(--eh-space-3); border-radius: var(--eh-radius-sm); cursor: pointer; min-height: var(--eh-target); align-content: center; }
+.eh-search__option.is-active, .eh-search__option:hover { background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); }
+.eh-search__name { font-weight: 600; }
+.eh-search__detail { font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
+.pax-attribution { margin: var(--eh-space-1) 0 0; font-size: var(--eh-text-xs); color: var(--eh-ink-3); }
+
+.pax-places { display: flex; gap: var(--eh-space-2); overflow-x: auto; padding: 2px 2px var(--eh-space-2); margin: 0 -2px var(--eh-space-3); scrollbar-width: thin; }
+.pax-places .eh-chip { flex: none; min-height: var(--eh-target); }
+
+.pax-when { display: grid; gap: var(--eh-space-2); margin: var(--eh-space-2) 0 var(--eh-space-4); }
+.pax-when__later[hidden] { display: none; }
+.pax-rule { margin: 0; font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
+
+.pax-actions { display: grid; gap: var(--eh-space-2); margin-top: var(--eh-space-4); }
+.pax-actions--row { display: flex; flex-wrap: wrap; }
+.pax-back { margin: 0 0 var(--eh-space-3) calc(-1 * var(--eh-space-2)); }
+
+/* ------------------------------------------------------------------ the booking home: one "Where to?" field */
+.pax-where { display: grid; gap: var(--eh-space-3); }
+.pax-from { display: flex; gap: var(--eh-space-2); align-items: stretch; min-width: 0; }
+.pax-from__chip {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--eh-space-3); min-height: var(--eh-target);
+    padding: var(--eh-space-1) var(--eh-space-3) var(--eh-space-1) var(--eh-space-3); border: 0; border-radius: var(--eh-radius-pill);
+    background: var(--eh-surface-2); color: var(--eh-ink); font: inherit; text-align: left; cursor: pointer;
+    transition: background-color var(--eh-duration-fast) var(--eh-ease);
+}
+.pax-from__chip:hover, .pax-from__when:hover { background: var(--eh-surface-3); }
+.pax-from__chip[aria-expanded="true"] { background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); }
+.pax-from__dot { flex: none; width: 14px; height: 14px; border-radius: 50%; background: var(--eh-map-pickup); box-shadow: inset 0 0 0 2.5px var(--eh-signal-ink); } /* taste-skill-ignore: pickup stop ring */
+.pax-from__text { flex: 1; min-width: 0; display: grid; gap: 0; line-height: 1.2; }
+.pax-from__label { font-size: var(--eh-text-xs); font-weight: 600; color: var(--eh-ink-2); }
+.pax-from__chip[aria-expanded="true"] .pax-from__label { color: inherit; }
+.pax-from__value { min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pax-from__value[data-empty="true"] { color: var(--eh-accent); text-decoration: underline; text-underline-offset: 3px; }
+.pax-from__edit { flex: none; --eh-icon: 18px; color: var(--eh-accent); }
+.pax-from__chip[aria-expanded="true"] .pax-from__edit { color: inherit; }
+.pax-from__chip { min-height: 52px; }
+.pax-from__when { min-height: 52px; }
+.pax-from__when {
+    flex: none; display: inline-flex; align-items: center; gap: var(--eh-space-1); min-height: var(--eh-target); padding: 0 var(--eh-space-3);
+    border: 0; border-radius: var(--eh-radius-pill); background: var(--eh-surface-2); color: var(--eh-ink); font: inherit; font-size: var(--eh-text-sm); font-weight: 600;
+    cursor: pointer; white-space: nowrap; --eh-icon: 18px;
+}
+.pax-from__when[aria-expanded="true"] { background: var(--eh-ink); color: var(--eh-ground); }
+.pax-from__when[aria-expanded="true"] .eh-icon:last-child { transform: rotate(180deg); }
+.pax-from__edit-box { display: grid; gap: var(--eh-space-2); padding: var(--eh-space-3); border-radius: var(--eh-radius); background: var(--eh-surface-2); }
+.pax-from__edit-box[hidden], .pax-later[hidden], .pax-go[hidden], .pax-places[hidden] { display: none; }
+.pax-from__edit-box .eh-input { background: var(--eh-surface); }
+.pax-later { display: grid; gap: var(--eh-space-2); padding: var(--eh-space-3); border-radius: var(--eh-radius); background: var(--eh-surface-2); }
+.pax-later .eh-when__day span, .pax-later .eh-when__time span { background: var(--eh-surface); }
+.pax-later .eh-when__day input:checked + span { background: var(--eh-ink); }
+.pax-later .eh-when__time input:checked + span { background: var(--eh-accent); }
+.pax-later__actions { display: flex; justify-content: flex-end; }
+.pax-to { margin-top: var(--eh-space-1); }
+.pax-to .eh-place__label { font-family: var(--eh-font-display); font-size: var(--eh-text-2xl); font-weight: 700; line-height: 1; letter-spacing: -0.01em; margin-bottom: var(--eh-space-1); }
+.pax-places { display: grid; gap: var(--eh-space-1); }
+.pax-places__title { margin: var(--eh-space-1) 0 0; font-size: var(--eh-text-sm); font-weight: 700; color: var(--eh-ink-2); }
+.pax-places__title[hidden] { display: none; }
+.pax-places__list { list-style: none; margin: 0; padding: 0; display: grid; }
+.pax-place {
+    width: 100%; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: var(--eh-space-3); align-items: center;
+    min-height: 56px; padding: var(--eh-space-2) var(--eh-space-2); border: 0; border-radius: var(--eh-radius); background: none; color: var(--eh-ink);
+    font: inherit; text-align: left; cursor: pointer;
+}
+.pax-place:hover { background: var(--eh-surface-2); }
+.pax-place__icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--eh-surface-2); color: var(--eh-ink-2); --eh-icon: 18px; }
+.pax-place:hover .pax-place__icon { background: var(--eh-surface); }
+.pax-place__text { display: grid; gap: 1px; min-width: 0; }
+.pax-place__name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pax-place__detail { font-size: var(--eh-text-xs); color: var(--eh-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pax-place__detail:empty { display: none; }
+.pax-places__empty { margin: 0; font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.pax-places__empty[hidden] { display: none; }
+.pax-go { margin-top: 0; }
+
+/* Options header: title and the way back on one line, the route in one compact line under it. */
+.pax-opthead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--eh-space-3); }
+.pax-opthead__title { margin: 0; font-size: var(--eh-text-xl); font-weight: 700; }
+.pax-opthead__title:focus { outline: none; }
+.pax-opthead__trip { font-size: var(--eh-text-sm); font-weight: 600; color: var(--eh-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* The route in one line; tapping it goes back to change the stops. */
+.pax-miniroute {
+    width: 100%; display: flex; align-items: center; gap: var(--eh-space-2); min-height: var(--eh-target); margin: var(--eh-space-1) 0 var(--eh-space-2);
+    padding: 0 var(--eh-space-3); border: 0; border-radius: var(--eh-radius-pill); background: var(--eh-surface-2); color: var(--eh-ink);
+    font: inherit; font-size: var(--eh-text-sm); text-align: left; cursor: pointer; --eh-icon: 16px;
+}
+.pax-miniroute:hover { background: var(--eh-surface-3); }
+.pax-miniroute__stop { display: inline-flex; align-items: center; gap: var(--eh-space-2); min-width: 0; flex: 1 1 0; font-weight: 600; }
+.pax-miniroute__stop > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pax-miniroute__stop .pax-from__dot { width: 12px; height: 12px; }
+.pax-miniroute__drop { flex: none; width: 11px; height: 11px; border-radius: 3px; background: var(--eh-map-dropoff); }
+.pax-miniroute__arrow { flex: none; color: var(--eh-ink-2); }
+.pax-miniroute__edit { flex: none; color: var(--eh-accent); }
+.pax-note--slim { padding: var(--eh-space-1) var(--eh-space-3); font-size: var(--eh-text-xs); margin-bottom: var(--eh-space-2); }
+
+/* The options step's half height leaves the upper third of the map (the route) in view. */
+@media (max-width: 1023.98px) {
+    .pax-stage .eh-sheet[data-snap="half"][data-pax-step="options"] { transform: translateY(36%); }
+    .pax-stage .eh-sheet[data-snap="half"][data-pax-step="options"] .eh-sheet__body { margin-bottom: calc(var(--pax-sheet-h) * 0.36); }
+}
+
+/* ------------------------------------------------------------------ compare categories */
+.pax-trip { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--eh-space-1) var(--eh-space-4); margin: 0 0 var(--eh-space-3); }
+.pax-trip__figure { font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pax-note { display: flex; align-items: flex-start; gap: var(--eh-space-2); --eh-icon: 18px; margin: 0 0 var(--eh-space-3); padding: var(--eh-space-2) var(--eh-space-3); border-radius: var(--eh-radius-sm); background: var(--eh-caution-bg); color: var(--eh-caution); font-size: var(--eh-text-sm); font-weight: 600; }
+.pax-note .eh-icon { flex: none; margin-top: 1px; }
+.pax-trip__note { font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
+
+.pax-options { border: 0; margin: 0; padding: 0; display: grid; gap: var(--eh-space-1); }
+/* One compact row per ride: icon, name, price on line one; arrival, seats, bags on line two. */
+.pax-option {
+    position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: var(--eh-space-3); row-gap: 0; align-items: center;
+    min-height: 60px; padding: var(--eh-space-2) var(--eh-space-3); border-radius: var(--eh-radius);
+    background: transparent; border: 2px solid transparent;
+    transition: background-color var(--eh-duration-fast) var(--eh-ease), border-color var(--eh-duration-fast) var(--eh-ease);
+}
+.pax-option:hover { background: var(--eh-surface-2); }
+.pax-option:has(input:checked) { background: var(--eh-accent-tint); border-color: var(--eh-accent); color: var(--eh-accent-tint-ink); }
+.pax-option:has(input:focus-visible) { outline: 3px solid var(--eh-focus); outline-offset: 2px; }
+.pax-option__pick { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; width: 100%; height: 100%; }
+.pax-option__icon { grid-row: 1 / span 2; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--eh-surface-2); --eh-icon: 22px; }
+.pax-option:has(input:checked) .pax-option__icon { background: var(--eh-surface); }
+.pax-option__name { grid-column: 2; font-weight: 700; font-size: var(--eh-text-md); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pax-option__total { grid-column: 3; grid-row: 1 / span 2; justify-self: end; font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.pax-option__meta { grid-column: 2; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--eh-space-3); font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
+.pax-option__seats { display: inline-flex; align-items: center; gap: 2px; --eh-icon: 14px; font-variant-numeric: tabular-nums; }
+.pax-option:has(input:checked) .pax-option__meta { color: var(--eh-accent-tint-ink); }
+.pax-option__eta { font-weight: 600; }
+.pax-option__eta[data-state="none"], .pax-option__eta[data-state="unknown"] { font-weight: 500; color: var(--eh-ink-3); }
+/* The breakdown link shows on the chosen ride only, and opens inline under it. */
+.pax-option__more { position: relative; z-index: 1; grid-column: 2 / -1; justify-self: start; font-size: var(--eh-text-sm); color: inherit; }
+.pax-option:has(.pax-option__pick):not(:has(.pax-option__pick:checked)) .pax-option__more { display: none; }
+.pax-option:has(.pax-option__pick):not(:has(.pax-option__pick:checked)) .pax-option__detail { display: none; }
+.pax-option__more[aria-expanded="true"] .eh-icon { transform: rotate(180deg); }
+.pax-option__detail { position: relative; z-index: 1; grid-column: 1 / -1; padding-bottom: var(--eh-space-2); }
+.pax-option__detail[hidden] { display: none; }
+.pax-unavailable { list-style: none; margin: var(--eh-space-3) 0 0; padding: 0; display: grid; gap: var(--eh-space-1); font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.pax-unavailable li { display: flex; gap: var(--eh-space-2); --eh-icon: 16px; }
+.pax-unavailable strong { color: var(--eh-ink); }
+
+.pax-quote { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--eh-space-2); margin: var(--eh-space-3) 0; font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.pax-quote[data-state="ending"] { color: var(--eh-caution); font-weight: 600; }
+.pax-quote[data-state="expired"] { color: var(--eh-stop); font-weight: 600; }
+.pax-quote__clock { font-variant-numeric: tabular-nums; }
+
+/* The fare line: each component a stop on the route, the total the yellow stop at the end. */
+.pax-fare { margin: var(--eh-space-2) 0 0; padding: 0; display: grid; }
+.pax-fare__row {
+    position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--eh-space-3); align-items: baseline;
+    padding: var(--eh-space-1) 0 var(--eh-space-1) var(--eh-space-6);
+}
+.pax-fare__row::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: var(--eh-map-route); }
+.pax-fare__row:first-child::before { top: 50%; }
+.pax-fare__row::after {
+    content: ""; position: absolute; left: 3px; top: calc(50% - 5px); width: 10px; height: 10px; border-radius: 50%;
+    background: var(--eh-surface); box-shadow: inset 0 0 0 2px var(--eh-map-route); /* taste-skill-ignore: stop ring on the fare line */
+}
+.pax-fare__row dt { min-width: 0; font-size: var(--eh-text-sm); }
+.pax-fare__row dd { margin: 0; font-size: var(--eh-text-sm); font-variant-numeric: tabular-nums; font-weight: 600; }
+.pax-fare__detail { display: block; font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
+.pax-fare__row.is-credit dd { color: var(--eh-go); }
+.pax-fare__row--total { margin-top: var(--eh-space-1); padding-top: var(--eh-space-2); }
+.pax-fare__row--total::before { bottom: 50%; }
+.pax-fare__row--total::after { left: 0; top: calc(50% - 8px); width: 16px; height: 16px; background: var(--eh-signal); box-shadow: 0 0 0 2px var(--eh-signal-ink); } /* taste-skill-ignore: yellow total stop ring */
+.pax-fare__row--total dt { font-weight: 700; font-size: var(--eh-text-md); }
+.pax-fare__row--total dd { font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-weight: 700; }
+.pax-fare-notes { margin: var(--eh-space-2) 0 0; padding-left: var(--eh-space-6); font-size: var(--eh-text-xs); color: var(--eh-ink-2); display: grid; gap: 2px; }
+.pax-fare-notes p { margin: 0; }
+
+.pax-section { margin-top: var(--eh-space-5); }
+.pax-section > h3, .pax-section > legend, .pax-h3 { margin: 0 0 var(--eh-space-2); font-size: var(--eh-text-md); font-weight: 700; padding: 0; }
+.pax-promo summary { cursor: pointer; font-weight: 600; font-size: var(--eh-text-sm); min-height: var(--eh-target); display: flex; align-items: center; }
+.pax-promo summary.eh-textlink { display: inline-flex; gap: var(--eh-space-1); }
+.pax-promo__row { display: flex; gap: var(--eh-space-2); }
+.pax-promo__row .eh-input { flex: 1; min-width: 0; text-transform: uppercase; }
+
+.pax-pay { border: 0; margin: 0; padding: 0; display: grid; gap: var(--eh-space-1); }
+.pax-pay > legend { margin-bottom: var(--eh-space-2); padding: 0; font-weight: 700; }
+.pax-pay__opt {
+    display: flex; align-items: center; gap: var(--eh-space-3); min-height: 52px; padding: var(--eh-space-2) var(--eh-space-3);
+    border-radius: var(--eh-radius); background: var(--eh-surface-2); cursor: pointer; --eh-icon: 22px;
+}
+.pax-pay__opt:has(input:checked) { background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); }
+.pax-pay__label { font-weight: 600; }
+.pax-pay__text { display: grid; gap: 1px; min-width: 0; }
+.pax-pay__meta { font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
+
+.pax-request { z-index: 2; position: sticky; bottom: calc(-1 * var(--eh-space-8)); margin: var(--eh-space-5) calc(-1 * var(--eh-space-5)) calc(-1 * var(--eh-space-8)); padding: var(--eh-space-3) var(--eh-space-5) var(--eh-space-5); background: var(--eh-surface); border-top: 1px solid var(--eh-rule); display: grid; gap: var(--eh-space-2); } /* taste-skill-ignore: sticky request bar edge (app screen, sticky bar) */
+.pax-request__fine { margin: 0; font-size: var(--eh-text-xs); color: var(--eh-ink-2); text-align: center; }
+
+/* ------------------------------------------------------------------ live ride */
+/* Stage labels never wrap: one short word each, a size down on the narrowest phones. */
+.pax-steps .eh-stepper__label { white-space: nowrap; font-size: var(--eh-text-sm); }
+.pax-steps { margin: var(--eh-space-3) 0 var(--eh-space-2); }
+@media (max-width: 374.98px) { .pax-steps .eh-stepper__label { font-size: var(--eh-text-xs); } }
+/* The ride sheet's half height shows who to look for and the PIN, with the driver and pickup on the map above. */
+@media (max-width: 1023.98px) {
+    .pax-stage[data-pax-trip] .eh-sheet[data-snap="half"] { transform: translateY(36%); }
+    .pax-stage[data-pax-trip] .eh-sheet[data-snap="half"] .eh-sheet__body { margin-bottom: calc(var(--pax-sheet-h) * 0.36); }
+}
+.pax-state { margin: 0 0 var(--eh-space-3); display: grid; gap: var(--eh-space-1); }
+.pax-state__title:focus, [data-pax-focus]:focus { outline: none; }
+.pax-state__title { margin: 0; font-family: var(--eh-font-display); font-size: var(--eh-text-3xl); font-weight: 700; line-height: 1; letter-spacing: -0.01em; }
+.pax-state__sub { margin: 0; color: var(--eh-ink-2); }
+.pax-state__sub strong { color: var(--eh-ink); font-variant-numeric: tabular-nums; }
+
+.pax-progress { height: 6px; border-radius: var(--eh-radius-pill); background: var(--eh-surface-3); overflow: hidden; margin: var(--eh-space-2) 0 var(--eh-space-3); }
+.pax-progress__bar { height: 100%; width: 100%; transform-origin: left center; transform: scaleX(var(--pax-progress, 0)); background: var(--eh-accent); transition: transform 1s linear; }
+
+/* Who to look for: face, name and car, the plate chip on the right, all above the PIN (jury item 4). */
+.pax-who { display: grid; gap: var(--eh-space-2); margin-bottom: var(--eh-space-3); }
+.pax-who__ask { display: flex; align-items: center; gap: var(--eh-space-2); margin: 0; font-weight: 700; --eh-icon: 20px; }
+.pax-who__ask[hidden] { display: none; }
+.pax-who__stale:has(.pax-stale[hidden]) { display: none; }
+.pax-driver { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--eh-space-1) var(--eh-space-3); align-items: center; padding: var(--eh-space-3); border-radius: var(--eh-radius); background: var(--eh-surface-2); }
+.pax-driver__face { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: var(--eh-surface-3); grid-row: 1 / span 2; }
+.pax-driver__face.eh-avatar { font-size: var(--eh-text-xl); }
+.pax-driver__who { display: grid; gap: 0; min-width: 0; }
+.pax-driver__name { margin: 0; font-size: var(--eh-text-lg); font-weight: 700; line-height: 1.2; }
+.pax-driver__model { margin: 0; font-weight: 600; color: var(--eh-ink-2); line-height: 1.25; }
+.pax-driver .pax-plate { grid-column: 3; grid-row: 1 / span 2; }
+.pax-driver__facts { grid-column: 2 / -1; margin: 0; font-size: var(--eh-text-xs); color: var(--eh-ink-2); display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--eh-space-3); --eh-icon: 14px; }
+.pax-driver__facts span { display: inline-flex; align-items: center; gap: 4px; }
+.pax-driver__facts span:empty { display: none; }
+.pax-driver__check { margin: 0; font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
+@media (max-width: 359.98px) {
+    .pax-driver { grid-template-columns: auto minmax(0, 1fr); }
+    .pax-driver .pax-plate { grid-column: 1 / -1; grid-row: auto; justify-self: start; }
+}
+
+/* A South African number plate: dark letters on white, a thin dark frame. White in both themes, like the real thing. */
+.pax-plate {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--eh-space-4);
+    border-radius: var(--eh-radius-sm); background: #ffffff; color: #0f1f19; box-shadow: inset 0 0 0 2.5px #0f1f19; /* taste-skill-ignore: the number plate frame, drawn as the plate border */
+    font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-weight: 700; letter-spacing: 0.06em; line-height: 1;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+.pax-pincode { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--eh-space-1) var(--eh-space-4); margin-top: var(--eh-space-3); padding: var(--eh-space-3) var(--eh-space-4); border-radius: var(--eh-radius); background: var(--eh-signal); color: var(--eh-signal-ink); }
+.pax-pincode[hidden] { display: none; }
+.pax-pincode__help { grid-column: 1 / -1; }
+.pax-pincode__label { margin: 0; font-weight: 700; }
+.pax-pincode__digits { display: flex; gap: var(--eh-space-2); margin: 0; }
+.pax-pincode__digit {
+    display: grid; place-items: center; width: 2.75rem; height: 3.5rem; border-radius: var(--eh-radius-sm);
+    background: #ffffff; color: #0f1f19;
+    font-family: var(--eh-font-display); font-size: var(--eh-text-4xl); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.pax-pincode__help { margin: 0; font-size: var(--eh-text-sm); }
+
+.pax-eta { font-family: var(--eh-font-display); font-weight: 700; font-size: var(--eh-text-2xl); font-variant-numeric: tabular-nums; }
+.pax-stale { display: inline-flex; align-items: center; gap: var(--eh-space-1); --eh-icon: 16px; font-size: var(--eh-text-xs); font-weight: 600; color: var(--eh-caution); }
+.pax-stale[hidden] { display: none; }
+
+.pax-wait { margin-top: var(--eh-space-3); display: grid; gap: var(--eh-space-1); }
+.pax-wait[hidden] { display: none; }
+.pax-wait__clock { font-family: var(--eh-font-display); font-size: var(--eh-text-3xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.pax-wait[data-charging="true"] .pax-wait__clock { color: var(--eh-caution); }
+
+.pax-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--eh-space-3); margin: 0 0 var(--eh-space-3); }
+.pax-compare div { display: grid; gap: 2px; }
+.pax-compare dt { font-size: var(--eh-text-xs); color: var(--eh-ink-2); font-weight: 600; }
+.pax-compare dd { margin: 0; font-family: var(--eh-font-display); font-size: var(--eh-text-2xl); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pax-changes { list-style: none; margin: 0 0 var(--eh-space-3); padding: 0; display: grid; gap: var(--eh-space-2); font-size: var(--eh-text-sm); }
+.pax-changes li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--eh-space-3); }
+
+/* Rating: five real radio buttons drawn as stars. */
+.pax-stars { border: 0; padding: 0; margin: 0 0 var(--eh-space-3); }
+.pax-stars legend { padding: 0; margin-bottom: var(--eh-space-2); font-weight: 700; }
+.pax-stars__row { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: var(--eh-space-1); }
+.pax-stars input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.pax-stars label { display: grid; place-items: center; width: 48px; height: 48px; cursor: pointer; color: var(--eh-rule-strong); border-radius: var(--eh-radius-sm); }
+.pax-stars label svg { width: 36px; height: 36px; }
+.pax-stars label:hover, .pax-stars label:hover ~ label,
+.pax-stars input:checked ~ label { color: var(--eh-signal); }
+.pax-stars input:checked ~ label svg path, .pax-stars label:hover svg path, .pax-stars label:hover ~ label svg path { fill: currentColor; stroke: var(--eh-signal-ink); }
+.pax-stars input:focus-visible + label { outline: 3px solid var(--eh-focus); outline-offset: 2px; }
+.pax-tags { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); margin: 0 0 var(--eh-space-3); }
+.pax-tags .eh-chip { min-height: 40px; }
+
+/* ------------------------------------------------------------------ SOS */
+.pax-sos-btn { background: var(--eh-stop-fill); color: var(--eh-stop-fill-ink); border-color: var(--eh-stop-fill); }
+.pax-sos { display: grid; gap: var(--eh-space-4); }
+.pax-sos__count { margin: 0; font-family: var(--eh-font-display); font-size: 6rem; font-weight: 700; line-height: 1; color: var(--eh-stop); font-variant-numeric: tabular-nums; text-align: center; }
+.pax-sos__go { min-height: 64px; font-size: var(--eh-text-lg); }
+.pax-calls { display: grid; gap: var(--eh-space-2); margin: 0; padding: 0; list-style: none; }
+.pax-calls a {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-3); min-height: 52px; padding: 0 var(--eh-space-4);
+    border-radius: var(--eh-radius-pill); background: var(--eh-signal); color: var(--eh-signal-ink); text-decoration: none; font-weight: 600; --eh-icon: 20px;
+}
+.pax-calls a strong { font-family: var(--eh-font-display); font-size: var(--eh-text-xl); font-variant-numeric: tabular-nums; }
+.pax-did { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--eh-space-2); }
+.pax-did li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--eh-space-1) var(--eh-space-3); padding: var(--eh-space-3) var(--eh-space-4); border-radius: var(--eh-radius); background: var(--eh-surface-2); }
+.pax-did__why { grid-column: 2; margin: 0; font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.pax-did__what { font-weight: 600; }
+
+.pax-checkin { text-align: left; }
+.pax-checkin__answers { display: grid; gap: var(--eh-space-3); }
+.pax-checkin__answers .eh-btn { min-height: 64px; font-size: var(--eh-text-lg); }
+
+/* ------------------------------------------------------------------ pages (trips, safety, account, help) */
+.pax-page { max-width: 46rem; margin: 0 auto; }
+.pax-page > section + section { margin-top: var(--eh-space-10); }
+.pax-page h2 { margin: 0 0 var(--eh-space-3); font-size: var(--eh-text-xl); }
+.pax-page .eh-list + .pax-more, .pax-page .eh-panel + .pax-more { margin-top: var(--eh-space-3); }
+.pax-lead { margin: 0 0 var(--eh-space-4); color: var(--eh-ink-2); max-width: 60ch; }
+.pax-trip-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--eh-space-3); padding: var(--eh-space-3) var(--eh-space-4); color: inherit; text-decoration: none; min-height: 64px; }
+a.pax-trip-row:hover { background: var(--eh-surface-2); }
+.pax-trip-row__route { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pax-trip-row__meta { grid-column: 1; font-size: var(--eh-text-sm); color: var(--eh-ink-2); display: flex; flex-wrap: wrap; gap: var(--eh-space-1) var(--eh-space-3); align-items: center; }
+.pax-trip-row__money { grid-column: 2; grid-row: 1 / span 2; align-self: center; text-align: right; display: grid; gap: 2px; justify-items: end; }
+/* The whole row opens the trip (the route link stretches over it); the receipt link sits above it at 44 px. */
+.pax-trip-row { position: relative; }
+.pax-trip-row__route::after { content: ""; position: absolute; inset: 0; }
+.pax-trip-row:hover { background: var(--eh-surface-2); }
+.pax-trip-row__money a { font-size: var(--eh-text-xs); position: relative; z-index: 1; display: inline-flex; align-items: center; min-height: var(--eh-target); }
+.pax-form { display: grid; gap: var(--eh-space-4); }
+.pax-form .eh-field { margin: 0; }
+.pax-inline-form { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); align-items: flex-end; }
+.pax-inline-form .eh-field { flex: 1 1 14rem; margin: 0; }
+.pax-share-url { display: flex; gap: var(--eh-space-2); align-items: center; }
+.pax-share-url input { flex: 1; min-width: 0; }
+/* Trip share sheet: the link as quiet text with Copy beside it, WhatsApp as the main way to send it. */
+.pax-share { display: grid; gap: var(--eh-space-3); padding: var(--eh-space-4); border-radius: var(--eh-radius); background: var(--eh-surface-2); }
+.pax-share[hidden] { display: none; }
+.pax-share .pax-h3 { margin: 0; }
+.pax-share__link { display: flex; align-items: center; gap: var(--eh-space-2); min-width: 0; padding: var(--eh-space-1) var(--eh-space-1) var(--eh-space-1) var(--eh-space-4); border-radius: var(--eh-radius-pill); background: var(--eh-surface); }
+.pax-share__url { flex: 1; min-width: 0; border: 0; background: none; color: var(--eh-ink-2); font: inherit; font-size: var(--eh-text-sm); text-overflow: ellipsis; padding: 0; }
+.pax-share__url:focus-visible { outline: 3px solid var(--eh-focus); outline-offset: 4px; border-radius: 2px; }
+.pax-share__url::selection { background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); }
+.pax-share__send { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); }
+.pax-share__send .eh-btn { flex: 1 1 10rem; }
+.pax-share__revoke { justify-self: start; color: var(--eh-ink-2); font-size: var(--eh-text-sm); }
+.pax-wa { display: grid; gap: var(--eh-space-3); }
+.pax-wa h2 { margin: 0; }
+.pax-wa__text { margin: 0; padding: var(--eh-space-3) var(--eh-space-4); border-radius: var(--eh-radius) var(--eh-radius) var(--eh-radius) var(--eh-radius-sm); background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); max-width: 40ch; }
+.pax-thread { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--eh-space-3); }
+.pax-msg { max-width: 85%; padding: var(--eh-space-3) var(--eh-space-4); border-radius: var(--eh-radius); background: var(--eh-surface); }
+.pax-msg[data-mine="true"] { justify-self: end; background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); }
+.pax-msg__who { margin: 0 0 var(--eh-space-1); font-size: var(--eh-text-xs); font-weight: 600; color: var(--eh-ink-2); }
+.pax-msg[data-mine="true"] .pax-msg__who { color: inherit; }
+.pax-msg__body { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Public fare calculator */
+.pax-public { min-height: 100dvh; display: grid; grid-template-rows: auto 1fr; background: var(--eh-ground); }
+.pax-public__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-3); height: var(--eh-topbar); padding: 0 var(--eh-gutter); background: var(--eh-surface); border-bottom: 1px solid var(--eh-rule); } /* taste-skill-ignore: top bar edge, same as the ds shells */
+.pax-public .pax-stage { height: calc(100dvh - var(--eh-topbar)); }
+.pax-calc-head { margin: 0 0 var(--eh-space-3); display: grid; gap: var(--eh-space-2); }
+.pax-calc-head h1 { margin: 0; font-family: var(--eh-font-display); font-size: var(--eh-text-2xl); line-height: 1.05; }
+.pax-calc-head p { margin: 0; color: var(--eh-ink-2); }
+.pax-tap { display: flex; gap: var(--eh-space-2); flex-wrap: wrap; margin-bottom: var(--eh-space-3); }
+
+@media (prefers-reduced-motion: reduce) {
+    .pax-progress__bar, .pax-option { transition: none; }
+}

@@ -15,7 +15,21 @@ class EcosystemErrorPagesTest extends TestCase
         $response->assertStatus($code);
         $response->assertSee($expectedHeading);
         $response->assertSee('Dot.Ehail', false);
-        $response->assertSee('the rest of the Dot Ecosystem', false);
+        // A way back, not a catalogue of every Dot product (R-46 polish, D-2210).
+        $response->assertDontSee('the rest of the Dot Ecosystem', false);
+        $response->assertDontSee('Dot.Analytics', false);
+    }
+
+    public function test_not_found_offers_at_most_three_destinations(): void
+    {
+        $html = $this->get('/_test-only-error-render/404')->getContent();
+        preg_match('#<main.*</main>#s', $html, $main);
+        preg_match('#<header class="eh-error__bar">.*?</header>#s', $html, $bar);
+
+        $links = preg_match_all('#<a [^>]*href=#', ($main[0] ?? '').($bar[0] ?? ''));
+        // The logo, plus at most three places to go.
+        $this->assertLessThanOrEqual(4, $links);
+        $this->assertStringContainsString('Go home', $html);
     }
 
     public static function errorCodes(): array

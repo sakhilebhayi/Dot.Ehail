@@ -114,7 +114,10 @@ return [
     |
     */
 
-    'lottery' => [2, 100],
+    // Every request draws the lottery that deletes expired sessions. Laravel's 2 in 100 means a DELETE on every
+    // 50th poll (several a second with hundreds of phones polling); 1 in 1,000 still sweeps every few seconds
+    // under load and once in a while when quiet (docs/R46_PERF.md section 1).
+    'lottery' => [(int) env('SESSION_LOTTERY_CHANCE', 1), 1000],
 
     /*
     |--------------------------------------------------------------------------
@@ -169,7 +172,8 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Secure by default whenever the app is served over HTTPS (R-46 security S-31); SESSION_SECURE_COOKIE overrides.
+    'secure' => env('SESSION_SECURE_COOKIE', str_starts_with((string) env('APP_URL', ''), 'https://')),
 
     /*
     |--------------------------------------------------------------------------

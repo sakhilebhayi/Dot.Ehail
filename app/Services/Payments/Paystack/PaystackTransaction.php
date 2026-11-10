@@ -19,6 +19,8 @@ final readonly class PaystackTransaction
         public ?string $channel = null,
         public ?string $paidAt = null,
         public ?string $gatewayResponse = null,
+        public ?PaystackAuthorization $authorization = null,
+        public ?string $metadataPurpose = null,
     ) {}
 
     /**
@@ -50,7 +52,21 @@ final readonly class PaystackTransaction
             channel: is_string($data['channel'] ?? null) ? $data['channel'] : null,
             paidAt: is_string($data['paid_at'] ?? null) ? $data['paid_at'] : null,
             gatewayResponse: is_string($data['gateway_response'] ?? null) ? $data['gateway_response'] : null,
+            authorization: PaystackAuthorization::fromData($data['authorization'] ?? null),
+            metadataPurpose: self::purposeFrom($data['metadata'] ?? null),
         );
+    }
+
+    /**
+     * Our own metadata (ids only) comes back as an object or as the JSON string we sent.
+     */
+    private static function purposeFrom(mixed $metadata): ?string
+    {
+        if (is_string($metadata)) {
+            $metadata = json_decode($metadata, true);
+        }
+
+        return is_array($metadata) && is_string($metadata['purpose'] ?? null) ? mb_substr($metadata['purpose'], 0, 40) : null;
     }
 
     public function isSuccessful(): bool
@@ -60,7 +76,7 @@ final readonly class PaystackTransaction
 
     /**
      * The only fields kept from a Paystack transaction. Customer details and the card authorization block
-     * are deliberately dropped.
+     * are deliberately dropped (a saved card keeps its token in payment_methods, encrypted, nowhere else).
      *
      * @return array<string, mixed>
      */

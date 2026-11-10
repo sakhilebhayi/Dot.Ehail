@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Ehail;
 
+use App\Domain\Payments\Webhooks\PaystackWebhookInbox;
 use App\Exceptions\Payments\PaymentGatewayException;
 use App\Http\Controllers\Controller;
-use App\Services\Ehail\RidePayments;
 use App\Services\Payments\Paystack\PaystackConfig;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,11 +16,20 @@ use Illuminate\Http\Request;
  * wrong signature) gets the same bare 401. A signed but unreadable body is a 400. Everything else is
  * acknowledged with 200 so Paystack stops retrying: events we do not use, repeats, and charges we
  * cannot match (those are recorded for the operator desk).
+ *
+ * R-46: an authenticated event is stored once (payment_webhook_events, idempotent on the event
+ * identity) and processed by a queued job that confirms every state change with Paystack's verify or
+ * fetch endpoints. Storing it is the acknowledgement; a processing failure is retried, not lost.
  */
 class PaystackWebhookController extends Controller
 {
-    public function __invoke(Request $request, PaystackConfig $config, RidePayments $payments): JsonResponse
+    public function __invoke(Request $request, PaystackConfig $config, PaystackWebhookInbox $inbox): JsonResponse
     {
+        // Paystack events are a few kilobytes; anything far larger is not one, and is refused before hashing (S-34).
+        if (strlen($request->getContent()) > 256 * 1024) {
+            return response()->json(['error' => 'payload_too_large'], 413);
+        }
+
         $raw = $request->getContent();
         $signature = strtolower(trim((string) $request->header('x-paystack-signature')));
 
@@ -40,7 +49,7 @@ class PaystackWebhookController extends Controller
             return response()->json(['message' => 'Invalid payload'], 400);
         }
 
-        $payments->handleWebhook($payload);
+        $inbox->receive($payload);
 
         return response()->json(['status' => 'ok']);
     }

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Ehail;
 use App\Http\Controllers\Controller;
 use App\Models\Fleet;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
 
 /**
  * Platform-operator vetting of fleets. Routes sit behind the `operator`
@@ -15,16 +14,17 @@ use Illuminate\View\View;
  */
 class OperatorFleetController extends Controller
 {
-    public function index(): View
+    /** The fleet review moved into the operations centre (R-46 ops: /ops/fleets); the old address redirects. */
+    public function index(): RedirectResponse
     {
-        return view('operator.fleets', [
-            'pending' => Fleet::where('status', Fleet::STATUS_PENDING)->with('owner')->oldest()->get(),
-            'approved' => Fleet::approved()->with('owner')->orderBy('name')->get(),
-        ]);
+        return redirect()->route('ops.fleets');
     }
 
     public function approve(Fleet $fleet): RedirectResponse
     {
+        // Nobody vets their own fleet (S-10); a second operator does.
+        abort_if($fleet->owner_user_id === auth()->id(), 403, 'You cannot approve your own fleet.');
+
         $fleet->update(['status' => Fleet::STATUS_APPROVED]);
 
         return back()->with('status', "{$fleet->name} approved.");

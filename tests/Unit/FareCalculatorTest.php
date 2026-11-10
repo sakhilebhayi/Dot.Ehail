@@ -7,67 +7,22 @@ use Tests\TestCase;
 
 class FareCalculatorTest extends TestCase
 {
-    public function test_distance_between_identical_points_is_zero(): void
+    /**
+     * R-46 (D-4): the straight-line estimate and the haversine distance it billed on were removed; fares come only
+     * from App\Domain\Pricing on road routes. The tests that exercised them were replaced by this guard and by
+     * tests/Unit/Pricing and tests/Feature/Pricing.
+     */
+    public function test_straight_line_pricing_no_longer_exists(): void
     {
-        $calculator = new FareCalculator;
-
-        $this->assertSame(0.0, $calculator->distanceKm(-33.9249, 18.4241, -33.9249, 18.4241));
+        $this->assertFalse(method_exists(FareCalculator::class, 'estimate'));
+        $this->assertFalse(method_exists(FareCalculator::class, 'distanceKm'));
     }
 
-    public function test_distance_between_known_coordinates_is_approximately_correct(): void
+    public function test_cents_and_legacy_decimals_format_identically(): void
     {
-        $calculator = new FareCalculator;
-
-        // Cape Town CBD to Cape Town International Airport, ~19km by air.
-        $distance = $calculator->distanceKm(-33.9249, 18.4241, -33.9715, 18.6021);
-
-        $this->assertEqualsWithDelta(19.0, $distance, 2.0);
-    }
-
-    public function test_estimate_includes_the_base_fare_even_for_zero_distance(): void
-    {
-        $calculator = new FareCalculator;
-
-        $this->assertSame(25.0, $calculator->estimate(0, 'standard'));
-    }
-
-    public function test_estimate_scales_with_distance(): void
-    {
-        $calculator = new FareCalculator;
-
-        $near = $calculator->estimate(5, 'standard');
-        $far = $calculator->estimate(20, 'standard');
-
-        $this->assertGreaterThan($near, $far);
-    }
-
-    public function test_premium_vehicle_type_costs_more_than_economy_for_the_same_distance(): void
-    {
-        $calculator = new FareCalculator;
-
-        $economy = $calculator->estimate(10, 'economy');
-        $premium = $calculator->estimate(10, 'premium');
-
-        $this->assertGreaterThan($economy, $premium);
-    }
-
-    public function test_an_unknown_vehicle_type_falls_back_to_a_neutral_multiplier(): void
-    {
-        $calculator = new FareCalculator;
-
-        $this->assertSame($calculator->estimate(10, 'economy'), $calculator->estimate(10, 'not-a-real-type'));
-    }
-
-    public function test_the_tariff_is_read_from_config_not_hardcoded(): void
-    {
-        config([
-            'ehail.tariff.base_fare' => 40.0,
-            'ehail.tariff.per_km' => 10.0,
-            'ehail.tariff.multipliers' => ['standard' => 1.5],
-        ]);
-
-        // 40 + 10 km * 10 * 1.5
-        $this->assertSame(190.0, (new FareCalculator)->estimate(10, 'standard'));
+        $this->assertSame('R80.00', FareCalculator::format('80.00'));
+        $this->assertSame('R80.00', FareCalculator::formatCents(8000));
+        $this->assertSame('R0.05', FareCalculator::formatCents(5));
     }
 
     public function test_the_shipped_defaults_match_the_previous_hardcoded_tariff(): void
@@ -82,10 +37,10 @@ class FareCalculatorTest extends TestCase
 
     public function test_money_is_formatted_with_the_configured_currency(): void
     {
-        $this->assertSame('R 1,234.50', FareCalculator::format(1234.5));
+        $this->assertSame("R1\u{202F}234.50", FareCalculator::format(1234.5));
 
         config(['ehail.currency.symbol' => '$']);
-        $this->assertSame('$ 9.00', FareCalculator::format(9));
+        $this->assertSame('$9.00', FareCalculator::format(9));
     }
 
     public function test_every_vehicle_type_has_a_multiplier_and_a_tier_mapping(): void

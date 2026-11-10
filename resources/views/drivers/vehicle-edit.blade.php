@@ -1,25 +1,18 @@
-<x-app-layout>
-<div style="padding:2rem 2.5rem 3rem;max-width:760px;">
-    <div style="margin-bottom:1.5rem;">
-        <a href="{{ route('drivers.vehicles.index') }}" style="font-size:0.78rem;color:#71717a;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-            <span class="material-symbols-rounded" style="font-size:16px;">arrow_back</span>
-            Back to vehicles
-        </a>
-    </div>
-
-    <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 1.5rem;letter-spacing:-0.01em;">Edit {{ $vehicle->plate_number }}</h1>
-
-    @if ($errors->any())
-    <div style="margin-bottom:1.25rem;padding:0.65rem 1rem;border-radius:0.6rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;font-size:0.8rem;">
-        @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
-    </div>
-    @endif
-
-    <form method="POST" action="{{ route('drivers.vehicles.update', $vehicle) }}" class="dot-card" style="padding:1.5rem;display:flex;flex-direction:column;gap:1rem;">
+<x-driver-layout title="Edit vehicle">
+    <x-slot:head>
+        @vite(['resources/css/driver.css'])
+    </x-slot:head>
+    <x-slot:header>
+        <div class="dr-head"><h1>Edit {{ $vehicle->plate_number }}</h1></div>
+    </x-slot:header>
+    <form method="POST" action="{{ route('drivers.vehicles.update', $vehicle) }}" class="dr-page dr-form">
         @csrf
         @method('PATCH')
+        @if ($errors->any())<x-eh.banner tone="stop" title="Not saved">{{ $errors->first() }}</x-eh.banner>@endif
         @include('drivers._vehicle-fields')
-        <button type="submit" class="dot-btn dot-btn-primary" style="align-self:flex-start;">Save changes</button>
+        <div class="dr-actions__row">
+            <x-eh.button type="submit" size="driver">Save changes</x-eh.button>
+            <x-eh.button variant="ghost" size="driver" :href="route('drivers.vehicles.index')">Back to vehicles</x-eh.button>
+        </div>
     </form>
-</div>
-</x-app-layout>
+</x-driver-layout>

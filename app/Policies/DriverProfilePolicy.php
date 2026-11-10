@@ -42,7 +42,12 @@ class DriverProfilePolicy
             return true;
         }
 
-        return $driverProfile->fleet && $user->id === $driverProfile->fleet->owner_user_id;
+        // R-46 (D-1205): this page carries the full licence and ID numbers. A fleet owner opens it only when a
+        // platform operator granted the fleet identity-review rights; otherwise the fleet portal's driver page
+        // (status only) is theirs.
+        return $driverProfile->fleet
+            && $user->id === $driverProfile->fleet->owner_user_id
+            && $driverProfile->fleet->identityReviewGranted();
     }
 
     /**

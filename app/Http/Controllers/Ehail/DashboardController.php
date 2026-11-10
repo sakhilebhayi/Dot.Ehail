@@ -27,9 +27,9 @@ class DashboardController extends Controller
         $rides = fn () => Ride::visibleTo($user);
 
         $totalRides = $rides()->count();
-        $activeRides = $rides()->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])->count();
+        $activeRides = $rides()->whereIn('status', ['driver_assigned', 'driver_arriving', 'driver_arrived', 'in_progress'])->count();
         $completedRides = $rides()->where('status', 'completed')->count();
-        $cancelledRides = $rides()->where('status', 'cancelled')->count();
+        $cancelledRides = $rides()->whereIn('status', ['cancelled_by_passenger', 'cancelled_by_driver', 'cancelled_by_operator'])->count();
         $requestedRides = $rides()->where('status', 'requested')->count();
 
         $totalDrivers = $availableDrivers = $approvedDrivers = 0;

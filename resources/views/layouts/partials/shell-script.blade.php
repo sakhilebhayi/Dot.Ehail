@@ -1,7 +1,7 @@
 {{-- Off-canvas drawer for the app shell below 860px. Plain JavaScript, no dependencies.
      Contract: #app-sidebar is the drawer, [data-shell-open] the top-bar button, [data-shell-close]
      the in-drawer close button and the backdrop, [data-shell-behind] what is made inert while open. --}}
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     (function () {
         var root = document.documentElement;
         var drawer = document.getElementById('app-sidebar');

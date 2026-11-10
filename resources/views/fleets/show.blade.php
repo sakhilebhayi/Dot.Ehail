@@ -1,98 +1,98 @@
-<x-app-layout>
-<div style="padding:2rem 2.5rem 3rem;max-width:900px;">
-    <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.3rem;letter-spacing:-0.01em;">
-        {{ $fleet->name }}
-    </h1>
-    <p style="font-size:0.78rem;color:#71717a;margin:0 0 2rem;">Driver applications</p>
+{{-- Legacy fleet page (/fleets/{fleet}), kept working and moved into the fleet shell (R-46). The portal at /fleet has the full tools. --}}
+<x-fleet.page :fleet="$fleet" :fleets="$fleets" title="Applications" :heading="$fleet->name"
+    :line="$fleet->isApproved() ? 'Driver applications and the vehicle register.' : 'This fleet is pending platform review. Applications can only be decided by a platform operator until it is approved.'">
+    <x-slot:actions>
+        @if (app(\App\Domain\Fleet\FleetAccess::class)->isMember(auth()->user(), $fleet))
+            <x-eh.button :href="route('fleet.home', ['fleet' => $fleet->id])" variant="secondary" icon="fleet">Open the fleet portal</x-eh.button>
+        @endif
+    </x-slot:actions>
 
-    @unless ($fleet->isApproved())
-        <div class="dot-card" style="padding:0.75rem 1rem;margin-bottom:1.5rem;border:1px solid rgba(245,158,11,0.3);">
-            <p style="font-size:0.8rem;color:#f59e0b;margin:0;">This fleet is pending platform review. Applications can only be decided by a platform operator until it is approved.</p>
-        </div>
-    @endunless
-
-    @if (session('status'))
-        <div class="dot-card" style="padding:0.75rem 1rem;margin-bottom:1.5rem;border:1px solid rgba(34,197,94,0.3);">
-            <p style="font-size:0.8rem;color:#4ade80;margin:0;">{{ session('status') }}</p>
-        </div>
+    @if ($errors->has('status'))
+        <x-eh.banner tone="stop" :title="$errors->first('status')" />
     @endif
 
-    <h2 style="font-size:1rem;font-weight:700;color:#f4f4f5;margin:0 0 1rem;">Pending ({{ $pending->count() }})</h2>
-    @forelse ($pending as $profile)
-        <div class="dot-card" style="padding:1.25rem;margin-bottom:1rem;">
-            <p style="font-size:0.95rem;font-weight:600;color:#f4f4f5;margin:0 0 0.25rem;">{{ $profile->user?->name }}</p>
-            <p style="font-size:0.78rem;color:#71717a;margin:0 0 0.75rem;">License {{ \App\Support\DriverIdentifiers::mask($profile->license_number) }} · ID {{ \App\Support\DriverIdentifiers::mask($profile->id_number) }} · <a href="{{ route('drivers.show', $profile) }}" style="color:#38bdf8;text-decoration:none;">Open profile</a> (logged)</p>
-            @foreach ($profile->vehicles as $vehicle)
-                <p style="font-size:0.78rem;color:#a1a1aa;margin:0 0 0.75rem;">{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} ({{ $vehicle->color }}) — {{ $vehicle->plate_number }}</p>
-            @endforeach
-
-            @if($profile->documents->isEmpty())
-                <p style="font-size:0.72rem;color:#71717a;margin:0 0 0.75rem;">No documents uploaded.</p>
-            @else
-                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">
-                    @foreach($profile->documents as $document)
-                    <a href="{{ route('drivers.documents.show', $document) }}" style="font-size:0.7rem;color:#38bdf8;text-decoration:none;padding:0.25rem 0.6rem;background:rgba(56,189,248,0.08);border-radius:9999px;">
-                        {{ ucfirst(str_replace('_', ' ', $document->type)) }}
-                    </a>
+    <section class="fl-panel" aria-labelledby="pending-title">
+        <div class="fl-panel__head"><h2 id="pending-title">Pending ({{ $pending->count() }})</h2></div>
+        @forelse ($pending as $profile)
+            <div class="fl-stack fl-stack--tight" style="padding: var(--eh-space-3) 0; {{ $loop->first ? '' : 'border-top: 1px solid var(--eh-rule);' }}">
+                <div>
+                    <p class="fl-items__title">{{ $profile->user?->name }}</p>
+                    <p class="fl-items__who">
+                        @if ($masked)
+                            License {{ \App\Support\DriverIdentifiers::mask($profile->license_number) }} · ID {{ \App\Support\DriverIdentifiers::mask($profile->id_number) }} · <a class="eh-link" href="{{ route('drivers.show', $profile) }}">Open profile</a> (logged)
+                        @else
+                            Applied {{ $profile->created_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}. Identity documents are checked by operations.
+                        @endif
+                    </p>
+                    @foreach ($profile->vehicles as $vehicle)
+                        <p class="fl-items__detail"><span class="fl-plate">{{ $vehicle->plate_number }}</span> {{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} ({{ $vehicle->color }})</p>
                     @endforeach
+                    @if ($masked && $profile->documents->isNotEmpty())
+                        <p class="fl-items__detail">
+                            @foreach ($profile->documents as $document)
+                                <a class="eh-link" href="{{ route('drivers.documents.show', $document) }}">{{ ucfirst(str_replace('_', ' ', $document->type)) }}</a>@if (! $loop->last), @endif
+                            @endforeach
+                        </p>
+                    @endif
                 </div>
-            @endif
 
-            @can('reviewDriver', [$fleet, $profile])
-            <div style="display:flex;gap:0.5rem;align-items:flex-start;">
-                <form method="POST" action="{{ route('fleets.drivers.approve', [$fleet, $profile]) }}">
-                    @csrf
-                    <button type="submit" style="padding:0.4rem 1rem;border-radius:6px;background:#22c55e;color:#052e13;font-weight:700;border:none;font-size:0.78rem;cursor:pointer;">Approve</button>
-                </form>
-                <form method="POST" action="{{ route('fleets.drivers.reject', [$fleet, $profile]) }}" style="display:flex;gap:0.4rem;align-items:center;">
-                    @csrf
-                    <input aria-label="Reason for rejecting" type="text" name="reason" placeholder="Reason for rejecting" required style="padding:0.4rem;border-radius:6px;font-size:0.78rem;">
-                    <button type="submit" style="padding:0.4rem 1rem;border-radius:6px;background:#ef4444;color:#3f0d0d;font-weight:700;border:none;font-size:0.78rem;cursor:pointer;">Reject</button>
-                </form>
+                @can('reviewDriver', [$fleet, $profile])
+                    <div class="fl-inline">
+                        <form method="POST" action="{{ route('fleets.drivers.approve', [$fleet, $profile]) }}" class="fl-inline">
+                            @csrf
+                            <x-eh.button type="submit" size="sm" icon="check">Approve</x-eh.button>
+                        </form>
+                        <form method="POST" action="{{ route('fleets.drivers.reject', [$fleet, $profile]) }}" class="fl-inline">
+                            @csrf
+                            <label class="eh-sr-only" for="legacy-reason-{{ $profile->id }}">Reason for rejecting</label>
+                            <input id="legacy-reason-{{ $profile->id }}" class="eh-input" type="text" name="reason" placeholder="Reason for rejecting" required>
+                            <x-eh.button type="submit" size="sm" variant="danger">Reject</x-eh.button>
+                        </form>
+                    </div>
+                @else
+                    <p class="fl-note">You can't decide this application. It needs review by someone other than the applicant{{ $fleet->isApproved() ? '' : ', and a platform operator while the fleet is pending' }}.</p>
+                @endcan
             </div>
-            @else
-            <p style="font-size:0.72rem;color:#71717a;margin:0;">You can't decide this application. It needs review by someone other than the applicant{{ $fleet->isApproved() ? '' : ', and a platform operator while the fleet is pending' }}.</p>
-            @endcan
-        </div>
-    @empty
-        <p style="font-size:0.8rem;color:#71717a;">No pending applications.</p>
-    @endforelse
-
-    @if($vehicles !== null)
-    <h2 style="font-size:1rem;font-weight:700;color:#f4f4f5;margin:2rem 0 1rem;">Vehicle register ({{ $vehicles->count() }})</h2>
-    <div class="dot-card" style="overflow:hidden;">
-        @forelse($vehicles as $vehicle)
-        <div style="padding:0.85rem 1.25rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;{{ $loop->last ? '' : 'border-bottom:1px solid rgba(255,255,255,0.06);' }}">
-            <div>
-                <span class="metric-val" style="font-size:0.9rem;color:#f4f4f5;">{{ $vehicle->plate_number }}</span>
-                <span style="font-size:0.78rem;color:#a1a1aa;margin-left:0.5rem;">{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} · {{ $vehicle->color }} · {{ $vehicle->seats }} seats · {{ $vehicle->type === 'suv' ? 'SUV' : ucfirst($vehicle->type) }}</span>
-                <div style="font-size:0.72rem;color:#71717a;">Driven by {{ $vehicle->driverProfile?->user?->name ?? 'unknown' }} ({{ $vehicle->driverProfile?->status }})</div>
-            </div>
-            @if($vehicle->is_active)
-            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:rgba(74,222,128,0.1);color:#4ade80;">Active</span>
-            @else
-            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:rgba(161,161,170,0.12);color:#a1a1aa;">Inactive</span>
-            @endif
-        </div>
         @empty
-        <p style="padding:1.25rem;font-size:0.8rem;color:#71717a;margin:0;">No vehicles registered in this fleet yet.</p>
+            <p class="fl-note">No pending applications.</p>
         @endforelse
-    </div>
+    </section>
+
+    @if ($vehicles !== null)
+        <section class="fl-panel fl-panel--flush" aria-labelledby="register-title">
+            <div class="fl-panel__head"><h2 id="register-title">Vehicle register ({{ $vehicles->count() }})</h2></div>
+            @if ($vehicles->isEmpty())
+                <p class="fl-note" style="padding: 0 var(--eh-space-5) var(--eh-space-4)">No vehicles registered in this fleet yet.</p>
+            @else
+                <table class="fl-table fl-table--stack">
+                    <thead><tr><th scope="col">Plate</th><th scope="col">Vehicle</th><th scope="col">Driven by</th><th scope="col">Active</th></tr></thead>
+                    <tbody>
+                        @foreach ($vehicles as $vehicle)
+                            <tr>
+                                <td><span class="fl-plate">{{ $vehicle->plate_number }}</span></td>
+                                <td>{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }}<span class="fl-sub">{{ $vehicle->color }}, {{ $vehicle->seats }} seats, {{ $vehicle->type === 'suv' ? 'SUV' : ucfirst($vehicle->type) }}</span></td>
+                                <td data-label="Driver">{{ $vehicle->driverProfile?->user?->name ?? 'unknown' }} ({{ $vehicle->driverProfile?->status }})</td>
+                                <td><x-eh.badge :tone="$vehicle->is_active ? 'go' : 'neutral'">{{ $vehicle->is_active ? 'Active' : 'Inactive' }}</x-eh.badge></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </section>
     @endif
 
-    <h2 style="font-size:1rem;font-weight:700;color:#f4f4f5;margin:2rem 0 1rem;">Reviewed</h2>
-    @forelse ($reviewed as $profile)
-        <div class="dot-card" style="padding:1rem 1.25rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-                <p style="font-size:0.9rem;color:#f4f4f5;margin:0;">{{ $profile->user?->name }}</p>
-                <p style="font-size:0.75rem;color:#71717a;margin:0;">{{ \App\Support\DriverIdentifiers::mask($profile->license_number) }}</p>
+    <section class="fl-panel" aria-labelledby="reviewed-title">
+        <div class="fl-panel__head"><h2 id="reviewed-title">Reviewed</h2></div>
+        @forelse ($reviewed as $profile)
+            <div style="display:flex;justify-content:space-between;gap:var(--eh-space-3);align-items:center;padding: var(--eh-space-2) 0; {{ $loop->first ? '' : 'border-top: 1px solid var(--eh-rule);' }}">
+                <div>
+                    <p class="fl-items__title">{{ $profile->user?->name }}</p>
+                    @if ($masked)<p class="fl-items__who">{{ \App\Support\DriverIdentifiers::mask($profile->license_number) }}</p>@endif
+                </div>
+                <x-eh.badge :tone="['approved' => 'go', 'rejected' => 'stop'][$profile->status] ?? 'caution'">{{ ucfirst($profile->status) }}</x-eh.badge>
             </div>
-            <span style="font-size:11px;font-weight:600;padding:4px 12px;border-radius:100px;{{ $profile->status === 'approved' ? 'background:rgba(34,197,94,0.1);color:#4ade80;' : ($profile->status === 'rejected' ? 'background:rgba(239,68,68,0.1);color:#f87171;' : 'background:rgba(245,158,11,0.1);color:#f59e0b;') }}">
-                {{ ucfirst($profile->status) }}
-            </span>
-        </div>
-    @empty
-        <p style="font-size:0.8rem;color:#71717a;">No reviewed applications yet.</p>
-    @endforelse
-</div>
-</x-app-layout>
+        @empty
+            <p class="fl-note">No reviewed applications yet.</p>
+        @endforelse
+    </section>
+</x-fleet.page>

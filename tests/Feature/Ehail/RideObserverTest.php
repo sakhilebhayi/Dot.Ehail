@@ -27,7 +27,7 @@ class RideObserverTest extends TestCase
             'driver_id' => $driver->id,
             'pickup_address' => '10 Kloof Street',
             'dropoff_address' => '20 Long Street',
-            'status' => 'accepted',
+            'status' => 'driver_assigned',
         ]);
 
         Notification::assertNothingSent();
@@ -57,7 +57,7 @@ class RideObserverTest extends TestCase
             'status' => 'requested',
         ]);
 
-        $ride->update(['status' => 'accepted']);
+        $ride->update(['status' => 'driver_assigned']);
 
         Notification::assertNothingSent();
     }
@@ -72,7 +72,7 @@ class RideObserverTest extends TestCase
             'driver_id' => $driver->id,
             'pickup_address' => '10 Kloof Street',
             'dropoff_address' => '20 Long Street',
-            'status' => 'accepted',
+            'status' => 'driver_assigned',
         ]);
 
         $ride->update(['status' => 'completed', 'final_fare' => 64.00]);
@@ -125,7 +125,7 @@ class RideObserverTest extends TestCase
             'status' => 'requested',
         ]);
 
-        $ride->update(['status' => 'accepted']);
+        $ride->update(['status' => 'driver_assigned']);
 
         Event::assertDispatched(RideStatusUpdated::class, fn ($event) => $event->ride->is($ride));
     }
@@ -143,7 +143,7 @@ class RideObserverTest extends TestCase
             'driver_id' => $driver->id,
             'pickup_address' => '10 Kloof Street',
             'dropoff_address' => '20 Long Street',
-            'status' => 'accepted',
+            'status' => 'driver_assigned',
         ]);
 
         $ride->update(['status' => 'completed', 'final_fare' => 64.00]);
@@ -162,7 +162,7 @@ class RideObserverTest extends TestCase
             'passenger_id' => $passenger->id,
             'pickup_address' => '10 Kloof Street',
             'dropoff_address' => '20 Long Street',
-            'status' => 'accepted',
+            'status' => 'driver_assigned',
         ]);
 
         $ride->update(['estimated_fare' => 55.00]);

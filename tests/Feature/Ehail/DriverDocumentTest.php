@@ -48,7 +48,7 @@ class DriverDocumentTest extends TestCase
             'new_fleet_name' => 'My Fleet',
             'vehicle_make' => 'Toyota', 'vehicle_model' => 'Corolla', 'vehicle_year' => 2022,
             'vehicle_color' => 'White', 'vehicle_plate_number' => 'CA 900900', 'vehicle_type' => 'standard',
-            'license_document' => UploadedFile::fake()->create('license.pdf', 100),
+            'license_document' => UploadedFile::fake()->createWithContent('license.pdf', "%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n"),
         ]);
 
         $profile = DriverProfile::withoutGlobalScope('user')->where('user_id', $applicant->id)->firstOrFail();
@@ -79,7 +79,7 @@ class DriverDocumentTest extends TestCase
 
         $this->actingAs($user)->post(route('drivers.documents.store'), [
             'type' => 'vehicle_inspection',
-            'document' => UploadedFile::fake()->create('inspection.pdf', 100),
+            'document' => UploadedFile::fake()->createWithContent('inspection.pdf', "%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n"),
         ])->assertRedirect(route('drivers.show', $profile));
 
         $this->assertSame(1, $profile->documents()->count());
@@ -112,6 +112,10 @@ class DriverDocumentTest extends TestCase
             'type' => 'license', 'file_path' => 'somefile.pdf', 'original_filename' => 'license.pdf',
         ]);
         Storage::disk('driver-documents')->put('somefile.pdf', 'fake contents');
+
+        // R-46 (D-1205): identity documents open for the fleet owner only with identity-review rights.
+        $this->actingAs($fleetOwner)->get(route('drivers.documents.show', $document))->assertForbidden();
+        $fleet->forceFill(['identity_review_granted_at' => now()])->save();
 
         $this->actingAs($fleetOwner)
             ->get(route('drivers.documents.show', $document))

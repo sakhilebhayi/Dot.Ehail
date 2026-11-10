@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Ehail;
 
+use App\Domain\Dispatch\Dispatcher;
+use App\Domain\Dispatch\Exceptions\DispatchRefused;
 use App\Enums\CancelReason;
 use App\Enums\RideStatus;
 use App\Http\Controllers\Controller;
@@ -24,14 +26,12 @@ use Illuminate\View\View;
 class RideLifecycleController extends Controller
 {
     /**
-     * Open requests any online, approved driver with an active vehicle can
-     * claim -- there's no live driver-location data anywhere in this
-     * schema (see FareCalculator's own doc comment on why distance is
-     * haversine-only), so "nearest driver" dispatch isn't something this
-     * app can honestly do yet. A shared claim queue, first driver to
-     * accept wins, is the real mechanism this data model supports today.
+     * The open board: requests an online, approved driver with an active
+     * vehicle can claim once sequential dispatch (App\Domain\Dispatch\Dispatcher)
+     * has offered them for ehail_dispatch.open_board_after_seconds without an
+     * acceptance, plus address-only requests that cannot be ranked by distance.
      */
-    public function available(Request $request): View
+    public function available(Request $request, Dispatcher $dispatcher): View
     {
         $profile = DriverProfile::withoutGlobalScope('user')
             ->where('user_id', $request->user()->id)
@@ -48,10 +48,7 @@ class RideLifecycleController extends Controller
             // Only what a driver needs to decide whether to claim: no
             // passenger relation, no passenger id, no coordinates -- and only
             // the tiers the active vehicle may serve.
-            ? Ride::select(['id', 'status', 'pickup_address', 'dropoff_address', 'vehicle_type', 'estimated_fare', 'created_at'])
-                ->where('status', 'requested')->whereNull('driver_id')
-                ->whereIn('vehicle_type', $vehicle->servableTiers())
-                ->latest()->get()
+            ? $dispatcher->boardFor($vehicle)
             : collect();
 
         return view('rides.available', [
@@ -68,7 +65,7 @@ class RideLifecycleController extends Controller
 
         try {
             $lifecycle->accept($ride, $request->user());
-        } catch (InvalidRideTransition $e) {
+        } catch (InvalidRideTransition|DispatchRefused $e) {
             return redirect()->route('rides.available')->withErrors(['ride' => $e->getMessage()]);
         }
 
@@ -76,8 +73,8 @@ class RideLifecycleController extends Controller
     }
 
     /**
-     * One stage at a time: accepted -> en_route -> arrived -> in_progress ->
-     * completed. The table in RideStatus is what refuses a skipped or
+     * One stage at a time: driver_assigned -> driver_arriving -> driver_arrived
+     * -> in_progress (PIN on rides that carry one) -> completed. The table in RideStatus is what refuses a skipped or
      * backward move.
      */
     public function advance(Ride $ride, Request $request, RideLifecycle $lifecycle): RedirectResponse
@@ -86,13 +83,16 @@ class RideLifecycleController extends Controller
 
         $validated = $request->validate([
             'status' => ['required', Rule::in([
-                RideStatus::EnRoute->value, RideStatus::Arrived->value,
+                RideStatus::DriverArriving->value, RideStatus::DriverArrived->value,
                 RideStatus::InProgress->value, RideStatus::Completed->value,
             ])],
+            'pin' => ['nullable', 'string', 'max:8'],
         ]);
 
         try {
-            $lifecycle->advance($ride, $request->user(), RideStatus::from($validated['status']));
+            $lifecycle->advance($ride, $request->user(), RideStatus::from($validated['status']), $validated['pin'] ?? null);
+        } catch (DispatchRefused $e) {
+            return back()->withErrors(['pin' => $e->getMessage()]);
         } catch (InvalidRideTransition $e) {
             return back()->withErrors(['status' => $e->getMessage()]);
         }
@@ -101,8 +101,8 @@ class RideLifecycleController extends Controller
     }
 
     /**
-     * Passenger: cancel. Driver on an accepted ride: back out, and the ride
-     * returns to the queue for another driver. The reason must be one that
+     * Passenger: cancel. Driver on an assigned ride: back out, and the ride
+     * goes back to searching for another driver. The reason must be one that
      * fits the person cancelling.
      */
     public function cancel(Ride $ride, Request $request, RideLifecycle $lifecycle): RedirectResponse

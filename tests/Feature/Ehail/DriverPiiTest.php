@@ -236,6 +236,11 @@ class DriverPiiTest extends TestCase
         $this->profileFor($fleet, 'ZA-LICENCE-557731', '8001015009087', 'pending');
         $this->profileFor($fleet, 'ZA-LICENCE-662842', '8002025009088', 'approved');
 
+        // R-46 (D-1205): the owner sees masked numbers only once operations granted identity-review rights.
+        $this->actingAs($fleet->owner)->get(route('fleets.show', $fleet))->assertOk()
+            ->assertDontSee('ZA-LICENCE-557731')->assertDontSee('•••• 7731')->assertDontSee('•••• 9087');
+        $fleet->forceFill(['identity_review_granted_at' => now()])->save();
+
         foreach ([$fleet->owner, $this->makeOperator()] as $viewer) {
             $this->actingAs($viewer)->get(route('fleets.show', $fleet))
                 ->assertOk()
@@ -251,20 +256,27 @@ class DriverPiiTest extends TestCase
 
     // ─── Opening a profile ───────────────────────────────────────────────
 
-    public function test_opening_a_profile_as_the_fleet_owner_shows_the_full_numbers_and_writes_an_audit_row(): void
+    public function test_opening_a_profile_as_the_fleet_owner_shows_masked_numbers_and_writes_an_audit_row(): void
     {
         $profile = $this->profileWithIdentifiers();
         $owner = $profile->fleet->owner;
 
+        // R-46 (D-1205): without identity-review rights the fleet owner does not get this page at all.
+        $this->actingAs($owner)->get(route('drivers.show', $profile))->assertNotFound();
+        $profile->fleet->forceFill(['identity_review_granted_at' => now()])->save();
+
+        // R-46 security S-04: full numbers are for the driver and identity reviewers; the fleet owner sees them
+        // masked, as in the fleet portal.
         $this->actingAs($owner)->get(route('drivers.show', $profile))
             ->assertOk()
-            ->assertSee(self::LICENCE)
-            ->assertSee(self::NATIONAL_ID);
+            ->assertDontSee(self::LICENCE)
+            ->assertDontSee(self::NATIONAL_ID)
+            ->assertSee(DriverIdentifiers::mask(self::NATIONAL_ID));
 
         $row = AuditLog::where('action', 'driver_profile.opened')->firstOrFail();
         $this->assertSame($owner->id, $row->actor_user_id);
         $this->assertSame($profile->id, (int) $row->subject_id);
-        $this->assertSame(['license_number', 'id_number'], $row->meta['fields']);
+        $this->assertSame(['masked_identity'], $row->meta['fields']);
         $this->assertSame('fleet_owner', $row->meta['as']);
         $this->assertStringNotContainsString(self::LICENCE, json_encode($row->meta));
     }

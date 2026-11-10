@@ -34,7 +34,11 @@ class DriverDocumentPolicy
             return true;
         }
 
-        return $profile->fleet && $user->id === $profile->fleet->owner_user_id;
+        // R-46 (D-1205): a fleet owner sees an applicant's identity documents only when a platform operator has
+        // granted the fleet identity-review rights; by default the fleet sees document status, never contents.
+        return $profile->fleet
+            && $user->id === $profile->fleet->owner_user_id
+            && $profile->fleet->identityReviewGranted();
     }
 
     /**

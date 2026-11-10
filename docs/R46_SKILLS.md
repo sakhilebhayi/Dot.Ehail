@@ -1,0 +1,134 @@
+# R-46 design skills record
+
+Global owner rule: all UI work goes through the installed design skills. This file records which skills each agent invoked, what was applied and what was unavailable. Other agents append their own section.
+
+## ds agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | Context, new world | `impeccable context` (no PRODUCT.md, so PRODUCT.md was written from the brief with inferences labelled; no question tool in this unattended run, the substitution is recorded here); `concept-seed --scope direction --mode persuade` (seed key 5aa5fa14, assigned grounded candidate 6 of 7: the transit route diagram); challengers fused and declined with named raises (see the direction contract in `.impeccable/surfaces/resources-views-welcome-blade-php.md`); code-led build (no image generation on this machine); craft floor applied; `impeccable detect` run on 15 rendered pages; the shipped `impeccable-finish-reviewer` subagent reviewed the captures (first round asked for a recapture of the landing because lazy images had not painted; outcome of the full round in `docs/R46_DS.md`). The documenter subagent was not spawned: DESIGN.md was written by hand from the built CSS (degraded path) and `.impeccable/design.json` was not produced. |
+| `design-taste-frontend` | invoked | Landing (page run), shells (app run) | Page draw: direction `one-motif` (seed 262676140) with brand palette and type kept; app draw: `smb-admin` kind, "Accent ladder" (full hue on small marks, pale tints on areas). Assets found with `assets.mjs` (Wikimedia Commons and Flickr, open licences, credited in the footer). `inspect.mjs` on the landing: 0 FAIL, 1 WARN (no video: deliberate, data cost on prepaid phones). Redraws: none. Section adjustments: the CTA "sentence with a blank" became a two-column close because there is no form backend; the features mosaic was not built because enlarged UI pieces would read as fake screenshots, which the owner bans. |
+| `hallmark` | invoked | Landing | DESIGN.md is the locked system (pre-flight signal 1), so no theme deal. Floor applied: tokens only, no `transition: all`, `overflow-x: clip`, focus-visible everywhere, reduced-motion fallbacks, content visible without script, no invented metrics, no eyebrows or tracked caps, stamp at the top of the CSS. `sloplint` landing: clean (0 FAIL, 0 REFLEX, 0 WARN). App CSS: one remaining FAIL 56 (two `position: sticky; top: 0` selectors in different layouts that never share a page; recorded as a false positive). Render tier not run (no puppeteer-core installed). |
+| `design-md` | invoked | DESIGN.md | Google format, `npx @google/design.md lint DESIGN.md`: 0 errors, 0 warnings. The review gate was skipped under the owner's no-questions order. |
+| `awesome-design-md`, `open-design` | not invoked | | Read as reference only per the brief; no brand system borrowed. |
+| `ui-ux-pro-max` | unavailable | | `~/.claude/skills/ui-ux-pro-max` is a dangling symlink (target missing). Not claimed. |
+| `emil-design-eng` | unavailable | | `~/.claude/skills/emil-design-eng` is a dangling symlink (target missing). Not claimed. |
+| `gsap-*`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark` | not used | | No motion library: the landing's motion (reveals, hero crossfade, fare line) is 1 KB of plain JS and CSS, which fits the data budget. |
+
+## business agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | Business portal and operator review pages | `impeccable context` loaded PRODUCT.md and DESIGN.md; Operate mode inside the locked Route Line world (no new world); craft floor read before UI edits (no eyebrows, no side-stripe borders, no metric tiles, honest empty states, tabular figures, focus rings). `impeccable detect` on `resources/views/business`, `resources/css/business`, `resources/js/business`: one finding (a 2px left border used as a segment gap on the spend line) fixed; clean after. One advisory left: `#000` in print styles (print only). |
+| `design-taste-frontend` | invoked | App-screen run | `draw.mjs --app --kind finance --keep palette,type`: options pastel-consumer / achromatic-ledger; chose achromatic ledger (seed 543034165) because the portal is about money read by finance and travel managers. Applied: no KPI strip, each figure inside the panel that explains it, one hue on the main data element (billed this month on the spend line, with stops), worded state badges only, flat panels, settings in two columns, phones get stacked labelled rows. Not adopted: the style's near-black primary (DESIGN.md's sign green stays the action colour). `lint.mjs --app`: 0 FAIL, 0 WARN after replacing inset ring shadows with borders. Screens checked at 1440 and 390, light and night (`docs/R46_screens/business/`). |
+| `hallmark` | not invoked | | DESIGN.md is locked by ds; no new page world was needed. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Dangling symlinks (as recorded by ds). Not claimed. |
+| `gsap-*` and other motion skills | not used | | Operate surface; only the details-row chevron turns (160 ms, off under reduced motion). |
+## comms agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | inbox, settings, bell (Operate mode) | `impeccable context` loaded PRODUCT.md and DESIGN.md (no surface brief for these pages; no question channel in this unattended run, inferred from the brief); worked inside the locked Route Line world; craft floor and operate reference read before UI code; `impeccable detect` on `resources/views/comms` and `comms.css`: one advisory (2px radius) fixed, then clean. Finish-reviewer subagent not spawned (bounded run). |
+| `design-taste-frontend` | invoked | app-screen run | Read `references/app-screens.md` (settings layout: label column beside a panel, one save model per view, "show what the setting produces" applied as the last real notification per category; empty states that teach; honest states). Draw skipped: the design system is locked (`--keep palette,type` would deal composition only, and the shells fix it). `lint.mjs`: shadow on the badge replaced by an outline; list dividers kept with `taste-skill-ignore` (same as the kit's `.eh-list`, allowed for app screens); then 0 FAIL. `inspect.mjs` not run: the pages need a signed-in session; checked by eye in the browser at 390 and 1440, light and night. |
+| `gsap-*` | not used | | No motion needed beyond the kit's switch transition. |
+| `ui-ux-pro-max`, `emil-design-eng` | not invoked | | Recorded as dangling symlinks by ds; not claimed. |
+
+## passenger agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | booking, live ride, safety centre, trips, help, account, fare calculator (Operate mode, inside the locked Route Line world) | `impeccable context` loaded PRODUCT.md and DESIGN.md (no surface brief; the probe for questions was not possible in this unattended run, so the brief was the source); `craft-floor.md` and `operate.md` applied: one action colour, states for every control (loading `aria-busy`, disabled, error text next to the action), skeletons not spinners, empty states that teach, 150 to 320 ms transitions only for state, reduced motion respected. `impeccable detect` on `resources/views/passenger`, `resources/css/passenger.css`, `resources/js/passenger`: first run 1 warning (width transition on the search progress, now `transform: scaleX`) and 8 advisories (radii and two font sizes off the scale, now tokens); final run clean (`[]`). |
+| `design-taste-frontend` | invoked | app-screen run | Read `references/app-screens.md` whole. No new draw: DESIGN.md fixes palette, type and components, so the run kept the ds direction (the "existing design system" special case). Applied: the screen's one question first (booking: "what will this trip cost and how soon can a car come"; live ride: "where is my driver and what do I do now"), the product's own element (the fare drawn as a route line of stops ending in the yellow total; the SA number plate; the PIN as the yellow stop), numbers right-aligned in tabular figures, empty sections keep their frame with one sentence, errors inside the block that failed with a retry. `lint.mjs`: 8 FAIL first (ring shadows on route stops, the plate frame, the pin's drop shadow, two bar edges), each kept with a `taste-skill-ignore` reason (they are drawn marks or real overlays, not elevation); final 0 FAIL, 4 WARN (zero-padding for clocks and dates, legitimate). `inspect.mjs --app` on `/fares`: 2 FAIL defended (Leaflet's "Report a map issue" attribution 8 px from the edge is geo's map control; the docked sheet's shadow is a real overlay on the map), 1 fixed (title 36 px to 28 px). Authenticated pages were checked with my own Playwright walkthrough instead (inspect cannot sign in). |
+| `gsap-*` | not used | | No motion library: motion is the kit's sheet transition, the map's driver glide (geo) and the search progress bar. |
+| `hallmark` | not invoked | | Not a new world: the pages are built inside the locked DESIGN.md system. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Empty folders in `~/.claude/skills` (checked); not claimed. |
+## driver agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | driver app (Operate mode) | `impeccable context --target resources/views/driver/home.blade.php` loaded PRODUCT.md and DESIGN.md; the surface brief covering `layouts/driver.blade.php` read (`surface-brief read`); `operate.md` and `craft-floor.md` read before UI edits; no question tool in this subagent run, so the brief and the owner's no-questions order stood in (substitution stated here). Applied: one question per screen (console: what do I do next; offer: what do I earn), the number before the ask, states for every control (disabled go-online with reasons, loading, errors inside their block), no modal where inline works (decline reasons inline, dialogs only for irreversible steps), skeleton-free honest pending lines. `impeccable detect` on `resources/views/driver`, `resources/css/driver.css`, `resources/js/driver`: one finding (width transition on the upload progress) fixed, then clean. Finish-review subagent not spawned (the ds review owns the world; budget). |
+| `design-taste-frontend` | invoked | app-screen run | Read `references/app-screens.md`; `draw.mjs --app --kind wallet --keep palette,type` dealt "Pastel consumer" (seed 2057463010): applied its money rules (one large figure in the block that explains it, quiet polarity, no red on ordinary outgoings, two-line rows with the amount right-aligned) and its phone rules (bottom tabs, two-line rows, one row of controls); its icon-rail shell and pastel category tiles were not used because the ds driver shell and Route Line palette are locked (DESIGN.md). Signature element: the route line (offer legs, trip stops, onboarding steps), the countdown as a burning line. `lint.mjs --app` on the driver views and CSS: 15 inset-shadow strokes converted to outlines, then 0 FAIL, 0 WARN. `inspect.mjs` not run (pages are behind sign-in); the same checks (overflow, one h1, theme) ran in the walkthrough script on every page at 390 and 1440, light and night: no horizontal overflow, one h1 each. |
+| `gsap-*` | not used | | Motion is two CSS animations (waiting line, countdown) with reduced-motion fallbacks. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Dangling symlinks in `~/.claude/skills` (as recorded by ds); not claimed. |
+| `hallmark`, `awesome-design-md`, `open-design`, `design-md` | not invoked | | Not a new world: the driver app lives inside the locked Route Line system. |
+
+## fleet agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | fleet portal (Operate mode) | `impeccable context --target resources/views/fleet` (PRODUCT.md, DESIGN.md; no surface brief; no question channel in this unattended run, so the brief stood in); read `reference/operate.md` and `reference/craft-floor.md` before UI code; applied: restrained colour on state and the one primary action, flat panels by tone step, every component with empty/disabled/error states, inline disclosures instead of modals, no eyebrows or numbered sections, tabular figures. `impeccable detect --json` on the fleet views and CSS: 2 advisories (plate radius 4px, plate size 1.0625rem off the ramp), both fixed to tokens; re-run clean. Finish-reviewer subagent not spawned (one inspection round plus one fix round within budget). |
+| `design-taste-frontend` | invoked | app-screen run | Read `references/app-screens.md`; `draw.mjs --app --kind smb-admin --keep palette,type` dealt framed-sheet and accent-ladder; chose accent-ladder (matches DESIGN.md's tint-led nav and badges); face: the number plate; each screen's one question written into its title line (overview: "N of M vehicles can work now. K cannot: ..."). `lint.mjs --app` on rendered pages: 1 FAIL from the Laravel Boost dev logger's console emoji (not shipped, dev only); `inspect.mjs --app` on saved renders: 0 FAIL; WARNs defended: fonts are cross-origin in the saved copy (they load on the real host, see screenshots), h1 at 36px is the ds page head contract, a 37px difference between two tables that shrink to their rows, "charts" counted are number plates. |
+| `gsap-*` | not used | | No motion needed: state changes only (hover tints, 160 ms). |
+| `hallmark`, `emil-design-eng`, `ui-ux-pro-max` | not invoked | | Not a new world (Route Line is fixed); emil/ui-ux-pro-max recorded earlier as unavailable symlinks; not claimed. |
+## ops agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | the operations centre (Operate mode) | `impeccable context` loaded PRODUCT.md and DESIGN.md (no surface brief; no question channel in this unattended run, so the reading of the brief is recorded in docs/R46_UI_OPS.md); worked inside the locked Route Line world; `operate.md` and `craft-floor.md` read before UI code (no kickers, flat panels, tables of rules and alignment, tabular figures, states for every block). `impeccable detect` on `resources/views/ops`, `ops.css` and the ops layout: 4 advisories (a 4 px data end kept per the dataviz spec; the 2 px route-line radius and 11 px chart text fixed). Finish-reviewer subagent not spawned (bounded run). |
+| `design-taste-frontend` | invoked | app-screen run | Read `references/app-screens.md` whole. Draw skipped: the design system is locked (the ds agent's app style "Accent ladder" applies). Applied: one h1 noun per screen with the finding as the line under it, KPIs as one strip split by rules (no tiles), colour only on status and data, a count only on queues that need action, every relative figure with its baseline, honest zero and dash, the ride timeline as the product's own element (route line). `lint.mjs` on `ops.css`: 0 FAIL, 8 WARN (shadows: map-marker rings, the floating map status, and 1 px zero-blur dividers on the figure strip; defended in R46_UI_OPS.md). `inspect.mjs` not run: every page needs a signed-in operator session; checked by captures at 1440 (light, night), 768 and 390 instead. |
+| `dataviz` | invoked | insights and ledger charts | Followed the procedure: form first (columns for counts and money per period, a table for how rides ended with inline bars, a sequential one-hue heat table for retention cohorts, figures not charts where a few numbers say it), one hue, `validate_palette.js` run for the light hue (#0b6a3c, pass) and the night hue (#48b17b failed the lightness band; #3f9f6c passes on the night surface and is used), mark specs (columns at most 24 px, 4 px data end, hairline grid, top tick above the maximum), hover and focus tooltip, the same values in a table under each chart. |
+| `gsap-*`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `hallmark` | not used | | Operate surface: motion is feedback only; hallmark is for new pages outside a locked system. |
+| `ui-ux-pro-max`, `emil-design-eng` | not invoked | | Recorded as dangling symlinks by ds; not claimed. |
+
+## qa2 (wave 3, 2026-11-10)
+- `impeccable` (context loaded with `--target resources/views/money/receipt.blade.php`): finish check of the three small UI fixes QA made. The receipt's "Why the fare differs from the quote" section uses the receipt's own tokens (ink-2 text, ink heading, the same minus sign as the promotion line, no dashes in copy); the passenger "Last position N s ago" indicator is the existing component, only its timing changed; the ops table wrapper gained `position: relative` (layout containment, nothing visible). No other design skill was needed: no new surface was built.
+
+## security agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `security-audit` | invoked | the whole review | Guidance mode (D-1400): the boundary-and-result evidence bar for every finding, severity anchors, smallest source fix; three focused read-only hunters; mutation check that the router-wide test catches a removed policy check. Full-audit mode not run (it forbids fixing and writes outside the repo). |
+| `impeccable` | invoked | one "Download my data" row on the driver account page | `impeccable context` loaded PRODUCT.md and DESIGN.md; craft floor read; existing `<x-eh.list-row>` and the kit's `download` icon reused, same copy as the passenger row; checked at 375 px in the browser (passenger page) and by a feature test (driver page). No new styles. |
+| others | not used | | No new surface or visual change: the CSP work moved inline handlers to data attributes with identical behaviour; the hover tint on legacy ride rows moved from inline handlers to a two-line `.eh-row-link` hover rule in app.css (same colour). |
+
+## a11y agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | accessibility and mobile pass (Operate mode, refinement of the locked Route Line world) | `impeccable context` loaded PRODUCT.md and DESIGN.md; read `reference/audit.md` (the five dimensions and P0 to P3 severity used in R46_A11Y.md) and `reference/adapt.md` (thumb zones, 44 px targets, landscape, 320 px, text scaling, "say what produced the evidence": every check names its engine, emulated viewport and touch emulation, and what stayed untested). Refinement rules held: identity, copy and behaviour kept except where a check failed. `impeccable detect` on every changed stylesheet and view: 11 advisories, 10 pre-existing (radii 2 to 4 px, off-ramp sizes in ds and business files not touched here), 1 mine (zoom button size) fixed to a type token. craft-floor not re-read: no new surface, only fixes inside existing components. |
+| `design-taste-frontend` | invoked | app-screen rules as a review lens | Read `references/app-screens.md` (the phone section and the house rules for app screens). Applied to the fixes: no new ornaments (no shadows, no gradients, no tinted icon squares) in any fix; colour only on status and action (the sunlight colours are darker steps of existing tokens); the phone keeps folded navigation (bottom tabs) and one row of controls. No draw: the system is locked. `inspect.mjs` not run (signed-in pages); its overflow, h1 and contrast measures are covered by the sweep (axe in real Chrome at 390, 768, 1440, light and night) and the mobile script (320 to 430 px, landscape, 200% text). |
+| `dataviz` | not used | | No chart was changed. |
+| `gsap-*`, `hallmark`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `open-design`, `design-md`, `awesome-design-md` | not used | | Not a new world or a motion task. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Dangling symlinks into `~/.agents/skills/` (checked: the targets do not exist); not claimed. |
+## Perf (wave 3, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| all design skills | not used | | No UI was built or restyled: the driver console's polling loop changed behind the same screens (one sync request instead of three; same states, alerts and wording), and the ops status work is a JSON data source only (no panel). Nothing visual to put through impeccable or the taste checks. |
+
+## pdrive agent (jury polish, driver app, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | polish of the driver app (Operate mode, refinement inside the locked Route Line world) | `impeccable context` loaded PRODUCT.md and DESIGN.md (no driver surface brief exists; none created). Read `reference/polish.md` (classify drift, fix in triage order, verify the whole path) and `reference/craft-floor.md` before UI edits. Applied: identity, tokens and copy voice kept; fixes at the narrowest level (driver.css and driver views, no kit change); tone step instead of a rule between the offer's scroll band and its pinned answers; theme-aware safety card; browser-surface detail (date picker button). `impeccable detect` on driver.css and the changed views: 2 advisories (offer money sizes off the type ramp) fixed to ramp endpoints, then clean. |
+| `design-taste-frontend` | invoked | app-screen run, as a review lens | Read the app-screens phone section (section 12) and the house rules. Applied: one action row pinned in thumb reach, the answer figure leads (the net in display type, siblings in body size), every relative figure names its base (commission "20% of R61.00"), figures that must agree are checked in code (`offerLines().reconciles`, asserted in tests), no new ornaments. `lint.mjs` on driver.css and the console views: 3 hairline FAILs, 1 fixed (offer actions now separate by a tone step), 2 kept (pre-existing ledger and checklist row rules: real tabular rows), 100vh fallback marked. No draw (system locked). `inspect.mjs` not run (signed-in pages); its measures (overflow, h1 count) are in the capture script's notes. |
+| `gsap-*`, `hallmark`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `open-design`, `design-md`, `awesome-design-md`, `dataviz` | not used | | Refinement of an existing app surface; no motion, chart or new world. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Checked: dangling symlinks into `~/.agents/skills/` (targets missing); not claimed. |
+
+## pops agent (jury polish: ops, business, fleet, shared public pages, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | polish of the work surfaces inside the locked Route Line world | `impeccable context` loaded PRODUCT.md and DESIGN.md. Read `reference/polish.md` and the craft floor: fix drift in triage order (meaning, hierarchy, then finish), one primary action per screen (incident ownership), state in words not colour alone (owner, alarm sound), reduced motion respected (rail pulse), night parity checked per changed surface. The detector script was not run. |
+| `design-taste-frontend` | invoked | review lens for dense app screens | Read the app-screens reference. Applied: keep density, give identity through one repeated system mark (route line, plate chip) not decoration; the answer leads (ownership bar before facts); no card inside card. |
+| `dataviz` | not used | | No chart was added or changed; insights labels are pmoney's payload fix. |
+| `hallmark`, `gsap-*`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `open-design`, `design-md`, `awesome-design-md` | not used | | Refinement of existing surfaces; no new world, motion library or brand system. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Not in the installed list this session; not claimed. |
+
+## Polish: data and money (pmoney, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | the few view edits this branch made (receipt, statement, bell badge, status badge, fleet strip, incident timeline) | Loaded the product context; kept to the existing Route Line components and tokens, tabular figures for money, no new patterns. The work is data and wording, so the craft rule applied was "the numbers on screen must agree with each other". |
+| other design skills | not used | | No new page, motion or brand system; UI edits were kept minimal by brief. |
+
+## ppass agent (jury polish, passenger app, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | polish of the passenger screens (booking home, category rows, approaching and arrived card, share page, receipt), inside the locked Route Line world | Polish in triage order: one "Where to?" field leads a map-first home, compact category rows at half height so the route stays visible, identity (photo, car, plate chip) above the PIN, branded controls in place of native ones (place field, day and time picker, file picker, radio, text link), one brand focus token. |
+| `design-taste-frontend` | invoked | app-screen run, as a review lens | Read the app-screen rules: the screen's one question first, no duplicate actions, only relevant categories offered (the rest listed as hidden), honest SMS wording. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Dangling symlinks (as recorded above); not claimed. |
+| others | not used | | Refinement inside an existing system; no motion library, chart or new world. |
+
+The agent was stopped by the account's weekly usage limit after its final trunk merge; the coordinator committed its last contract adaptation (`0695e7e`) after reading the diff, and ran the PHP, JS and build checks. Its browser pass after that last merge was not repeated by the agent; the end-to-end suite covers the passenger journey on the merged trunk (docs/R46_QA.md).

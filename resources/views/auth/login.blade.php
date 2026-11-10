@@ -1,48 +1,27 @@
-<x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
+<x-guest-layout title="Sign in">
+    <header>
+        <h1 class="eh-guest__title">Sign in</h1>
+        <p class="eh-guest__lead">Use the email and password of your Dot account, the same one you use in the other Dot apps.</p>
+    </header>
 
-        <x-validation-errors class="mb-4" />
+    @session('status')
+        <x-eh.banner tone="go">{{ $value }}</x-eh.banner>
+    @endsession
 
-        @session('status')
-            <div class="mb-4 font-medium text-sm text-[var(--sage)]">
-                {{ $value }}
-            </div>
-        @endsession
+    <form method="POST" action="{{ route('login') }}" class="eh-form" novalidate>
+        @csrf
+        <x-eh.field label="Email" name="email" type="email" id="email" required autofocus autocomplete="username" inputmode="email" />
+        <x-eh.field label="Password" name="password" type="password" id="password" required autocomplete="current-password" />
+        <div class="eh-form__row">
+            <label class="eh-check" for="remember_me"><input type="checkbox" id="remember_me" name="remember"> Keep me signed in</label>
+            @if (Route::has('password.request'))
+                <a class="eh-link eh-tap" href="{{ route('password.request') }}">Forgot your password?</a>
+            @endif
+        </div>
+        <x-eh.button type="submit" size="lg" block>Sign in</x-eh.button>
+    </form>
 
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
-
-            <div>
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            </div>
-
-            <div class="mt-4">
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
-            </div>
-
-            <div class="block mt-4">
-                <label for="remember_me" class="flex items-center">
-                    <x-checkbox id="remember_me" name="remember" />
-                    <span class="ms-2 text-sm text-[var(--ink-soft)]">{{ __('Remember me') }}</span>
-                </label>
-            </div>
-
-            <div class="flex items-center justify-end mt-4">
-                @if (Route::has('password.request'))
-                    <a class="underline text-sm text-[var(--ink-soft)] hover:text-[var(--ink)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--gold)]" href="{{ route('password.request') }}">
-                        {{ __('Forgot your password?') }}
-                    </a>
-                @endif
-
-                <x-button class="ms-4">
-                    {{ __('Log in') }}
-                </x-button>
-            </div>
-        </form>
-    </x-authentication-card>
+    @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::registration()))
+        <p class="eh-small" style="margin:0">New here? <a class="eh-link" href="{{ route('register') }}">Create an account</a></p>
+    @endif
 </x-guest-layout>

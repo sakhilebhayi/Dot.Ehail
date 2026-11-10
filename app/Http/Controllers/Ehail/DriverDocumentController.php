@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Ehail;
 
+use App\Domain\Verification\Files\PrivateFileResponse;
+use App\Domain\Verification\Files\SecureFileStore;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\DriverDocument;
 use App\Models\DriverProfile;
 use Illuminate\Http\RedirectResponse;
@@ -10,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Roadmap item (wiki.md §8): driver document/inspection workflow, beyond
@@ -39,7 +42,8 @@ class DriverDocumentController extends Controller
             'document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ]);
 
-        $path = $request->file('document')->store('', 'driver-documents');
+        // Sniffed, re-encoded (EXIF and GPS stripped) and randomly named, like every R-46 identity upload (S-24).
+        $path = app(SecureFileStore::class)->store($request->file('document'), 'driver-documents', 'legacy', ['image', 'pdf'], 'document')->path;
 
         $profile->documents()->create([
             'type' => $validated['type'],
@@ -51,11 +55,21 @@ class DriverDocumentController extends Controller
         return redirect()->route('drivers.show', $profile)->with('status', 'Document uploaded.');
     }
 
-    public function show(DriverDocument $document): StreamedResponse
+    public function show(DriverDocument $document): Response
     {
         Gate::authorize('view', $document);
 
-        return Storage::disk('driver-documents')->response($document->file_path, $document->original_filename);
+        $viewer = request()->user();
+        $ownerId = $document->driverProfile()->withoutGlobalScope('user')->value('user_id');
+
+        // Anyone but the driver opening an identity document is recorded, as on /verification (S-24).
+        if ($viewer->id !== $ownerId) {
+            AuditLog::record('driver_document.viewed', $viewer, $document, ['type' => $document->type, 'as' => $viewer->isPlatformOperator() ? 'operator' : 'fleet_owner']);
+        }
+
+        $mime = (string) (Storage::disk('driver-documents')->mimeType($document->file_path) ?: 'application/octet-stream');
+
+        return PrivateFileResponse::make('driver-documents', $document->file_path, (string) $document->original_filename, $mime);
     }
 
     public function destroy(DriverDocument $document): RedirectResponse

@@ -11,7 +11,7 @@ use App\Models\RideRating;
  * recomputed from the rows that define them -- never incremented -- so calling
  * refresh() any number of times, or after any drift, lands on the same values.
  *
- *   rating      = mean of passengers' ratings of this person AS A DRIVER
+ *   rating      = mean of passengers' ratings of this person AS A DRIVER (minus upheld appeals)
  *   total_rides = completed rides this person drove
  */
 class DriverStats
@@ -26,6 +26,8 @@ class DriverStats
 
         $average = RideRating::where('rated_user_id', $driverUserId)
             ->where('rated_role', RideRating::ROLE_DRIVER)
+            // A rating removed on appeal (R-46 safety, RatingModeration) stays on record but not in the mean.
+            ->whereNull('excluded_at')
             ->avg('rating');
 
         $profile->forceFill([

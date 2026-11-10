@@ -18,6 +18,18 @@ class RideRatingTest extends TestCase
 {
     use CreatesEhailFixtures, RefreshDatabase;
 
+    /**
+     * R-46: rides reach the open board only after ehail_dispatch.open_board_after_seconds
+     * (sequential offers come first). These tests exercise the claim mechanics, not the
+     * delay, so the board opens at once (the delay is tested in DispatcherTest).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['ehail_dispatch.open_board_after_seconds' => 0]);
+    }
+
     private function completedRide(?User $passenger = null, ?User $driver = null): Ride
     {
         $driver ??= $this->makeApprovedDriver();
@@ -105,7 +117,10 @@ class RideRatingTest extends TestCase
         $passenger = User::factory()->withPersonalTeam()->create();
         $driver = $this->makeApprovedDriver();
 
-        foreach (['requested', 'accepted', 'in_progress', 'cancelled', 'expired', 'needs_review'] as $status) {
+        foreach (['requested', 'driver_assigned', 'in_progress', 'cancelled_by_passenger', 'expired', 'needs_review'] as $status) {
+            // R-46: one active ride per passenger and per driver is enforced by the database
+            // (rides.active_*_id), so each fixture ride is closed before the next is made.
+            Ride::where('passenger_id', $passenger->id)->update(['active_passenger_id' => null, 'active_driver_id' => null]);
             $ride = $this->makeRide(['status' => $status, 'driver_id' => $driver->id], $passenger);
 
             $this->actingAs($passenger)->post(route('rides.ratings.store', $ride), ['rating' => 5])->assertForbidden();
@@ -206,7 +221,7 @@ class RideRatingTest extends TestCase
         $second = User::factory()->withPersonalTeam()->create();
         $rideOne = $this->completedRide($first, $driver);
         $rideTwo = $this->completedRide($second, $driver);
-        $this->makeRide(['status' => 'cancelled', 'driver_id' => $driver->id]);
+        $this->makeRide(['status' => 'cancelled_by_passenger', 'driver_id' => $driver->id]);
 
         $this->actingAs($first)->post(route('rides.ratings.store', $rideOne), ['rating' => 5]);
         $this->actingAs($second)->post(route('rides.ratings.store', $rideTwo), ['rating' => 2]);
@@ -276,7 +291,7 @@ class RideRatingTest extends TestCase
         $driver = $this->makeApprovedDriver();
         $ride = $this->makeRide();
         $this->actingAs($driver)->post(route('rides.accept', $ride));
-        foreach (['en_route', 'arrived', 'in_progress', 'completed'] as $stage) {
+        foreach (['driver_arriving', 'driver_arrived', 'in_progress', 'completed'] as $stage) {
             $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => $stage]);
         }
 
@@ -376,7 +391,10 @@ class RideRatingTest extends TestCase
         $profile = DriverProfile::withoutGlobalScope('user')->where('user_id', $driver->id)->with('fleet')->firstOrFail();
 
         $this->actingAs($this->makeOperator())->get(route('drivers.show', $profile))->assertOk()->assertSee('Nokuthula Distinctive Rider');
-        $this->actingAs($profile->fleet->owner)->get(route('drivers.show', $profile))->assertOk()->assertSee('Nokuthula Distinctive Rider');
+        // R-46 (D-1205/D-1206): a fleet owner without identity-review rights no longer opens the legacy driver
+        // page (it carries passenger names and places); the fleet portal shows first names only.
+        $this->actingAs($profile->fleet->owner)->get(route('drivers.show', $profile))->assertNotFound();
+        $this->actingAs($profile->fleet->owner)->get(route('fleet.drivers.show', $profile->id))->assertOk()->assertDontSee('Nokuthula Distinctive Rider');
     }
 
     public function test_a_driver_with_no_ratings_says_so_instead_of_showing_zero_stars(): void
@@ -397,7 +415,7 @@ class RideRatingTest extends TestCase
         $this->actingAs($earlier)->post(route('rides.ratings.store', $earlierRide), ['rating' => 5, 'comment' => 'Comment from an earlier rider only']);
 
         $passenger = User::factory()->withPersonalTeam()->create();
-        $ride = $this->makeRide(['status' => 'accepted', 'driver_id' => $driver->id], $passenger);
+        $ride = $this->makeRide(['status' => 'driver_assigned', 'driver_id' => $driver->id], $passenger);
 
         $this->actingAs($passenger)->get(route('rides.show', $ride))
             ->assertOk()
