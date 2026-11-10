@@ -287,8 +287,11 @@ class RideLifecycleTest extends TestCase
             $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => $status]);
         }
 
-        $this->assertSame(1, $passenger->fresh()->unreadNotifications()->count());
-        $this->assertSame(1, $driver->fresh()->unreadNotifications()->count());
+        // R-46 comms adds the passenger's trip updates (driver on the way, arrived, trip started) to the inbox;
+        // the completion notice is still exactly one per party.
+        $types = fn (User $user) => $user->fresh()->unreadNotifications()->get()->pluck('data.type')->sort()->values()->all();
+        $this->assertSame(['driver_arrived', 'driver_assigned', 'ride_completed', 'trip_started'], $types($passenger));
+        $this->assertSame(['ride_completed'], $types($driver));
     }
 
     // ─── Cancel ──────────────────────────────────────────────────────────

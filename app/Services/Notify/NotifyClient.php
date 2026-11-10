@@ -2,6 +2,7 @@
 
 namespace App\Services\Notify;
 
+use App\Domain\Comms\Preferences;
 use App\Jobs\SendNotifyEvent;
 use App\Models\Team;
 use App\Models\User;
@@ -60,6 +61,14 @@ class NotifyClient
                 return;
             }
 
+            // R-46 comms: a person who explicitly switched email off for this kind of message is
+            // not emailed through Notify either (defaults never block: Notify's own settings apply).
+            if ($this->switchedOffByRecipient($recipient, $event)) {
+                Log::info('Notify event skipped: the recipient switched this email off.', ['event' => $event, 'user_id' => $recipient->getKey()]);
+
+                return;
+            }
+
             $payload = $this->payload($recipient, $event, $subject, $bucket, $data);
 
             if ($payload === null) {
@@ -81,6 +90,13 @@ class NotifyClient
         } catch (Throwable $e) {
             Log::warning('Could not queue a Notify event.', ['event' => $event, 'error' => class_basename($e)]);
         }
+    }
+
+    private function switchedOffByRecipient(User $recipient, string $event): bool
+    {
+        $category = config('ehail_comms.notify_event_categories.'.str_replace('.', '_', $event));
+
+        return is_string($category) && app(Preferences::class)->explicitlyOff($recipient, $category, 'email');
     }
 
     /**

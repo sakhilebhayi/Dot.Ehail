@@ -1,0 +1,117 @@
+/*
+ * R-46 comms: inbox and notification settings inside the Route Line shells. Tokens only (DESIGN.md).
+ * The inbox is drawn as a route line: each notification a stop, filled while unread, a ring once read,
+ * a yellow stop with a dark ring for safety. Flat surfaces, tone steps, no shadows at rest.
+ */
+
+/* Header actions and filter */
+.comms-headactions { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); align-items: center; }
+.comms-filter { display: flex; gap: var(--eh-space-2); margin-bottom: var(--eh-space-6); }
+.comms-more { margin-top: var(--eh-space-8); }
+
+/* The bell (top bar) */
+.comms-bell { position: relative; }
+.comms-bell[aria-current="page"] { background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); }
+.comms-bell__count {
+    position: absolute; top: 4px; right: 2px; min-width: 20px; height: 20px; padding: 0 5px;
+    display: grid; place-items: center; border-radius: var(--eh-radius-pill);
+    background: var(--eh-signal); color: var(--eh-signal-ink); outline: 2px solid var(--eh-ground);
+    font-size: var(--eh-text-xs); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
+}
+
+/* Inbox: days, then the line */
+.comms-inbox { display: grid; gap: var(--eh-space-10); max-width: 44rem; }
+.comms-day__title { margin: 0 0 var(--eh-space-3); font-size: var(--eh-text-sm); font-weight: 700; color: var(--eh-ink-2); }
+.comms-line { list-style: none; margin: 0; padding: 0; position: relative; }
+.comms-line::before {
+    content: ""; position: absolute; left: 11px; top: 14px; bottom: 14px; width: 2px;
+    background: var(--eh-rule-strong); border-radius: var(--eh-radius-pill);
+}
+.comms-stop { position: relative; display: grid; grid-template-columns: 24px 1fr; gap: var(--eh-space-4); padding: var(--eh-space-2) 0; }
+.comms-stop + .comms-stop { margin-top: var(--eh-space-3); }
+.comms-stop__dot {
+    position: relative; z-index: 1; width: 16px; height: 16px; margin: 6px 4px 0;
+    border-radius: 50%; background: var(--eh-ground); border: 3px solid var(--eh-rule-strong);
+}
+.comms-stop.is-unread .comms-stop__dot { background: var(--eh-accent); border-color: var(--eh-accent); }
+.comms-stop.is-critical .comms-stop__dot { width: 20px; height: 20px; margin: 4px 2px 0; background: var(--eh-signal); border-color: var(--eh-ink); }
+.comms-stop__body {
+    min-width: 0; display: grid; gap: var(--eh-space-1);
+    padding: var(--eh-space-3) var(--eh-space-4); border-radius: var(--eh-radius);
+    background: var(--eh-surface);
+}
+.comms-stop.is-read .comms-stop__body { background: transparent; padding-block: var(--eh-space-1); }
+.comms-stop__meta { margin: 0; display: flex; flex-wrap: wrap; gap: var(--eh-space-3); font-size: var(--eh-text-xs); color: var(--eh-ink-2); }
+.comms-stop__meta time { font-weight: 700; color: var(--eh-ink); font-variant-numeric: tabular-nums; }
+.comms-stop__title { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-2); font-size: var(--eh-text-md); font-weight: 700; line-height: 1.3; }
+.comms-stop.is-read .comms-stop__title { font-weight: 600; }
+.comms-stop__text { margin: 0; color: var(--eh-ink); line-height: 1.5; max-width: 62ch; }
+.comms-stop.is-read .comms-stop__text { color: var(--eh-ink-2); }
+.comms-stop__channels { margin: 0; font-size: var(--eh-text-xs); color: var(--eh-ink-3); }
+.comms-stop__actions { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); margin-top: var(--eh-space-2); }
+.comms-stop__actions form { margin: 0; }
+
+/* Settings: label column beside a panel; stacks on phones */
+.comms-settings { display: grid; gap: var(--eh-space-10); max-width: 64rem; }
+.comms-block { display: grid; gap: var(--eh-space-4); margin: 0; }
+.comms-block__label { display: grid; gap: var(--eh-space-2); align-content: start; }
+.comms-block__label .eh-small { margin: 0; max-width: 40ch; }
+@media (min-width: 900px) {
+    .comms-block { grid-template-columns: 17rem minmax(0, 1fr); gap: var(--eh-space-8); }
+    .comms-block__label { padding-top: var(--eh-space-2); }
+}
+.comms-panel { background: var(--eh-surface); border-radius: var(--eh-radius); padding: var(--eh-space-5); display: grid; gap: var(--eh-space-4); align-content: start; }
+.comms-panel--flush { padding: 0; gap: 0; }
+
+/* Channels on this service */
+.comms-channels { list-style: none; margin: 0; padding: 0; background: var(--eh-surface); border-radius: var(--eh-radius); }
+.comms-channel { display: grid; grid-template-columns: 24px 1fr; gap: var(--eh-space-3); padding: var(--eh-space-4) var(--eh-space-5); }
+.comms-channel + .comms-channel { border-top: 1px solid var(--eh-rule); } /* taste-skill-ignore: list row divider, same as the kit's .eh-list (app-screen rule 7.3) */
+.comms-channel__icon { color: var(--eh-ink-2); margin-top: 2px; }
+.comms-channel__main { display: grid; gap: var(--eh-space-1); min-width: 0; }
+.comms-channel__name { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-2); font-weight: 700; }
+.comms-channel__text { margin: 0; font-size: var(--eh-text-sm); color: var(--eh-ink-2); max-width: 60ch; }
+
+/* This device */
+.comms-device__state { margin: 0; font-weight: 600; }
+.comms-device__state[data-tone="caution"] { color: var(--eh-caution); }
+.comms-device__state[data-tone="go"] { color: var(--eh-go); }
+.comms-device__actions { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); }
+.comms-device__actions [hidden] { display: none; }
+.comms-device__actions:not(:has(> :not([hidden]))) { display: none; }
+.comms-devices__title { margin: 0 0 var(--eh-space-2); font-size: var(--eh-text-sm); font-weight: 700; }
+.comms-devices ul { margin: 0; padding-left: var(--eh-space-5); display: grid; gap: var(--eh-space-1); }
+
+/* What we send */
+.comms-cats { list-style: none; margin: 0; padding: 0; }
+.comms-cat { display: grid; gap: var(--eh-space-3); padding: var(--eh-space-5); }
+.comms-cat + .comms-cat { border-top: 1px solid var(--eh-rule); } /* taste-skill-ignore: list row divider, same as the kit's .eh-list */
+@media (min-width: 640px) {
+    .comms-cat { grid-template-columns: minmax(0, 1fr) auto; gap: var(--eh-space-6); align-items: start; }
+}
+.comms-cat.is-critical { background: var(--eh-surface-2); }
+.comms-cat:first-child { border-top-left-radius: var(--eh-radius); border-top-right-radius: var(--eh-radius); }
+.comms-cat__text { display: grid; gap: var(--eh-space-1); min-width: 0; }
+.comms-cat__title { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-2); font-size: var(--eh-text-md); font-weight: 700; }
+.comms-cat__desc, .comms-cat__why { margin: 0; font-size: var(--eh-text-sm); color: var(--eh-ink-2); max-width: 56ch; }
+.comms-cat__why { color: var(--eh-ink); }
+.comms-cat__last { margin: var(--eh-space-1) 0 0; font-size: var(--eh-text-xs); color: var(--eh-ink-3); }
+.comms-cat__switches { display: flex; flex-wrap: wrap; gap: var(--eh-space-2) var(--eh-space-6); }
+@media (min-width: 640px) { .comms-cat__switches { flex-direction: column; min-width: 11rem; } }
+.comms-cat__inapp { margin: 0; font-size: var(--eh-text-sm); font-weight: 600; color: var(--eh-ink-2); min-height: var(--eh-target); display: flex; align-items: center; }
+.comms-save { display: flex; justify-content: flex-end; padding: var(--eh-space-4) var(--eh-space-5); border-top: 1px solid var(--eh-rule); } /* taste-skill-ignore: closes the form panel above its one Save button */
+
+/* Safety: locked on, shown as facts rather than as switches that cannot move */
+.comms-locked { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--eh-space-2); }
+.comms-locked li { display: flex; gap: var(--eh-space-2); align-items: center; min-height: 32px; font-size: var(--eh-text-sm); color: var(--eh-ink); }
+.comms-locked li .eh-icon, .comms-locked li svg { color: var(--eh-go); flex: none; }
+.comms-locked li.is-off { color: var(--eh-ink-2); }
+.comms-locked li.is-off svg { color: var(--eh-ink-3); }
+
+/* SMS */
+.comms-sms { display: grid; gap: var(--eh-space-3); max-width: 24rem; }
+.comms-sms[hidden] { display: none; }
+.comms-sms__message:empty { display: none; }
+
+/* The driver shell is used in a moving car: larger targets for the actions there. */
+[data-surface="driver"] .comms-stop__actions .eh-btn--sm { --eh-btn-h: var(--eh-target); }

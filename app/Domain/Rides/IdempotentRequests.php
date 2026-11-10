@@ -7,6 +7,7 @@ use App\Domain\Rides\Models\IdempotencyKey;
 use App\Models\User;
 use Closure;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Idempotency-Key handling for state-creating requests (ride requests,
@@ -42,10 +43,12 @@ class IdempotentRequests
             ->where('expires_at', '<', now())->delete();
 
         try {
-            $row = IdempotencyKey::create([
+            // In its own (nested = savepoint) transaction: on PostgreSQL a failed insert would otherwise abort
+            // any enclosing transaction (integration D-715).
+            $row = DB::transaction(fn () => IdempotencyKey::create([
                 'user_id' => $user->id, 'scope' => $scope, 'key' => $key, 'request_hash' => $hash,
                 'expires_at' => now()->addHours((int) config('ehail_dispatch.idempotency_hours')),
-            ]);
+            ]));
         } catch (UniqueConstraintViolationException) {
             $existing = IdempotencyKey::where('user_id', $user->id)->where('scope', $scope)->where('key', $key)->firstOrFail();
 

@@ -16,6 +16,8 @@ export default defineConfig({
                 'resources/js/passenger/trip.js',
                 'resources/js/passenger/pages.js',
                 'resources/js/passenger/fares.js',
+                'resources/css/comms/comms.css',
+                'resources/js/comms/comms.js',
             ],
             refresh: true,
         }),

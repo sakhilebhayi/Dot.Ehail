@@ -23,6 +23,7 @@ return [
     EhailDispatchServiceProvider::class,
     App\Providers\EhailDesignServiceProvider::class,
     App\Providers\EhailPassengerServiceProvider::class,
+    App\Providers\EhailCommsServiceProvider::class,
     // Must stay last: binds every cross-domain seam to its real implementation (docs/R46_INTEGRATION.md).
     EhailIntegrationServiceProvider::class,
 ];
