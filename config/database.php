@@ -38,10 +38,11 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
+            // Unset (the default) keeps the driver's behaviour; the browser E2E suite sets these for its multi-worker server.
+            'busy_timeout' => env('DB_BUSY_TIMEOUT') !== null ? (int) env('DB_BUSY_TIMEOUT') : null,
+            'journal_mode' => env('DB_JOURNAL_MODE'),
+            'synchronous' => env('DB_SYNCHRONOUS'),
+            'transaction_mode' => env('DB_TRANSACTION_MODE', 'DEFERRED'),
         ],
 
         'mysql' => [
