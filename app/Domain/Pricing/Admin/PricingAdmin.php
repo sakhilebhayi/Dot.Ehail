@@ -71,7 +71,7 @@ final class PricingAdmin
     public function newRuleSetVersion(PricingRuleSet $source, User $actor, array $overrides = []): PricingRuleSet
     {
         return DB::transaction(function () use ($source, $actor, $overrides) {
-            $next = (int) PricingRuleSet::query()->where('lineage_key', $source->lineage_key)->lockForUpdate()->max('version') + 1;
+            $next = (int) PricingRuleSet::query()->where('lineage_key', $source->lineage_key)->lockForUpdate()->pluck('version')->max() + 1;
             $terms = array_merge($source->only(PricingRuleSet::TERMS), array_intersect_key($overrides, array_flip(PricingRuleSet::TERMS)));
             $valid = RuleSetValidator::validate($terms);
 
@@ -125,7 +125,7 @@ final class PricingAdmin
 
         return DB::transaction(function () use ($valid, $actor, $from) {
             $lineage = $from?->lineage_key ?? (string) Str::ulid();
-            $version = $from === null ? 1 : (int) CommissionPlan::query()->where('lineage_key', $lineage)->lockForUpdate()->max('version') + 1;
+            $version = $from === null ? 1 : (int) CommissionPlan::query()->where('lineage_key', $lineage)->lockForUpdate()->pluck('version')->max() + 1;
             $plan = CommissionPlan::query()->create($valid + ['lineage_key' => $lineage, 'version' => $version, 'status' => 'draft', 'created_by' => $actor->id]);
             AuditLog::record('pricing.commission_plan_drafted', $actor, $plan, ['lineage_key' => $lineage, 'version' => $version]);
 

@@ -205,6 +205,10 @@ class PricingHttpTest extends TestCase
         $plan = $this->postJson(route('pricing.ops.commission-plans.store'), ['name' => 'Market 18%', 'percent_bp' => 1800])->assertCreated()->json('commission_plan');
         $this->postJson(route('pricing.ops.commission-plans.publish', $plan['id']))->assertOk()->assertJsonPath('commission_plan.status', 'published');
         $this->postJson(route('pricing.ops.commission-plans.store'), ['name' => 'Bad', 'percent_bp' => 9000])->assertUnprocessable();
+        $v2 = $this->postJson(route('pricing.ops.commission-plans.version', $plan['id']), ['percent_bp' => 1700])->assertCreated()->json('commission_plan');
+        $this->assertSame([2, 1700, 'Market 18%'], [$v2['version'], $v2['percent_bp'], $v2['name']]);
+        $this->postJson(route('pricing.ops.commission-plans.publish', $v2['id']))->assertOk();
+        $this->postJson(route('pricing.ops.commission-plans.retire', $plan['id']))->assertStatus(409);
 
         $this->postJson(route('pricing.ops.promotions.store'), ['code' => 'launch', 'name' => 'Launch', 'kind' => 'code', 'discount_type' => 'percent', 'percent_bp' => 2000, 'max_discount_minor' => 3000, 'currency' => 'ZAR', 'per_user_limit' => 1, 'eligibility' => ['first_ride_only' => true]])
             ->assertCreated()->assertJsonPath('promotion.code', 'LAUNCH');
