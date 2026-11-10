@@ -48,6 +48,14 @@ return new class extends Migration
             $table->index(['user_id', 'revoked_at']);
         });
 
+        // Adding a foreign key and changing a column both REBUILD the table on SQLite, and the rebuild copies the partial
+        // "one active vehicle per driver" index (2026_10_19_200100) WITHOUT its WHERE clause: on a live database where a
+        // driver has an inactive second vehicle that fails with "UNIQUE constraint failed: vehicles.driver_profile_id"
+        // (found by scripts/ops/upgrade-rehearsal.sh). Drop it first; it is re-created below once the table is final.
+        if (in_array(DB::connection()->getDriverName(), ['pgsql', 'sqlite'], true)) {
+            DB::statement('DROP INDEX IF EXISTS vehicles_one_active_per_driver');
+        }
+
         Schema::table('vehicles', function (Blueprint $table) {
             $table->foreignId('fleet_id')->nullable()->after('driver_profile_id')->constrained()->nullOnDelete();
             $table->string('owned_by', 8)->default('driver')->after('fleet_id'); // driver | fleet
