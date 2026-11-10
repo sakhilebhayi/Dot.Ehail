@@ -61,7 +61,7 @@
 .ops-figures a:hover dt { color: var(--eh-ink); text-decoration: underline; text-underline-offset: 3px; }
 
 /* Tables: rules and alignment, numbers right and tabular, no zebra, no header band */
-.ops-tablewrap { overflow-x: auto; min-width: 0; }
+.ops-tablewrap { overflow-x: auto; min-width: 0; position: relative; } /* contains absolutely placed screen-reader labels in cells (they widened the page at 390, D-1615) */
 .ops-table { width: 100%; border-collapse: collapse; font-size: var(--eh-text-sm); }
 .ops-table th { text-align: left; font-weight: 600; color: var(--eh-ink-2); font-size: var(--eh-text-xs); padding: var(--eh-space-2) var(--eh-space-3); border-bottom: 1px solid var(--eh-rule-strong); white-space: nowrap; }
 .ops-table td { padding: var(--eh-space-2) var(--eh-space-3); border-bottom: 1px solid var(--eh-rule); vertical-align: top; }
