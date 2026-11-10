@@ -23,7 +23,7 @@
     @endunless
 
     <dl class="fl-strip" style="--fl-cells: {{ $week ? 5 : 4 }}" aria-label="This fleet now">
-        <div class="fl-strip__cell"><dt>Drivers</dt><dd>{{ $drivers->where('status', 'approved')->count() }}</dd><dd class="fl-strip__note">{{ $drivers->where('status', 'suspended')->count() }} suspended, {{ $applications->count() }} applying</dd></div>
+        <div class="fl-strip__cell"><dt>Drivers</dt><dd>{{ $drivers->where('status', 'approved')->count() }}</dd><dd class="fl-strip__note">{{ $drivers->where('status', 'suspended')->count() }} suspended, {{ $applicationsCount ?? $applications->count() }} applying</dd></div>
         <div class="fl-strip__cell"><dt>Vehicles</dt><dd>{{ $yard->count() }}</dd><dd class="fl-strip__note">{{ $yard->where('vehicle.owned_by', 'fleet')->count() }} held by the fleet</dd></div>
         <div class="fl-strip__cell"><dt>Online now</dt><dd>{{ $onlineNow }}</dd><dd class="fl-strip__note">online, paused or on a trip</dd></div>
         <div class="fl-strip__cell"><dt>Trips this week</dt><dd>{{ $tripsThisWeek }}</dd><dd class="fl-strip__note">completed since Monday</dd></div>

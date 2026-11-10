@@ -54,7 +54,13 @@ class PortalController extends BusinessController
             $counters = BusinessSpendCounter::where('business_account_id', $account->id)->where('scope', BusinessSpendCounter::DEPARTMENT)->where('period', $month)->get()->keyBy('scope_id');
 
             $data += [
-                'spent' => (int) BusinessCharge::where('business_account_id', $account->id)->where('recorded_at', '>=', $start)->where('recorded_at', '<', $end)->sum('amount_minor'),
+                // Same basis as the department budget lines (D-1912): a trip's charge counts in the month of the trip
+                // (its spend month, as the budget counters do); a charge with no trip (an adjustment) by when it was
+                // recorded. Was "recorded in the month" only, so the headline said R0.00 next to a department at R48.00.
+                'spent' => (int) BusinessCharge::where('business_account_id', $account->id)
+                    ->where(fn ($q) => $q->whereHas('trip', fn ($t) => $t->where('spend_month', $month))
+                        ->orWhere(fn ($loose) => $loose->whereNull('business_trip_id')->where('recorded_at', '>=', $start)->where('recorded_at', '<', $end)))
+                    ->sum('amount_minor'),
                 'held' => (int) BusinessSpendCounter::where('scope', BusinessSpendCounter::CREDIT)->where('scope_id', $account->id)->where('period', 'open')->value('reserved_minor'),
                 'outstanding' => $limits->outstanding($account),
                 'creditAvailable' => $limits->creditAvailable($account),
