@@ -122,7 +122,18 @@ Every GET route (197, 189 swept; the rest need a parameter nothing in the run cr
 
 ## 6. Results
 
-RESULTS_PLACEHOLDER
+Final full run on the merged trunk (all polish branches in), 2026-11-10, `node tests/e2e/run.mjs`, exit 0:
+
+| Spec | Result |
+|---|---|
+| 01 passenger journey | Pass |
+| 02 driver journey | Pass |
+| 03 safety journey | Pass |
+| 04 public estimate, pricing journey | Pass, Pass |
+| 05 failure scenarios (10) | 10 Pass |
+| 06 route sweep | Pass: 198 GET routes, 191 swept, 7 need a parameter; 15 roles x 390/1440, 0 problems |
+
+After the polish merge the specs were updated to the new screens (map-first booking home with a pickup chip that fills from the phone's location and moves on to prices by itself; the documents form open by default; the live PIN count; an explicit Economy quote now that every category is priced; trip 2 driving back from trip 1's new destination, since a teleport is correctly screened as a jump). The same run found one product bug, fixed in `993786b`: the public fare calculator hid every fare breakdown (a compact-row CSS rule meant for booking rows).
 
 ## 7. Bugs found and fixed
 
