@@ -69,3 +69,10 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | `dataviz` | invoked | insights and ledger charts | Followed the procedure: form first (columns for counts and money per period, a table for how rides ended with inline bars, a sequential one-hue heat table for retention cohorts, figures not charts where a few numbers say it), one hue, `validate_palette.js` run for the light hue (#0b6a3c, pass) and the night hue (#48b17b failed the lightness band; #3f9f6c passes on the night surface and is used), mark specs (columns at most 24 px, 4 px data end, hairline grid, top tick above the maximum), hover and focus tooltip, the same values in a table under each chart. |
 | `gsap-*`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `hallmark` | not used | | Operate surface: motion is feedback only; hallmark is for new pages outside a locked system. |
 | `ui-ux-pro-max`, `emil-design-eng` | not invoked | | Recorded as dangling symlinks by ds; not claimed. |
+## security agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `security-audit` | invoked | the whole review | Guidance mode (D-1400): the boundary-and-result evidence bar for every finding, severity anchors, smallest source fix; three focused read-only hunters; mutation check that the router-wide test catches a removed policy check. Full-audit mode not run (it forbids fixing and writes outside the repo). |
+| `impeccable` | invoked | one "Download my data" row on the driver account page | `impeccable context` loaded PRODUCT.md and DESIGN.md; craft floor read; existing `<x-eh.list-row>` and the kit's `download` icon reused, same copy as the passenger row; checked at 375 px in the browser (passenger page) and by a feature test (driver page). No new styles. |
+| others | not used | | No new surface or visual change: the CSP work moved inline handlers to data attributes with identical behaviour; the hover tint on legacy ride rows moved from inline handlers to a two-line `.eh-row-link` hover rule in app.css (same colour). |
