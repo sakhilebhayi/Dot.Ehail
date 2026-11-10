@@ -157,7 +157,8 @@ test('unpriceable trips say why in plain words', () => {
 
 test('scheduled pickup times respect the lead-time rules', () => {
     const rules = { min_lead_minutes: 30, max_lead_days: 30 };
-    const now = new Date('2026-11-10T08:00:00');
+    // The values are wall times in the service area (SAST, D-1906); "now" is the same instant on any machine clock.
+    const now = new Date('2026-11-10T08:00:00+02:00');
     assert.match(laterError('2026-11-10T08:10', rules, now), /at least 30 minutes/);
     assert.equal(laterError('2026-11-10T09:00', rules, now), null);
     assert.match(laterError('2026-12-31T09:00', rules, now), /within 30 days/);
