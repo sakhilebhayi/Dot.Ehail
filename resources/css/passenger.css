@@ -232,8 +232,8 @@
 .pax-option__eta[data-state="none"], .pax-option__eta[data-state="unknown"] { font-weight: 500; color: var(--eh-ink-3); }
 /* The breakdown link shows on the chosen ride only, and opens inline under it. */
 .pax-option__more { position: relative; z-index: 1; grid-column: 2 / -1; justify-self: start; font-size: var(--eh-text-sm); color: inherit; }
-.pax-option:not(:has(input:checked)) .pax-option__more { display: none; }
-.pax-option:not(:has(input:checked)) .pax-option__detail { display: none; }
+.pax-option:has(.pax-option__pick):not(:has(.pax-option__pick:checked)) .pax-option__more { display: none; }
+.pax-option:has(.pax-option__pick):not(:has(.pax-option__pick:checked)) .pax-option__detail { display: none; }
 .pax-option__more[aria-expanded="true"] .eh-icon { transform: rotate(180deg); }
 .pax-option__detail { position: relative; z-index: 1; grid-column: 1 / -1; padding-bottom: var(--eh-space-2); }
 .pax-option__detail[hidden] { display: none; }
