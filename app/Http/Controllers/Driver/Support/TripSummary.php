@@ -70,6 +70,8 @@ final class TripSummary
             'vehicle' => $vehicle ? trim("{$vehicle->color} {$vehicle->make} {$vehicle->model}").' '.$vehicle->plate_number : null,
             'currency' => $currency,
             'payment_method' => $ride->payment_method_kind ?? ($cash ? 'cash' : null),
+            // not_due: the money domain does not collect this fare (payments switched off), so no earning follows.
+            'payment_status' => $ride->payment_status,
             'fare' => [
                 'quoted_minor' => $quoted,
                 'final_minor' => $final,

@@ -29,7 +29,9 @@
 
     <x-slot:state>
         <section class="eh-statebar" data-state="{{ $statebar[0] }}" aria-labelledby="drive-state-title" data-dr-statebar>
-            <x-eh.icon :name="$statebar[3]" class="eh-statebar__mark" />
+            @foreach (['offline', 'online', 'route'] as $mark)
+                <span data-dr-mark="{{ $mark }}" class="eh-statebar__mark" @if($mark !== $statebar[3]) hidden @endif><x-eh.icon :name="$mark" /></span>
+            @endforeach
             <div class="eh-statebar__text">
                 <h1 class="eh-statebar__title" id="drive-state-title" data-dr-state-title>{{ $statebar[1] }}</h1>
                 <p class="eh-statebar__sub" data-dr-state-sub aria-live="polite">{{ $statebar[2] }}</p>

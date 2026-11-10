@@ -133,6 +133,7 @@
 
 .dr-map { display: grid; gap: var(--eh-space-2); justify-items: start; }
 .dr-map .eh-mapframe { width: 100%; }
+.dr-map:not([data-open="true"]) .eh-mapframe { display: none; }
 .dr-map[data-open="true"] [data-dr-map-show] { display: none; }
 
 .dr-more { border-radius: var(--eh-radius); background: var(--eh-surface); }
@@ -210,6 +211,7 @@ html.dr-offer-open { overflow: hidden; }
 .dr-cash__form[hidden] { display: none; }
 .dr-cash .eh-field__label, .dr-cash .dr-note { color: var(--eh-signal-ink); }
 .dr-cash__done { margin: 0; font-weight: 700; }
+.dr-cash__amount[data-pending="true"] { font-family: var(--eh-font-ui); font-size: var(--eh-text-lg); font-weight: 600; }
 
 /* ---------- statements (earnings) ---------- */
 .dr-figure { display: grid; gap: var(--eh-space-1); }
@@ -284,3 +286,7 @@ html[data-moving="true"] .eh-statebar__sub { display: none; }
     .dr-countdown span { transition: none; }
     .dr-golive, .dr-primary, .dr-accept { transition: none; }
 }
+
+/* Statebar mark swaps with the state (offline, online, on a trip). */
+.eh-statebar [data-dr-mark] { display: inline-flex; }
+.eh-statebar [data-dr-mark][hidden] { display: none; }

@@ -53,6 +53,10 @@ function toast(message, tone = 'info') {
     if (typeof window.ehToast === 'function') window.ehToast(message, { tone });
 }
 
+function clockTime(d) {
+    return [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
+}
+
 function online() {
     return ['online', 'paused', 'on_trip'].includes(state.availability?.state);
 }
@@ -83,6 +87,8 @@ function setStatebar(kind, title, sub) {
     const bar = $('[data-dr-statebar]');
     if (!bar) return;
     bar.dataset.state = kind;
+    const mark = { online: 'online', busy: 'route' }[kind] || 'offline';
+    $$('[data-dr-mark]', bar).forEach((el) => (el.hidden = el.dataset.drMark !== mark));
     setText('[data-dr-state-title]', title);
     setText('[data-dr-state-sub]', sub);
 }
@@ -132,7 +138,7 @@ async function poll() {
         if (res.status !== 304 && res.data) applyFeed(res.data);
         state.failures = 0;
         alertOff('connection');
-        setText('[data-dr-conn-status]', `Checked ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
+        setText('[data-dr-conn-status]', `Checked at ${clockTime(new Date())}`);
     } catch (e) {
         state.failures++;
         if (e instanceof ApiError && e.status === 401) {
@@ -173,13 +179,15 @@ function render() {
     $('[data-dr-sos-open]').hidden = !state.ride;
 
     const a = state.availability || {};
-    if (state.ride) {
-        setStatebar('busy', 'On a trip', state.ride.status_label || 'Trip in progress');
+    if (state.summaryRideId) {
+        setStatebar('online', 'Trip complete', 'Check the fare and your earnings, then go back to offers.');
+    } else if (state.ride) {
+        setStatebar('busy', 'On a trip', DRIVER_LABELS[state.ride.status] || state.ride.status_label || 'Trip in progress');
     } else if (a.state === 'online') {
         setStatebar('online', 'You are online', 'Waiting for ride offers. Keep this screen open.');
     } else if (a.state === 'paused') {
         setStatebar('offline', 'Paused', 'No offers until you resume. You are still signed in.');
-    } else if (!state.summaryRideId) {
+    } else {
         setStatebar('offline', 'You are offline', 'Go online when you are ready to take rides.');
     }
 
@@ -188,7 +196,9 @@ function render() {
 
     if (online()) {
         ensureLocation();
-        if (a.heartbeat_stale && state.lastFix) alertOn('stale', 'caution', `Dispatch has not heard from your phone for over ${policy.heartbeat_stale_s ?? 45} seconds. You get no offers until it does.`);
+        // Stale: our own heartbeats have not been getting through (the feed's flag can lag behind a fresh heartbeat).
+        const staleMs = (policy.heartbeat_stale_s ?? 45) * 1000;
+        if (lastHeartbeatOk && Date.now() - lastHeartbeatOk > staleMs) alertOn('stale', 'caution', `Dispatch has not heard from your phone for over ${policy.heartbeat_stale_s ?? 45} seconds. You get no offers until it does.`);
         else alertOff('stale');
     } else {
         stopLocation();
@@ -311,10 +321,15 @@ function onFix(pos) {
 function onFixError(err) {
     alertOn('location', err?.code === 1 ? 'stop' : 'caution', locationErrorText(err));
     setText('[data-dr-loc-status]', err?.code === 1 ? 'Blocked' : 'Searching');
+    // Blocked: stop this watch and try again a little later, so allowing location in the browser settings
+    // takes effect without reloading the app.
+    if (err?.code === 1) stopLocation();
 }
 
+let lastWatchAttempt = 0;
 function ensureLocation() {
-    if (state.watchId !== null || !navigator.geolocation) return;
+    if (state.watchId !== null || !navigator.geolocation || Date.now() - lastWatchAttempt < 10000) return;
+    lastWatchAttempt = Date.now();
     state.watchId = navigator.geolocation.watchPosition(onFix, onFixError, { enableHighAccuracy: true, maximumAge: 3000, timeout: 30000 });
 }
 
@@ -352,6 +367,7 @@ async function postLocations() {
 }
 
 let lastHeartbeat = 0;
+let lastHeartbeatOk = 0;
 async function sendHeartbeat() {
     if (!online()) return;
     lastHeartbeat = Date.now();
@@ -362,6 +378,8 @@ async function sendHeartbeat() {
             method: 'POST',
             body: f ? { lat: f.lat, lng: f.lng, heading: f.heading ?? undefined, speed_ms: f.speed ?? undefined, accuracy_m: f.accuracy ?? undefined } : {},
         });
+        lastHeartbeatOk = Date.now();
+        alertOff('stale');
     } catch {
         /* the feed's staleness flag tells the driver */
     }
@@ -427,7 +445,7 @@ function renderOffer() {
     // Earnings first: the number before the ask.
     const net = offer.earnings_estimate_minor;
     setText('[data-dr-offer-net]', net !== null && net !== undefined ? formatMoney(net, offer.currency) : formatMoney(offer.fare_total_minor, offer.currency) ?? 'Fare not shown');
-    setText('[data-dr-offer-net-label]', net !== null && net !== undefined ? 'You earn (estimate)' : 'Passenger fare (your net cannot be shown: no commission plan is configured)');
+    setText('[data-dr-offer-net-label]', net !== null && net !== undefined ? 'You earn (estimate)' : 'Passenger fare. Your net is being worked out.');
     $('[data-dr-offer-ledger]').replaceChildren();
     loadOfferEarnings(offer);
 
@@ -438,7 +456,8 @@ function renderOffer() {
     setText('[data-dr-offer-trip]', tripBits || 'distance not known');
     setText('[data-dr-offer-dropoff]', policy.destination_detail === 'address' ? offer.dropoff?.address : `Towards ${destinationArea(offer.dropoff?.address) || 'the destination'} (full address after you accept)`);
 
-    const tags = [offer.category ? String(offer.category).replace(/_/g, ' ') : null, paymentLabel(offer.payment_method), offer.passenger?.first_name ? `${offer.passenger.first_name}, rating ${offer.passenger.rating_band}` : null].filter(Boolean);
+    const category = offer.category ? String(offer.category).replace(/_/g, ' ') : null;
+    const tags = [category ? category.charAt(0).toUpperCase() + category.slice(1) : null, paymentLabel(offer.payment_method), offer.passenger?.first_name ? `${offer.passenger.first_name}, rating ${offer.passenger.rating_band}` : null].filter(Boolean);
     setText('[data-dr-offer-tags]', tags.join(' · '));
 
     state.stopCountdown?.();
@@ -490,7 +509,7 @@ async function loadOfferEarnings(offer) {
             setText('[data-dr-offer-net]', formatMoney(data.net_minor, data.currency));
             setText('[data-dr-offer-net-label]', 'You earn (estimate)');
         } else if (data.note) {
-            setText('[data-dr-offer-net-label]', data.note);
+            setText('[data-dr-offer-net-label]', `Passenger fare. ${data.note}`);
         }
     } catch {
         ledger.replaceChildren(ledgerRow('Breakdown', 'Could not load. The figure above is the estimate dispatch sent.'));
@@ -547,6 +566,14 @@ async function declineOffer(reason) {
 }
 
 // ---------- the trip ----------
+
+// The ride's state in the driver's words (the feed's labels are written for passengers).
+const DRIVER_LABELS = {
+    driver_assigned: 'Heading to the pickup',
+    driver_arriving: 'Heading to the pickup',
+    driver_arrived: 'Waiting at the pickup',
+    in_progress: 'Passenger on board',
+};
 
 function tripTarget(ride) {
     return ride.status === 'in_progress' ? ride.dropoff : ride.pickup;
@@ -644,6 +671,8 @@ function openFar(text) {
 async function markArrived(confirmFar = false) {
     const ride = state.ride;
     if (!ride) return;
+    // The server checks the distance against the last position it holds: send the newest fix first.
+    await sendHeartbeat();
     try {
         const res = await api(fill(urls.arrived, ride.id), { method: 'POST', body: { confirm_far: confirmFar, accuracy_m: state.lastFix?.accuracy ?? undefined } });
         applyFeed(res.data);
@@ -668,7 +697,7 @@ function renderWaiting() {
             noShow.disabled = !ready;
             setText('[data-dr-noshow-note]', ready
                 ? `You have waited ${policy.no_show_wait_min ?? 5} minutes. If the passenger has not come, you may record a no-show.`
-                : `You may record a no-show from ${new Date(noShowAt - state.offset).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, after ${policy.no_show_wait_min ?? 5} minutes of waiting.`);
+                : `You may record a no-show from ${clockTime(new Date(noShowAt - state.offset)).slice(0, 5)}, after ${policy.no_show_wait_min ?? 5} minutes of waiting.`);
         }
         if (!state.ride || state.ride.status !== 'driver_arrived') clearInterval(waitTimer);
     };
@@ -791,8 +820,8 @@ async function loadSummary(attempt) {
     try {
         const { data } = await api(fill(urls.summary, id));
         renderSummary(data);
-        const waitingForCash = data.payment_method === 'cash' && !data.cash;
-        const waitingForFare = !data.fare.finalised || !data.earnings;
+        const waitingForCash = data.payment_method === 'cash' && !data.cash && data.payment_status !== 'not_due';
+        const waitingForFare = (!data.fare.finalised || !data.earnings) && data.payment_status !== 'not_due';
         if ((waitingForCash || waitingForFare) && attempt < 10) summaryTimer = setTimeout(() => loadSummary(attempt + 1), 3000);
     } catch {
         setText('[data-dr-summary-note]', 'Could not load the trip summary. It is in your trips list.');
@@ -811,17 +840,21 @@ function renderSummary(s) {
         rows.push(ledgerRow('You earn', s.earnings.net_minor !== null ? formatMoney(s.earnings.net_minor, s.currency) : 'not configured', true));
     }
     $('[data-dr-summary-ledger]').replaceChildren(...rows);
-    setText('[data-dr-summary-note]', !s.earnings
-        ? 'Your earnings appear once the fare is settled.'
+    setText('[data-dr-summary-note]', s.payment_status === 'not_due'
+        ? 'Payments are not collected through Dot.Ehail on this platform yet, so no earnings are recorded for this trip.'
+        : !s.earnings
+        ? 'Your earnings appear once the fare is settled. This can take a minute.'
         : s.earnings.status === 'pending'
             ? 'Earnings are pending until the payment settles, then count towards your next payout.'
             : '');
 
     const cashBox = $('[data-dr-cash]');
-    if (s.payment_method === 'cash') {
+    if (s.payment_method === 'cash' && s.payment_status !== 'not_due') {
         cashBox.hidden = false;
+        const amountEl = $('[data-dr-cash-amount]');
+        amountEl.dataset.pending = String(!s.cash);
         if (!s.cash) {
-            setText('[data-dr-cash-amount]', 'Preparing the amount to collect');
+            setText(amountEl, 'Working out the amount to collect from the final fare.');
             $('[data-dr-cash-form]').hidden = true;
         } else if (s.cash.confirmed) {
             $('[data-dr-cash-form]').hidden = true;
