@@ -3,15 +3,18 @@
 namespace Tests\Feature\Fleet;
 
 use App\Domain\Dispatch\AvailabilityService;
+use App\Domain\Dispatch\Exceptions\DispatchRefused;
 use App\Domain\Dispatch\Models\DriverAvailability;
 use App\Domain\Fleet\FleetAlerts;
 use App\Domain\Fleet\FleetVehicles;
-use App\Domain\Fleet\VehicleAssignments;
+use App\Domain\Fleet\Models\FleetVehicleAssignment;
+use App\Domain\Fleet\Models\VehicleMaintenanceRecord;
 use App\Domain\Rides\Events\TripCompleted;
 use App\Domain\Verification\DriverEligibility;
 use App\Domain\Verification\DriverNotEligibleToGoOnline;
 use App\Models\DriverProfile;
 use App\Models\User;
+use App\Support\Ui\MoneyFormatter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\Concerns\CreatesEhailFixtures;
@@ -83,8 +86,22 @@ class MaintenanceEligibilityTest extends TestCase
         $vehicle = $this->giveVehicle($fleet, $this->fleetVehicle($fleet), $profile);
         app(FleetVehicles::class)->takeOutOfService($fleet, $vehicle, 'Service', User::find($fleet->owner_user_id));
 
-        $this->expectException(\Throwable::class);
-        app(AvailabilityService::class)->goOnline($driver, $vehicle->fresh());
+        $this->assertTrue(app(\App\Domain\Dispatch\Contracts\DriverEligibility::class)->canGoOnline($driver, $vehicle)->allowed === false);
+
+        try {
+            app(AvailabilityService::class)->goOnline($driver, $vehicle->fresh());
+            $this->fail('dispatch let the driver online in an out-of-service vehicle');
+        } catch (DispatchRefused $refused) {
+            $this->assertSame('vehicle_out_of_service', $refused->reason);
+            $this->assertSame(403, $refused->status);
+        }
+
+        // Through the driver API as well.
+        $this->actingAs($driver)->postJson('/api/ehail/driver/online', ['vehicle_id' => $vehicle->id])->assertStatus(403);
+        $this->assertNotSame(DriverAvailability::ONLINE, DriverAvailability::where('user_id', $driver->id)->value('state'));
+
+        app(FleetVehicles::class)->returnToService($fleet, $vehicle->fresh(), User::find($fleet->owner_user_id));
+        $this->assertSame(DriverAvailability::ONLINE, app(AvailabilityService::class)->goOnline($driver, $vehicle->fresh())->state);
     }
 
     public function test_a_fleet_vehicle_without_an_open_assignment_to_the_driver_cannot_be_driven(): void
@@ -93,7 +110,7 @@ class MaintenanceEligibilityTest extends TestCase
         [$driver, $profile] = $this->fleetDriver($fleet);
         $vehicle = $this->giveVehicle($fleet, $this->fleetVehicle($fleet), $profile);
         // Defence in depth: someone moved the holder without an assignment.
-        \App\Domain\Fleet\Models\FleetVehicleAssignment::query()->update(['active_vehicle_id' => null, 'ended_at' => now()]);
+        FleetVehicleAssignment::query()->update(['active_vehicle_id' => null, 'ended_at' => now()]);
 
         $this->assertContains('fleet_vehicle_unassigned', app(DriverEligibility::class)->canGoOnline($driver, $vehicle->fresh())->codes());
     }
@@ -136,10 +153,10 @@ class MaintenanceEligibilityTest extends TestCase
             'description' => 'Oil and filters', 'cost' => '2450.50', 'next_service_due_km' => 57000,
         ])->assertSessionHasNoErrors();
 
-        $record = \App\Domain\Fleet\Models\VehicleMaintenanceRecord::sole();
+        $record = VehicleMaintenanceRecord::sole();
         $this->assertSame(245050, $record->cost_minor);
         $this->assertSame(42000, $vehicle->fresh()->odometer_km);
 
-        $this->actingAs(User::find($fleet->owner_user_id))->get(route('fleet.maintenance'))->assertOk()->assertSee('57 000 km')->assertSee(\App\Support\Ui\MoneyFormatter::format(245050, 'ZAR'), false);
+        $this->actingAs(User::find($fleet->owner_user_id))->get(route('fleet.maintenance'))->assertOk()->assertSee('57 000 km')->assertSee(MoneyFormatter::format(245050, 'ZAR'), false);
     }
 }

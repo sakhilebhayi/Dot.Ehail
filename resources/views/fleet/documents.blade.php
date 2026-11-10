@@ -1,6 +1,6 @@
 @php($docState = fn (string $s) => \App\Domain\Fleet\FleetAlerts::stateLabel($s))
 <x-fleet.page :fleet="$fleet" :fleets="$fleets" title="Documents"
-    :line="$counts['blocking'].' '.\Illuminate\Support\Str::plural('document', $counts['blocking']).' stop someone working, '.$counts['expiring'].' expire within '.config('ehail_fleet.alerts.document_expiry_days').' days, '.$counts['in_order'].' in order.'">
+    :line="$counts['blocking'].' '.\Illuminate\Support\Str::plural('document', $counts['blocking']).' stop someone working, '.$counts['expiring'].' '.($counts['expiring'] === 1 ? 'expires' : 'expire').' within '.config('ehail_fleet.alerts.document_expiry_days').' days, '.$counts['in_order'].' in order.'">
     <x-eh.tabs label="Which documents" :active="$filter" :items="[
         'attention' => ['label' => 'Needs attention', 'href' => route('fleet.documents')],
         'expiring' => ['label' => 'Expiring soon', 'href' => route('fleet.documents', ['show' => 'expiring'])],
@@ -29,7 +29,7 @@
                                 </td>
                                 <td>{{ $row['label'] }}</td>
                                 <td class="fl-span"><x-eh.badge :tone="! $row['satisfied'] ? 'stop' : ($row['expiring'] ? 'caution' : 'go')">{{ ucfirst($docState($row['state'])) }}</x-eh.badge>@if ($row['renewal_pending'])<span class="fl-sub">Renewal waiting for review</span>@endif</td>
-                                <td class="num" @if($row['expires_on']) data-label="Expires" @endif>{!! $row['expires_on'] ? e(\Illuminate\Support\Carbon::parse($row['expires_on'])->format('j M Y')) : '<span class="fl-dash">No expiry</span>' !!}</td>
+                                <td class="num" @if($row['expires_on']) data-label="Expires" @endif>{!! $row['expires_on'] ? e(\Illuminate\Support\Carbon::parse($row['expires_on'])->format('j M Y')) : ($row['satisfied'] ? '<span class="fl-dash">No expiry</span>' : '<span class="fl-dash">&#8212;</span>') !!}</td>
                                 <td class="num" data-label="Days left">{!! $row['days_left'] !== null ? ($row['days_left'] < 0 ? '<span class="fl-sev--stop">'.abs($row['days_left']).' ago</span>' : e($row['days_left'])) : '<span class="fl-dash">&#8212;</span>' !!}</td>
                             </tr>
                         @endforeach
