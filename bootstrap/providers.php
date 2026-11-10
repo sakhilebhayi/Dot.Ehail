@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Geo\EhailGeoServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\BroadcastServiceProvider;
 use App\Providers\FortifyServiceProvider;
@@ -10,4 +11,5 @@ return [
     BroadcastServiceProvider::class,
     FortifyServiceProvider::class,
     JetstreamServiceProvider::class,
+    EhailGeoServiceProvider::class,
 ];
