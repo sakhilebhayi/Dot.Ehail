@@ -8,6 +8,7 @@ use App\Providers\JetstreamServiceProvider;
 return [
     AppServiceProvider::class,
     BroadcastServiceProvider::class,
+    App\Providers\EhailPricingServiceProvider::class,
     FortifyServiceProvider::class,
     JetstreamServiceProvider::class,
 ];
