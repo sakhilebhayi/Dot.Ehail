@@ -168,6 +168,13 @@ function applyFeed(body) {
         openSummary(previousRide.id);
     }
 
+    // A new trip (an offer accepted from the summary screen) takes the screen from the last trip's summary:
+    // otherwise the summary stays up and the driver never sees the pickup (QA, D-1614).
+    if (state.ride && state.summaryRideId && String(state.ride.id) !== String(state.summaryRideId)) {
+        closeSummary();
+        return;
+    }
+
     render();
 }
 
