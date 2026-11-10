@@ -167,4 +167,10 @@ class MoneyIntegrityTest extends TestCase
 
         $this->actingAs($this->makeOperator())->postJson(route('money.ops.batch.transfers', $batch))->assertOk()->assertJson(['sent' => 0, 'skipped' => 1]);
     }
+
+    public function test_an_oversized_webhook_body_is_refused_before_it_is_hashed(): void
+    {
+        $this->call('POST', route('paystack.webhook'), [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_PAYSTACK_SIGNATURE' => 'x'], str_repeat('a', 300 * 1024))
+            ->assertStatus(413);
+    }
 }
