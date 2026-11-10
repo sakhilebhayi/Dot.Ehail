@@ -76,11 +76,8 @@
                 <div class="dr-checks" aria-labelledby="dr-checks-h">
                     <h3 class="dr-checks__title" id="dr-checks-h">You can go online when:</h3>
                     <ul class="dr-checks__list">
-                        @foreach ($eligibility['reasons'] as $reason)
-                            <li>
-                                <x-eh.icon name="alert" />
-                                <span>{{ $reason['message'] }}</span>
-                            </li>
+                        @foreach (\App\Http\Controllers\Driver\Support\DriverState::reasonLines($eligibility['reasons']) as $line)
+                            <li @if($line['waiting']) data-waiting @endif><x-eh.icon :name="$line['waiting'] ? 'clock' : 'alert'" /><span>{{ $line['text'] }}</span></li>
                         @endforeach
                     </ul>
                     <div class="dr-checks__actions">
@@ -243,6 +240,7 @@
                 <p class="dr-offer__net-label" data-dr-offer-net-label>You earn</p>
             </div>
             <dl class="dr-ledger dr-ledger--offer" data-dr-offer-ledger></dl>
+            <p class="dr-offer__plan" data-dr-offer-plan hidden>The commission plan is an example the operator has not replaced yet.</p>
             <ol class="dr-legs">
                 <li class="dr-legs__pickup">
                     <span class="dr-legs__dot" aria-hidden="true"></span>

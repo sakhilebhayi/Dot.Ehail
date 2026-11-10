@@ -177,6 +177,7 @@ function render() {
     if (root) root.dataset.view = view;
     $$('[data-dr-view]').forEach((el) => (el.hidden = el.dataset.drView !== view));
     $('[data-dr-sos-open]').hidden = !state.ride;
+    document.documentElement.classList.toggle('dr-on-trip', Boolean(state.ride));
 
     const a = state.availability || {};
     if (state.summaryRideId) {
@@ -249,6 +250,8 @@ async function goOnline(button) {
         applyFeed(res.data);
         sendHeartbeat();
         keepAwake();
+        // Online polls every 2 s: restart the loop now instead of waiting out the offline interval.
+        poll();
     } catch (e) {
         const message = e instanceof ApiError ? e.message : 'Could not reach Dot.Ehail. Check your connection and try again.';
         alertOn('online', 'stop', message);
@@ -386,6 +389,14 @@ async function sendHeartbeat() {
 }
 
 setInterval(() => {
+    // Some browsers report a position only when it changes: no fix for a while while "moving" means stopped.
+    const exitMs = ((policy.moving?.exit_after_s ?? 10) + 5) * 1000;
+    if (document.documentElement.dataset.moving === 'true' && state.lastFix && Date.now() - state.lastFix.recorded_at > exitMs) {
+        motion.moving = false;
+        motion.fastCount = 0;
+        document.documentElement.dataset.moving = 'false';
+        shareMoving(false);
+    }
     postLocations();
     if (online() && Date.now() - lastHeartbeat >= (policy.heartbeat_every_s ?? 10) * 1000) sendHeartbeat();
 }, 1000);
@@ -501,10 +512,11 @@ async function loadOfferEarnings(offer) {
         if (data.available) {
             if (data.tolls_minor) rows.push(['Tolls, paid back to you', formatMoney(data.tolls_minor, data.currency)]);
             (data.deductions || []).forEach((d) => rows.push([d.label + (d.detail ? ` (${d.detail})` : ''), formatMoney(-d.amount_minor, data.currency)]));
-            rows.push(['You earn', data.net_minor !== null ? formatMoney(data.net_minor, data.currency) : 'not configured']);
-            if (data.plan?.is_example) rows.push(['Commission plan', 'Example plan, set by the operator for testing']);
+            rows.push(['You earn', data.net_minor !== null ? formatMoney(data.net_minor, data.currency) : 'not configured', true]);
         }
-        ledger.replaceChildren(...rows.map(([k, v]) => ledgerRow(k, v)));
+        ledger.replaceChildren(...rows.map(([k, v, total]) => ledgerRow(k, v, total)));
+        const plan = $('[data-dr-offer-plan]');
+        if (plan) plan.hidden = !data.plan?.is_example;
         if (data.net_minor !== null && data.net_minor !== undefined) {
             setText('[data-dr-offer-net]', formatMoney(data.net_minor, data.currency));
             setText('[data-dr-offer-net-label]', 'You earn (estimate)');
@@ -748,6 +760,7 @@ async function stageAction(url, body, okMessage) {
     try {
         const res = await api(url, { method: 'POST', body });
         applyFeed(res.data);
+        poll();
         if (okMessage) toast(okMessage, 'success');
 
         return res.data;
@@ -819,16 +832,19 @@ async function loadSummary(attempt) {
     if (!id) return;
     try {
         const { data } = await api(fill(urls.summary, id));
-        renderSummary(data);
-        const waitingForCash = data.payment_method === 'cash' && !data.cash && data.payment_status !== 'not_due';
-        const waitingForFare = (!data.fare.finalised || !data.earnings) && data.payment_status !== 'not_due';
-        if ((waitingForCash || waitingForFare) && attempt < 10) summaryTimer = setTimeout(() => loadSummary(attempt + 1), 3000);
+        // Settlement runs just after completion (queued): until it has, "not due" only means "not settled yet".
+        const waitingForCash = data.payment_method === 'cash' && !data.cash;
+        const waitingForFare = !data.fare.finalised || !data.earnings || data.earnings.source !== 'statement';
+        const more = (waitingForCash || waitingForFare) && attempt < 12;
+        renderSummary(data, !more);
+        if (more) summaryTimer = setTimeout(() => loadSummary(attempt + 1), 3000);
     } catch {
         setText('[data-dr-summary-note]', 'Could not load the trip summary. It is in your trips list.');
     }
 }
 
-function renderSummary(s) {
+function renderSummary(s, settled = true) {
+    const notCollected = settled && s.payment_status === 'not_due';
     $('[data-dr-summary-link]').href = fill(urls.trip, s.ride_id);
     const rows = [];
     if (s.fare.quoted_minor !== null) rows.push(ledgerRow('Fare agreed at request', formatMoney(s.fare.quoted_minor, s.currency)));
@@ -840,16 +856,16 @@ function renderSummary(s) {
         rows.push(ledgerRow('You earn', s.earnings.net_minor !== null ? formatMoney(s.earnings.net_minor, s.currency) : 'not configured', true));
     }
     $('[data-dr-summary-ledger]').replaceChildren(...rows);
-    setText('[data-dr-summary-note]', s.payment_status === 'not_due'
+    setText('[data-dr-summary-note]', notCollected
         ? 'Payments are not collected through Dot.Ehail on this platform yet, so no earnings are recorded for this trip.'
-        : !s.earnings
-        ? 'Your earnings appear once the fare is settled. This can take a minute.'
+        : !s.earnings || s.earnings.source !== 'statement'
+        ? (settled ? 'Your statement shows these earnings once the payment is recorded.' : 'Recording the fare in your statement. This takes a moment.')
         : s.earnings.status === 'pending'
             ? 'Earnings are pending until the payment settles, then count towards your next payout.'
             : '');
 
     const cashBox = $('[data-dr-cash]');
-    if (s.payment_method === 'cash' && s.payment_status !== 'not_due') {
+    if (s.payment_method === 'cash' && !notCollected) {
         cashBox.hidden = false;
         const amountEl = $('[data-dr-cash-amount]');
         amountEl.dataset.pending = String(!s.cash);

@@ -86,7 +86,7 @@
                         <li>
                             <a class="dr-trip-row" href="{{ route('drive.earnings.payout', $payout) }}">
                                 <span class="dr-trip-row__title">Week to {{ \App\Http\Controllers\Driver\Support\Local::at($payout->batch?->period_end)?->isoFormat('D MMMM') ?? 'date not set' }}</span>
-                                <span class="dr-trip-row__meta">{{ (int) ($payout->composition['trips'] ?? 0) }} trips, earnings <x-eh.money :minor="$payout->earnings_minor" :currency="$payout->currency" />@if($payout->cash_offset_minor), cash netted <x-eh.money :minor="-$payout->cash_offset_minor" :currency="$payout->currency" />@endif</span>
+                                <span class="dr-trip-row__meta">{{ (int) ($payout->composition['trips'] ?? 0) }} {{ \Illuminate\Support\Str::plural('trip', (int) ($payout->composition['trips'] ?? 0)) }}, earnings <x-eh.money :minor="$payout->earnings_minor" :currency="$payout->currency" />@if($payout->cash_offset_minor), cash netted <x-eh.money :minor="-$payout->cash_offset_minor" :currency="$payout->currency" />@endif</span>
                                 <span class="dr-trip-row__amount"><x-eh.money :minor="$payout->amount_minor" :currency="$payout->currency" /><x-eh.badge :tone="$statusTone[$payout->status] ?? 'neutral'">{{ $statusWord[$payout->status] ?? $payout->status }}</x-eh.badge></span>
                             </a>
                         </li>

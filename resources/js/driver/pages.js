@@ -95,7 +95,7 @@ function upload(form, file) {
     retry.hidden = true;
     form.setAttribute('aria-busy', 'true');
     setMsg(form, 'Sending…');
-    bar.style.width = '0%';
+    bar.style.transform = 'scaleX(0)';
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', form.action);
@@ -104,7 +104,7 @@ function upload(form, file) {
     xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
             const pct = Math.round((e.loaded / e.total) * 100);
-            bar.style.width = `${pct}%`;
+            bar.style.transform = `scaleX(${pct / 100})`;
             setMsg(form, `Sending… ${pct}%`);
         }
     });
@@ -117,7 +117,7 @@ function upload(form, file) {
             body = {};
         }
         if (xhr.status >= 200 && xhr.status < 300) {
-            bar.style.width = '100%';
+            bar.style.transform = 'scaleX(1)';
             setMsg(form, body.message || 'Sent.', 'go');
             setTimeout(() => window.location.reload(), 1200);
         } else if (xhr.status === 422) {

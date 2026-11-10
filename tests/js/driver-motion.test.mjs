@@ -18,7 +18,7 @@ test('stays moving at a red light until slow for the whole exit time', () => {
     m.update(at(1, 8));
     assert.equal(m.update(at(2, 0)), true);
     assert.equal(m.update(at(8, 0)), true, '6 s stopped');
-    assert.equal(m.update(at(9, 3)), true, 'creeping forward under 5 km/h still counts as slow');
+    assert.equal(m.update(at(9, 1)), true, 'creeping forward at 3.6 km/h still counts as slow');
     assert.equal(m.update(at(12, 0)), false, '10 s slow');
 });
 

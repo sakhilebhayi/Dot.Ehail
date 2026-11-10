@@ -88,6 +88,44 @@ final class DriverState
     }
 
     /**
+     * The gate's reasons in the driver's words, grouped: several documents in the same state become one line (the
+     * documents page lists each). Waiting for a person is not the driver's fault, so it reads as waiting, not an error.
+     *
+     * @param  list<array{code: string, subject: string, type: ?string, message: string}>  $reasons
+     * @return list<array{text: string, waiting: bool}>
+     */
+    public static function reasonLines(array $reasons): array
+    {
+        $groups = [
+            'document_missing' => '%d documents not uploaded yet',
+            'document_pending_review' => '%d documents waiting for review by a person',
+            'document_rejected' => '%d documents rejected: see the reason and send them again',
+            'document_resubmission_requested' => '%d documents to send again',
+            'document_expired' => '%d documents expired',
+            'document_too_old' => '%d vehicle photos too old: take them again',
+        ];
+        $lines = [];
+        $byCode = collect($reasons)->groupBy('code');
+
+        foreach ($byCode as $code => $items) {
+            if (isset($groups[$code]) && $items->count() > 2) {
+                $lines[] = ['text' => sprintf($groups[$code], $items->count()).'.', 'waiting' => $code === 'document_pending_review'];
+
+                continue;
+            }
+
+            foreach ($items as $item) {
+                $lines[] = ['text' => $item['message'], 'waiting' => $code === 'document_pending_review'];
+            }
+        }
+
+        // What the driver can act on first; waiting last.
+        usort($lines, fn ($a, $b) => $a['waiting'] <=> $b['waiting']);
+
+        return $lines;
+    }
+
+    /**
      * The document checklist: every required document for the driver and for each vehicle, with the state the
      * verification domain reports and, for a rejected or returned document, the reviewer's reason.
      *

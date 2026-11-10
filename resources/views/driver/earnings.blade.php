@@ -68,7 +68,9 @@
                 @if ($onlineSeconds !== null)
                     <div><dt>Time online</dt><dd>{{ $hours }} h {{ $mins }} min</dd></div>
                 @endif
-                <div><dt>Pending, available, paid</dt><dd><x-eh.money :minor="$t['pending_minor']" :currency="$cur" />, <x-eh.money :minor="$t['available_minor']" :currency="$cur" />, <x-eh.money :minor="$t['paid_minor']" :currency="$cur" /></dd></div>
+                <div><dt>Pending (payment not settled)</dt><dd><x-eh.money :minor="$t['pending_minor']" :currency="$cur" /></dd></div>
+                <div><dt>Available for payout</dt><dd><x-eh.money :minor="$t['available_minor']" :currency="$cur" /></dd></div>
+                <div><dt>Already paid out</dt><dd><x-eh.money :minor="$t['paid_minor']" :currency="$cur" /></dd></div>
             </dl>
             <p class="dr-note">Pending earnings become available once the trip's payment settles. Commission is charged on the trip fare only; tolls are paid back to you at cost.@if($onlineSeconds === null) Time online is not shown because it is not measured yet.@endif</p>
             <div class="dr-actions__row">
@@ -90,7 +92,7 @@
                         <li>
                             <a class="dr-trip-row" href="{{ $ride ? route('drive.trips.show', $ride) : '#' }}" @unless($ride) aria-disabled="true" @endunless>
                                 <span class="dr-trip-row__title">{{ $ride ? \Illuminate\Support\Str::limit($ride->dropoff_address, 48) : $kinds[$row['kind']] ?? $row['kind'] }}</span>
-                                <span class="dr-trip-row__meta">{{ $kinds[$row['kind']] ?? $row['kind'] }}, {{ \App\Http\Controllers\Driver\Support\Local::at($row['earned_at'])->isoFormat('D MMM HH:mm') }}. Fare <x-eh.money :minor="$row['fare_minor']" :currency="$row['currency']" />@if($row['commission_minor']), commission <x-eh.money :minor="$row['commission_minor']" :currency="$row['currency']" />@endif @if($row['cash_collected_minor']), cash <x-eh.money :minor="$row['cash_collected_minor']" :currency="$row['currency']" />@endif</span>
+                                <span class="dr-trip-row__meta">{{ $kinds[$row['kind']] ?? $row['kind'] }}, {{ \App\Http\Controllers\Driver\Support\Local::at($row['earned_at'])->isoFormat('D MMM HH:mm') }}. Fare {{ \App\Support\Ui\MoneyFormatter::format((int) $row['fare_minor'], $row['currency']) }}@if($row['commission_minor']), commission {{ \App\Support\Ui\MoneyFormatter::format((int) $row['commission_minor'], $row['currency']) }}@endif{{ $row['cash_collected_minor'] ? ', cash '.\App\Support\Ui\MoneyFormatter::format((int) $row['cash_collected_minor'], $row['currency']) : '' }}</span>
                                 <span class="dr-trip-row__amount"><x-eh.money :minor="$row['net_minor']" :currency="$row['currency']" /><x-eh.badge :tone="$statusTone[$row['status']] ?? 'neutral'">{{ $statusWord[$row['status']] ?? $row['status'] }}</x-eh.badge></span>
                             </a>
                         </li>

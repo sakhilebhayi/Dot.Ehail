@@ -46,9 +46,9 @@
                 <x-eh.button size="driver" :href="route('drive.home')" icon="online" block>Open the driver console</x-eh.button>
             @else
                 <ul class="dr-checks__list">
-                    @foreach ($eligibility['reasons'] as $reason)
-                        <li><x-eh.icon name="alert" /><span>{{ $reason['message'] }}</span></li>
-                    @endforeach
+                    @foreach (\App\Http\Controllers\Driver\Support\DriverState::reasonLines($eligibility['reasons']) as $line)
+                            <li @if($line['waiting']) data-waiting @endif><x-eh.icon :name="$line['waiting'] ? 'clock' : 'alert'" /><span>{{ $line['text'] }}</span></li>
+                        @endforeach
                 </ul>
             @endif
             @unless ($eligibility['documents_enforced'])
