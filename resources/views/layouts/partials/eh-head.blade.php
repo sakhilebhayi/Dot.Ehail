@@ -5,7 +5,7 @@
 <title>{{ isset($title) && $title ? $title.' | Dot.Ehail' : 'Dot.Ehail' }}</title>
 @isset($description)<meta name="description" content="{{ $description }}">@endisset
 <meta name="theme-color" content="#f1f4f0" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0d1613" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#13201b" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">

@@ -2,7 +2,7 @@
     <!-- Generate API Token -->
     <x-form-section submit="createApiToken">
         <x-slot name="title">
-            {{ __('Create API Token') }}
+            {{ __('Create API token') }}
         </x-slot>
 
         <x-slot name="description">
@@ -12,7 +12,7 @@
         <x-slot name="form">
             <!-- Token Name -->
             <div class="col-span-6 sm:col-span-4">
-                <x-label for="name" value="{{ __('Token Name') }}" />
+                <x-label for="name" value="{{ __('Token name') }}" />
                 <x-input id="name" type="text" class="mt-1 block w-full" wire:model="createApiTokenForm.name" autofocus />
                 <x-input-error for="name" class="mt-2" />
             </div>
@@ -52,7 +52,7 @@
         <div class="mt-10 sm:mt-0">
             <x-action-section>
                 <x-slot name="title">
-                    {{ __('Manage API Tokens') }}
+                    {{ __('Manage API tokens') }}
                 </x-slot>
 
                 <x-slot name="description">
@@ -149,7 +149,7 @@
     <!-- Delete Token Confirmation Modal -->
     <x-confirmation-modal wire:model.live="confirmingApiTokenDeletion">
         <x-slot name="title">
-            {{ __('Delete API Token') }}
+            {{ __('Delete API token') }}
         </x-slot>
 
         <x-slot name="content">

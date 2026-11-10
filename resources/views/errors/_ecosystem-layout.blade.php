@@ -61,9 +61,8 @@
 
             <main id="main" class="eh-error__main">
                 <div class="eh-error__line" aria-hidden="true"><span></span><i></i><span></span></div>
-                <p class="eh-error__code">Error {{ $code }}</p>
                 <h1 class="eh-error__title">@yield('title')</h1>
-                <p class="eh-error__message">@yield('message')</p>
+                <p class="eh-error__message">@yield('message') <span class="eh-error__code">(Error {{ $code }})</span></p>
                 <div class="eh-error__actions">@yield('actions')</div>
 
                 @if (!empty($discover))

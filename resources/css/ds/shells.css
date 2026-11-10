@@ -76,6 +76,7 @@
 .eh-app--bleed .eh-app__main { max-width: none; padding: 0; }
 .eh-pagehead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--eh-space-3) var(--eh-space-6); margin-bottom: var(--eh-space-6); }
 .eh-pagehead__text { display: grid; gap: var(--eh-space-2); min-width: 0; }
+.eh-pagehead .eh-h1 { font-family: var(--eh-font-display); font-size: var(--eh-text-3xl); line-height: 1; letter-spacing: -0.01em; }
 
 @media (min-width: 768px) {
     .eh-topbar { padding: 0 var(--eh-space-4) 0 var(--eh-space-6); gap: var(--eh-space-4); }
@@ -224,7 +225,7 @@ html.eh-drawer-open .eh-side__scrim { opacity: 1; visibility: visible; transitio
 .eh-error__line span { width: 22px; height: 22px; border-radius: 50%; border: 6px solid var(--eh-accent); background: var(--eh-surface); }
 .eh-error__line span:last-child { background: var(--eh-signal); border-color: var(--eh-ink); }
 .eh-error__line i { width: 96px; border-top: 6px dashed var(--eh-accent); }
-.eh-error__code { margin: 0; font-weight: 600; color: var(--eh-ink-2); font-variant-numeric: tabular-nums; }
+.eh-error__code { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .eh-error__title { margin: 0; font-family: var(--eh-font-display); font-weight: 700; font-size: clamp(2.5rem, 6vw, 4rem); line-height: 0.95; letter-spacing: -0.015em; text-wrap: balance; }
 .eh-error__message { margin: 0; font-size: var(--eh-text-lg); line-height: 1.5; color: var(--eh-ink-2); max-width: 52ch; }
 .eh-error__actions { display: flex; flex-wrap: wrap; gap: var(--eh-space-3); }

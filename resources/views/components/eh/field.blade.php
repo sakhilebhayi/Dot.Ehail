@@ -5,7 +5,7 @@
 @props(['label', 'name', 'type' => 'text', 'id' => null, 'value' => null, 'hint' => null, 'error' => null, 'optional' => false, 'size' => 'md', 'bag' => 'default'])
 @php
     $id = $id ?? 'f-'.\Illuminate\Support\Str::slug(str_replace(['[', ']', '.'], '-', $name), '-');
-    $message = $error ?? ($errors->getBag($bag)->first(str_replace(['[', ']'], ['.', ''], $name)) ?: null);
+    $message = $error ?? (($errors ?? new \Illuminate\Support\ViewErrorBag)->getBag($bag)->first(str_replace(['[', ']'], ['.', ''], $name)) ?: null);
     $describedBy = trim(($hint ? $id.'-hint ' : '').($message ? $id.'-error' : ''));
     $old = $type === 'password' ? null : old($name, $value);
     $inputClass = $type === 'textarea' ? 'eh-textarea' : 'eh-input'.($size === 'driver' ? ' eh-input--driver' : '');

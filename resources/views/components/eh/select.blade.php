@@ -2,7 +2,7 @@
 @props(['label', 'name', 'options' => [], 'value' => null, 'id' => null, 'placeholder' => null, 'hint' => null, 'error' => null])
 @php
     $id = $id ?? 'f-'.\Illuminate\Support\Str::slug($name, '-');
-    $message = $error ?? ($errors->first($name) ?: null);
+    $message = $error ?? (($errors ?? new \Illuminate\Support\ViewErrorBag)->first($name) ?: null);
     $selected = (string) old($name, $value);
     $describedBy = trim(($hint ? $id.'-hint ' : '').($message ? $id.'-error' : ''));
 @endphp

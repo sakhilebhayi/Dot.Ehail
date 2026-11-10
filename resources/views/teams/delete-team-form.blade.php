@@ -1,6 +1,6 @@
 <x-action-section>
     <x-slot name="title">
-        {{ __('Delete Team') }}
+        {{ __('Delete team') }}
     </x-slot>
 
     <x-slot name="description">
@@ -14,14 +14,14 @@
 
         <div class="mt-5">
             <x-danger-button wire:click="$toggle('confirmingTeamDeletion')" wire:loading.attr="disabled">
-                {{ __('Delete Team') }}
+                {{ __('Delete team') }}
             </x-danger-button>
         </div>
 
         <!-- Delete Team Confirmation Modal -->
         <x-confirmation-modal wire:model.live="confirmingTeamDeletion">
             <x-slot name="title">
-                {{ __('Delete Team') }}
+                {{ __('Delete team') }}
             </x-slot>
 
             <x-slot name="content">
@@ -34,7 +34,7 @@
                 </x-secondary-button>
 
                 <x-danger-button class="ms-3" wire:click="deleteTeam" wire:loading.attr="disabled">
-                    {{ __('Delete Team') }}
+                    {{ __('Delete team') }}
                 </x-danger-button>
             </x-slot>
         </x-confirmation-modal>

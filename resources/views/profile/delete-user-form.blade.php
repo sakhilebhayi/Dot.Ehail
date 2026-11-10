@@ -1,6 +1,6 @@
 <x-action-section>
     <x-slot name="title">
-        {{ __('Delete Account') }}
+        {{ __('Delete account') }}
     </x-slot>
 
     <x-slot name="description">
@@ -14,14 +14,14 @@
 
         <div class="mt-5">
             <x-danger-button wire:click="confirmUserDeletion" wire:loading.attr="disabled">
-                {{ __('Delete Account') }}
+                {{ __('Delete account') }}
             </x-danger-button>
         </div>
 
         <!-- Delete User Confirmation Modal -->
         <x-dialog-modal wire:model.live="confirmingUserDeletion">
             <x-slot name="title">
-                {{ __('Delete Account') }}
+                {{ __('Delete account') }}
             </x-slot>
 
             <x-slot name="content">
@@ -45,7 +45,7 @@
                 </x-secondary-button>
 
                 <x-danger-button class="ms-3" wire:click="deleteUser" wire:loading.attr="disabled">
-                    {{ __('Delete Account') }}
+                    {{ __('Delete account') }}
                 </x-danger-button>
             </x-slot>
         </x-dialog-modal>

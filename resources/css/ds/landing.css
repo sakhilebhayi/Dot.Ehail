@@ -1,3 +1,4 @@
+/* Hallmark v2 stamp: Dot.Ehail landing, theme custom (DESIGN.md "Route Line"), genre editorial; signature: the fare line. Critique: one motif, the dot on a route line; real South African road photographs. */
 /* Landing page (/). One motif: the dot on a route line. Photographs of South African roads sit inside the page's one radius. */
 
 .lp { --lp-step-1: 0.875rem; --lp-step-2: 1.125rem; --lp-step-3: 1.5rem; --lp-step-4: clamp(2rem, 3vw, 2.75rem); --lp-gap: 12px; --lp-radius: var(--eh-radius-lg); --lp-section: clamp(5rem, 10vw, 9rem); }
@@ -29,7 +30,7 @@ html.lp body { font-size: var(--lp-step-2); }
     order: 2;
 }
 .lp-hero__photo { order: 1; height: 44svh; min-height: 260px; }
-@media (max-width: 959px) { .lp-hero { position: relative; padding-top: 72px; } .lp-hero__card { position: static; padding-top: var(--eh-space-8); } .lp-bar { padding: 0 var(--eh-space-2) 0 var(--eh-space-4); } }
+@media (max-width: 959px) { .lp-hero__photo figcaption { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .lp-hero__card .lp-route { order: 10; margin-top: var(--eh-space-2); } .lp-hero { position: relative; padding-top: 72px; } .lp-hero__card { position: static; padding-top: var(--eh-space-8); } .lp-bar { padding: 0 var(--eh-space-2) 0 var(--eh-space-4); } }
 .lp-hero__photo img { object-position: 50% 62%; }
 .lp-hero h1 { font-family: var(--eh-font-display); font-weight: 700; font-size: clamp(3rem, 6.4vw, 6rem); line-height: 0.92; letter-spacing: -0.02em; margin: 0; overflow-wrap: break-word; min-width: 0; max-width: 11ch; text-wrap: balance; }
 .lp-hero__sentence { font-size: var(--lp-step-2); line-height: 1.45; margin: 0; max-width: 32ch; }
@@ -86,7 +87,8 @@ html.lp body { font-size: var(--lp-step-2); }
     .lp-stop__btn { flex-direction: column; align-items: flex-start; gap: var(--eh-space-3); min-height: 0; padding: 2px 8px 12px 2px; border-radius: var(--eh-radius); font-size: var(--lp-step-2); }
     .lp-stop__op { position: absolute; top: -32px; left: 8px; text-align: left; }
     .lp-stop__panel { position: static; margin: 0; }
-    .lp-fareline__panels { margin-top: var(--eh-space-6); min-height: 7rem; }
+    .lp-fareline__panels { margin-top: var(--eh-space-6); min-height: 7rem; position: relative; }
+    .lp-fareline__panels .lp-stop__panel { margin-left: var(--lp-panel-at, 0); }
 }
 
 /* Safety: the ride as a line beside a photograph in the disc */
@@ -126,6 +128,7 @@ html.lp body { font-size: var(--lp-step-2); }
 .lp-band { margin-top: var(--lp-section); }
 .lp-band .lp-photo { border-radius: 0; height: clamp(160px, 22vw, 320px); }
 .lp-band .lp-photo img { object-position: 50% 45%; }
+@media (max-width: 767px) { .lp-band .lp-photo img { object-position: 80% 45%; } }
 
 /* Business and fleets */
 .lp-accounts { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-8); }
@@ -135,9 +138,9 @@ html.lp body { font-size: var(--lp-step-2); }
 .lp-accounts__col p { margin: 0; font-size: var(--lp-step-2); line-height: 1.5; max-width: 48ch; }
 .lp-accounts__photo { aspect-ratio: 16 / 10; }
 @media (min-width: 960px) {
-    .lp-accounts { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: end; gap: var(--eh-space-12); }
+    .lp-accounts { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: start; gap: var(--eh-space-12); }
     .lp-accounts__cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top: var(--eh-space-10); }
-    .lp-accounts__photo { aspect-ratio: 4 / 5; }
+    .lp-accounts__photo { aspect-ratio: 4 / 3; }
 }
 
 /* South Africa first: minibus photograph and the plain facts */

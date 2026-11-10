@@ -1,6 +1,6 @@
 <x-action-section>
     <x-slot name="title">
-        {{ __('Two Factor Authentication') }}
+        {{ __('Two factor authentication') }}
     </x-slot>
 
     <x-slot name="description">
@@ -44,7 +44,7 @@
 
                 <div class="mt-4 max-w-xl text-sm text-[var(--eh-ink-2)]">
                     <p class="font-semibold">
-                        {{ __('Setup Key') }}: {{ decrypt($this->user->two_factor_secret) }}
+                        {{ __('Setup key') }}: {{ decrypt($this->user->two_factor_secret) }}
                     </p>
                 </div>
 
@@ -87,7 +87,7 @@
                 @if ($showingRecoveryCodes)
                     <x-confirms-password wire:then="regenerateRecoveryCodes">
                         <x-secondary-button class="me-3">
-                            {{ __('Regenerate Recovery Codes') }}
+                            {{ __('Regenerate recovery codes') }}
                         </x-secondary-button>
                     </x-confirms-password>
                 @elseif ($showingConfirmation)
@@ -99,7 +99,7 @@
                 @else
                     <x-confirms-password wire:then="showRecoveryCodes">
                         <x-secondary-button class="me-3">
-                            {{ __('Show Recovery Codes') }}
+                            {{ __('Show recovery codes') }}
                         </x-secondary-button>
                     </x-confirms-password>
                 @endif

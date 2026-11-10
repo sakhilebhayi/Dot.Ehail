@@ -15,6 +15,7 @@
         ['offer', 'The offer', 'Every offer shows the pickup distance, the trip and what you earn, before you accept.'],
         ['trip', 'The trip', 'Navigation opens in Google Maps, Waze or Apple Maps. Big buttons, few words, dark after sunset.'],
         ['statement', 'The statement', 'Each trip lists the fare, the commission, any deductions and what is yours.'],
+        ['commission', 'The commission', 'One commission rate per market, the same on every trip, shown on each offer and statement. The rate is published before launch.'],
         ['payouts', 'Payouts', 'Payouts run on a set schedule, and every amount matches your statement.'],
     ];
     $questions = [

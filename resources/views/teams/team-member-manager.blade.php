@@ -6,7 +6,7 @@
         <div class="mt-10 sm:mt-0">
             <x-form-section submit="addTeamMember">
                 <x-slot name="title">
-                    {{ __('Add Team Member') }}
+                    {{ __('Add team member') }}
                 </x-slot>
 
                 <x-slot name="description">
@@ -83,7 +83,7 @@
         <div class="mt-10 sm:mt-0">
             <x-action-section>
                 <x-slot name="title">
-                    {{ __('Pending Team Invitations') }}
+                    {{ __('Pending team invitations') }}
                 </x-slot>
 
                 <x-slot name="description">
@@ -120,7 +120,7 @@
         <div class="mt-10 sm:mt-0">
             <x-action-section>
                 <x-slot name="title">
-                    {{ __('Team Members') }}
+                    {{ __('Team members') }}
                 </x-slot>
 
                 <x-slot name="description">
@@ -173,7 +173,7 @@
     <!-- Role Management Modal -->
     <x-dialog-modal wire:model.live="currentlyManagingRole">
         <x-slot name="title">
-            {{ __('Manage Role') }}
+            {{ __('Manage role') }}
         </x-slot>
 
         <x-slot name="content">
@@ -219,7 +219,7 @@
     <!-- Leave Team Confirmation Modal -->
     <x-confirmation-modal wire:model.live="confirmingLeavingTeam">
         <x-slot name="title">
-            {{ __('Leave Team') }}
+            {{ __('Leave team') }}
         </x-slot>
 
         <x-slot name="content">
@@ -240,7 +240,7 @@
     <!-- Remove Team Member Confirmation Modal -->
     <x-confirmation-modal wire:model.live="confirmingTeamMemberRemoval">
         <x-slot name="title">
-            {{ __('Remove Team Member') }}
+            {{ __('Remove team member') }}
         </x-slot>
 
         <x-slot name="content">

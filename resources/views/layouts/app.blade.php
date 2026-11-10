@@ -79,7 +79,7 @@
             <div class="sidebar-divider"></div>
             <a href="{{ route('profile.show') }}" class="nav-item {{ request()->routeIs('profile.show') ? 'active' : '' }}">
                 <x-eh.icon name="account" class="nav-icon" />
-                Profile & Settings
+                Profile and security
             </a>
         </nav>
 

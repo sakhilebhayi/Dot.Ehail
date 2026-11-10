@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="eh-h1">
-            {{ __('Create Team') }}
+            {{ __('Create team') }}
         </h1>
     </x-slot>
 

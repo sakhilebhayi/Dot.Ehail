@@ -17,6 +17,9 @@ function initFareLine() {
             const panel = doc.getElementById(b.getAttribute('aria-controls'));
             if (panel) panel.hidden = !on;
         });
+        // On wide screens the open explanation is pinned under its own stop (clamped so it never runs off the line).
+        const i = buttons.indexOf(button);
+        panels.style.setProperty('--lp-panel-at', `min(${(i / buttons.length) * 100}%, calc(100% - 48ch - 2.5rem))`);
         if (focus) button.focus();
     };
     // Wide screens show the explanation under the whole line; narrow screens under its stop.
