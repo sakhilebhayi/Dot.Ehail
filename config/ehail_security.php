@@ -12,6 +12,10 @@ return [
     // at once by email and in the app, so a hijacked session cannot quietly redirect earnings).
     'payout_account_cooling_off_hours' => (int) env('EHAIL_PAYOUT_COOLING_OFF_HOURS', 72),
 
+    // After a passenger changes the trip, billable distance is bounded by the straight-line path of the changed
+    // trip times this road factor (S-18), so a spoofed GPS trail cannot bill an arbitrary length.
+    'trip_change_road_factor' => (float) env('EHAIL_TRIP_CHANGE_ROAD_FACTOR', 2.0),
+
     // New-device sign-in notice (email + in-app) when a sign-in comes from a browser this account has not used.
     'new_device_notice' => (bool) env('EHAIL_NEW_DEVICE_NOTICE', true),
 
