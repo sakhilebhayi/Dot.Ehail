@@ -104,6 +104,10 @@ final class Account
             throw new InvalidArgumentException("Unknown ledger account [{$account}].");
         }
 
+        if ((self::CHART[$type]['party'] !== null) !== ($party !== null) || ($party !== null && ! ctype_digit($party))) {
+            throw new InvalidArgumentException("Ledger account [{$account}] has a missing or unexpected party id.");
+        }
+
         return [$type, $party === null ? null : (int) $party];
     }
 
