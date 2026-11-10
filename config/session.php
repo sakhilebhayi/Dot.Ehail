@@ -114,7 +114,10 @@ return [
     |
     */
 
-    'lottery' => [2, 100],
+    // Every request draws the lottery that deletes expired sessions. Laravel's 2 in 100 means a DELETE on every
+    // 50th poll (several a second with hundreds of phones polling); 1 in 1,000 still sweeps every few seconds
+    // under load and once in a while when quiet (docs/R46_PERF.md section 1).
+    'lottery' => [(int) env('SESSION_LOTTERY_CHANCE', 1), 1000],
 
     /*
     |--------------------------------------------------------------------------

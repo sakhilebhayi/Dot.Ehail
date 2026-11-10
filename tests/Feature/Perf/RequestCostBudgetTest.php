@@ -127,9 +127,11 @@ class RequestCostBudgetTest extends TestCase
         $driver = $this->onlineDriverAt(...$this->northOfPickup(800));
         $session = $this->signedInSession($driver);
         $this->warm($session, 'GET', route('ehail.dispatch.driver.feed'));
+        $this->warm($session, 'GET', route('ehail.dispatch.driver.feed'));
         $sessionWrites = 0;
         DB::listen(function (QueryExecuted $q) use (&$sessionWrites) {
-            if (QueryProbe::isWrite($q->sql) && str_contains($q->sql, 'sessions')) {
+            // Rewrites of this session (the sweeping lottery's delete of expired sessions is not one).
+            if (preg_match('/^(update|insert into) "sessions"/', $q->sql) === 1) {
                 $sessionWrites++;
             }
         });
