@@ -175,8 +175,8 @@ class CardChargingTest extends TestCase
         $this->savedCard($this->passenger);
         $ride = $this->completeTrip($this->passenger);
 
-        event(new TripCompleted($ride->id, $ride->driver_id, now()));
-        event(new TripCompleted($ride->id, $ride->driver_id, now()));
+        event(new TripCompleted($ride->id, $ride->driver_id, 'driver', now()));
+        event(new TripCompleted($ride->id, $ride->driver_id, 'driver', now()));
         SettleCompletedRide::dispatchSync($ride->id);
 
         $this->assertCount(1, $this->paystackRequests('/transaction/charge_authorization'));

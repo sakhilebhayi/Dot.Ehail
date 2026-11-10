@@ -66,12 +66,12 @@ class RatingModeration
         }
 
         try {
-            return RatingAppeal::create([
+            return DB::transaction(fn () => RatingAppeal::create([
                 'ride_rating_id' => $rating->id,
                 'user_id' => $driver->id,
                 'reason' => mb_substr(trim($reason), 0, 2000),
                 'status' => 'pending',
-            ]);
+            ]));
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['rating' => 'This rating has already been appealed.']);
         }

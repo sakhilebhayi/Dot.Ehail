@@ -44,6 +44,15 @@ class RideSettlement
             return 'settled';
         }
 
+        // A fare charge was already attempted (the completion arrived twice: the ride row and the TripCompleted
+        // event both trigger settlement). Later attempts belong to the retry schedule (money:sweep) and the
+        // passenger's pay-now, never to a repeated completion (integration D-713).
+        if (Payment::where('ride_id', $ride->id)->where('purpose', Payment::PURPOSE_RIDE_FARE)->exists()) {
+            $this->settlement->recogniseTrip($ride);
+
+            return 'already_attempted';
+        }
+
         $fare = $this->fares->finalFareFor($ride);
 
         if ($fare === null || $fare->payableMinor() <= 0) {

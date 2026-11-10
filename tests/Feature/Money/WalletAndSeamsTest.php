@@ -77,7 +77,7 @@ class WalletAndSeamsTest extends TestCase
         $this->savedCard($passenger);
         $driver = $this->makeApprovedDriver();
 
-        // Default: no policy, no fee, no job.
+        // No fee decided for this ride (no pricing fare record): nothing is charged.
         $ride = $this->makeRide(['status' => 'accepted', 'driver_id' => $driver->id, 'accepted_at' => now()], $passenger);
         app(RideLifecycle::class)->cancel($ride, $passenger, CancelReason::cases()[0]);
         $this->assertSame(0, Payment::count());
@@ -92,7 +92,7 @@ class WalletAndSeamsTest extends TestCase
 
         $second = $this->makeRide(['status' => 'accepted', 'driver_id' => $driver->id, 'accepted_at' => now()], $passenger);
         app(RideLifecycle::class)->cancel($second, $passenger, CancelReason::cases()[0]);
-        event(new RideCancelled($second->id, $passenger->id, now(), 'passenger_cancelled', 'passenger')); // duplicate signal
+        event(new RideCancelled($second->id, $passenger->id, 'passenger', now(), 'passenger_cancelled')); // duplicate signal
 
         $fee = Payment::where('purpose', Payment::PURPOSE_CANCELLATION_FEE)->sole();
         $this->assertSame(2500, $fee->amountMinor());

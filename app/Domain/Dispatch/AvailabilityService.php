@@ -179,8 +179,11 @@ class AvailabilityService
             return;
         }
 
+        // A driver taken offline during the trip (verification lapsed, D-714) does not come back online.
+        $stillOnline = (bool) DriverProfile::withoutGlobalScope('user')->where('user_id', $driverId)->value('is_online');
+
         $row->forceFill([
-            'state' => $row->state === DriverAvailability::ON_TRIP ? DriverAvailability::ONLINE : $row->state,
+            'state' => $row->state === DriverAvailability::ON_TRIP ? ($stillOnline ? DriverAvailability::ONLINE : DriverAvailability::OFFLINE) : $row->state,
             'current_ride_id' => null,
             'last_trip_ended_at' => now(),
             'since' => now(),

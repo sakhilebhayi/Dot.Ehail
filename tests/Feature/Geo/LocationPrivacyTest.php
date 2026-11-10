@@ -48,6 +48,9 @@ class LocationPrivacyTest extends TestCase
                 ->assertJsonPath('driver_location.heading_deg', 91)
                 ->assertJsonPath('driver_location.age_seconds', 3)
                 ->assertJsonMissingPath('driver_location.driver_id');
+
+            // One active ride per passenger and driver (dispatch D-402): end this one before the next status.
+            $ride->update(['status' => 'completed']);
         }
     }
 
