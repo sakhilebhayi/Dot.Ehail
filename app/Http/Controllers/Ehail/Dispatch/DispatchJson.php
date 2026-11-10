@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Ehail\Dispatch;
 use App\Domain\Dispatch\Exceptions\DispatchRefused;
 use App\Services\Ehail\InvalidRideTransition;
 use Closure;
+use Illuminate\Database\ConcurrencyErrorDetector;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,6 +26,15 @@ trait DispatchJson
             return $this->refusal($e);
         } catch (InvalidRideTransition $e) {
             return response()->json(['error' => 'invalid_transition', 'message' => $e->getMessage()], 409);
+        } catch (QueryException $e) {
+            // Lock contention that outlasted the transaction retries (SQLite "database is
+            // locked", a deadlock victim, a serialisation failure): nothing was written.
+            if (! app(ConcurrencyErrorDetector::class)->causedByConcurrencyError($e)) {
+                throw $e;
+            }
+
+            return response()->json(['error' => 'conflict_retry', 'message' => 'Someone else changed this ride at the same moment. Try again.'], 409)
+                ->header('Retry-After', '1');
         }
     }
 

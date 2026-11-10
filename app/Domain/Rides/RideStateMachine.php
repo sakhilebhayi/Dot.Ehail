@@ -81,6 +81,10 @@ class RideStateMachine
         $edge = RideTransitions::edge($from, $to);
 
         if ($edge === null || ! in_array($actor, $edge['actors'], true)) {
+            if ($to === RideStatus::DriverAssigned && ! $from->isAwaitingDriver()) {
+                throw new InvalidRideTransition('That ride was just claimed by another driver.');
+            }
+
             throw InvalidRideTransition::between($from, $to);
         }
 
