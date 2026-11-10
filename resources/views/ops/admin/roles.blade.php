@@ -20,7 +20,7 @@
                             <form method="POST" action="{{ route('ops.roles.update', $op['user']->id) }}" class="ops-act" style="margin-top:var(--eh-space-2)">
                                 @csrf @method('PUT')
                                 <fieldset style="border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:var(--eh-space-1) var(--eh-space-4)">
-                                    <legend class="eh-sr">Roles for {{ $op['user']->name }}</legend>
+                                    <legend class="eh-sr-only">Roles for {{ $op['user']->name }}</legend>
                                     @foreach ($roles as $role)
                                         <label class="ops-check"><input type="checkbox" name="roles[]" value="{{ $role->value }}" @checked(in_array($role->value, $op['roles'], true))> {{ $role->label() }}</label>
                                     @endforeach

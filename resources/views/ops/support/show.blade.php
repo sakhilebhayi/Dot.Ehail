@@ -34,10 +34,10 @@
                     @if ($canAct && ! $done)
                         <form class="ops-act" data-ops-action method="post" action="{{ route('support.ops.cases.reply', $case->id) }}" enctype="multipart/form-data" data-ops-done="Reply sent." style="margin-top:var(--eh-space-4)">
                             <x-eh.field label="Your reply" name="body" type="textarea" maxlength="5000" id="reply-body" />
+                            <div class="eh-field"><label class="eh-field__label" for="reply-file">Attach a file <span class="eh-field__optional">(optional; image or PDF)</span></label><input id="reply-file" type="file" name="attachment" accept="image/*,application/pdf" style="font:inherit"></div>
                             <div class="ops-act__row">
-                                <div class="eh-select-wrap" style="width:auto"><label class="eh-sr" for="reply-vis">Who sees it</label><select id="reply-vis" class="eh-select" name="visibility" style="padding-right:var(--eh-space-10)"><option value="requester">The requester</option>@if($case->counterparty_user_id)<option value="participants">Everyone on the case</option>@endif<option value="internal">Internal note</option></select><x-eh.icon name="chevron-down" /></div>
+                                <div class="eh-select-wrap" style="width:auto"><label class="eh-sr-only" for="reply-vis">Who sees it</label><select id="reply-vis" class="eh-select" name="visibility" style="padding-right:var(--eh-space-10)"><option value="requester">The requester</option>@if($case->counterparty_user_id)<option value="participants">Everyone on the case</option>@endif<option value="internal">Internal note</option></select><x-eh.icon name="chevron-down" /></div>
                                 <label class="ops-check"><input type="checkbox" name="await_user" value="1"> Wait for their answer</label>
-                                <label class="ops-check"><span class="eh-sr">Attach a file</span><input type="file" name="attachment"></label>
                                 <x-eh.button type="submit" size="sm">Send</x-eh.button>
                             </div>
                         </form>

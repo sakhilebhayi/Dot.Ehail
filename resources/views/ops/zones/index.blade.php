@@ -35,7 +35,7 @@
                     @if ($areas->isEmpty())
                         <p class="ops-none">No service area exists. Run the reference areas command or draw one.</p>
                     @else
-                        <ul class="ops-queue">
+                        <ul class="ops-queue ops-queue--actions">
                             @foreach ($areas as $area)
                                 <li>
                                     <span class="ops-queue__title">{{ $area->name }}</span>

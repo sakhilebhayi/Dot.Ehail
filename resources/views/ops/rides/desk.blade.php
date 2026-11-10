@@ -114,7 +114,7 @@
                                     <form method="POST" action="{{ route('operator.rides.waive', $ride) }}" class="ops-act" data-ops-confirm="Waive this fare? The passenger will owe nothing." style="margin-top:var(--eh-space-2)">
                                         @csrf
                                         <div class="ops-act__row">
-                                            <label class="eh-sr" for="waive-{{ $ride->id }}">Why the fare is waived</label>
+                                            <label class="eh-sr-only" for="waive-{{ $ride->id }}">Why the fare is waived</label>
                                             <input id="waive-{{ $ride->id }}" class="eh-input" style="flex:1 1 12rem" type="text" name="reason" maxlength="500" required placeholder="Why the fare is waived">
                                             <x-eh.button type="submit" size="sm" variant="secondary">Waive fare</x-eh.button>
                                         </div>
@@ -139,7 +139,7 @@
                                     <form method="POST" action="{{ route('operator.payments.review', $payment) }}" class="ops-act" style="margin-top:var(--eh-space-2)">
                                         @csrf
                                         <div class="ops-act__row">
-                                            <label class="eh-sr" for="review-{{ $payment->id }}">What you did</label>
+                                            <label class="eh-sr-only" for="review-{{ $payment->id }}">What you did</label>
                                             <input id="review-{{ $payment->id }}" class="eh-input" style="flex:1 1 12rem" type="text" name="note" maxlength="500" required placeholder="What you did">
                                             <x-eh.button type="submit" size="sm" variant="secondary">Mark reviewed</x-eh.button>
                                         </div>

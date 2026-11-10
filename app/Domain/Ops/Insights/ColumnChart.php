@@ -28,6 +28,8 @@ final class ColumnChart
         }
 
         $n = max(1, count($points));
+        $maxLabels = max(2, intdiv($width, 64));
+        $labelEvery = (int) ceil($n / $maxLabels);
         $band = $plot['w'] / $n;
         $barW = min(24.0, max(2.0, $band - 2));
         $bars = [];
@@ -48,7 +50,7 @@ final class ColumnChart
                 'label' => $p['label'],
                 'display' => $p['display'],
                 'null' => $p['value'] === null,
-                'axis' => $n <= 14 || $i % (int) ceil($n / 12) === 0 ? $p['label'] : null,
+                'axis' => $i % $labelEvery === 0 ? $p['label'] : null,
                 'cx' => $x + $barW / 2,
             ];
         }

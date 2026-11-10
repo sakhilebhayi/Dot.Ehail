@@ -19,7 +19,7 @@
             <div class="ops-head__actions">
                 <x-eh.button size="sm" variant="secondary" :href="route('ops.pricing.simulator', ['rule_set' => $set->id])" icon="sliders">Simulate</x-eh.button>
                 @if ($canManage && ! $hasDraft && $set->status !== 'draft')
-                    <form data-ops-action method="post" action="{{ route('pricing.ops.rule-sets.version', $set->id) }}" data-ops-done="New draft version created. Open it from the history." style="margin:0">
+                    <form data-ops-action method="post" action="{{ route('pricing.ops.rule-sets.version', $set->id) }}" data-ops-done="New draft version created." data-ops-redirect-template="{{ url('/ops/tariffs/{id}') }}" data-ops-redirect-key="rule_set.id" style="margin:0">
                         <x-eh.button type="submit" size="sm" icon="edit">New draft from this version</x-eh.button>
                     </form>
                 @endif
@@ -99,13 +99,12 @@
                 <section class="ops-panel ops-panel--flush" aria-labelledby="hist-h">
                     <div class="ops-panel__head"><h2 id="hist-h">Version history</h2></div>
                     <table class="ops-table ops-table--compact">
-                        <thead><tr><th>Version</th><th>State</th><th class="num">In force</th></tr></thead>
+                        <thead><tr><th>Version</th><th>State</th></tr></thead>
                         <tbody>
                             @foreach ($versions as $v)
                                 <tr @if($v->id === $set->id) aria-current="true" style="background:var(--eh-accent-tint)" @endif>
-                                    <td><a href="{{ route('ops.pricing.show', $v->id) }}">v{{ $v->version }}</a></td>
+                                    <td><a href="{{ route('ops.pricing.show', $v->id) }}">v{{ $v->version }}</a><span class="sub">{{ $v->effective_from ? $v->effective_from->format('d M Y') : 'not in force' }}{{ $v->retired_at ? ' to '.$v->retired_at->format('d M Y') : '' }}</span></td>
                                     <td>@include('ops.pricing.status', ['v' => $v])</td>
-                                    <td class="num">{{ $v->effective_from?->format('d M Y') ?? '-' }}{{ $v->retired_at ? ' to '.$v->retired_at->format('d M Y') : '' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

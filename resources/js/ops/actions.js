@@ -1,5 +1,5 @@
 // Action forms: <form data-ops-action action="(a domain JSON API)" method="post" [data-ops-method="PATCH"]
-// [data-ops-confirm="question"] [data-ops-done="toast text"] [data-ops-redirect="url"]>. Sends the form with the CSRF
+// [data-ops-confirm="question"] [data-ops-done="toast text"] [data-ops-redirect="url"] [data-ops-redirect-template, -key]>. Sends the form with the CSRF
 // token and Accept: application/json, shows the domain's own refusal under the form, and reloads on success so
 // every figure on the page is read again from the server (nothing is updated optimistically).
 import { errorMessage, randToMinor } from './helpers.js';
@@ -34,7 +34,7 @@ async function submit(form, submitter) {
         if (input.value.trim() === '') continue;
         const minor = randToMinor(input.value);
         if (minor === null) {
-            showError(form, `Enter an amount in rand, like 125.50, in "${input.labels?.[0]?.textContent?.trim() || input.name}".`);
+            showError(form, `Enter an amount in rand, like 125.50, in "${input.labels?.[0]?.childNodes?.[0]?.textContent?.trim() || input.name}".`);
             input.focus();
             return;
         }
@@ -71,7 +71,11 @@ async function submit(form, submitter) {
 
     if (response.ok) {
         try { sessionStorage.setItem(TOAST_KEY, form.dataset.opsDone || 'Done.'); } catch { /* private mode */ }
-        if (form.dataset.opsRedirect) window.location.assign(form.dataset.opsRedirect);
+        // data-ops-redirect-template="/ops/tariffs/{id}" + data-ops-redirect-key="rule_set.id": go to what was created.
+        const key = form.dataset.opsRedirectKey;
+        const created = key ? key.split('.').reduce((value, part) => (value == null ? value : value[part]), body) : null;
+        if (form.dataset.opsRedirectTemplate && created != null) window.location.assign(form.dataset.opsRedirectTemplate.replace('{id}', encodeURIComponent(String(created))));
+        else if (form.dataset.opsRedirect) window.location.assign(form.dataset.opsRedirect);
         else window.location.reload();
         return;
     }

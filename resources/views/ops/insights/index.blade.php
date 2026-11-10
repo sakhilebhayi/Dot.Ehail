@@ -18,7 +18,7 @@
     $volumeChart = ColumnChart::build(array_map(fn ($r) => ['label' => $r['label'], 'value' => $r['value'], 'display' => $count($r['value']).' '.\Illuminate\Support\Str::plural('ride', $r['value'])], $volume['rows']), $count);
     $completedChart = ColumnChart::build(array_map(fn ($r) => ['label' => $r['label'], 'value' => $r['value'], 'display' => $count($r['value']).' completed'], $completed['rows']), $count, 720, 160);
     $revChart = ColumnChart::build(array_map(fn ($r) => ['label' => $r['label'], 'value' => $r['commission'] + $r['fees'], 'display' => $money($r['commission'] + $r['fees'])], $rev['rows']), $short, 720, 160);
-    $incChart = ColumnChart::build(array_map(fn ($r) => ['label' => $r['label'], 'value' => $r['value'], 'display' => $r['value'].' '.\Illuminate\Support\Str::plural('incident', $r['value'])], $inc['rows']), $count, 720, 140);
+    $incChart = ColumnChart::build(array_map(fn ($r) => ['label' => $r['label'], 'value' => $r['value'], 'display' => $r['value'].' '.\Illuminate\Support\Str::plural('incident', $r['value'])], $inc['rows']), $count, 400, 180);
     $cancelTotal = array_sum(array_column($cancel['rows'], 'count'));
     $completionRate = $cancel['total'] > 0 ? intdiv($cancel['completed'] * 10000 + intdiv($cancel['total'], 2), $cancel['total']) : null;
     $finding = $volume['total'] === 0
@@ -91,33 +91,13 @@
                             <tbody>
                                 <tr><td>Completed</td><td class="num">{{ $count($cancel['completed']) }}</td><td class="num">{{ $pct($completionRate) }}</td></tr>
                                 @foreach ($cancel['rows'] as $r)
-                                    <tr><td><span class="ops-bar-inline" style="width:{{ round(64 * (int) $r['rate_bp'] / $maxBp) }}px" aria-hidden="true"></span>{{ $r['label'] }}</td><td class="num">{{ $count($r['count']) }}</td><td class="num">{{ $pct($r['rate_bp']) }}</td></tr>
+                                    <tr><td>{{ $r['label'] }}</td><td class="num">{{ $count($r['count']) }}</td><td class="num"><span class="ops-bar-inline" style="width:{{ round(56 * (int) $r['rate_bp'] / $maxBp) }}px" aria-hidden="true"></span>{{ $pct($r['rate_bp']) }}</td></tr>
                                 @endforeach
                             </tbody>
                         </table>
                         <p class="ops-note ops-note--small">The rest are still live or scheduled.</p>
                     @endif
                 </section>
-
-                <section class="ops-panel ops-metric" aria-labelledby="eta-h">
-                    <div class="ops-panel__head" style="margin:0"><h2 id="eta-h">Pickup: estimated against actual</h2><span class="ops-panel__meta">{{ $count($eta['count']) }} {{ \Illuminate\Support\Str::plural('pickup', $eta['count']) }}</span></div>
-                    <p class="ops-metric__def">Defined as <code>{{ $def('pickup_eta') }}</code>.</p>
-                    @if ($eta['count'] === 0)
-                        <p class="ops-none">No driver reached a pickup in this period.</p>
-                    @else
-                        <dl class="ops-facts">
-                            <dt>Estimated, average</dt><dd class="num">{{ Durations::short($eta['estimated_s']) }}</dd>
-                            <dt>Actual, average</dt><dd class="num">{{ Durations::short($eta['actual_s']) }}</dd>
-                            <dt>Later than estimated</dt><dd class="num">{{ $count($eta['late']) }} of {{ $count($eta['count']) }}</dd>
-                        </dl>
-                        <table class="ops-table ops-table--compact" style="margin-top:var(--eh-space-3)">
-                            <thead><tr><th>ETA method</th><th class="num">Pickups</th><th class="num">Estimated</th><th class="num">Actual</th></tr></thead>
-                            <tbody>@foreach ($eta['by_method'] as $m)<tr><td>{{ str_replace('_', ' ', $m['method'] ?: 'not recorded') }}</td><td class="num">{{ $m['count'] }}</td><td class="num">{{ Durations::short($m['estimated_s']) }}</td><td class="num">{{ Durations::short($m['actual_s']) }}</td></tr>@endforeach</tbody>
-                        </table>
-                        @if (collect($eta['by_method'])->contains('method', 'straight_line_estimate'))<p class="ops-note ops-note--small">Straight-line estimates are used for ranking drivers only; they are expected to undershoot real road time.</p>@endif
-                    @endif
-                </section>
-
                 <section class="ops-panel ops-metric" aria-labelledby="util-h">
                     <div class="ops-panel__head" style="margin:0"><h2 id="util-h">Driver utilisation</h2><span class="ops-panel__meta">{{ $util['drivers'] }} {{ \Illuminate\Support\Str::plural('driver', $util['drivers']) }} measured</span></div>
                     <p class="ops-metric__def">Defined as <code>{{ $def('utilisation') }}</code>.</p>
@@ -137,6 +117,43 @@
             </div>
         </div>
 
+        <div class="ops-cols ops-cols--2" style="margin-top:var(--ops-gap)">
+            <section class="ops-panel ops-metric" aria-labelledby="eta-h">
+                <div class="ops-panel__head" style="margin:0"><h2 id="eta-h">Pickup: estimated against actual</h2><span class="ops-panel__meta">{{ $count($eta['count']) }} {{ \Illuminate\Support\Str::plural('pickup', $eta['count']) }}</span></div>
+                <p class="ops-metric__def">Defined as <code>{{ $def('pickup_eta') }}</code>.</p>
+                @if ($eta['count'] === 0)
+                    <p class="ops-none">No driver reached a pickup in this period.</p>
+                @else
+                    <dl class="ops-facts">
+                        <dt>Estimated, average</dt><dd class="num">{{ Durations::short($eta['estimated_s']) }}</dd>
+                        <dt>Actual, average</dt><dd class="num">{{ Durations::short($eta['actual_s']) }}</dd>
+                        <dt>Later than estimated</dt><dd class="num">{{ $count($eta['late']) }} of {{ $count($eta['count']) }}</dd>
+                    </dl>
+                    <table class="ops-table ops-table--compact" style="margin-top:var(--eh-space-3)">
+                        <thead><tr><th>ETA method</th><th class="num">Pickups</th><th class="num">Estimated</th><th class="num">Actual</th></tr></thead>
+                        <tbody>@foreach ($eta['by_method'] as $m)<tr><td>{{ str_replace('_', ' ', $m['method'] ?: 'not recorded') }}</td><td class="num">{{ $m['count'] }}</td><td class="num">{{ Durations::short($m['estimated_s']) }}</td><td class="num">{{ Durations::short($m['actual_s']) }}</td></tr>@endforeach</tbody>
+                    </table>
+                    @if (collect($eta['by_method'])->contains('method', 'straight_line_estimate'))<p class="ops-note ops-note--small">Straight-line estimates are used for ranking drivers only; they are expected to undershoot real road time.</p>@endif
+                @endif
+            </section>
+            <section class="ops-panel ops-metric" aria-labelledby="cov-h">
+                <div class="ops-panel__head" style="margin:0"><h2 id="cov-h">Service coverage</h2></div>
+                <p class="ops-metric__def">Defined as <code>{{ $def('coverage') }}</code>.</p>
+                <table class="ops-table ops-table--compact" style="margin:0 calc(-1 * var(--eh-space-5));width:calc(100% + 2 * var(--eh-space-5))">
+                    <thead><tr><th>Area</th><th class="num">Requests</th><th class="num">No driver found</th></tr></thead>
+                    <tbody>
+                        @forelse ($cov['rows'] as $r)
+                            <tr><td>{{ $r['area'] }}</td><td class="num">{{ $count($r['requests']) }}</td><td class="num">{{ $pct($r['rate_bp']) }}</td></tr>
+                        @empty
+                            <tr><td colspan="3" class="muted">No active service area.</td></tr>
+                        @endforelse
+                        <tr><td>Outside every active area</td><td class="num">{{ $count($cov['outside']['requests']) }}</td><td class="num">{{ $cov['outside']['requests'] > 0 ? $pct(intdiv($cov['outside']['expired'] * 10000, $cov['outside']['requests'])) : '-' }}</td></tr>
+                    </tbody>
+                </table>
+                <p class="ops-note ops-note--small">Requests refused before a ride exists (a quote outside every service area) are not recorded anywhere, so they cannot be counted here. {{ $cov['no_coordinates'] > 0 ? $cov['no_coordinates'].' ride(s) had no pickup coordinates (address-only bookings).' : '' }}</p>
+            </section>
+        </div>
+
         <div class="ops-split" style="margin-top:var(--ops-gap)">
             <section class="ops-panel ops-metric" aria-labelledby="rev-h">
                 <div class="ops-panel__head" style="margin:0"><h2 id="rev-h">Platform revenue and driver earnings</h2><span class="ops-panel__meta">from the ledger</span></div>
@@ -150,33 +167,14 @@
                     <dt>Promotions funded</dt><dd class="num">{{ $money($rev['totals']['promotions']) }}</dd>
                 </dl>
             </section>
-
-            <div class="ops-stack">
-                <section class="ops-panel ops-metric" aria-labelledby="inc-h">
-                    <div class="ops-panel__head" style="margin:0"><h2 id="inc-h">Safety incidents</h2><span class="ops-panel__meta">{{ $inc['total'] }} opened</span></div>
-                    <p class="ops-metric__def">Defined as <code>{{ $def('incidents') }}</code>.</p>
-                    @include('ops.partials.columns', ['chart' => $incChart, 'title' => 'Safety incidents opened per '.$grain, 'empty' => 'No safety incident was opened in this period.'])
-                    @if ($inc['total'] > 0)
-                        <p class="ops-note ops-note--small">Critical {{ array_sum(array_column($inc['rows'], 'critical')) }}, high {{ array_sum(array_column($inc['rows'], 'high')) }}, medium {{ array_sum(array_column($inc['rows'], 'medium')) }}, low {{ array_sum(array_column($inc['rows'], 'low')) }}.</p>
-                    @endif
-                </section>
-                <section class="ops-panel ops-metric" aria-labelledby="cov-h">
-                    <div class="ops-panel__head" style="margin:0"><h2 id="cov-h">Service coverage</h2></div>
-                    <p class="ops-metric__def">Defined as <code>{{ $def('coverage') }}</code>.</p>
-                    <table class="ops-table ops-table--compact" style="margin:0 calc(-1 * var(--eh-space-5));width:calc(100% + 2 * var(--eh-space-5))">
-                        <thead><tr><th>Area</th><th class="num">Requests</th><th class="num">No driver found</th></tr></thead>
-                        <tbody>
-                            @forelse ($cov['rows'] as $r)
-                                <tr><td>{{ $r['area'] }}</td><td class="num">{{ $count($r['requests']) }}</td><td class="num">{{ $pct($r['rate_bp']) }}</td></tr>
-                            @empty
-                                <tr><td colspan="3" class="muted">No active service area.</td></tr>
-                            @endforelse
-                            <tr><td>Outside every active area</td><td class="num">{{ $count($cov['outside']['requests']) }}</td><td class="num">{{ $cov['outside']['requests'] > 0 ? $pct(intdiv($cov['outside']['expired'] * 10000, $cov['outside']['requests'])) : '-' }}</td></tr>
-                        </tbody>
-                    </table>
-                    <p class="ops-note ops-note--small">Requests refused before a ride exists (a quote outside every service area) are not recorded anywhere, so they cannot be counted here. {{ $cov['no_coordinates'] > 0 ? $cov['no_coordinates'].' ride(s) had no pickup coordinates (address-only bookings).' : '' }}</p>
-                </section>
-            </div>
+            <section class="ops-panel ops-metric" aria-labelledby="inc-h">
+                <div class="ops-panel__head" style="margin:0"><h2 id="inc-h">Safety incidents</h2><span class="ops-panel__meta">{{ $inc['total'] }} opened</span></div>
+                <p class="ops-metric__def">Defined as <code>{{ $def('incidents') }}</code>.</p>
+                @include('ops.partials.columns', ['chart' => $incChart, 'title' => 'Safety incidents opened per '.$grain, 'empty' => 'No safety incident was opened in this period.'])
+                @if ($inc['total'] > 0)
+                    <p class="ops-note ops-note--small">Critical {{ array_sum(array_column($inc['rows'], 'critical')) }}, high {{ array_sum(array_column($inc['rows'], 'high')) }}, medium {{ array_sum(array_column($inc['rows'], 'medium')) }}, low {{ array_sum(array_column($inc['rows'], 'low')) }}.</p>
+                @endif
+            </section>
         </div>
 
         <section class="ops-panel ops-metric" aria-labelledby="ret-h" style="margin-top:var(--ops-gap)">
