@@ -17,7 +17,7 @@
 /* Livewire modal shell (Jetstream x-modal) */
 .eh-js-modal { position: fixed; inset: 0; z-index: 70; overflow-y: auto; padding: var(--eh-space-6) var(--eh-gutter); }
 .eh-js-modal__backdrop { position: fixed; inset: 0; }
-.eh-js-modal__scrim { position: absolute; inset: 0; background: rgb(8 16 13 / 0.55); }
+.eh-js-modal__scrim { position: absolute; inset: 0; background: var(--eh-scrim); }
 .eh-js-modal__panel { position: relative; margin: 10vh auto var(--eh-space-6); width: 100%; border-radius: var(--eh-radius-lg); overflow: hidden; background: var(--eh-surface); color: var(--eh-ink); box-shadow: var(--eh-shadow-float); }
 .eh-js-modal__panel--sm { max-width: 24rem; } .eh-js-modal__panel--md { max-width: 28rem; } .eh-js-modal__panel--lg { max-width: 32rem; }
 .eh-js-modal__panel--xl { max-width: 36rem; } .eh-js-modal__panel--2xl { max-width: 42rem; }
@@ -57,11 +57,12 @@
 .eh-legacy .dot-loading-overlay { display: flex; align-items: center; justify-content: center; padding: 2.5rem 0; }
 .eh-legacy .dot-spin { animation: eh-spin 0.9s linear infinite; }
 @media (max-width: 859.98px) {
-    html.shell-open, html.shell-open body { overflow: hidden; }
+    html.shell-open, html.shell-open body { overflow: clip; }
     .eh-legacy .shell-menu-btn, .eh-legacy .shell-close { display: inline-flex; }
-    .eh-legacy .sidebar { width: min(300px, 86vw); z-index: 60; transform: translateX(-100%); visibility: hidden; transition: transform var(--eh-duration) var(--eh-ease), visibility 0s linear var(--eh-duration); }
-    html.shell-open .eh-legacy .sidebar, html.shell-open .sidebar { transform: none; visibility: visible; box-shadow: var(--eh-shadow-float); transition: transform var(--eh-duration) var(--eh-ease), visibility 0s; }
-    .eh-legacy .shell-backdrop { display: block; position: fixed; inset: 0; z-index: 50; background: rgb(8 16 13 / 0.55); opacity: 0; visibility: hidden; transition: opacity var(--eh-duration) var(--eh-ease), visibility 0s linear var(--eh-duration); }
+    .eh-legacy .sidebar { width: min(300px, 86dvw); z-index: 60; }
+    .js .eh-legacy .sidebar, .eh-legacy.js .sidebar { transform: translateX(-100%); visibility: hidden; transition: transform var(--eh-duration) var(--eh-ease), visibility 0s linear var(--eh-duration); }
+    html.shell-open.eh-legacy.js .sidebar, html.shell-open .sidebar { transform: none; visibility: visible; box-shadow: var(--eh-shadow-float); transition: transform var(--eh-duration) var(--eh-ease), visibility 0s; }
+    .eh-legacy .shell-backdrop { display: block; position: fixed; inset: 0; z-index: 50; background: var(--eh-scrim); opacity: 0; visibility: hidden; transition: opacity var(--eh-duration) var(--eh-ease), visibility 0s linear var(--eh-duration); }
     html.shell-open .eh-legacy .shell-backdrop { opacity: 1; visibility: visible; transition: opacity var(--eh-duration) var(--eh-ease), visibility 0s; }
     .eh-legacy .topbar { left: 0; padding: 0 var(--eh-space-2); }
     .eh-legacy .topbar-team, .eh-legacy .topbar-profile { display: none; }
@@ -79,7 +80,7 @@
 .eh-legacy .dot-card { background: var(--eh-surface); border-radius: var(--eh-radius); }
 .eh-legacy .metric-val { font-variant-numeric: tabular-nums; font-weight: 600; }
 .eh-legacy .dot-input { width: 100%; min-height: var(--eh-target); padding: 0 var(--eh-space-3); background: var(--eh-surface); color: var(--eh-ink); border: 1.5px solid var(--eh-rule-strong); border-radius: var(--eh-radius-sm); font: inherit; }
-.eh-legacy .dot-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 var(--eh-space-4); border-radius: var(--eh-radius-pill); font-weight: 600; font-size: var(--eh-text-sm); cursor: pointer; border: 0; text-decoration: none; }
+.eh-legacy .dot-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 var(--eh-space-4); border-radius: var(--eh-radius-pill); font-weight: 600; font-size: var(--eh-text-sm); cursor: pointer; border: 0; text-decoration: none; }
 .eh-legacy .dot-btn-primary { background: var(--eh-accent); color: var(--eh-accent-ink); }
 .eh-legacy .dot-btn-ghost { background: var(--eh-surface-2); color: var(--eh-ink); }
 .eh-legacy .dot-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--eh-radius-pill); font-size: var(--eh-text-xs); font-weight: 600; }

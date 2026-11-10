@@ -2,7 +2,7 @@
 // the slow crossfade of the hero photograph. Without this script every explanation is visible and nothing moves.
 const doc = document;
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-doc.documentElement.classList.add('lp-js');
+doc.documentElement.classList.add('js');
 
 // Fare line: each stop is a button controlling its own explanation
 function initFareLine() {

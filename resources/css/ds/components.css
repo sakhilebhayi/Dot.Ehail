@@ -1,3 +1,4 @@
+/* Hallmark v2 stamp: Dot.Ehail "Route Line" system (DESIGN.md), app scope. Critique: pill controls, map-paper ground, sign green on small marks, tints for areas. */
 /* Components <x-eh.*>. Every value reads a token. States: hover, focus-visible, active, disabled, loading, error. */
 
 /* Icon */
@@ -92,20 +93,22 @@
 }
 .eh-switch__track::after {
     content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%;
-    background: var(--eh-surface); box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+    background: var(--eh-surface); box-shadow: var(--eh-shadow-thumb);
     transition: transform var(--eh-duration) var(--eh-ease);
 }
 .eh-switch__input:checked + .eh-switch__track { background: var(--eh-accent); border-color: var(--eh-accent); }
 .eh-switch__input:checked + .eh-switch__track::after { transform: translateX(20px); background: var(--eh-accent-ink); }
 .eh-switch__input:focus-visible + .eh-switch__track { outline: 3px solid var(--eh-focus); outline-offset: 2px; }
-.eh-switch__input:disabled + .eh-switch__track { opacity: 0.5; }
+.eh-switch__input:disabled + .eh-switch__track { background: var(--eh-surface-2); border-color: var(--eh-rule); cursor: not-allowed; }
+.eh-switch__input:disabled + .eh-switch__track::after { background: var(--eh-surface-3); }
+.eh-switch:has(.eh-switch__input:disabled) { cursor: not-allowed; color: var(--eh-ink-3); }
 .eh-switch__text { display: grid; gap: 2px; }
 .eh-switch__label { font-weight: 600; }
 .eh-switch__desc { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
 .eh-switch__state { font-size: var(--eh-text-sm); font-weight: 600; color: var(--eh-ink-2); min-width: 2.2em; }
 
 /* Segmented control: radio group on one track */
-.eh-segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--eh-radius-pill); background: var(--eh-surface-2); border: 0; margin: 0; min-width: 0; max-width: 100%; overflow-x: auto; }
+.eh-segmented { display: inline-flex; padding: 4px; gap: 4px; border-radius: var(--eh-radius-pill); background: var(--eh-surface-2); border: 0; margin: 0; min-width: 0; max-width: 100%; overflow-x: auto; }
 .eh-segmented legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .eh-segmented__opt { position: relative; flex: 1 0 auto; }
 .eh-segmented__opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
@@ -116,7 +119,7 @@
     transition: background-color var(--eh-duration-fast) var(--eh-ease), color var(--eh-duration-fast) var(--eh-ease);
 }
 .eh-segmented__opt input:hover + span { color: var(--eh-ink); }
-.eh-segmented__opt input:checked + span { background: var(--eh-surface); color: var(--eh-ink); box-shadow: 0 1px 2px rgb(15 31 25 / 0.12); }
+.eh-segmented__opt input:checked + span { background: var(--eh-surface); color: var(--eh-ink); box-shadow: var(--eh-shadow-thumb); }
 .eh-segmented__opt input:focus-visible + span { outline: 3px solid var(--eh-focus); outline-offset: 1px; }
 
 /* Tabs: underline on a rule (nav tabs) or an ARIA tablist */
@@ -152,7 +155,7 @@
 
 /* Badge / status */
 .eh-badge {
-    display: inline-flex; align-items: center; gap: 6px; --eh-icon: 16px;
+    display: inline-flex; align-items: center; gap: 4px; --eh-icon: 16px;
     min-height: 26px; padding: 0 var(--eh-space-3); border-radius: var(--eh-radius-pill);
     font-size: var(--eh-text-xs); font-weight: 600; line-height: 1; white-space: nowrap;
     background: var(--eh-surface-2); color: var(--eh-ink-2);
@@ -194,7 +197,7 @@
 .eh-stepper__step[data-state="stop"] .eh-stepper__dot { border-color: var(--eh-accent); }
 .eh-stepper__step[data-state="stop"]:last-child .eh-stepper__dot { background: var(--eh-signal); border-color: var(--eh-ink); }
 .eh-stepper__step[data-state="current"] .eh-stepper__dot { background: var(--eh-signal); border-color: var(--eh-ink); }
-.eh-stepper__body { padding-top: 3px; min-width: 0; }
+.eh-stepper__body { padding-top: 4px; min-width: 0; }
 .eh-stepper__label { font-weight: 600; color: var(--eh-ink); }
 .eh-stepper__step[data-state="todo"] .eh-stepper__label { color: var(--eh-ink-2); font-weight: 500; }
 .eh-stepper__meta { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
@@ -214,7 +217,7 @@
 a.eh-row:hover, button.eh-row:hover { background: var(--eh-surface-2); }
 button.eh-row { width: 100%; border: 0; background: none; text-align: left; cursor: pointer; }
 .eh-row:focus-visible { outline-offset: -3px; }
-.eh-row__icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--eh-surface-2); color: var(--eh-ink-2); }
+.eh-row__icon { flex: none; display: grid; place-items: center; width: 24px; color: var(--eh-ink-2); }
 .eh-row__main { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .eh-row__title { font-weight: 600; overflow-wrap: anywhere; }
 .eh-row__meta { font-size: var(--eh-text-sm); color: var(--eh-ink-2); overflow-wrap: anywhere; }
@@ -255,7 +258,7 @@ button.eh-row { width: 100%; border: 0; background: none; text-align: left; curs
 .eh-toast[data-tone="stop"] { background: var(--eh-stop-fill); color: var(--eh-stop-fill-ink); }
 .eh-toast__text { flex: 1; padding-top: 2px; }
 .eh-toast .eh-iconbtn { --eh-btn-h: 32px; color: inherit; margin: -4px -8px -4px 0; }
-.eh-toast .eh-iconbtn:hover { background: rgb(255 255 255 / 0.14); }
+.eh-toast .eh-iconbtn:hover { background: var(--eh-on-ink-hover); }
 @keyframes eh-toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
 /* Dialog (native <dialog>) */
@@ -264,11 +267,11 @@ button.eh-row { width: 100%; border: 0; background: none; text-align: left; curs
     padding: 0; border: 0; border-radius: var(--eh-radius-lg);
     background: var(--eh-surface); color: var(--eh-ink); box-shadow: var(--eh-shadow-float);
 }
-.eh-dialog::backdrop { background: rgb(8 16 13 / 0.55); }
+.eh-dialog::backdrop { background: var(--eh-scrim); }
 .eh-dialog[open] { animation: eh-dialog-in var(--eh-duration-slow) var(--eh-ease); }
 @keyframes eh-dialog-in { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: none; } }
 .eh-dialog__head { display: flex; align-items: flex-start; gap: var(--eh-space-3); padding: var(--eh-space-5) var(--eh-space-5) 0; }
-.eh-dialog__title { flex: 1; font-size: var(--eh-text-xl); font-weight: 700; line-height: 1.25; margin: 0; padding-top: 6px; }
+.eh-dialog__title { flex: 1; font-size: var(--eh-text-xl); font-weight: 700; line-height: 1.25; margin: 0; padding-top: 8px; }
 .eh-dialog__body { padding: var(--eh-space-3) var(--eh-space-5) var(--eh-space-5); color: var(--eh-ink-2); }
 .eh-dialog__foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--eh-space-3); padding: var(--eh-space-4) var(--eh-space-5); background: var(--eh-surface-2); }
 
@@ -282,7 +285,7 @@ button.eh-row { width: 100%; border: 0; background: none; text-align: left; curs
 .eh-banner__title { font-weight: 700; margin: 0; }
 .eh-banner__text { margin: 0; color: var(--eh-ink-2); }
 .eh-banner__actions { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); margin-top: var(--eh-space-2); }
-.eh-banner .eh-iconbtn { --eh-btn-h: 36px; margin: -6px -6px 0 0; }
+.eh-banner .eh-iconbtn { --eh-btn-h: 36px; margin: -8px -8px 0 0; }
 .eh-banner--safety { background: var(--eh-ink); color: var(--eh-ground); }
 .eh-banner--safety > .eh-icon { color: var(--eh-signal); }
 .eh-banner--safety .eh-banner__text { color: inherit; opacity: 0.9; }

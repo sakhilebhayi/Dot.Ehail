@@ -1,3 +1,5 @@
+/* Hallmark v2 stamp: Dot.Ehail "Route Line" system (DESIGN.md), app scope. Critique: pill controls, map-paper ground, sign green on small marks, tints for areas. */
+/* waive 56: the passenger/driver top bar, the side-shell bar and nav, and the guest aside are sticky in different layouts and never share a page. */
 /* App shells: passenger (/ride), driver (/drive), side shell (ops, business, fleet), guest (auth). */
 
 /* Top bar shared by passenger and driver */
@@ -31,7 +33,7 @@
 .eh-account > summary:focus-visible { outline: 3px solid var(--eh-focus); outline-offset: 2px; }
 .eh-account__menu {
     position: absolute; right: 0; top: calc(100% + var(--eh-space-2)); z-index: 50;
-    width: min(20rem, calc(100vw - 2 * var(--eh-gutter)));
+    width: 20rem; max-width: 86dvw;
     padding: var(--eh-space-2); border-radius: var(--eh-radius);
     background: var(--eh-surface); color: var(--eh-ink); box-shadow: var(--eh-shadow-float);
 }
@@ -112,24 +114,30 @@
 @media (min-width: 768px) { .eh-statebar { padding: var(--eh-space-4) var(--eh-space-6); } .eh-drive .eh-app__main { padding-bottom: var(--eh-space-16); } }
 
 /* Side shell: ops (dense), business, fleet */
-.eh-side { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100dvh; }
+.eh-side { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; min-height: 100dvh; }
 .eh-side__bar {
     position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: var(--eh-space-2);
     height: var(--eh-topbar); padding: 0 var(--eh-space-2) 0 var(--eh-space-2);
     background: var(--eh-ground); border-bottom: 1px solid var(--eh-rule);
 }
 .eh-side__bar .eh-logo { margin-right: auto; }
+html:not(.js) .eh-side__bar [data-eh-drawer-open], html:not(.js) .eh-side__close { display: none; }
 .eh-side__nav {
-    position: fixed; z-index: 60; inset: 0 auto 0 0; width: min(var(--eh-sidebar), 86vw);
+    display: flex; flex-direction: column; gap: var(--eh-space-2);
+    padding: var(--eh-space-4) var(--eh-space-3); background: var(--eh-ground);
+}
+/* With script the narrow-screen nav becomes a drawer; without it the nav stays in the page above the content. */
+.js .eh-side__nav {
+    position: fixed; z-index: 60; inset: 0 auto 0 0; width: min(var(--eh-sidebar), 86dvw);
     display: flex; flex-direction: column; gap: var(--eh-space-2);
     padding: var(--eh-space-4) var(--eh-space-3); overflow-y: auto; overscroll-behavior: contain;
     background: var(--eh-ground);
     transform: translateX(-102%); visibility: hidden;
     transition: transform var(--eh-duration) var(--eh-ease), visibility 0s linear var(--eh-duration);
 }
-html.eh-drawer-open .eh-side__nav { transform: none; visibility: visible; box-shadow: var(--eh-shadow-float); transition: transform var(--eh-duration) var(--eh-ease), visibility 0s; }
-html.eh-drawer-open, html.eh-drawer-open body { overflow: hidden; }
-.eh-side__scrim { position: fixed; inset: 0; z-index: 55; background: rgb(8 16 13 / 0.5); opacity: 0; visibility: hidden; transition: opacity var(--eh-duration) var(--eh-ease), visibility 0s linear var(--eh-duration); }
+html.eh-drawer-open.js .eh-side__nav, html.eh-drawer-open .eh-side__nav { transform: none; visibility: visible; box-shadow: var(--eh-shadow-float); transition: transform var(--eh-duration) var(--eh-ease), visibility 0s; }
+html.eh-drawer-open, html.eh-drawer-open body { overflow: clip; }
+.eh-side__scrim { position: fixed; inset: 0; z-index: 55; background: var(--eh-scrim); opacity: 0; visibility: hidden; transition: opacity var(--eh-duration) var(--eh-ease), visibility 0s linear var(--eh-duration); }
 html.eh-drawer-open .eh-side__scrim { opacity: 1; visibility: visible; transition: opacity var(--eh-duration) var(--eh-ease), visibility 0s; }
 .eh-side__head { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-2); padding: 0 var(--eh-space-2) var(--eh-space-2); }
 .eh-side__scope { padding: var(--eh-space-2) var(--eh-space-3); font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
@@ -150,9 +158,10 @@ html.eh-drawer-open .eh-side__scrim { opacity: 1; visibility: visible; transitio
 .eh-side__inner { max-width: 80rem; }
 
 @media (min-width: 1024px) {
-    .eh-side { grid-template-columns: var(--eh-sidebar) minmax(0, 1fr); }
+    .eh-side { grid-template-columns: var(--eh-sidebar) minmax(0, 1fr); grid-template-rows: 1fr; }
     .eh-side__bar { display: none; }
-    .eh-side__nav { position: sticky; top: 0; height: 100dvh; width: auto; transform: none; visibility: visible; transition: none; border-right: 1px solid var(--eh-rule); }
+    .eh-side__nav, .js .eh-side__nav { position: fixed; inset: 0 auto 0 0; width: var(--eh-sidebar); transform: none; visibility: visible; transition: none; border-right: 1px solid var(--eh-rule); box-shadow: none; }
+    .eh-side__main { grid-column: 2; }
     .eh-side__nav .eh-side__close { display: none; }
     .eh-side__scrim { display: none; }
     .eh-side__main { padding: var(--eh-space-8) var(--eh-space-10) var(--eh-space-16); }
@@ -179,7 +188,7 @@ html.eh-drawer-open .eh-side__scrim { opacity: 1; visibility: visible; transitio
     .eh-guest { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
     .eh-guest__aside {
         display: flex; flex-direction: column; justify-content: space-between; gap: var(--eh-space-8);
-        position: sticky; top: 0; height: 100dvh; padding: var(--eh-space-10);
+        min-height: 100dvh; padding: var(--eh-space-10);
         background: var(--eh-accent); color: var(--eh-accent-ink);
     }
     .eh-guest__aside .eh-logo { color: var(--eh-accent-ink); }
