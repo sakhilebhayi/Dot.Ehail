@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Events\NotificationSending;
 use Illuminate\Notifications\Events\NotificationSent;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -48,6 +49,9 @@ class EhailCommsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // <x-comms::shell>, <x-comms::bell> and friends (resources/views/comms/components).
+        Blade::anonymousComponentPath(resource_path('views/comms/components'), 'comms');
+
         $this->limiters();
         $this->listeners();
         $this->modelHooks();
