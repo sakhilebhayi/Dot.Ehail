@@ -3,11 +3,9 @@
 use App\Domain\Geo\EhailGeoServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\BroadcastServiceProvider;
-use App\Providers\EhailDesignServiceProvider;
 use App\Providers\EhailDispatchServiceProvider;
 use App\Providers\EhailIntegrationServiceProvider;
 use App\Providers\EhailMoneyServiceProvider;
-use App\Providers\EhailPassengerServiceProvider;
 use App\Providers\EhailPricingServiceProvider;
 use App\Providers\EhailSafetyServiceProvider;
 use App\Providers\FortifyServiceProvider;
@@ -23,8 +21,8 @@ return [
     EhailSafetyServiceProvider::class,
     EhailMoneyServiceProvider::class,
     EhailDispatchServiceProvider::class,
-    EhailDesignServiceProvider::class,
-    EhailPassengerServiceProvider::class,
+    App\Providers\EhailDesignServiceProvider::class,
+    App\Providers\EhailPassengerServiceProvider::class,
     // Must stay last: binds every cross-domain seam to its real implementation (docs/R46_INTEGRATION.md).
     EhailIntegrationServiceProvider::class,
 ];
