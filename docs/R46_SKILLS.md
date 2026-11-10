@@ -76,3 +76,9 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | `security-audit` | invoked | the whole review | Guidance mode (D-1400): the boundary-and-result evidence bar for every finding, severity anchors, smallest source fix; three focused read-only hunters; mutation check that the router-wide test catches a removed policy check. Full-audit mode not run (it forbids fixing and writes outside the repo). |
 | `impeccable` | invoked | one "Download my data" row on the driver account page | `impeccable context` loaded PRODUCT.md and DESIGN.md; craft floor read; existing `<x-eh.list-row>` and the kit's `download` icon reused, same copy as the passenger row; checked at 375 px in the browser (passenger page) and by a feature test (driver page). No new styles. |
 | others | not used | | No new surface or visual change: the CSP work moved inline handlers to data attributes with identical behaviour; the hover tint on legacy ride rows moved from inline handlers to a two-line `.eh-row-link` hover rule in app.css (same colour). |
+
+## Perf (wave 3, 2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| all design skills | not used | | No UI was built or restyled: the driver console's polling loop changed behind the same screens (one sync request instead of three; same states, alerts and wording), and the ops status work is a JSON data source only (no panel). Nothing visual to put through impeccable or the taste checks. |
