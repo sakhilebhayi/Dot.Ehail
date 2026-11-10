@@ -8,7 +8,8 @@ use App\Http\Controllers\Ehail\Dispatch\OpsRideController;
 use App\Http\Controllers\Ehail\Dispatch\PassengerRideController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('ehail')->name('ehail.dispatch.')->group(function () {
+// Under /api/ so validation and auth failures render as JSON (bootstrap/app.php shouldRenderJsonWhen api/*).
+Route::prefix('api/ehail')->name('ehail.dispatch.')->group(function () {
     // Passenger
     Route::post('/rides', [PassengerRideController::class, 'store'])->middleware('throttle:ehail-ride-request')->name('rides.store');
     Route::get('/rides/{ride}/feed', [PassengerRideController::class, 'feed'])->middleware('throttle:ehail-feed')->name('rides.feed');
