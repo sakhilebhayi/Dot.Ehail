@@ -1,34 +1,17 @@
-<x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
+<x-guest-layout title="Reset your password">
+    <header>
+        <h1 class="eh-guest__title">Reset your password</h1>
+        <p class="eh-guest__lead">Enter your email and we will send you a link to choose a new password.</p>
+    </header>
 
-        <div class="mb-4 text-sm text-[var(--ink-soft)]">
-            {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
-        </div>
+    @session('status')
+        <x-eh.banner tone="go">{{ $value }}</x-eh.banner>
+    @endsession
 
-        @session('status')
-            <div class="mb-4 font-medium text-sm text-[var(--sage)]">
-                {{ $value }}
-            </div>
-        @endsession
-
-        <x-validation-errors class="mb-4" />
-
-        <form method="POST" action="{{ route('password.email') }}">
-            @csrf
-
-            <div class="block">
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            </div>
-
-            <div class="flex items-center justify-end mt-4">
-                <x-button>
-                    {{ __('Email Password Reset Link') }}
-                </x-button>
-            </div>
-        </form>
-    </x-authentication-card>
+    <form method="POST" action="{{ route('password.email') }}" class="eh-form" novalidate>
+        @csrf
+        <x-eh.field label="Email" name="email" type="email" id="email" required autofocus autocomplete="username" inputmode="email" />
+        <x-eh.button type="submit" size="lg" block>Email me a reset link</x-eh.button>
+    </form>
+    <p class="eh-small" style="margin:0"><a class="eh-link" href="{{ route('login') }}">Back to sign in</a></p>
 </x-guest-layout>

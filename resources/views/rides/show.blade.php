@@ -2,7 +2,7 @@
 <div style="padding:2rem 2.5rem 3rem;max-width:900px;">
     <div style="margin-bottom:1.5rem;">
         <a href="{{ route('rides.index') }}" style="font-size:0.78rem;color:#71717a;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-            <span class="material-symbols-rounded" style="font-size:16px;">arrow_back</span>
+            <x-eh.icon name="arrow-left" size="16" />
             Back to rides
         </a>
     </div>

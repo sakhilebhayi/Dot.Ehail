@@ -7,14 +7,14 @@
             <p style="font-size:0.8rem;color:#71717a;margin:0;">Search and browse every ride recorded on the platform.</p>
         </div>
         <a href="{{ route('dashboard') }}" style="font-size:0.78rem;color:#71717a;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-            <span class="material-symbols-rounded" style="font-size:16px;">arrow_back</span>
+            <x-eh.icon name="arrow-left" size="16" />
             Back to dashboard
         </a>
     </div>
 
     <form method="GET" action="{{ route('rides.index') }}" style="margin-bottom:1.5rem;display:flex;gap:0.6rem;max-width:480px;">
         <div style="position:relative;flex:1;">
-            <span class="material-symbols-rounded" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:17px;color:#52525b;">search</span>
+            <x-eh.icon name="search" size="17" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#52525b;" />
             <input aria-label="Search rides"
                 type="text"
                 name="q"
@@ -33,7 +33,7 @@
     <div class="dot-card" style="overflow:hidden;">
         @if($rides->isEmpty())
         <div style="padding:3.5rem 1rem;text-align:center;color:#71717a;">
-            <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:0.75rem;opacity:0.3;">local_taxi</span>
+            <x-eh.icon name="car" size="48" style="display:block;margin-bottom:0.75rem;opacity:0.3;" />
             @if($search !== '')
                 <p style="font-size:0.85rem;margin:0;">No rides match "{{ $search }}".</p>
             @else

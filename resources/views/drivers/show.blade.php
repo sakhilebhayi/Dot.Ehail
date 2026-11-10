@@ -2,7 +2,7 @@
 <div style="padding:2rem 2.5rem 3rem;max-width:1000px;">
     <div style="margin-bottom:1.5rem;">
         <a href="{{ route('dashboard') }}" style="font-size:0.78rem;color:#71717a;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-            <span class="material-symbols-rounded" style="font-size:16px;">arrow_back</span>
+            <x-eh.icon name="arrow-left" size="16" />
             Back to dashboard
         </a>
     </div>
@@ -137,7 +137,7 @@
         </div>
         @if($rides->isEmpty())
         <div style="padding:3rem;text-align:center;color:#71717a;">
-            <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:0.75rem;opacity:0.3;">local_taxi</span>
+            <x-eh.icon name="car" size="48" style="display:block;margin-bottom:0.75rem;opacity:0.3;" />
             <p style="font-size:0.85rem;margin:0;">No rides recorded for this driver yet.</p>
         </div>
         @else

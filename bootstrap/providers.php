@@ -19,4 +19,5 @@ return [
     EhailSafetyServiceProvider::class,
     EhailMoneyServiceProvider::class,
     EhailDispatchServiceProvider::class,
+    App\Providers\EhailDesignServiceProvider::class,
 ];

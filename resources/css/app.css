@@ -1,3 +1,15 @@
+/* Hallmark v2 stamp: theme custom (locked by DESIGN.md, "Route Line"), genre editorial for the landing, app scope for the shells; signature: the ride drawn as a route line from pickup dot to drop-off. */
+/* Critique: sign green and road-marking yellow on cool map paper; pill controls like a route line with round caps; type is Barlow, highway lettering. */
+
+/* Dot.Ehail design system (ds, R-46). Tokens and components first, then Tailwind for the Jetstream and legacy views. */
+@import "./ds/tokens.css";
+@import "./ds/fonts.css";
+@import "./ds/base.css";
+@import "./ds/components.css";
+@import "./ds/shells.css";
+@import "./ds/landing.css";
+@import "./ds/jetstream.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

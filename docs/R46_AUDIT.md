@@ -122,3 +122,14 @@ Method: read `App\Services\Ehail\FareCalculator`, `config/ehail.php`, `RideReque
 | Tariff values | n/a | R25 + R8.50/km config defaults | Example tariff labelled "review before launch"; real prices are an owner decision |
 
 Open after this branch: geo bridges need a smoke test once geo merges; dispatch must call `QuoteBinder`, `FareFinaliser`, `CancellationFeePolicy` and bind `EligibleSupplyCounter`; ops UI (wave 2) consumes the admin API; VAT status and real tariffs are owner decisions.
+### ds (design system, shells, landing, auth, PWA), 2026-11-10
+
+| Area | Class before | Finding | Done on feat/r46-ds |
+|---|---|---|---|
+| Visual identity | B | Three unrelated looks: dark app shell (Syne, Inter, sky blue), cream guest pages (Space Grotesk, Manrope, gold), Jetstream grey defaults | One system, "Route Line" (DESIGN.md, tokens `--eh-*`) |
+| Runtime hosts | B | Tailwind CDN script, Google Fonts, Material Symbols, Unsplash backgrounds, ui-avatars images, a Laravel logo in mail | All removed; fonts and icons self-hosted; tested |
+| App shells | M | One dark sidebar shell for every role | Passenger, driver, ops, business, fleet shells; role-aware navigation; /home role routing |
+| Landing | U | Generic marketing page with stock photography from a CDN | Rebuilt: fare breakdown first, honest safety copy, credited South African photographs |
+| Auth and errors | I | Working but off-brand; error pages loaded Google Fonts and Material Symbols | Restyled with the kit; no external hosts |
+| PWA | M | None | Manifest, shell-only service worker, offline page, icons from the logo |
+| Accessibility | I | 44px drawer targets existed; no skip link; mixed focus styles | Skip link, one focus ring, 44/56px targets, measured AA contrast both themes |

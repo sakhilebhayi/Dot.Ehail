@@ -7,7 +7,7 @@
             <p style="font-size:0.8rem;color:#71717a;margin:0;">Open requests any driver can claim. First to accept wins.</p>
         </div>
         <a href="{{ route('rides.index') }}" style="font-size:0.78rem;color:#71717a;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-            <span class="material-symbols-rounded" style="font-size:16px;">arrow_back</span>
+            <x-eh.icon name="arrow-left" size="16" />
             Back to rides
         </a>
     </div>
@@ -41,7 +41,7 @@
     <div class="dot-card" style="overflow:hidden;">
         @if($rides->isEmpty())
         <div style="padding:3.5rem 1rem;text-align:center;color:#71717a;">
-            <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:0.75rem;opacity:0.3;">local_taxi</span>
+            <x-eh.icon name="car" size="48" style="display:block;margin-bottom:0.75rem;opacity:0.3;" />
             <p style="font-size:0.85rem;margin:0;">No open ride requests for your vehicle right now.</p>
         </div>
         @else

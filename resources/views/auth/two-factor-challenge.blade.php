@@ -1,58 +1,20 @@
-<x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
+<x-guest-layout title="Two-step sign in">
+    <header>
+        <h1 class="eh-guest__title">Two-step sign in</h1>
+        <p class="eh-guest__lead">Enter the six-digit code from your authenticator app.</p>
+    </header>
 
-        <div x-data="{ recovery: false }">
-            <div class="mb-4 text-sm text-[var(--ink-soft)]" x-show="! recovery">
-                {{ __('Please confirm access to your account by entering the authentication code provided by your authenticator application.') }}
+    <x-validation-errors />
+
+    <form method="POST" action="{{ route('two-factor.login') }}" class="eh-form" novalidate>
+        @csrf
+        <x-eh.field label="Authentication code" name="code" id="code" inputmode="numeric" autocomplete="one-time-code" autofocus />
+        <details class="eh-panel eh-panel--quiet">
+            <summary style="cursor:pointer;font-weight:600;min-height:var(--eh-target);display:flex;align-items:center">Use a recovery code instead</summary>
+            <div style="margin-top:var(--eh-space-3)">
+                <x-eh.field label="Recovery code" name="recovery_code" id="recovery_code" autocomplete="one-time-code" hint="One of the codes you saved when you turned on two-step sign in." />
             </div>
-
-            <div class="mb-4 text-sm text-[var(--ink-soft)]" x-cloak x-show="recovery">
-                {{ __('Please confirm access to your account by entering one of your emergency recovery codes.') }}
-            </div>
-
-            <x-validation-errors class="mb-4" />
-
-            <form method="POST" action="{{ route('two-factor.login') }}">
-                @csrf
-
-                <div class="mt-4" x-show="! recovery">
-                    <x-label for="code" value="{{ __('Code') }}" />
-                    <x-input id="code" class="block mt-1 w-full" type="text" inputmode="numeric" name="code" autofocus x-ref="code" autocomplete="one-time-code" />
-                </div>
-
-                <div class="mt-4" x-cloak x-show="recovery">
-                    <x-label for="recovery_code" value="{{ __('Recovery Code') }}" />
-                    <x-input id="recovery_code" class="block mt-1 w-full" type="text" name="recovery_code" x-ref="recovery_code" autocomplete="one-time-code" />
-                </div>
-
-                <div class="flex items-center justify-end mt-4">
-                    <button type="button" class="text-sm text-[var(--ink-soft)] hover:text-[var(--ink)] underline cursor-pointer"
-                                    x-show="! recovery"
-                                    x-on:click="
-                                        recovery = true;
-                                        $nextTick(() => { $refs.recovery_code.focus() })
-                                    ">
-                        {{ __('Use a recovery code') }}
-                    </button>
-
-                    <button type="button" class="text-sm text-[var(--ink-soft)] hover:text-[var(--ink)] underline cursor-pointer"
-                                    x-cloak
-                                    x-show="recovery"
-                                    x-on:click="
-                                        recovery = false;
-                                        $nextTick(() => { $refs.code.focus() })
-                                    ">
-                        {{ __('Use an authentication code') }}
-                    </button>
-
-                    <x-button class="ms-4">
-                        {{ __('Log in') }}
-                    </x-button>
-                </div>
-            </form>
-        </div>
-    </x-authentication-card>
+        </details>
+        <x-eh.button type="submit" size="lg" block>Sign in</x-eh.button>
+    </form>
 </x-guest-layout>
