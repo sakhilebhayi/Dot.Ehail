@@ -194,6 +194,32 @@ class DriverAppPagesTest extends TestCase
         $this->actingAs($me)->get(route('drive.trips.show', $theirs))->assertNotFound();
     }
 
+    public function test_driver_lists_show_short_addresses_and_the_trip_page_keeps_the_full_one(): void
+    {
+        [$me] = $this->makeVerifiedDriver();
+        $ride = $this->makeRide(['driver_id' => $me->id, 'status' => 'completed', 'completed_at' => now(), 'currency' => 'ZAR', 'quoted_total_minor' => 6400,
+            'pickup_address' => 'Oxford Road, Rosebank, Johannesburg, 2196, South Africa', 'dropoff_address' => 'Juta Street, Braamfontein, Johannesburg, 2001, South Africa']);
+
+        $this->actingAs($me)->get(route('drive.trips'))->assertOk()
+            ->assertSee('Juta Street, Braamfontein')->assertSee('From Oxford Road, Rosebank')->assertDontSee('South Africa')->assertDontSee('2001');
+        $this->actingAs($me)->get(route('drive.trips.show', $ride))->assertOk()
+            ->assertSee('<h1>Juta Street, Braamfontein</h1>', false)
+            ->assertSee('Full addresses')->assertSee('Juta Street, Braamfontein, Johannesburg, 2001, South Africa');
+    }
+
+    public function test_offer_alert_settings_are_on_the_console_and_the_account_page(): void
+    {
+        [$me] = $this->makeVerifiedDriver();
+
+        foreach (['/drive', '/drive/account'] as $url) {
+            $xpath = $this->xpath($this->actingAs($me)->get($url)->assertOk());
+            $this->assertSame(1, $xpath->query('//section[@data-dr-alertset]//input[@name="sound"][@role="switch"]')->length, $url.': sound switch');
+            $this->assertSame(1, $xpath->query('//section[@data-dr-alertset]//input[@name="vibrate"][@role="switch"]')->length, $url.': vibration switch');
+            $this->assertSame(1, $xpath->query('//section[@data-dr-alertset]//button[@data-dr-test-sound]')->length, $url.': test sound');
+            $this->assertStringContainsString('Offers arrive while this screen is open', $xpath->query('//section[@data-dr-alertset]')->item(0)->textContent);
+        }
+    }
+
     public function test_cash_opt_in_is_the_money_domains_setting(): void
     {
         config(['money.cash.enabled' => true]);
