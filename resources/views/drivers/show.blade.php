@@ -1,7 +1,7 @@
 <x-app-layout>
 <div style="padding:2rem 2.5rem 3rem;max-width:1000px;">
     <div style="margin-bottom:1.5rem;">
-        <a href="{{ route('dashboard') }}" style="font-size:0.78rem;color:#71717a;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+        <a href="{{ route('dashboard') }}" style="font-size:0.78rem;color:#a1a1aa;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
             <x-eh.icon name="arrow-left" size="16" />
             Back to dashboard
         </a>
@@ -18,9 +18,9 @@
             <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.2rem;letter-spacing:-0.01em;">
                 {{ $driverProfile->user?->name ?? 'Driver' }}
             </h1>
-            <p style="font-size:0.78rem;color:#71717a;margin:0;">License {{ $licenceShown }} · ID {{ $idShown }}</p>
+            <p style="font-size:0.78rem;color:#a1a1aa;margin:0;">License {{ $licenceShown }} · ID {{ $idShown }}</p>
             @if(auth()->id() !== $driverProfile->user_id && $fullIdentity)
-            <p style="font-size:0.72rem;color:#52525b;margin:0.2rem 0 0;">Opening this profile shows the full numbers and is recorded in the audit log.</p>
+            <p style="font-size:0.72rem;color:#a1a1aa;margin:0.2rem 0 0;">Opening this profile shows the full numbers and is recorded in the audit log.</p>
             @endif
         </div>
         <div style="display:flex;align-items:center;gap:0.6rem;">
@@ -41,21 +41,21 @@
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
         <div class="dot-card" style="padding:1.25rem;">
-            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.5rem;">Rating</div>
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#a1a1aa;margin-bottom:0.5rem;">Rating</div>
             @if($ratingCount > 0)
             <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#f59e0b;" data-figure="rating-average">{{ number_format((float) $driverProfile->rating, 2) }}</div>
-            <div style="font-size:0.72rem;color:#71717a;margin-top:0.25rem;">out of 5 from <span data-figure="rating-count">{{ $ratingCount }}</span> {{ \Illuminate\Support\Str::plural('rating', $ratingCount) }}</div>
+            <div style="font-size:0.72rem;color:#a1a1aa;margin-top:0.25rem;">out of 5 from <span data-figure="rating-count">{{ $ratingCount }}</span> {{ \Illuminate\Support\Str::plural('rating', $ratingCount) }}</div>
             @else
             <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:#a1a1aa;line-height:2.25rem;">No ratings yet</div>
             @endif
         </div>
         <div class="dot-card" style="padding:1.25rem;">
-            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.5rem;">Total Rides</div>
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#a1a1aa;margin-bottom:0.5rem;">Total Rides</div>
             <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#f4f4f5;">{{ number_format($driverProfile->total_rides) }}</div>
         </div>
         <div class="dot-card" style="padding:1.25rem;">
-            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;margin-bottom:0.5rem;">Status</div>
-            <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:{{ $driverProfile->is_online ? '#4ade80' : '#71717a' }};">{{ $driverProfile->is_online ? 'Online' : 'Offline' }}</div>
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#a1a1aa;margin-bottom:0.5rem;">Status</div>
+            <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:{{ $driverProfile->is_online ? '#4ade80' : '#a1a1aa' }};">{{ $driverProfile->is_online ? 'Online' : 'Offline' }}</div>
         </div>
     </div>
 
@@ -63,13 +63,13 @@
         <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 1rem;">Documents</h3>
 
         @if($driverProfile->documents->isEmpty())
-        <p style="font-size:0.8rem;color:#71717a;margin:0 0 1rem;">No documents uploaded yet.</p>
+        <p style="font-size:0.8rem;color:#a1a1aa;margin:0 0 1rem;">No documents uploaded yet.</p>
         @else
         <div style="display:grid;gap:0.5rem;margin-bottom:1rem;">
             @foreach($driverProfile->documents as $document)
             <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
                 <a href="{{ route('drivers.documents.show', $document) }}" style="font-size:12px;color:#38bdf8;text-decoration:none;">
-                    {{ ucfirst(str_replace('_', ' ', $document->type)) }} — {{ $document->original_filename }}
+                    {{ ucfirst(str_replace('_', ' ', $document->type)) }}: {{ $document->original_filename }}
                 </a>
                 @if(auth()->id() === $driverProfile->user_id)
                 <form method="POST" action="{{ route('drivers.documents.destroy', $document) }}" data-eh-confirm="Delete this document?">
@@ -121,7 +121,7 @@
         <div style="padding:0.75rem 0;{{ $loop->last ? '' : 'border-bottom:1px solid rgba(255,255,255,0.06);' }}">
             <div style="display:flex;align-items:baseline;gap:0.6rem;margin-bottom:0.2rem;">
                 <span class="metric-val" style="font-size:0.85rem;color:#f59e0b;">{{ $entry->rating }}/5</span>
-                <span style="font-size:0.72rem;color:#71717a;">
+                <span style="font-size:0.72rem;color:#a1a1aa;">
                     {{ $canSeeRaters ? ($entry->rater?->name ?? 'A passenger') : 'A passenger' }} · {{ $entry->created_at->diffForHumans() }}
                 </span>
             </div>
@@ -136,7 +136,7 @@
             <h3 style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:#f4f4f5;margin:0;text-transform:uppercase;letter-spacing:0.08em;">Ride History</h3>
         </div>
         @if($rides->isEmpty())
-        <div style="padding:3rem;text-align:center;color:#71717a;">
+        <div style="padding:3rem;text-align:center;color:#a1a1aa;">
             <x-eh.icon name="car" size="48" style="display:block;margin-bottom:0.75rem;opacity:0.3;" />
             <p style="font-size:0.85rem;margin:0;">No rides recorded for this driver yet.</p>
         </div>
@@ -146,10 +146,10 @@
                 <tbody>
                     @foreach($rides as $ride)
                     <tr tabindex="0" data-eh-href="{{ route('rides.show', $ride) }}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);">
-                        <td style="padding:0.85rem 1.5rem;font-size:0.75rem;color:#71717a;">#{{ $ride->id }}</td>
+                        <td style="padding:0.85rem 1.5rem;font-size:0.75rem;color:#a1a1aa;">#{{ $ride->id }}</td>
                         <td style="padding:0.85rem 1rem;font-size:0.75rem;color:#f4f4f5;">{{ $rideAddresses ? $ride->pickup_address.' → '.$ride->dropoff_address : 'Trip' }}</td>
                         <td style="padding:0.85rem 1rem;font-size:0.72rem;color:#38bdf8;">{{ ucfirst(str_replace('_', ' ', $ride->status)) }}</td>
-                        <td style="padding:0.85rem 1.5rem;text-align:right;font-size:0.7rem;color:#71717a;">{{ $ride->created_at->diffForHumans() }}</td>
+                        <td style="padding:0.85rem 1.5rem;text-align:right;font-size:0.7rem;color:#a1a1aa;">{{ $ride->created_at->diffForHumans() }}</td>
                     </tr>
                     @endforeach
                 </tbody>

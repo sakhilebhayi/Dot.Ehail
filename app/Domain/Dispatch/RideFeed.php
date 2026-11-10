@@ -142,6 +142,7 @@ class RideFeed
             'pickup' => $this->place($ride->pickup_address, $ride->pickup_lat, $ride->pickup_lng),
             'dropoff' => $this->place($ride->dropoff_address, $ride->dropoff_lat, $ride->dropoff_lng),
             'category' => $ride->category_code ?? $ride->vehicle_type,
+            'category_name' => \App\Domain\Business\CategoryNames::for($ride->category_code ?? $ride->vehicle_type),
             'fare' => [
                 'quoted_total_minor' => $ride->quoted_total_minor,
                 'final_total_minor' => $ride->final_fare_minor,
@@ -244,6 +245,7 @@ class RideFeed
             'fare_total_minor' => $ride->quoted_total_minor,
             'currency' => $ride->currency,
             'category' => $ride->category_code ?? $ride->vehicle_type,
+            'category_name' => \App\Domain\Business\CategoryNames::for($ride->category_code ?? $ride->vehicle_type),
             'payment_method' => $ride->payment_method_kind,
             'passenger' => $this->passengerSummary($ride),
         ];

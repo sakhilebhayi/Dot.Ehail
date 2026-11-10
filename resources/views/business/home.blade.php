@@ -98,7 +98,7 @@
                     <section class="bz-panel bz-panel--flush" aria-labelledby="bz-recent-title">
                         <div class="bz-panel__head">
                             <h2 class="bz-panel__title" id="bz-recent-title">Latest trips</h2>
-                            <a class="eh-link" href="{{ route('business.trips') }}">All trips</a>
+                            <a class="eh-link eh-tap" href="{{ route('business.trips') }}">All trips</a>
                         </div>
                         @if ($recentTrips->isEmpty())
                             <div style="padding:0 var(--eh-space-5) var(--eh-space-5)">
@@ -150,7 +150,7 @@
                     <section class="bz-panel" aria-labelledby="bz-people-title">
                         <div class="bz-panel__head">
                             <h2 class="bz-panel__title" id="bz-people-title">People</h2>
-                            <a class="eh-link" href="{{ route('business.people') }}">Manage</a>
+                            <a class="eh-link eh-tap" href="{{ route('business.people') }}">Manage</a>
                         </div>
                         <dl class="bz-facts">
                             <div><dt>On the account</dt><dd>{{ $peopleCount }}</dd></div>

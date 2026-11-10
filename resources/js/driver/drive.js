@@ -4,6 +4,8 @@
 
 import { api, ApiError, fill } from './api.js';
 import { clockOffset, startCountdown } from './countdown.js';
+import { countdownCue, createAnnouncer } from '../eh/announce.js';
+import { isolate } from '../eh/isolate.js';
 import { destinationArea, formatClock, formatDistance, formatDuration, formatMoney, haversine } from './geometry.js';
 import { MotionMode, shareMoving } from './motion.js';
 import { navLink, NAV_APPS, readPrefs } from './nav.js';
@@ -47,8 +49,20 @@ const pin = new PinPad(4);
 
 function setText(sel, text) {
     const el = typeof sel === 'string' ? $(sel) : sel;
-    if (el) el.textContent = text ?? '';
+    // Writing the same words again would make a live region speak them again (D-1702).
+    if (el && el.textContent !== (text ?? '')) el.textContent = text ?? '';
 }
+
+// Screen-reader announcements: offers, countdown marks, PIN progress, SOS (throttled, never every tick).
+const say = createAnnouncer(document);
+let releaseOffer = null;
+let releaseSos = null;
+const homeFocus = () => {
+    const title = $('[data-dr-state-title]');
+    title?.setAttribute('tabindex', '-1');
+
+    return title;
+};
 
 function toast(message, tone = 'info') {
     if (typeof window.ehToast === 'function') window.ehToast(message, { tone });
@@ -70,9 +84,14 @@ function alertOn(key, tone, text) {
 function alertOff(key) {
     if (alerts.delete(key)) renderAlerts();
 }
+let alertsShown = '';
 function renderAlerts() {
     const box = $('[data-dr-alerts]');
     if (!box) return;
+    // The box is an assertive live region: rewrite it only when an alert really changed, never on every poll.
+    const signature = JSON.stringify([...alerts.values()]);
+    if (signature === alertsShown) return;
+    alertsShown = signature;
     box.replaceChildren(
         ...[...alerts.values()].map(({ tone, text }) => {
             const p = document.createElement('p');
@@ -451,6 +470,10 @@ function renderOffer() {
     state.shownOfferId = offer.id;
     card.hidden = false;
     document.documentElement.classList.add('dr-offer-open');
+    // The offer is modal: nothing behind it takes focus or is read until it closes (D-1703).
+    releaseOffer?.();
+    releaseOffer = isolate(card);
+    let lastSeconds = null;
     $('[data-dr-decline-form]').hidden = true;
     $('.dr-offer__actions').hidden = false;
 
@@ -468,7 +491,8 @@ function renderOffer() {
     setText('[data-dr-offer-trip]', tripBits || 'distance not known');
     setText('[data-dr-offer-dropoff]', policy.destination_detail === 'address' ? offer.dropoff?.address : `Towards ${destinationArea(offer.dropoff?.address) || 'the destination'} (full address after you accept)`);
 
-    const category = offer.category ? String(offer.category).replace(/_/g, ' ') : null;
+    // The catalogue name the passenger booked ("Comfort"), never the internal key ("standard").
+    const category = offer.category_name || (offer.category ? String(offer.category).replace(/_/g, ' ') : null);
     const tags = [category ? category.charAt(0).toUpperCase() + category.slice(1) : null, paymentLabel(offer.payment_method), offer.passenger?.first_name ? `${offer.passenger.first_name}, rating ${offer.passenger.rating_band}` : null].filter(Boolean);
     setText('[data-dr-offer-tags]', tags.join(' · '));
 
@@ -480,6 +504,9 @@ function renderOffer() {
         offsetMs: state.offset,
         onTick: (s, f) => {
             setText('[data-dr-countdown-seconds]', String(s));
+            const mark = countdownCue(lastSeconds, s);
+            lastSeconds = s;
+            if (mark) say.say(`${mark} seconds left to answer the offer.`, { topic: `offer-${offer.id}-${mark}`, assertive: mark <= 5 });
             if (fillEl) fillEl.style.transform = `scaleX(${f})`;
         },
         onExpire: () => {
@@ -499,8 +526,16 @@ function hideOffer() {
     state.stopCountdown = null;
     state.shownOfferId = null;
     const card = $('[data-dr-offer]');
+    const wasOpen = card && !card.hidden;
     if (card) card.hidden = true;
     document.documentElement.classList.remove('dr-offer-open');
+    // Focus goes back to the screen's title, never to the page's top or a control that is now hidden.
+    if (wasOpen) {
+        releaseOffer?.();
+        releaseOffer = null;
+        const focused = document.activeElement;
+        if (!focused || focused === document.body || focused.closest('[hidden]')) homeFocus()?.focus({ preventScroll: true });
+    }
 }
 
 async function loadOfferEarnings(offer) {
@@ -745,7 +780,7 @@ function renderPin() {
         b.textContent = pin.digits[i] ? '•' : '';
         b.dataset.filled = pin.digits[i] ? 'true' : 'false';
     });
-    $('[data-dr-pin-boxes]')?.setAttribute('aria-label', `${pin.digits.length} of 4 digits entered`);
+    setText('[data-dr-pin-said]', `${pin.digits.length} of 4 digits entered`);
     const locked = pin.locked();
     $$('[data-dr-key], [data-dr-key-back], [data-dr-key-clear]').forEach((b) => (b.disabled = locked));
     const start = $('[data-dr-start]');
@@ -955,7 +990,11 @@ function openSos() {
     $('[data-dr-sos-result]').hidden = true;
     let n = 3;
     setText('[data-dr-sos-count]', String(n));
+    releaseSos?.();
+    releaseSos = isolate(box);
     $('[data-dr-sos-cancel]').focus();
+    say.forget('sos');
+    say.say('Sending SOS in 3 seconds. Press Cancel to stop it.', { topic: 'sos', assertive: true });
     sosTimer = setInterval(() => {
         n--;
         setText('[data-dr-sos-count]', String(Math.max(0, n)));
@@ -972,13 +1011,16 @@ async function sendSos(rideId) {
     $('[data-dr-sos-result]').hidden = false;
     const list = $('[data-dr-sos-done]');
     list.replaceChildren(li('Sending to Dot.Ehail…'));
+    $('[data-dr-sos-result-title]')?.focus({ preventScroll: true });
     try {
         const { data } = await api(fill(urls.sos, rideId), { method: 'POST', body: f ? { lat: f.lat, lng: f.lng, accuracy_m: f.accuracy ?? undefined } : {} });
         const w = data.what_we_did;
         list.replaceChildren(...w.actions.map((a) => li(`${a.what}${a.status_text ? `: ${a.status_text}` : ''}${a.why ? ` (${a.why})` : ''}`)));
         setText('[data-dr-sos-not]', (w.not_done || []).join(' '));
+        say.say(`SOS sent. ${w.actions.length} things done. The list is on screen.`, { topic: 'sos', assertive: true });
     } catch {
         list.replaceChildren(li('The SOS could not reach Dot.Ehail (no connection). Call for help with the numbers below.'));
+        say.say('The SOS could not be sent. Call for help with the emergency numbers on screen.', { topic: 'sos', assertive: true });
     }
 }
 
@@ -1042,8 +1084,14 @@ document.addEventListener('click', (e) => {
     else if (t.matches('[data-dr-sos-cancel]')) {
         clearInterval(sosTimer);
         $('[data-dr-sos]').hidden = true;
+        releaseSos?.($('[data-dr-sos-open]'));
+        releaseSos = null;
         toast('SOS cancelled. Nothing was sent.', 'info');
-    } else if (t.matches('[data-dr-sos-close]')) $('[data-dr-sos]').hidden = true;
+    } else if (t.matches('[data-dr-sos-close]')) {
+        $('[data-dr-sos]').hidden = true;
+        releaseSos?.(homeFocus());
+        releaseSos = null;
+    }
 });
 
 document.addEventListener('submit', (e) => {
@@ -1054,6 +1102,13 @@ document.addEventListener('submit', (e) => {
         e.preventDefault();
         confirmCash(e.target);
     }
+});
+
+// Escape stops an SOS that is still counting down (the same as Cancel).
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const sos = $('[data-dr-sos]');
+    if (sos && !sos.hidden && !$('[data-dr-sos-arming]')?.hidden) $('[data-dr-sos-cancel]')?.click();
 });
 
 // Keyboard digits on the PIN pad (hardware keyboards, accessibility).
