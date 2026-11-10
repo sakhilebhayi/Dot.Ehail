@@ -5,26 +5,28 @@
     $tz = config('ehail_business.timezone');
 @endphp
 <tr>
-    <td>
+    <td class="bz-when" data-label="When">
         <time datetime="{{ $when?->toIso8601String() }}">{{ $when?->setTimezone($tz)->format('j M, H:i') }}</time>
         @if ($ride?->scheduled_for)<span class="bz-table__sub">Scheduled</span>@endif
     </td>
-    <td>
-        {{ $trip->riderLabel() }}
-        @if ($trip->isOnBehalf())<span class="bz-table__sub">Booked by {{ $trip->booker?->displayName() }}</span>@endif
+    <td data-label="Rider">
+        <span>{{ $trip->riderLabel() }}
+        @if ($trip->isOnBehalf())<span class="bz-table__sub">Booked by {{ $trip->booker?->displayName() }}</span>@endif</span>
     </td>
     @if ($showDepartment ?? true)
-        <td>{{ $trip->department_name ?? '' }}@if ($trip->cost_centre)<span class="bz-table__sub">{{ $trip->cost_centre }}</span>@endif @if (! $trip->department_name)<span class="eh-muted">None</span>@endif</td>
+        <td data-label="Department"><span>{{ $trip->department_name ?? '' }}@if ($trip->cost_centre)<span class="bz-table__sub">{{ $trip->cost_centre }}</span>@endif @if (! $trip->department_name)<span class="eh-muted">None</span>@endif</span></td>
     @endif
-    <td>{{ $trip->purpose ?? '' }}@if (! $trip->purpose)<span class="eh-muted">Not given</span>@endif</td>
-    <td>
+    <td data-label="Purpose"><span>@if ($trip->category_code)<span class="bz-table__sub" style="margin:0 0 2px">{{ \App\Domain\Business\CategoryNames::for($trip->category_code) }}</span>@endif{{ $trip->purpose ?? '' }}@if (! $trip->purpose)<span class="eh-muted">Not given</span>@endif</span></td>
+    @if ($showRoute ?? true)
+    <td data-label="Route">
         <div class="bz-route">
             <span><i class="bz-stop bz-stop--pickup" aria-hidden="true"></i><span class="eh-sr-only">From </span>{{ \Illuminate\Support\Str::limit($ride?->pickup_address ?? 'Pickup', 48) }}</span>
             <span><i class="bz-stop bz-stop--dropoff" aria-hidden="true"></i><span class="eh-sr-only">To </span>{{ \Illuminate\Support\Str::limit($ride?->dropoff_address ?? 'Drop-off', 48) }}</span>
         </div>
     </td>
-    <td>@if ($ride)<x-eh.status :status="$ride->status" />@endif</td>
-    <td class="num">
+    @endif
+    <td data-label="Ride">@if ($ride)<x-eh.status :status="$ride->status" />@endif</td>
+    <td class="num" data-label="Amount"><span>
         @if ($trip->status === 'charged')
             <x-eh.money :minor="$trip->charged_minor" :currency="$trip->currency" />
         @elseif ($trip->status === 'booked')
@@ -32,5 +34,5 @@
         @else
             <span class="eh-muted">Not billed</span>
         @endif
-    </td>
+    </span></td>
 </tr>

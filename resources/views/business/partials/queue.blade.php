@@ -7,7 +7,7 @@
                 <x-eh.avatar :name="$approval->riderLabel()" :size="36" />
                 <div class="bz-queue__who">
                     <p class="bz-queue__name">{{ $approval->riderLabel() }}</p>
-                    <p class="bz-queue__meta">{{ $approval->purpose ?: 'No purpose given' }}@if ($approval->category_code) · {{ ucfirst($approval->category_code) }}@endif @if ($approval->trip_at) · for {{ $approval->trip_at->setTimezone($tz)->format('j M H:i') }}@endif</p>
+                    <p class="bz-queue__meta">{{ $approval->purpose ?: 'No purpose given' }}@if ($approval->category_code) · {{ \App\Domain\Business\CategoryNames::for($approval->category_code) }}@endif @if ($approval->trip_at) · for {{ $approval->trip_at->setTimezone($tz)->format('j M H:i') }}@endif</p>
                 </div>
                 <div class="bz-queue__amount">
                     <x-eh.money :minor="$approval->estimate_minor" :currency="$approval->currency" />

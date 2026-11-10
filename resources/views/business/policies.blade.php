@@ -19,7 +19,7 @@
                             <span class="bz-rows__main">
                                 <p class="bz-rows__title">{{ $policy->name }} @if ($policy->is_default)<x-eh.badge tone="accent">Default</x-eh.badge>@endif</p>
                                 <p class="bz-rows__meta">
-                                    {{ $policy->allowed_categories ? implode(', ', array_map('ucfirst', $policy->allowed_categories)) : 'Any category' }}
+                                    {{ $policy->allowed_categories ? implode(', ', array_map([\App\Domain\Business\CategoryNames::class, 'for'], $policy->allowed_categories)) : 'Any category' }}
                                     · {{ $policy->hasHours() ? $policy::minutesLabel($policy->hours_start).' to '.$policy::minutesLabel($policy->hours_end) : 'any time' }}
                                     · {{ $policy->max_fare_minor !== null ? 'up to '.\App\Support\Ui\MoneyFormatter::format($policy->max_fare_minor, $account->currency) : 'no fare cap' }}
                                     @if ($policy->approval_above_minor !== null) · approval above {{ \App\Support\Ui\MoneyFormatter::format($policy->approval_above_minor, $account->currency) }}@endif

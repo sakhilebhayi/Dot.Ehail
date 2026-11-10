@@ -6,7 +6,7 @@
             <div class="bz-title__text">
                 <h1 class="eh-h1" style="margin:0">{{ $account->displayName() }}</h1>
                 @if ($can['view_overview'])
-                    <p class="bz-title__sub">{{ $monthLabel }} so far: {{ \App\Support\Ui\MoneyFormatter::format($spent, $cur) }} billed on {{ $rideCount }} {{ \Illuminate\Support\Str::plural('ride', $rideCount) }}@if ($pendingCount > 0), and {{ $pendingCount }} {{ \Illuminate\Support\Str::plural('ride', $pendingCount) }} waiting for your approval @endif.</p>
+                    <p class="bz-title__sub">{{ $monthLabel }} so far: {{ \App\Support\Ui\MoneyFormatter::format($spent, $cur) }} billed on {{ $rideCount }} {{ \Illuminate\Support\Str::plural('ride', $rideCount) }}{{ $pendingCount > 0 ? ', and '.$pendingCount.' '.\Illuminate\Support\Str::plural('ride', $pendingCount).' waiting for your approval' : '' }}.</p>
                 @else
                     <p class="bz-title__sub">You ride on this account as {{ strtolower($member->roleLabel()) }}. Choose the business profile when you request a ride and the trip is billed to {{ $account->displayName() }}.</p>
                 @endif
@@ -106,9 +106,9 @@
                             </div>
                         @else
                             <div class="bz-tablewrap">
-                                <table class="bz-table">
-                                    <thead><tr><th scope="col">When</th><th scope="col">Rider</th><th scope="col">Department</th><th scope="col">Purpose</th><th scope="col">Route</th><th scope="col">Ride</th><th scope="col" class="num">Amount</th></tr></thead>
-                                    <tbody>@foreach ($recentTrips as $trip)@include('business.partials.trip-row', ['trip' => $trip])@endforeach</tbody>
+                                <table class="bz-table bz-table--stack">
+                                    <thead><tr><th scope="col">When</th><th scope="col">Rider</th><th scope="col">Purpose</th><th scope="col">Ride</th><th scope="col" class="num">Amount</th></tr></thead>
+                                    <tbody>@foreach ($recentTrips as $trip)@include('business.partials.trip-row', ['trip' => $trip, 'showDepartment' => false, 'showRoute' => false])@endforeach</tbody>
                                 </table>
                             </div>
                         @endif
@@ -117,7 +117,7 @@
 
                 <div class="bz">
                     @if ($can['decide_approvals'])
-                        <section class="bz-panel" aria-labelledby="bz-queue-title">
+                        <section class="bz-panel {{ $pendingCount > 0 ? 'bz-first-on-phone' : '' }}" aria-labelledby="bz-queue-title">
                             <div class="bz-panel__head">
                                 <h2 class="bz-panel__title" id="bz-queue-title">Waiting for approval</h2>
                                 @if ($pendingCount > 0)<a class="eh-link" href="{{ route('business.approvals') }}">All {{ $pendingCount }}</a>@endif

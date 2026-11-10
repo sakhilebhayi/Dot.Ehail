@@ -17,17 +17,17 @@
                 @if ($statements->isEmpty())
                     <div style="padding:0 var(--eh-space-5) var(--eh-space-5)"><p class="bz-hint">The first statement is issued on the 1st of the month after the account's first billed ride.</p></div>
                 @else
-                    <div class="bz-tablewrap"><table class="bz-table">
+                    <div class="bz-tablewrap"><table class="bz-table bz-table--stack">
                         <thead><tr><th scope="col">Statement</th><th scope="col">Period</th><th scope="col">Due</th><th scope="col">State</th><th scope="col" class="num">Total</th><th scope="col" class="num">Still owed</th></tr></thead>
                         <tbody>
                             @foreach ($statements as $s)
                                 <tr>
-                                    <td><a class="eh-link" href="{{ route('business.statements.show', $s) }}">{{ $s->number }}</a></td>
-                                    <td>{{ $s->snapshot['period_label'] ?? $s->period }}</td>
-                                    <td>{{ $s->due_at->format('j M Y') }}</td>
-                                    <td><x-eh.badge :tone="$s->statusTone()">{{ $s->statusLabel() }}</x-eh.badge></td>
-                                    <td class="num"><x-eh.money :minor="$s->closing_minor" :currency="$s->currency" /></td>
-                                    <td class="num">@php($o = $owed($s))<x-eh.money :minor="$o" :currency="$s->currency" :muted="$o === 0" /></td>
+                                    <td data-label="Statement"><a class="eh-link" href="{{ route('business.statements.show', $s) }}">{{ $s->number }}</a></td>
+                                    <td data-label="Period">{{ $s->snapshot['period_label'] ?? $s->period }}</td>
+                                    <td data-label="Due">{{ $s->due_at->format('j M Y') }}</td>
+                                    <td data-label="State"><x-eh.badge :tone="$s->statusTone()">{{ $s->statusLabel() }}</x-eh.badge></td>
+                                    <td class="num" data-label="Total"><x-eh.money :minor="$s->closing_minor" :currency="$s->currency" /></td>
+                                    <td class="num" data-label="Still owed">@php($o = $owed($s))<x-eh.money :minor="$o" :currency="$s->currency" :muted="$o === 0" /></td>
                                 </tr>
                             @endforeach
                         </tbody>

@@ -19,7 +19,7 @@
             @if ($myTrips->isEmpty())
                 <div style="padding:0 var(--eh-space-5) var(--eh-space-5)"><p class="bz-hint">None yet. Request a ride and choose the {{ $account->displayName() }} business profile.</p></div>
             @else
-                <div class="bz-tablewrap"><table class="bz-table">
+                <div class="bz-tablewrap"><table class="bz-table bz-table--stack">
                     <thead><tr><th scope="col">When</th><th scope="col">Rider</th><th scope="col">Purpose</th><th scope="col">Route</th><th scope="col">Ride</th><th scope="col" class="num">Amount</th></tr></thead>
                     <tbody>@foreach ($myTrips as $trip)@include('business.partials.trip-row', ['trip' => $trip, 'showDepartment' => false])@endforeach</tbody>
                 </table></div>

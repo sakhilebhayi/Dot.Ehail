@@ -74,7 +74,7 @@
                     @else
                         <p class="bz-hint">Pays by {{ $account->billing_mode === 'card' ? 'company card' : 'EFT' }}.</p>
                     @endif
-                    @if ($account->status_note && $account->status === 'active')<x-eh.banner tone="caution">{{ $account->status_note }}</x-eh.banner>@endif
+                    @if ($account->billing_mode === 'card' && $account->status_note && $account->status === 'active')<x-eh.banner tone="caution">{{ $account->status_note }}</x-eh.banner>@endif
                 </div>
             </section>
         </div>

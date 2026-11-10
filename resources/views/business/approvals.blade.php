@@ -34,16 +34,16 @@
                     @if ($history->isEmpty())
                         <div style="padding:0 var(--eh-space-5) var(--eh-space-5)"><p class="bz-hint">No decisions yet.</p></div>
                     @else
-                        <div class="bz-tablewrap"><table class="bz-table">
+                        <div class="bz-tablewrap"><table class="bz-table bz-table--stack">
                             <thead><tr><th scope="col">Asked</th><th scope="col">Rider</th><th scope="col">Trip</th><th scope="col">Outcome</th><th scope="col" class="num">Fare asked</th></tr></thead>
                             <tbody>
                                 @foreach ($history as $a)
                                     <tr>
-                                        <td>{{ $a->created_at->setTimezone($tz)->format('j M, H:i') }}</td>
-                                        <td>{{ $a->riderLabel() }}<span class="bz-table__sub">{{ $a->purpose ?: 'No purpose given' }}</span></td>
-                                        <td><div class="bz-route"><span><i class="bz-stop bz-stop--pickup" aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit($a->pickup_address ?? 'Pickup', 40) }}</span><span><i class="bz-stop bz-stop--dropoff" aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit($a->dropoff_address ?? 'Drop-off', 40) }}</span></div></td>
-                                        <td><x-eh.badge :tone="$a->statusTone()">{{ $a->statusLabel() }}</x-eh.badge>@if ($a->decision_note)<span class="bz-table__sub">{{ $a->decision_note }}</span>@endif</td>
-                                        <td class="num"><x-eh.money :minor="$a->estimate_minor" :currency="$a->currency" /></td>
+                                        <td data-label="Asked">{{ $a->created_at->setTimezone($tz)->format('j M, H:i') }}</td>
+                                        <td data-label="Rider"><span>{{ $a->riderLabel() }}<span class="bz-table__sub">{{ $a->purpose ?: 'No purpose given' }}</span></span></td>
+                                        <td data-label="Trip"><div class="bz-route"><span><i class="bz-stop bz-stop--pickup" aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit($a->pickup_address ?? 'Pickup', 40) }}</span><span><i class="bz-stop bz-stop--dropoff" aria-hidden="true"></i>{{ \Illuminate\Support\Str::limit($a->dropoff_address ?? 'Drop-off', 40) }}</span></div></td>
+                                        <td data-label="Outcome"><span><x-eh.badge :tone="$a->statusTone()">{{ $a->statusLabel() }}</x-eh.badge>@if ($a->decision_note)<span class="bz-table__sub">{{ $a->decision_note }}</span>@endif</span></td>
+                                        <td class="num" data-label="Fare asked"><x-eh.money :minor="$a->estimate_minor" :currency="$a->currency" /></td>
                                     </tr>
                                 @endforeach
                             </tbody>

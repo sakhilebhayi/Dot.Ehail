@@ -27,7 +27,7 @@
             @if ($trips->isEmpty())
                 <div style="padding:var(--eh-space-5)"><p class="bz-hint">No trips match. @if (array_filter($filters))<a class="eh-link" href="{{ route('business.trips') }}">Show all trips</a>.@endif</p></div>
             @else
-                <div class="bz-tablewrap"><table class="bz-table">
+                <div class="bz-tablewrap"><table class="bz-table bz-table--stack">
                     <thead><tr><th scope="col">When</th><th scope="col">Rider</th><th scope="col">Department</th><th scope="col">Purpose</th><th scope="col">Route</th><th scope="col">Ride</th><th scope="col" class="num">Amount</th></tr></thead>
                     <tbody>@foreach ($trips as $trip)@include('business.partials.trip-row', ['trip' => $trip])@endforeach</tbody>
                 </table></div>

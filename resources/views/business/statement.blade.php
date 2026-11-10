@@ -77,7 +77,7 @@
             <x-eh.money :minor="abs($statement->closing_minor)" :currency="$cur" />
         </div>
         @if ($owed !== $statement->closing_minor && $statement->closing_minor > 0)
-            <p class="bz-doc__note" style="text-align:right">Still owed today: {{ \App\Support\Ui\MoneyFormatter::format($owed, $cur) }}</p>
+            <p class="bz-doc__owed">Still owed today: {{ \App\Support\Ui\MoneyFormatter::format($owed, $cur) }}</p>
         @endif
         @if (! empty($s['credits']))
             <h2 class="eh-h3" style="margin-top:var(--eh-space-8)">Payments in this period</h2>

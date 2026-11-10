@@ -103,7 +103,11 @@ if (form) {
         }) });
         if (!ok || body.available === false) { say(body.message || 'Fares are not available for this trip right now.'); return; }
         const options = (body.options || []).filter((o) => o.quote_id);
-        if (options.length === 0) { say('No ride category is available here right now.'); return; }
+        if (options.length === 0) {
+            const first = (body.unavailable || [])[0];
+            say(first?.reason === 'no_supply' ? 'No drivers are available near the pickup right now. Try again in a few minutes.' : (first?.message || 'No ride category is available here right now.'));
+            return;
+        }
         say(`${options.length} ${options.length === 1 ? 'category' : 'categories'} for this trip. Choose one.`);
         options.forEach((option, i) => {
             const label = document.createElement('label');
@@ -175,7 +179,7 @@ if (form) {
         askBtn.disabled = false;
         if (ok) {
             askBtn.hidden = true;
-            showReasons(`Asked. An approver has until ${new Date(body.approval.decide_by).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to decide; you get an email. Then get a fresh fare here and request.`, [], 'go');
+            showReasons(`Asked. An approver has until ${new Date(body.approval.decide_by).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false })} to decide; you get an email. Then get a fresh fare here and request.`, [], 'go');
         } else {
             showReasons(body.message || 'The request could not be sent.', body.reasons || [], 'stop');
         }
