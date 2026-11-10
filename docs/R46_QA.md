@@ -87,7 +87,7 @@ Every row is asserted by the spec named, in Chrome, against the integrated app; 
 | 3 | Context captured | Pass | ride state, registration and driver position in `context` |
 | 4 | Contact alerted | Pass | email (SMTP stub) with a live share link and 10111; SMS (BulkSMS stub); the share page shows the car; notification rows `sent` for mail and SMS, in-app alert to operations `sent` |
 | 5 | Ops console and escalation | Pass | the incident in `/ops/safety`; after the critical timer (time moved back) `ehail:safety-sweep` escalates to level 1, the on-call email arrives, the timeline says so |
-| 6 | Acknowledge, resolve, "what we did" | Pass | acknowledged from the escalated incident's page (D-1617), resolved with `user_safe` and a note; the passenger page says resolved, lists only what happened, has a "What we did not do" section and never claims police were called |
+| 6 | Acknowledge, resolve, "what we did" | Pass | acknowledged from the escalated incident's page (D-1617), resolved with `user_safe` and a note; the passenger page says when it was resolved (D-1618), lists only what happened, has a "What we did not do" section and never claims police were called |
 
 ### 3.4 Pricing (spec 04)
 
@@ -135,6 +135,7 @@ RESULTS_PLACEHOLDER
 | Medium | The open board hid R-46 rides a vehicle may serve (legacy tiers vs category rules) and the accept policy refused the claim (D-1610) | `0b76101` | DispatcherTest `test_the_board_lists_exactly_the_rides_the_drivers_vehicle_may_claim` |
 | Medium | On the driver console, a trip accepted while the last trip's summary was up stayed hidden behind the summary (D-1614) | `44bcf31` | E2E pricing journey (second trip) |
 | Medium | An escalated safety incident could not be acknowledged from its ops page (D-1617) | `e96ca1f` | OpsPagesTest `test_an_escalated_incident_can_still_be_acknowledged_from_its_page` |
+| Medium | A resolved incident still read "Our operations team has seen this" on the passenger's page, with "I am safe now" offered (D-1618) | `350da58` | PassengerPagesJourneyTest `test_sos_leads_to_what_we_did_with_the_emergency_numbers` |
 | Low | The wrong PIN that locks entry said only "not right" (D-1611) | `2a9579a` | RideStateMachineTest |
 | Low | Receipts did not say why a recalculated fare differs from the quote (D-1616) | `42201ed` | Acceptance PricingJourneyTest |
 | Low | Legal pages had no h1 (D-1612) | `46df89c` | LegalPagesHeadingTest |
