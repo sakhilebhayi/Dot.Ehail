@@ -34,6 +34,8 @@
         <env name="PAYSTACK_SECRET_KEY" value="" force="true"/>
         <env name="PAYSTACK_PUBLIC_KEY" value="" force="true"/>
         <env name="PAYSTACK_ALLOW_LIVE" value="false" force="true"/>
+        <!-- No test may reach a real map provider: tests that need one fake it and set the driver themselves. -->
+        <env name="EHAIL_ROUTING_DRIVER" value="none" force="true"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
