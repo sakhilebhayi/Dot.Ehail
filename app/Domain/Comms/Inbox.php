@@ -27,9 +27,46 @@ final class Inbox
         return $query->cursorPaginate($perPage);
     }
 
+    /**
+     * Unread things needing the person's attention (D-1909): every unread notification about one ride counts once
+     * (they share the collapse key "ride-<id>": searching, assigned, arriving, arrived, started, completed), so six
+     * trips are six, not thirty-six. Notifications without a collapse key count one each.
+     */
     public function unreadCount(User $user): int
     {
-        return $user->unreadNotifications()->count();
+        return self::countFor($user);
+    }
+
+    public static function countFor(User $user): int
+    {
+        $keys = [];
+        $loose = 0;
+
+        $user->unreadNotifications()->getQuery()->reorder()->select(['id', 'data'])->orderByDesc('created_at')->limit(1000)
+            ->each(function (DatabaseNotification $n) use (&$keys, &$loose): void {
+                $key = ((array) $n->data)['collapse_key'] ?? null;
+                is_string($key) && $key !== '' ? $keys[$key] = true : $loose++;
+            });
+
+        return $loose + count($keys);
+    }
+
+    /** The badge text: the count, capped at "9+". */
+    public static function badge(int $count): ?string
+    {
+        return $count <= 0 ? null : ($count > 9 ? '9+' : (string) $count);
+    }
+
+    /**
+     * The person opened this ride's page: its progress notifications are seen (marked read). Returns how many.
+     */
+    public static function markRideSeen(User $user, int $rideId): int
+    {
+        $ids = $user->unreadNotifications()->getQuery()->reorder()->select(['id', 'data'])->limit(200)->get()
+            ->filter(fn (DatabaseNotification $n) => (((array) $n->data)['collapse_key'] ?? null) === 'ride-'.$rideId)
+            ->pluck('id');
+
+        return $ids->isEmpty() ? 0 : DatabaseNotification::query()->whereIn('id', $ids)->update(['read_at' => now()]);
     }
 
     /**
