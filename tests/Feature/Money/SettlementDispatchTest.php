@@ -47,7 +47,8 @@ class SettlementDispatchTest extends TestCase
 
     private function drainQueue(): void
     {
-        $this->artisan('queue:work', ['--stop-when-empty' => true, '--tries' => 3, '--sleep' => 0])->assertSuccessful();
+        // In-process worker: the whole suite's memory counts against its limit, so the 128 MB default stops it (exit 12).
+        $this->artisan('queue:work', ['--stop-when-empty' => true, '--tries' => 3, '--sleep' => 0, '--memory' => 4096])->assertSuccessful();
     }
 
     private function queuedSettlements(int $rideId): int
