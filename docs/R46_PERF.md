@@ -105,7 +105,38 @@ Forked-process races already in the suite (dispatch `ConcurrencyTest`: accept vs
 
 ## 4. Front end on a throttled mid-range Android profile
 
-{{FRONTEND}}
+`scripts/load/frontend.mjs` (headless system Chrome through playwright-core, no project dependency): 390 x 844 touch phone, CPU throttled 4x, DevTools "Fast 3G" (562.5 ms RTT, 1.47 Mbps down, 675 kbps up). Served by the built-in server, which does **not** compress: the byte counts below are uncompressed, so the load times are pessimistic against a host that gzips CSS/JS (Vite's gzip sizes are given beside them). Map tiles were answered locally (never fetched from the OSM tile server by automation) and counted.
+
+### 4.1 Load
+
+| Page | FCP | LCP | DOMContentLoaded | load | TBT | TTI (estimate) | JS on the wire (uncompressed) | Map |
+|---|---|---|---|---|---|---|---|---|
+| Driver console `/drive` | 2.58 s | 2.58 s | 2.57 s | 3.39 s | 0 ms | 2.58 s | 5 files, 42 KB (console entry 10.4 KB gzip) | not loaded (opens on request: `map-*.js` 2.5 KB + Leaflet 43 KB gzip, lazy) |
+| Passenger booking `/ride` | 2.69 s | 4.60 s | 3.02 s | 3.76 s | 0 ms | 3.02 s | 12 files, 207 KB (booking entry 8.1 KB gzip) | loaded with the page by design (map-first booking): Leaflet 145 KB raw / 43 KB gzip; 17 tiles |
+| Passenger live trip `/ride/trips/{id}` | 2.68 s | 2.68 s | 3.02 s | 4.29 s | 10 ms | 5.12 s | 12 files, 205 KB | loaded (the trip map); 18 tiles |
+
+CSS is the largest item on every page (147 to 165 KB uncompressed in 3 to 5 files) and fonts 89 to 110 KB: gzip at the web server and HTTP caching of the hashed build files are what matter for repeat visits; the JS budget (150 KB gzip first view) holds on both entries.
+
+### 4.2 Steady state and memory over 30 minutes
+
+| | Driver console, online, GPS moving 15 m/s, 30 min (last 5 emulated hidden) | Passenger watching a live trip, driver approaching then driving, 30 min |
+|---|---|---|
+| Requests a minute | 16.7 (one sync each 3-4 s; nothing else) | 11.1 (feed every 5 s in the car; safety check-ins every 20 s at first) |
+| Main-thread CPU a minute (at 4x throttle; real phone about a quarter) | 181 ms (0.3 %) | 542 ms (0.9 %): the map marker glide and redraws |
+| JS heap after GC, first -> last minute | 0.96 -> 1.01 MB (flat after minute 9) | 1.90 -> 1.96 MB (flat after minute 13) |
+| DOM nodes / event listeners | 971 -> 971 / 25 -> 25 | 1,405 -> 1,407 / 149 -> 149 |
+| Verdict | no leak (timers, listeners and the map are not accumulating) | no leak |
+| Hidden tab | the console keeps its own interval while hidden (it must, for offers; D-907 states the web-app limit) and leaves throttling to the browser | the passenger feed client stops polling while hidden and polls at once when visible (passenger-owned, unchanged) |
+
+### 4.3 Data per hour (what a driver pays for)
+
+| Measured with real request and response headers, HTTP/1.1, uncompressed | Down | Up | Total |
+|---|---|---|---|
+| Driver online, sync protocol (browser, 30 min) | 0.66 MB/h | 1.54 MB/h | **2.2 MB/h** (22 MB a 10-hour shift) |
+| Passenger in a live trip (browser, 30 min) | 0.84 MB/h | 0.87 MB/h | 1.7 MB/h |
+| Driver online, before (load runner, HTTP/1.1 payload model) | 6.3 MB/h | 1.9 MB/h | ~8.2 MB/h |
+
+Upload is now larger than download because every request carries its headers: about 1.5 KB, of which ~760 bytes are the two cookies (session and XSRF-TOKEN) and the rest the browser's own headers. Over HTTP/2 those repeated headers are compressed (HPACK) to a few bytes after the first request, so serving the site over HTTP/2 (Apache mod_http2 or LiteSpeed on cPanel) would bring the driver to roughly 0.8 MB/h. Answers themselves are already small (a no-change sync is ~70 bytes of JSON; 745 bytes with headers on the wire, D-1506). Tile caching through the service worker was considered and not built (D-1515): the browser's HTTP cache already keeps tiles for as long as the tile server allows, and the driver console shows no map unless asked.
 
 ## 5. Server hot paths at volume
 
@@ -149,7 +180,13 @@ Thresholds (`config/ehail_perf.php`, env overridable): queue lag 120 s degraded 
 
 ## 7. Tests
 
-{{TESTS}}
+| Suite | Before (branch point) | After (trunk merged, this branch) |
+|---|---|---|
+| PHP, SQLite | 1,294 tests: 1,286 passed, 8 skipped | **1,388 tests: 1,380 passed, 8 skipped, 0 failed** (trunk's passenger and security work included) |
+| PHP, PostgreSQL (`bin/test-pgsql.sh`, throwaway `ehail_integ_*`) | hung in two forked race tests (fleet, business: the children shared the parent's socket) | 1,388 tests: 1,380 passed, 7 skipped, 1 failed: dispatch's `FairnessTest` idle-credit assertion (60.1 s vs 60.0 s) while the 30-minute browser soak loaded the machine; it passes when re-run (5/5) |
+| JS | 54 | 80 (2 new: sync batching in `driver-throttle.test.mjs`; the rest arrived with the passenger merge) |
+
+New PHP tests (`tests/Feature/Perf`, 31): `DriverSyncTest` (9: positions recorded and mirrored, unchanged feed null while the position moves, offer and saver poll hints, offline refused without creating rows, heartbeat writes at most every 20 s, trail on a trip, validation shape, guests), `RequestCostBudgetTest` (7), `HotPathBudgetTest` (2), `HealthTest` (8: polling-mode report, cron heartbeat, queue lag and failed jobs, silent drivers, overdue searching rides, open circuit, webhook lag, notification failures, alert once per worsening and on recovery, no pretend alerting, ops data source permissions), `ReliabilityScenariosTest` (4), `WebhookBurstConcurrencyTest` (1, forked processes). Changed tests: `RealtimeHealthCheckTest` (mode field; polling-mode cases replace "degraded when the driver is not reverb", D-1508), `RolePermissionMatrixTest` (`ops.status` row), fleet and business race harnesses (own connection per contender on PostgreSQL). `route:cache` and `view:cache` pass; `npm run build` passes.
 
 ## 8. Changes in other owners' files (small, focused, each tested)
 
