@@ -111,7 +111,25 @@ Forked-process races already in the suite (dispatch `ConcurrencyTest`: accept vs
 
 `scripts/load/hotpaths.sh <sqlite|pgsql> <outdir>`: 2,000 drivers (600 online with fresh positions), 3,000 passengers, 10,000 rides over 60 days with 64,000 timeline events and 9,250 offers, 50,000 trip points (half past the 90-day retention), 25,600 ledger entries, 30 trips in progress and 20 rides searching. Medians of 15 runs; endpoints through the full HTTP stack (database session, rate limiter, middleware), the rest at the domain call the page makes.
 
-{{HOTPATHS}}
+| Hot path | Statements (writes) | SQLite median | PostgreSQL median | Before the fixes (SQLite) |
+|---|---|---|---|---|
+| driver sync, idle (no position), full HTTP stack | 16 (2: limiter counter, global tick lock) | 2.0 ms | 6.7 ms | n/a (new) |
+| driver sync on a trip, one position | 30 (5: latest row, availability, trip point, limiter, lock) | 4.6 ms | 13.5 ms | |
+| driver feed (old GET) | 15 (2) | 1.7 ms | 6.5 ms | |
+| passenger feed, trip in progress | 17 (2) | 2.3 ms | 7.0 ms | |
+| quote, one category (routing stub, HTTP) | 24 (4) | 53 ms | 53 ms | |
+| compare, every category | 45 (10) | 50 ms | 65 ms | 69 statements, 270 ms |
+| categories available at a point | 31 (2) | 49 ms | 68 ms | 55 statements, 271 ms |
+| nearby drivers, 4 km of 600 online | 1 | 2.4 ms | 6.0 ms | |
+| dispatch tick, 20 searching rides (20 offers made) | 748 (180), 37 a ride | 197 ms | 483 ms | 1,946 statements (97 a ride), 226 ms |
+| ops live board payload (600 online, 50 live rides) | 9 | 79 ms | 86 ms | |
+| ops insights, uncached (30 days, 10k rides; the page caches it) | 16 (1) | 118 ms | 237 ms | PostgreSQL 1,871 ms (revenue join without an index, D-1516) |
+| ops status (health report) | 17 | 1.2 ms | 5.0 ms | |
+| retention: `ehail:geo-purge`, 25,000 old points of 500 trips | | 2.1 s | 2.4 s | |
+
+Timings in this final pass were taken while the 30-minute browser soak (section 4) ran on the same machine, so they are a little higher than in a quiet run (the first quiet pass: tick 130 ms, compare 118 ms, sync 1.6 ms). Statement counts do not depend on load.
+
+The tick's remaining cost per ride is mostly the road ETA for ranking: dispatch asks the router for the five closest candidates (`EHAIL_ETA_ROUTER_MAX_CANDIDATES`, 400 ms budget); with a paid routing provider that is up to five billable route calls per offer round, because a moving driver's position rarely hits the 10-minute route cache. Set it to 1 or 2 to cut provider cost (the straight-line rank is labelled and already used as the fallback); left at dispatch's default here (owner decision).
 
 Fixes from this table (D-1511, D-1512): the dispatch tick read the category, its vehicle rules and each candidate's profile once per candidate (3 statements per candidate, 60 of a ~97-statement tick); category availability (the booking screen's "which categories have drivers") re-read and re-checked every nearby driver for every category. Budgets pinned by `HotPathBudgetTest` (statements must not grow with drivers or categories; a tick's only per-candidate cost is the road ETA for at most five candidates, already capped by dispatch) and `RequestCostBudgetTest` (an idle sync runs at most 11 statements and writes nothing; a moving one at most 19 statements and 4 writes; the session row is rewritten at most once a minute while polling; poll answers carry no cookie or CSP overhead; the passenger feed asks the router at most twice a minute; feed polls never touch the ride row).
 

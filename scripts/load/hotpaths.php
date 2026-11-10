@@ -55,9 +55,9 @@ function point(float $radiusM): array
     return [CENTRE[0] + $r * cos($a) / 111320, CENTRE[1] + $r * sin($a) / (111320 * cos(deg2rad(CENTRE[0])))];
 }
 
-function insertChunks(string $table, array $rows): void
+function insertChunks(string $table, array $rows, int $size = 500): void
 {
-    foreach (array_chunk($rows, 500) as $chunk) {
+    foreach (array_chunk($rows, $size) as $chunk) {
         DB::table($table)->insert($chunk);
     }
 }
@@ -190,11 +190,12 @@ if ($command === 'seed') {
             $entries[] = ['journal_id' => $j->id, 'account' => $type, 'account_type' => $type, 'debit_minor' => $d, 'credit_minor' => $c, 'currency' => 'ZAR', 'created_at' => $now];
         }
         if (count($entries) >= 6000) {
-            insertChunks('ledger_entries', $entries);
+            // Whole journals per statement: PostgreSQL checks each journal balances (ledger trigger).
+            insertChunks('ledger_entries', $entries, 498);
             $entries = [];
         }
     }
-    insertChunks('ledger_entries', $entries);
+    insertChunks('ledger_entries', $entries, 498);
 
     // Live work for the hot paths: 20 searching rides and 30 trips in progress.
     $dispatcher = app(Dispatcher::class);
@@ -211,6 +212,11 @@ if ($command === 'seed') {
         Ride::create(['passenger_id' => $passengerIds[$k], 'active_passenger_id' => $passengerIds[$k], 'status' => 'searching', 'pickup_address' => 'Waiting pickup', 'dropoff_address' => 'Waiting drop-off',
             'pickup_lat' => $plat, 'pickup_lng' => $plng, 'dropoff_lat' => CENTRE[0], 'dropoff_lng' => CENTRE[1], 'vehicle_type' => 'standard', 'category_code' => 'standard', 'currency' => 'ZAR',
             'quoted_total_minor' => 8000, 'requested_at' => now()->subSeconds(30), 'search_started_at' => now()->subSeconds(30)]);
+    }
+
+    // A live database has current planner statistics (autovacuum); a bulk load has none until analysed.
+    if ($connection === 'pgsql') {
+        DB::statement('ANALYZE');
     }
 
     $counts = [];
@@ -319,7 +325,10 @@ $results['dispatch tick (20 searching rides)'] = measure(function () {
 $results['ops live board payload (600 online, 50 live rides)'] = measure(function () use ($operator) {
     return count(app(LiveBoard::class)->payload($operator)['drivers']) > 0 ? 200 : 500;
 }, 8);
-$results['ops insights (30 days, 10k rides)'] = measure(function () {
+$results['ops insights, uncached (30 days, 10k rides)'] = measure(function () {
+    // The page caches the result; this measures the computation behind it.
+    cache()->flush();
+    QueryProbe::$queries = QueryProbe::$writes = 0;
     app(InsightsQuery::class)->all(CarbonImmutable::now()->subDays(30)->startOfDay(), CarbonImmutable::now(), 'day');
 
     return 200;

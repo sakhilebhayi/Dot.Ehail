@@ -13,6 +13,7 @@ use App\Providers\EhailIntegrationServiceProvider;
 use App\Providers\EhailMoneyServiceProvider;
 use App\Providers\EhailOpsServiceProvider;
 use App\Providers\EhailPassengerServiceProvider;
+use App\Providers\EhailPerfServiceProvider;
 use App\Providers\EhailPricingServiceProvider;
 use App\Providers\EhailSafetyServiceProvider;
 use App\Providers\EhailSecurityServiceProvider;
@@ -37,7 +38,7 @@ return [
     EhailOpsServiceProvider::class,
     EhailCommsServiceProvider::class,
     EhailSecurityServiceProvider::class,
-    App\Providers\EhailPerfServiceProvider::class,
+    EhailPerfServiceProvider::class,
     // Must stay last: binds every cross-domain seam to its real implementation (docs/R46_INTEGRATION.md).
     EhailIntegrationServiceProvider::class,
 ];
