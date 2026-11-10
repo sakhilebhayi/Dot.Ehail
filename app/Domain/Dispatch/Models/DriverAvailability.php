@@ -2,6 +2,7 @@
 
 namespace App\Domain\Dispatch\Models;
 
+use App\Domain\Rides\FeedVersion;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Eloquent\Model;
@@ -41,6 +42,7 @@ class DriverAvailability extends Model
         'last_lng' => 'float',
         'heading' => 'integer',
         'version' => 'integer',
+        'location_version' => 'integer',
     ];
 
     protected static function booted(): void
@@ -50,7 +52,11 @@ class DriverAvailability extends Model
                 return;
             }
 
-            $row->version = max((int) now()->getPreciseTimestamp(3), (int) $row->version + 1);
+            $row->version = FeedVersion::next((int) $row->version);
+
+            if ($row->isDirty('last_location_at') || $row->isDirty('last_lat') || $row->isDirty('last_lng')) {
+                $row->location_version = FeedVersion::next((int) $row->location_version);
+            }
         });
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Dispatch\Models;
 
+use App\Domain\Rides\FeedVersion;
 use App\Models\Ride;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -44,7 +45,13 @@ class RideOffer extends Model
         'radius_m' => 'integer',
         'pickup_distance_m' => 'integer',
         'pickup_eta_s' => 'integer',
+        'version' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(fn (RideOffer $offer) => $offer->version = FeedVersion::next((int) $offer->version));
+    }
 
     public function ride(): BelongsTo
     {

@@ -10,6 +10,7 @@ use App\Domain\Dispatch\Data\EtaEstimate;
 use App\Domain\Dispatch\Exceptions\DispatchRefused;
 use App\Domain\Dispatch\Models\DriverAvailability;
 use App\Domain\Dispatch\Models\RideOffer;
+use App\Domain\Rides\FeedVersion;
 use App\Domain\Rides\RideStateMachine;
 use App\Domain\Rides\RideTimeline;
 use App\Domain\Rides\TransitionOptions;
@@ -208,7 +209,7 @@ class Dispatcher
 
     public function markSeen(RideOffer $offer, User $driver): void
     {
-        RideOffer::whereKey($offer->id)->where('driver_id', $driver->id)->whereNull('seen_at')->update(['seen_at' => now(), 'updated_at' => now()]);
+        RideOffer::whereKey($offer->id)->where('driver_id', $driver->id)->whereNull('seen_at')->update(['seen_at' => now(), 'updated_at' => now(), 'version' => FeedVersion::now()]);
     }
 
     /**
@@ -320,7 +321,7 @@ class Dispatcher
                 ->where('expires_at', '>', now())
                 ->update([
                     'status' => RideOffer::ACCEPTED, 'pending_ride_id' => null, 'pending_driver_id' => null,
-                    'responded_at' => now(), 'updated_at' => now(),
+                    'responded_at' => now(), 'updated_at' => now(), 'version' => FeedVersion::now(),
                 ]);
 
             if ($claimed !== 1) {
@@ -340,7 +341,7 @@ class Dispatcher
                 vehicle: $offer->vehicle_id ? Vehicle::find($offer->vehicle_id) : null,
                 context: ['offer_id' => $offer->id, 'round' => $offer->round],
             ));
-        });
+        }, 3);
     }
 
     private function decline(RideOffer $offer, User $driver, ?string $reason): Ride
@@ -351,7 +352,7 @@ class Dispatcher
             $n = RideOffer::whereKey($offer->id)->where('driver_id', $driver->id)->where('status', RideOffer::PENDING)
                 ->update([
                     'status' => RideOffer::DECLINED, 'pending_ride_id' => null, 'pending_driver_id' => null,
-                    'responded_at' => now(), 'reason' => $reason ?? 'declined', 'updated_at' => now(),
+                    'responded_at' => now(), 'reason' => $reason ?? 'declined', 'updated_at' => now(), 'version' => FeedVersion::now(),
                 ]);
 
             if ($n === 1) {
@@ -361,7 +362,7 @@ class Dispatcher
             }
 
             return $ride;
-        });
+        }, 3);
 
         $this->tickRide($declined);
 
@@ -381,7 +382,7 @@ class Dispatcher
 
             $n = RideOffer::whereKey($lapsed->id)->where('status', RideOffer::PENDING)->where('expires_at', '<=', now())->update([
                 'status' => RideOffer::EXPIRED, 'pending_ride_id' => null, 'pending_driver_id' => null,
-                'responded_at' => now(), 'reason' => 'timeout', 'updated_at' => now(),
+                'responded_at' => now(), 'reason' => 'timeout', 'updated_at' => now(), 'version' => FeedVersion::now(),
             ]);
 
             if ($n === 1) {
@@ -390,7 +391,7 @@ class Dispatcher
                     'offer_id' => $lapsed->id, 'driver_id' => $lapsed->driver_id,
                 ]);
             }
-        });
+        }, 3);
     }
 
     /**
@@ -448,7 +449,7 @@ class Dispatcher
                 ]);
 
                 return $offer;
-            });
+            }, 3);
         } catch (UniqueConstraintViolationException) {
             // The driver received another ride's offer a moment ago (or another
             // tick placed this ride's offer): try the next candidate.

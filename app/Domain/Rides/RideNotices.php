@@ -25,6 +25,7 @@ class RideNotices
         $reasonLabel = $options->reason !== null ? CancelReason::tryFrom($options->reason)?->label() : null;
 
         match (true) {
+            $to === RideStatus::DriverAssigned && $actor === RideActor::Operator => $this->operatorAssigned($ride, $from, $user, $options),
             $to === RideStatus::DriverAssigned => app(EhailNotifyEvents::class)->rideAccepted($ride->load(['passenger', 'driver'])),
 
             $to === RideStatus::CancelledByPassenger => $ride->driver_id !== null
@@ -95,6 +96,17 @@ class RideNotices
             : $this->notify($ride->passenger, $ride, 'ride_requeued', 'Your driver cancelled',
                 "Your driver for ride #{$ride->id} cancelled. We are looking for another driver.",
                 'driver', $reasonLabel);
+    }
+
+    private function operatorAssigned(Ride $ride, RideStatus $from, ?User $operator, TransitionOptions $options): void
+    {
+        AuditLog::record('ride.operator_assigned', $operator, $ride, [
+            'previous_status' => $from->value,
+            'driver_id' => $ride->driver_id,
+            'reason' => $options->note,
+        ]);
+
+        app(EhailNotifyEvents::class)->rideAccepted($ride->load(['passenger', 'driver']));
     }
 
     private function operatorReassigned(Ride $ride, RideStatus $from, ?User $operator, TransitionOptions $options): void

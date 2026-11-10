@@ -7,6 +7,7 @@ use App\Domain\Dispatch\Contracts\DriverLocationSink;
 use App\Domain\Dispatch\Exceptions\DispatchRefused;
 use App\Domain\Dispatch\Models\DriverAvailability;
 use App\Domain\Dispatch\Models\RideOffer;
+use App\Domain\Rides\FeedVersion;
 use App\Models\DriverProfile;
 use App\Models\Ride;
 use App\Models\User;
@@ -71,7 +72,7 @@ class AvailabilityService
             $profile?->forceFill(['is_online' => true])->save();
 
             return $row;
-        });
+        }, 3);
     }
 
     public function goOffline(User $driver): DriverAvailability
@@ -90,7 +91,7 @@ class AvailabilityService
             DriverProfile::withoutGlobalScope('user')->where('user_id', $driver->id)->update(['is_online' => false]);
 
             return $row;
-        });
+        }, 3);
     }
 
     public function pause(User $driver): DriverAvailability
@@ -106,7 +107,7 @@ class AvailabilityService
             $row->forceFill(['state' => DriverAvailability::PAUSED, 'since' => now()])->save();
 
             return $row;
-        });
+        }, 3);
     }
 
     public function resume(User $driver): DriverAvailability
@@ -203,7 +204,7 @@ class AvailabilityService
 
         $updated = RideOffer::whereKey($offer->id)->where('status', RideOffer::PENDING)->update([
             'status' => RideOffer::WITHDRAWN, 'pending_ride_id' => null, 'pending_driver_id' => null,
-            'responded_at' => now(), 'reason' => $reason, 'updated_at' => now(),
+            'responded_at' => now(), 'reason' => $reason, 'updated_at' => now(), 'version' => FeedVersion::now(),
         ]);
 
         if ($updated === 1) {

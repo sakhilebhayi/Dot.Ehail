@@ -14,5 +14,7 @@ final class DriverPosition
         public readonly Carbon $recordedAt,
         public readonly ?int $vehicleId = null,
         public readonly ?int $straightLineM = null,
+        // FeedVersion of this position (microseconds), for the passenger feed.
+        public readonly int $version = 0,
     ) {}
 }

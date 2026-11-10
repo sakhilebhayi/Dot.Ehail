@@ -82,6 +82,6 @@ class TripPin
             AuditLog::record('ride.pin_rejected', $driver, $locked, ['attempt' => $attempts, 'locked' => $lock]);
 
             return false;
-        }) ?: throw new DispatchRefused('pin_wrong', 'That PIN is not right. Ask the passenger for the 4-digit PIN in their app.');
+        }, 3) ?: throw new DispatchRefused('pin_wrong', 'That PIN is not right. Ask the passenger for the 4-digit PIN in their app.');
     }
 }

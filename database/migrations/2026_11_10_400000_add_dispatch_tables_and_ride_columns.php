@@ -24,7 +24,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('rides', function (Blueprint $table) {
-            // Feed version: epoch milliseconds of the last change, strictly increasing per ride.
+            // Feed version: epoch microseconds of the last change, strictly increasing per ride (FeedVersion).
             $table->unsignedBigInteger('version')->default(0);
             $table->unsignedBigInteger('active_driver_id')->nullable()->unique('rides_active_driver_unique');
             $table->unsignedBigInteger('active_passenger_id')->nullable()->unique('rides_active_passenger_unique');
@@ -94,6 +94,7 @@ return new class extends Migration
             $table->unsignedBigInteger('current_ride_id')->nullable()->unique('driver_availability_current_ride_unique');
             $table->timestamp('last_trip_ended_at')->nullable();
             $table->unsignedBigInteger('version')->default(0);
+            $table->unsignedBigInteger('location_version')->default(0);
             $table->timestamps();
 
             $table->index(['state', 'last_lat', 'last_lng'], 'driver_availability_state_position_index');
@@ -120,10 +121,12 @@ return new class extends Migration
             $table->timestamp('expires_at');
             $table->timestamp('responded_at')->nullable();
             $table->string('reason', 40)->nullable();
+            $table->unsignedBigInteger('version')->default(0);
             $table->timestamps();
 
             $table->index(['ride_id', 'status']);
             $table->index(['driver_id', 'status', 'responded_at']);
+            $table->index(['driver_id', 'version']);
         });
 
         Schema::create('ride_events', function (Blueprint $table) {

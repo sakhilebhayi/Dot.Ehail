@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Dispatch\Models\RideOffer;
+use App\Domain\Rides\FeedVersion;
 use App\Domain\Rides\Models\RideEvent;
 use App\Enums\PaymentStatus;
 use App\Enums\RideActor;
@@ -91,9 +92,8 @@ class Ride extends Model
                 return;
             }
 
-            // Feed version: epoch ms, strictly increasing per ride, so a poller's
-            // "since" comparison never misses a change made in the same millisecond.
-            $ride->version = max((int) now()->getPreciseTimestamp(3), (int) $ride->version + 1);
+            // Feed version (App\Domain\Rides\FeedVersion): epoch microseconds, strictly increasing per ride.
+            $ride->version = FeedVersion::next((int) $ride->version);
 
             $ride->syncConcurrencyGuards();
         });

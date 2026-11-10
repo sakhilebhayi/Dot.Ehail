@@ -47,12 +47,12 @@ class AvailabilityDriverLocator implements DriverLocator
 
     public function latest(int $driverUserId): ?DriverPosition
     {
-        $row = DriverAvailability::where('user_id', $driverUserId)->first(['user_id', 'vehicle_id', 'last_lat', 'last_lng', 'heading', 'last_location_at']);
+        $row = DriverAvailability::where('user_id', $driverUserId)->first(['user_id', 'vehicle_id', 'last_lat', 'last_lng', 'heading', 'last_location_at', 'location_version']);
 
         if ($row === null || $row->last_lat === null || $row->last_location_at === null) {
             return null;
         }
 
-        return new DriverPosition($row->user_id, $row->last_lat, $row->last_lng, $row->heading, $row->last_location_at, $row->vehicle_id);
+        return new DriverPosition($row->user_id, $row->last_lat, $row->last_lng, $row->heading, $row->last_location_at, $row->vehicle_id, null, (int) $row->location_version);
     }
 }

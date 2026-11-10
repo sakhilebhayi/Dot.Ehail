@@ -63,7 +63,7 @@ class RideStateMachine
         $options ??= new TransitionOptions;
 
         try {
-            return DB::transaction(fn () => $this->apply($ride, $to, $actor, $user, $options));
+            return DB::transaction(fn () => $this->apply($ride, $to, $actor, $user, $options), 3);
         } catch (UniqueConstraintViolationException $e) {
             throw new InvalidRideTransition($this->uniqueMessage($e, $actor));
         }
@@ -214,7 +214,7 @@ class RideStateMachine
             'release_driver' => $previousDriverId !== null ? $this->availability->releaseFromRide($previousDriverId, $ride) : null,
             'withdraw_offers' => RideOffer::where('ride_id', $ride->id)->where('status', RideOffer::PENDING)->update([
                 'status' => RideOffer::WITHDRAWN, 'pending_ride_id' => null, 'pending_driver_id' => null,
-                'responded_at' => now(), 'reason' => 'ride_'.$ride->status, 'updated_at' => now(),
+                'responded_at' => now(), 'reason' => 'ride_'.$ride->status, 'updated_at' => now(), 'version' => FeedVersion::now(),
             ]),
             default => null,
         };

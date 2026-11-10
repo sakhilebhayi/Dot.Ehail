@@ -12,6 +12,7 @@ Artisan::command('inspire', function () {
 // Needs the host's one-minute cron entry: * * * * * php artisan schedule:run
 // withoutOverlapping() keeps a slow run from notifying the same passenger twice.
 Schedule::command('ehail:expire-rides')->everyMinute()->withoutOverlapping();
+Schedule::command('ehail:dispatch-tick')->everyMinute()->withoutOverlapping(); // R-46 dispatch (docs/R46_DISPATCH.md)
 
 // Signed aggregate snapshots to Dot.Analytics just after the UTC day turns over (taken_at is the
 // start of that UTC day, so a re-run the same day is the same snapshot upstream). Does nothing
