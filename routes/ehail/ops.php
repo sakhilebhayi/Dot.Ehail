@@ -34,7 +34,6 @@ Route::middleware('operator')->prefix('ops')->name('ops.')->group(function () {
     Route::get('/drivers', [DriverController::class, 'index'])->name('drivers');
     Route::get('/drivers/{driver}', [DriverController::class, 'show'])->whereNumber('driver')->name('drivers.show');
     Route::post('/drivers/{driver}/suspend', [DriverController::class, 'suspend'])->whereNumber('driver')->name('drivers.suspend');
-    Route::post('/drivers/{driver}/application', [DriverController::class, 'application'])->whereNumber('driver')->name('drivers.application');
     Route::post('/suspensions/{suspension}/lift', [DriverController::class, 'lift'])->name('drivers.lift');
     Route::post('/suspensions/{suspension}/appeal-decision', [DriverController::class, 'decideAppeal'])->name('drivers.appeal-decide');
 

@@ -3,7 +3,7 @@
     $docTypes = (array) config('ehail_safety.markets.ZA.document_types', []);
     $finding = match (true) {
         $suspension !== null => ['Suspended since '.$suspension->suspended_at->format('d M Y').': '.$suspension->reasonLabel().($suspension->appeal_status === 'open' ? '. An appeal is waiting for a decision.' : '.'), 'stop'],
-        $profile->status === 'pending' => ['Application pending'.($profile->fleet_id ? ' with fleet '.$profile->fleet?->name.' (the fleet owner decides)' : ' as an independent driver').'.', 'caution'],
+        $profile->status === 'pending' => ['Application pending with fleet '.($profile->fleet?->name ?? $profile->fleet_id).': the fleet owner decides.', 'caution'],
         default => [$factsAll['completed_all'].' completed '.\Illuminate\Support\Str::plural('trip', $factsAll['completed_all']).'; '.$facts30['completed_window'].' in the last 30 days.', null],
     };
 @endphp
@@ -111,21 +111,6 @@
             </div>
 
             <div class="ops-stack">
-                @if ($canDecideApplication)
-                    <section class="ops-panel" aria-labelledby="app-h">
-                        <div class="ops-panel__head"><h2 id="app-h">Application</h2><span class="ops-panel__meta">independent driver</span></div>
-                        <p class="ops-note ops-note--small" style="margin-bottom:var(--eh-space-3)">Approval does not put the driver online: their documents must also be approved.</p>
-                        <form class="ops-act" method="POST" action="{{ route('ops.drivers.application', $driver->id) }}">
-                            @csrf
-                            <x-eh.field label="Reason (needed to reject)" name="reason" type="textarea" maxlength="500" id="app-reason" :optional="true" />
-                            <div class="ops-act__row">
-                                <x-eh.button type="submit" size="sm" name="decision" value="approve">Approve</x-eh.button>
-                                <x-eh.button type="submit" size="sm" variant="secondary" name="decision" value="reject">Reject</x-eh.button>
-                            </div>
-                        </form>
-                    </section>
-                @endif
-
                 <section class="ops-panel" aria-labelledby="susp-h">
                     <div class="ops-panel__head"><h2 id="susp-h">Suspension</h2></div>
                     @if ($suspension)
@@ -191,7 +176,7 @@
                     <div class="ops-panel__head"><h2 id="profile-h">Profile</h2></div>
                     <dl class="ops-facts">
                         <dt>Email</dt><dd>{{ $driver->email }}</dd>
-                        <dt>Fleet</dt><dd>{{ $profile->fleet?->name ?? 'Independent' }}</dd>
+                        <dt>Fleet</dt><dd>{{ $profile->fleet?->name ?? 'Fleet '.$profile->fleet_id }} {{ $profile->fleet && $profile->fleet->status !== 'approved' ? '(not approved yet)' : '' }}</dd>
                         <dt>Joined</dt><dd class="num">{{ $profile->created_at?->format('d M Y') }}</dd>
                         @if ($profile->reviewed_at)<dt>Reviewed</dt><dd class="num">{{ $profile->reviewed_at->format('d M Y') }}</dd>@endif
                         @if ($profile->rejected_reason)<dt>Rejected because</dt><dd>{{ $profile->rejected_reason }}</dd>@endif

@@ -30,7 +30,7 @@
                                 <td><a href="{{ route('ops.drivers.show', $profile->user_id) }}">{{ $profile->user?->name ?? 'User '.$profile->user_id }}</a><span class="sub">{{ $profile->user?->email }}</span></td>
                                 <td>@include('ops.partials.profile-status', ['status' => $profile->status])</td>
                                 <td>@include('ops.partials.state', ['row' => $availability[$profile->user_id] ?? null])</td>
-                                <td>{{ $profile->fleet?->name ?? 'Independent' }}</td>
+                                <td>{{ $profile->fleet?->name ?? 'Fleet '.$profile->fleet_id }}</td>
                                 <td class="num">{{ number_format((int) ($completed[$profile->user_id] ?? 0)) }}</td>
                                 <td class="num">{{ $profile->created_at?->format('d M Y') }}</td>
                             </tr>

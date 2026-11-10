@@ -28,7 +28,6 @@ final class RoutePermissions
         'ops.drivers.lift' => [P::DRIVERS_SUSPEND],
         'ops.drivers.appeal' => [P::DRIVERS_SUSPEND],
         'ops.drivers.appeal-decide' => [P::DRIVERS_SUSPEND],
-        'ops.drivers.application' => [P::FLEETS_REVIEW],
         'ops.verification' => [P::VERIFICATION_REVIEW],
         'ops.verification.*' => [P::VERIFICATION_REVIEW],
         'ops.safety.access' => [P::AUDIT_VIEW],

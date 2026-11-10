@@ -18,13 +18,13 @@
                     <p class="ops-none" style="padding:var(--eh-space-5)">No application is pending.</p>
                 @else
                     <div class="ops-tablewrap"><table class="ops-table">
-                        <thead><tr><th>Applicant</th><th>Applied as</th><th>Who decides</th><th class="num">Waiting</th></tr></thead>
+                        <thead><tr><th>Applicant</th><th>Fleet</th><th>Who decides</th><th class="num">Waiting</th></tr></thead>
                         <tbody>
                             @foreach ($profiles as $profile)
                                 <tr>
                                     <td><a href="{{ route('ops.drivers.show', $profile->user_id) }}">{{ $profile->user?->name }}</a><span class="sub">{{ $profile->user?->email }}</span></td>
-                                    <td>{{ $profile->fleet ? 'Fleet driver, '.$profile->fleet->name : 'Independent driver' }}</td>
-                                    <td>{{ $profile->fleet ? 'The fleet owner' : 'Operations' }}</td>
+                                    <td>{{ $profile->fleet?->name ?? 'Fleet '.$profile->fleet_id }}</td>
+                                    <td>{{ $profile->fleet?->status === 'approved' ? 'The fleet owner' : 'Operations approves the fleet first' }}</td>
                                     <td class="num"><span class="ops-timer" data-ops-since="{{ $profile->created_at?->toIso8601String() }}" data-ops-warn="172800">{{ \App\Domain\Ops\Support\Durations::short((int) $profile->created_at?->diffInSeconds(now(), true)) }}</span></td>
                                 </tr>
                             @endforeach

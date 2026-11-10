@@ -15,7 +15,8 @@ class AvailabilitySpanRecorder
 {
     public function saved(DriverAvailability $availability): void
     {
-        if (! $availability->wasRecentlyCreated && ! $availability->wasChanged('state')) {
+        $created = $availability->wasRecentlyCreated && $availability->getChanges() === [];
+        if (! $created && ! $availability->wasChanged('state')) {
             return;
         }
 

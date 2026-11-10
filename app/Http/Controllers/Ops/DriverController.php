@@ -19,13 +19,13 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
  * Drivers: the list, one driver's record (trips, factual stats, rating band, earnings and payouts for roles that may
- * see money, documents for reviewers), suspensions with reasons and the appeal path, and independent applications.
+ * see money, documents for reviewers), and suspensions with reasons and the appeal path. Applications are decided
+ * by the driver's fleet owner (every driver profile belongs to a fleet); operations approves the fleets.
  */
 class DriverController extends Controller
 {
@@ -92,7 +92,6 @@ class DriverController extends Controller
             'history' => DriverSuspension::query()->where('user_id', $user->id)->with(['suspender:id,name', 'lifter:id,name'])->orderByDesc('id')->get(),
             'reasons' => SuspensionService::REASONS,
             'canSuspend' => $access->can($viewer, OpsPermission::DRIVERS_SUSPEND),
-            'canDecideApplication' => $access->can($viewer, OpsPermission::FLEETS_REVIEW) && $profile->status === 'pending' && $profile->fleet_id === null,
             'documents' => $access->can($viewer, OpsPermission::VERIFICATION_REVIEW)
                 ? VerificationDocument::query()->where('user_id', $user->id)->orderByDesc('id')->get() : null,
             'earnings' => $earnings,
@@ -129,40 +128,5 @@ class DriverController extends Controller
         $suspensions->decideAppeal($request->user(), $suspension, $validated['decision'], $validated['note']);
 
         return redirect()->route('ops.drivers.show', $suspension->user_id)->with('status', $validated['decision'] === 'upheld' ? 'Appeal upheld: suspension lifted.' : 'Appeal rejected: suspension stays.');
-    }
-
-    /** An independent driver's application (no fleet). Fleet drivers are decided by their fleet owner. */
-    public function application(Request $request, int $driver, OpsAudit $audit): RedirectResponse
-    {
-        $validated = $request->validate([
-            'decision' => ['required', Rule::in(['approve', 'reject'])],
-            'reason' => ['nullable', 'string', 'max:500', 'required_if:decision,reject'],
-        ]);
-
-        $profile = DriverProfile::withoutGlobalScope('user')->where('user_id', $driver)->firstOrFail();
-        if ($profile->status !== 'pending') {
-            return back()->withErrors(['status' => 'Only a pending application can be decided.']);
-        }
-        if ($profile->fleet_id !== null) {
-            return back()->withErrors(['status' => 'This driver applied through a fleet; the fleet owner decides.']);
-        }
-        if ($profile->user_id === $request->user()->id) {
-            return back()->withErrors(['status' => 'You cannot decide your own application.']);
-        }
-
-        DB::transaction(function () use ($profile, $validated, $request): void {
-            $profile->forceFill([
-                'status' => $validated['decision'] === 'approve' ? 'approved' : 'rejected',
-                'rejected_reason' => $validated['decision'] === 'reject' ? $validated['reason'] : null,
-                'reviewed_by' => $request->user()->id,
-                'reviewed_at' => now(),
-            ])->save();
-        });
-
-        $audit->action('ops.driver_application_'.($validated['decision'] === 'approve' ? 'approved' : 'rejected'), $request->user(), $profile, ['reason' => $validated['reason'] ?? null]);
-
-        return redirect()->route('ops.drivers.show', $driver)->with('status', $validated['decision'] === 'approve'
-            ? 'Application approved. The driver still needs approved documents before going online.'
-            : 'Application rejected.');
     }
 }
