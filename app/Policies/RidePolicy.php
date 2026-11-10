@@ -77,10 +77,18 @@ class RidePolicy
             ->where('user_id', $user->id)
             ->first();
 
-        return $profile !== null
-            && $profile->status === 'approved'
-            && $profile->is_online
-            && $profile->activeVehicleFor($ride->vehicle_type) !== null;
+        if ($profile === null || $profile->status !== 'approved' || ! $profile->is_online) {
+            return false;
+        }
+
+        // An R-46 ride by its category's vehicle rules (as the board lists it and the claim guards it).
+        if ($ride->category_code !== null) {
+            $vehicle = $profile->activeVehicle();
+
+            return $vehicle !== null && $dispatcher->vehicleMayClaim($vehicle, $ride);
+        }
+
+        return $profile->activeVehicleFor($ride->vehicle_type) !== null;
     }
 
     /**

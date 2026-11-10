@@ -11,6 +11,7 @@ use App\Domain\Rides\Events\RideExpired;
 use App\Domain\Rides\Events\RideRequested;
 use App\Enums\CancelReason;
 use App\Enums\RideStatus;
+use App\Models\DriverProfile;
 use App\Models\Ride;
 use App\Models\User;
 use App\Services\Ehail\InvalidRideTransition;
@@ -273,6 +274,22 @@ class DispatcherTest extends TestCase
         $this->assertSame($claimer->id, $ride->fresh()->driver_id);
         $this->assertSame(0, RideOffer::where('ride_id', $ride->id)->where('status', RideOffer::PENDING)->count());
         $this->assertNotNull(RideOffer::where('ride_id', $ride->id)->where('driver_id', $offered->id)->whereIn('status', [RideOffer::WITHDRAWN, RideOffer::EXPIRED])->first());
+    }
+
+    public function test_the_board_lists_exactly_the_rides_the_drivers_vehicle_may_claim(): void
+    {
+        // Economy admits standard cars (category vehicle rules); a standard car got Economy offers but the board,
+        // filtering on the legacy vehicle_type tiers, hid the same ride from it (QA, D-1610).
+        config(['ehail_dispatch.open_board_after_seconds' => 45]);
+        $claimer = $this->onlineDriverAt(...$this->northOfPickup(9000));
+        $economy = $this->requestRide(null, ['category' => 'economy']);
+        $this->assertSame('economy', $economy->vehicle_type);
+        $this->travel(46)->seconds();
+
+        $listed = $this->dispatcher()->boardFor(DriverProfile::withoutGlobalScope('user')->where('user_id', $claimer->id)->firstOrFail()->activeVehicle());
+        $this->assertSame([$economy->id], $listed->pluck('id')->all());
+        $this->actingAs($claimer)->get(route('rides.available'))->assertOk()->assertSee(route('rides.accept', $economy), false);
+        $this->actingAs($claimer)->post(route('rides.accept', $economy))->assertRedirect(route('rides.show', $economy));
     }
 
     public function test_a_negative_board_delay_switches_the_board_off(): void

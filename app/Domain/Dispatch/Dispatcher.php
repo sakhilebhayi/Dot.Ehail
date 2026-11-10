@@ -253,12 +253,25 @@ class Dispatcher
 
         $cutoff = now()->subSeconds($after);
 
+        // The same eligibility the claim applies: an Economy ride a standard car may claim is listed for it (D-1610).
         return Ride::select(['id', 'status', 'pickup_address', 'dropoff_address', 'vehicle_type', 'category_code', 'estimated_fare', 'quoted_total_minor', 'currency', 'created_at'])
             ->whereIn('status', [RideStatus::Requested->value, RideStatus::Searching->value])
             ->whereNull('driver_id')
-            ->whereIn('vehicle_type', $vehicle->servableTiers())
             ->when($after > 0, fn ($q) => $q->whereRaw('coalesce(search_started_at, requested_at, created_at) <= ?', [$cutoff]))
-            ->latest()->get();
+            ->latest()->limit(200)->get()
+            ->filter(fn (Ride $ride) => $this->vehicleMayClaim($vehicle, $ride))
+            ->values();
+    }
+
+    /**
+     * Who may claim a ride from the board (listing and the accept policy agree with the claim's guard): an R-46
+     * ride by its category's vehicle rules; a ride from before categories by the configured vehicle tiers.
+     */
+    public function vehicleMayClaim(Vehicle $vehicle, Ride $ride): bool
+    {
+        return $ride->category_code !== null
+            ? $this->categories->vehicleCanServe($vehicle, $ride->category_code)
+            : $vehicle->canServe((string) $ride->vehicle_type);
     }
 
     /**
