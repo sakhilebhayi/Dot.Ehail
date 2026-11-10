@@ -99,12 +99,12 @@ class ExpireRidesCommandTest extends TestCase
     {
         Carbon::setTestNow('2026-10-18 09:00:00');
         $driver = $this->makeApprovedDriver();
-        $accepted = $this->makeRide(['status' => 'accepted', 'driver_id' => $driver->id, 'requested_at' => now()->subHour()]);
+        $accepted = $this->makeRide(['status' => 'driver_assigned', 'driver_id' => $driver->id, 'requested_at' => now()->subHour()]);
         $completed = $this->makeRide(['status' => 'completed', 'driver_id' => $driver->id, 'requested_at' => now()->subHour(), 'final_fare' => 80]);
 
         $this->artisan('ehail:expire-rides')->assertSuccessful();
 
-        $this->assertSame('accepted', $accepted->fresh()->status);
+        $this->assertSame('driver_assigned', $accepted->fresh()->status);
         $this->assertSame('completed', $completed->fresh()->status);
     }
 

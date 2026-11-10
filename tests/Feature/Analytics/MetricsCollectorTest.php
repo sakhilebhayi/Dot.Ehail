@@ -144,7 +144,7 @@ class MetricsCollectorTest extends TestCase
         $this->completedRide($driver, '2026-11-02 12:00:00');   // in
         $this->completedRide($driver, '2026-10-28 23:59:59');   // before the window
         $this->completedRide($driver, '2026-11-05 00:00:00');   // exactly taken_at: the next window's
-        $this->ride(['driver_id' => $driver->id, 'status' => 'cancelled', 'cancelled_at' => $this->at('2026-11-02 12:00:00')]);
+        $this->ride(['driver_id' => $driver->id, 'status' => 'cancelled_by_passenger', 'cancelled_at' => $this->at('2026-11-02 12:00:00')]);
         $this->ride(['driver_id' => $driver->id, 'status' => 'in_progress', 'started_at' => $this->at('2026-11-02 12:00:00')]);
         $this->ride(['driver_id' => $driver->id, 'status' => 'needs_review', 'completed_at' => $this->at('2026-11-02 12:00:00')]);
         $this->ride(['driver_id' => $driver->id, 'status' => 'requested', 'completed_at' => $this->at('2026-11-02 12:00:00')]);
@@ -457,7 +457,7 @@ class MetricsCollectorTest extends TestCase
         // Expired in the window: 1.
         $this->ride(['status' => 'expired', 'expired_at' => $this->at('2026-10-28 23:59:59'), 'created_at' => $this->at('2026-10-28 23:00:00')]);
         $this->ride(['status' => 'expired', 'expired_at' => $this->at('2026-11-05 00:00:00'), 'created_at' => $this->at('2026-11-04 23:00:00')]);
-        $this->ride(['status' => 'cancelled', 'expired_at' => $this->at('2026-11-03 10:00:00'), 'created_at' => $this->at('2026-11-03 09:00:00')]);
+        $this->ride(['status' => 'cancelled_by_passenger', 'expired_at' => $this->at('2026-11-03 10:00:00'), 'created_at' => $this->at('2026-11-03 09:00:00')]);
 
         $platform = app(MetricsCollector::class)->snapshots($this->takenAt, self::OPERATOR)[self::OPERATOR];
 

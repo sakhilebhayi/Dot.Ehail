@@ -13,6 +13,18 @@ class VehicleTierMatchingTest extends TestCase
 {
     use CreatesEhailFixtures, RefreshDatabase;
 
+    /**
+     * R-46: rides reach the open board only after ehail_dispatch.open_board_after_seconds
+     * (sequential offers come first). These tests exercise the claim mechanics, not the
+     * delay, so the board opens at once (the delay is tested in DispatcherTest).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['ehail_dispatch.open_board_after_seconds' => 0]);
+    }
+
     public function test_a_premium_ride_is_refused_by_a_standard_vehicle(): void
     {
         $driver = $this->makeApprovedDriver('standard');

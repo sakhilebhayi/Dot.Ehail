@@ -21,6 +21,18 @@ class RideCancellationTest extends TestCase
 {
     use CreatesEhailFixtures, RefreshDatabase;
 
+    /**
+     * R-46: rides reach the open board only after ehail_dispatch.open_board_after_seconds
+     * (sequential offers come first). These tests exercise the claim mechanics, not the
+     * delay, so the board opens at once (the delay is tested in DispatcherTest).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['ehail_dispatch.open_board_after_seconds' => 0]);
+    }
+
     private function accepted(User $passenger, User $driver, array $attributes = []): Ride
     {
         $ride = $this->makeRide($attributes, $passenger);
@@ -51,7 +63,7 @@ class RideCancellationTest extends TestCase
             ->assertRedirect(route('rides.show', $ride));
 
         $ride->refresh();
-        $this->assertSame('cancelled', $ride->status);
+        $this->assertSame('cancelled_by_passenger', $ride->status);
         $this->assertSame($passenger->id, $ride->cancelled_by);
         $this->assertSame('changed_plans', $ride->cancel_reason);
         $this->assertSame('Meeting moved to tomorrow', $ride->cancel_note);
@@ -90,7 +102,7 @@ class RideCancellationTest extends TestCase
             ->post(route('rides.cancel', $ride), ['reason' => 'found_other_ride'])
             ->assertRedirect();
 
-        $this->assertSame('cancelled', $ride->fresh()->status);
+        $this->assertSame('cancelled_by_passenger', $ride->fresh()->status);
         $notice = $this->notificationsOfType($driver, 'ride_cancelled')->first();
         $this->assertNotNull($notice, 'the driver must be told the passenger cancelled');
         $this->assertSame($ride->id, $notice->data['ride_id']);
@@ -110,7 +122,8 @@ class RideCancellationTest extends TestCase
             ->assertRedirect();
 
         $ride->refresh();
-        $this->assertSame('requested', $ride->status);
+        // R-46 v2: a hand-back returns the ride to 'searching' (it was 'requested' before v2).
+        $this->assertSame('searching', $ride->status);
         $this->assertNull($ride->driver_id);
         $this->assertNull($ride->vehicle_id);
         $this->assertNull($ride->accepted_at);
@@ -153,7 +166,7 @@ class RideCancellationTest extends TestCase
         $this->actingAs($second)->post(route('rides.accept', $ride))->assertRedirect(route('rides.show', $ride));
 
         $this->assertSame($second->id, $ride->fresh()->driver_id);
-        $this->assertSame('accepted', $ride->fresh()->status);
+        $this->assertSame('driver_assigned', $ride->fresh()->status);
     }
 
     public function test_after_three_reassignments_the_next_driver_cancel_expires_the_ride(): void
@@ -166,7 +179,7 @@ class RideCancellationTest extends TestCase
             $this->actingAs($driver)->post(route('rides.accept', $ride))->assertRedirect();
             $this->actingAs($driver)->post(route('rides.cancel', $ride), ['reason' => 'vehicle_problem']);
 
-            $this->assertSame('requested', $ride->fresh()->status);
+            $this->assertSame('searching', $ride->fresh()->status);
             $this->assertSame($expectedCount, $ride->fresh()->reassignment_count);
         }
 
@@ -174,15 +187,18 @@ class RideCancellationTest extends TestCase
         $this->actingAs($fourth)->post(route('rides.accept', $ride))->assertRedirect();
         $this->actingAs($fourth)->post(route('rides.cancel', $ride), ['reason' => 'vehicle_problem'])->assertRedirect();
 
+        // R-46 v2: the exhausted policy ends the ride as cancelled_by_driver (architecture
+        // section 2; it was stored as 'expired' before v2). The passenger notice is unchanged.
         $ride->refresh();
-        $this->assertSame('expired', $ride->status);
+        $this->assertSame('cancelled_by_driver', $ride->status);
         $this->assertNull($ride->driver_id);
-        $this->assertNotNull($ride->expired_at);
+        $this->assertSame($fourth->id, $ride->cancelled_by);
+        $this->assertNotNull($ride->cancelled_at);
         $this->assertNotNull(
             $this->notificationsOfType($passenger, 'ride_expired')->first(),
             'the passenger is told the request ended',
         );
-        $this->assertSame('expired', AuditLog::where('action', 'ride.driver_cancelled')->latest('id')->first()->meta['outcome']);
+        $this->assertSame('cancelled_by_driver', AuditLog::where('action', 'ride.driver_cancelled')->latest('id')->first()->meta['outcome']);
     }
 
     public function test_the_reassignment_cap_comes_from_config(): void
@@ -194,12 +210,12 @@ class RideCancellationTest extends TestCase
         $one = $this->makeApprovedDriver();
         $this->actingAs($one)->post(route('rides.accept', $ride));
         $this->actingAs($one)->post(route('rides.cancel', $ride), ['reason' => 'other']);
-        $this->assertSame('requested', $ride->fresh()->status);
+        $this->assertSame('searching', $ride->fresh()->status);
 
         $two = $this->makeApprovedDriver();
         $this->actingAs($two)->post(route('rides.accept', $ride));
         $this->actingAs($two)->post(route('rides.cancel', $ride), ['reason' => 'other']);
-        $this->assertSame('expired', $ride->fresh()->status);
+        $this->assertSame('cancelled_by_driver', $ride->fresh()->status);
     }
 
     public function test_a_driver_cannot_cancel_a_ride_that_is_not_theirs_or_is_in_progress(): void
@@ -227,11 +243,11 @@ class RideCancellationTest extends TestCase
 
         $this->actingAs($driver)->post(route('rides.cancel', $ride), ['reason' => 'other']);
         Event::assertDispatchedTimes(RideStatusUpdated::class, 2);
-        Event::assertDispatched(RideStatusUpdated::class, fn ($e) => $e->ride->status === 'requested');
+        Event::assertDispatched(RideStatusUpdated::class, fn ($e) => $e->ride->status === 'searching');
 
         $this->actingAs($passenger)->post(route('rides.cancel', $ride), ['reason' => 'changed_plans']);
         Event::assertDispatchedTimes(RideStatusUpdated::class, 3);
-        Event::assertDispatched(RideStatusUpdated::class, fn ($e) => $e->ride->status === 'cancelled');
+        Event::assertDispatched(RideStatusUpdated::class, fn ($e) => $e->ride->status === 'cancelled_by_passenger');
     }
 
     public function test_the_status_broadcast_waits_for_the_transaction_to_commit(): void
@@ -244,7 +260,7 @@ class RideCancellationTest extends TestCase
         Queue::fake();
         try {
             DB::transaction(function () use ($ride) {
-                $ride->update(['status' => 'cancelled']);
+                $ride->update(['status' => 'cancelled_by_passenger']);
                 throw new RuntimeException('roll back');
             });
         } catch (RuntimeException) {
@@ -256,7 +272,7 @@ class RideCancellationTest extends TestCase
         $ride = $ride->fresh();
         $this->assertSame('requested', $ride->status);
         DB::transaction(function () use ($ride) {
-            $ride->update(['status' => 'cancelled']);
+            $ride->update(['status' => 'cancelled_by_passenger']);
             Queue::assertNothingPushed();
         });
         Queue::assertPushed(BroadcastEvent::class, 1);

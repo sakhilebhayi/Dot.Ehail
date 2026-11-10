@@ -2,6 +2,8 @@
 
 namespace App\Policies;
 
+use App\Domain\Dispatch\Dispatcher;
+use App\Domain\Dispatch\Models\RideOffer;
 use App\Enums\PaymentStatus;
 use App\Enums\RideActor;
 use App\Models\DriverProfile;
@@ -46,14 +48,23 @@ class RidePolicy
     }
 
     /**
-     * A driver may claim an open request if they have an approved, online
+     * A driver may claim an open-board request if they have an approved, online
      * DriverProfile whose active vehicle may serve the ride's requested
      * tier (config/ehail.php vehicle_tiers: a premium ride needs a premium
      * vehicle unless the mapping says otherwise).
      */
     public function accept(User $user, Ride $ride): bool
     {
-        if ($ride->status !== 'requested' || $ride->driver_id !== null) {
+        if (! in_array($ride->status, ['requested', 'searching'], true) || $ride->driver_id !== null) {
+            return false;
+        }
+
+        // Sequential offers come first: a ride reaches the open board only after
+        // ehail_dispatch.open_board_after_seconds, unless this driver holds its offer.
+        $dispatcher = app(Dispatcher::class);
+
+        if (! $dispatcher->onBoard($ride)
+            && ! RideOffer::where('pending_ride_id', $ride->id)->where('driver_id', $user->id)->exists()) {
             return false;
         }
 
@@ -74,7 +85,7 @@ class RidePolicy
 
     /**
      * Only the ride's assigned driver may progress it through its
-     * lifecycle (en_route -> arrived -> in_progress -> completed). Which
+     * lifecycle (driver_arriving -> driver_arrived -> in_progress -> completed). Which
      * stage may follow which is RideStatus's job, not this policy's.
      */
     public function advance(User $user, Ride $ride): bool
@@ -84,7 +95,7 @@ class RidePolicy
 
     /**
      * The passenger may cancel until the trip starts. The assigned driver
-     * may back out of an accepted ride until the trip starts (which sends
+     * may back out of an assigned ride until the trip starts (which sends
      * the ride back to the queue -- see RideLifecycle::cancel). Once
      * in_progress nobody on the ride may cancel: completion, or an operator's
      * review, is the only way out.
@@ -92,8 +103,8 @@ class RidePolicy
     public function cancel(User $user, Ride $ride): bool
     {
         return match ($ride->actorFor($user)) {
-            RideActor::Passenger => in_array($ride->status, ['requested', 'accepted', 'en_route', 'arrived'], true),
-            RideActor::Driver => in_array($ride->status, ['accepted', 'en_route', 'arrived'], true),
+            RideActor::Passenger => in_array($ride->status, ['scheduled', 'requested', 'searching', 'driver_assigned', 'driver_arriving', 'driver_arrived'], true),
+            RideActor::Driver => in_array($ride->status, ['driver_assigned', 'driver_arriving', 'driver_arrived'], true),
             default => false,
         };
     }

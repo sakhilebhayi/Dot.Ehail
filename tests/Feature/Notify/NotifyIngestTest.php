@@ -66,6 +66,8 @@ class NotifyIngestTest extends TestCase
         parent::setUp();
         Carbon::setTestNow('2026-11-05 09:00:00');
         Cache::flush();
+        // R-46: the open board opens at once here; these tests are about Notify, not the board delay.
+        config(['ehail_dispatch.open_board_after_seconds' => 0]);
         config([
             'notify' => ['url' => self::URL, 'secret' => self::SECRET, 'platform' => 'ehail', 'timeout' => 5,
                 'circuit' => ['threshold' => 5, 'pause_seconds' => 60]],
@@ -287,7 +289,8 @@ class NotifyIngestTest extends TestCase
 
         $this->actingAs($driver)->post(route('rides.cancel', $ride), ['reason' => 'vehicle_problem']);
 
-        $this->assertSame('expired', $ride->fresh()->status);
+        // R-46 v2 stores this outcome as cancelled_by_driver; the passenger email is unchanged.
+        $this->assertSame('cancelled_by_driver', $ride->fresh()->status);
         $this->assertCount(1, $this->sent('ride.expired'));
         $this->assertCount(0, $this->sent('ride.cancelled'));
     }
@@ -416,7 +419,7 @@ class NotifyIngestTest extends TestCase
         $this->actingAs($this->driver())->post(route('rides.accept', $ride))->assertRedirect();
 
         Http::assertNothingSent();
-        $this->assertSame('accepted', $ride->fresh()->status);
+        $this->assertSame('driver_assigned', $ride->fresh()->status);
     }
 
     public function test_a_user_with_no_team_at_all_is_skipped_without_writing_anything(): void
@@ -473,12 +476,12 @@ class NotifyIngestTest extends TestCase
             });
 
             [$ride, $passenger, $driver] = $this->acceptedRide($this->member(null), $this->driver(null));
-            $this->assertSame('accepted', $ride->status);
+            $this->assertSame('driver_assigned', $ride->status);
             $this->assertSame($driver->id, $ride->driver_id);
             $this->assertSame(1, $calls, 'Notify was attempted once and its failure stayed contained');
 
             $this->actingAs($passenger)->post(route('rides.cancel', $ride), ['reason' => 'changed_plans'])->assertRedirect();
-            $this->assertSame('cancelled', $ride->fresh()->status);
+            $this->assertSame('cancelled_by_passenger', $ride->fresh()->status);
             $this->assertSame(1, $this->notificationsOfType($driver, 'ride_cancelled')->count(), 'the in-app notice is untouched');
         }
     }
@@ -508,7 +511,7 @@ class NotifyIngestTest extends TestCase
 
         $this->actingAs($driver)->post(route('rides.accept', $ride))->assertRedirect(route('rides.show', $ride));
 
-        $this->assertSame('accepted', $ride->fresh()->status);
+        $this->assertSame('driver_assigned', $ride->fresh()->status);
     }
 
     public function test_a_transient_failure_asks_the_queue_to_retry_and_a_permanent_one_does_not(): void

@@ -204,7 +204,7 @@ class VehicleManagementTest extends TestCase
     {
         $driver = $this->makeApprovedDriver();
         $vehicle = $this->profileOf($driver)->activeVehicle();
-        $this->makeRide(['status' => 'en_route', 'driver_id' => $driver->id, 'vehicle_id' => $vehicle->id]);
+        $this->makeRide(['status' => 'driver_arriving', 'driver_id' => $driver->id, 'vehicle_id' => $vehicle->id]);
 
         $this->actingAs($driver)->patch(route('drivers.vehicles.update', $vehicle), $this->payload(['plate_number' => $vehicle->plate_number]))
             ->assertSessionHasErrors('vehicle');

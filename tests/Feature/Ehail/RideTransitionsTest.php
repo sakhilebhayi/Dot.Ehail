@@ -17,6 +17,18 @@ class RideTransitionsTest extends TestCase
 {
     use CreatesEhailFixtures, RefreshDatabase;
 
+    /**
+     * R-46: rides reach the open board only after ehail_dispatch.open_board_after_seconds
+     * (sequential offers come first). These tests exercise the claim mechanics, not the
+     * delay, so the board opens at once (the delay is tested in DispatcherTest).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['ehail_dispatch.open_board_after_seconds' => 0]);
+    }
+
     private function acceptedRide(User $driver): Ride
     {
         $ride = $this->makeRide();
@@ -30,13 +42,13 @@ class RideTransitionsTest extends TestCase
         $driver = $this->makeApprovedDriver();
         $ride = $this->acceptedRide($driver);
 
-        foreach (['arrived', 'in_progress', 'completed'] as $skipped) {
+        foreach (['driver_arrived', 'in_progress', 'completed'] as $skipped) {
             $this->actingAs($driver)
                 ->patch(route('rides.advance', $ride), ['status' => $skipped])
                 ->assertSessionHasErrors('status');
         }
 
-        $this->assertSame('accepted', $ride->fresh()->status);
+        $this->assertSame('driver_assigned', $ride->fresh()->status);
         $this->assertNull($ride->fresh()->final_fare);
     }
 
@@ -46,10 +58,10 @@ class RideTransitionsTest extends TestCase
         $ride = $this->acceptedRide($driver);
 
         $this->actingAs($driver)
-            ->patch(route('rides.advance', $ride), ['status' => 'cancelled'])
+            ->patch(route('rides.advance', $ride), ['status' => 'cancelled_by_passenger'])
             ->assertSessionHasErrors('status');
 
-        $this->assertSame('accepted', $ride->fresh()->status);
+        $this->assertSame('driver_assigned', $ride->fresh()->status);
     }
 
     public function test_a_terminal_ride_cannot_be_advanced_again(): void
@@ -58,7 +70,7 @@ class RideTransitionsTest extends TestCase
         $ride = $this->makeRide(['status' => 'expired', 'driver_id' => $driver->id]);
 
         $this->actingAs($driver)
-            ->patch(route('rides.advance', $ride), ['status' => 'en_route'])
+            ->patch(route('rides.advance', $ride), ['status' => 'driver_arriving'])
             ->assertSessionHasErrors('status');
 
         $this->assertSame('expired', $ride->fresh()->status);
@@ -69,7 +81,7 @@ class RideTransitionsTest extends TestCase
         $driver = $this->makeApprovedDriver();
         $ride = $this->acceptedRide($driver);
 
-        foreach (['en_route', 'arrived'] as $stage) {
+        foreach (['driver_arriving', 'driver_arrived'] as $stage) {
             $this->actingAs($driver)->patch(route('rides.advance', $ride), ['status' => $stage]);
         }
         $this->assertNull($ride->fresh()->started_at);
