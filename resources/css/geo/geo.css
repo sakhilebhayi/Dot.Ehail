@@ -420,5 +420,5 @@
 
 /* Zoom buttons reach 44 px on phones and touch screens (R-46 a11y, D-1712). */
 @media (max-width: 767.98px), (pointer: coarse) {
-    .eh-map.leaflet-container .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 1.25rem; }
+    .eh-map.leaflet-container .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: var(--eh-text-xl); }
 }

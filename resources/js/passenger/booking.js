@@ -327,7 +327,7 @@ function renderOptions() {
         children.push(el('ul', { class: 'pax-unavailable', 'aria-label': 'Not available right now' }, compare.unavailable.map((u) => el('li', {}, [icon('info'), el('span', {}, u.message)]))));
     }
 
-    // A timer role: the clock ticks every second and is never read aloud on its own (R-46 a11y, D-1716).
+    // A timer role: the clock ticks every second and is never read aloud on its own (R-46 a11y, D-1702).
     children.push(el('p', { class: 'pax-quote', 'data-pax-quote': '', role: 'timer', 'aria-label': 'Prices held' }));
     children.push(promoBlock());
     children.push(paymentBlock());

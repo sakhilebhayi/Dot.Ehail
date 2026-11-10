@@ -61,7 +61,7 @@ export function createMap(el, config, { center, zoom, onMapClick } = {}) {
 
     map.attributionControl.setPrefix(false);
     // Top right: at the bottom the passenger sheet and the ops panels covered it, hiding the OSM credit (which must
-    // stay visible) and its links from keyboard users (R-46 a11y, D-1714).
+    // stay visible) and its links from keyboard users (R-46 a11y, D-1708).
     map.attributionControl.setPosition('topright');
     if (!motion) stillMap(map);
 

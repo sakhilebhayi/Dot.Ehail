@@ -303,7 +303,7 @@ html[data-moving="true"] .eh-statebar__sub { display: none; }
 .dr-form.dr-more__body { justify-items: stretch; }
 .dr-trip-row .eh-money--negative { color: inherit; }
 
-/* Sunlight (R-46 a11y, D-1717). A phone on a windscreen in daylight needs more than the AA floor: in the light theme
+/* Sunlight (R-46 a11y, D-1716). A phone on a windscreen in daylight needs more than the AA floor: in the light theme
    the driver app holds its text to WCAG AAA (7:1). Night keeps its own measured pairs. Light is the default, the
    pinned light theme, or the system light preference; a pinned or system dark theme is left alone. */
 :root:not([data-theme="dark"]) .eh-drive {
@@ -320,7 +320,7 @@ html[data-moving="true"] .eh-statebar__sub { display: none; }
 .eh-drive [data-dr-switch-state] { color: var(--dr-sun-quiet, var(--eh-ink-3)); }
 .eh-drive .dr-sos-btn { background: var(--dr-sun-sos, var(--eh-stop-fill)); }
 
-/* Thumb reach (R-46 a11y, D-1718). On a phone in a cradle the lower part of the screen is where the thumb lands:
+/* Thumb reach (R-46 a11y, D-1717). On a phone in a cradle the lower part of the screen is where the thumb lands:
    offline and online, the console fills the screen and its one big control (Go online / Go offline) sits at the
    bottom of the view, above today's figure, instead of under the vehicle row. Visual and focus order stay the DOM
    order (reordering today's figure above it would make Tab jump backwards, WCAG 2.4.3). */

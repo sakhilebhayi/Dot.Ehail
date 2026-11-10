@@ -5,7 +5,7 @@ import { mountMap } from '../geo/index.js';
 import { formatDuration } from './helpers.js';
 import { createAnnouncer, risesSentence } from '../eh/announce.js';
 
-// Said aloud (politely) when one of these goes up; the figures themselves stay quiet (R-46 a11y, D-1715).
+// Said aloud (politely) when one of these goes up; the figures themselves stay quiet (R-46 a11y, D-1702).
 const RISES = { needs_review: 'Needs review', stuck: 'Stuck', incidents: 'Open incidents', searching: 'Waiting for a driver' };
 
 const VISIBLE_MS = 5000;
