@@ -311,14 +311,18 @@ html[data-moving="true"] .eh-statebar__sub { display: none; }
     --dr-sun-go: #0a4a2b;    /* 8.71:1 on the go tint (go on its tint was 5.32) */
     --dr-sun-quiet: var(--eh-ink-2); /* 9.37:1 on surface (ink-3 was 6.07) */
     --dr-sun-sos: #a3221b;   /* white 7.49:1 (the stop fill was 6.53) */
+    --dr-sun-online: #08552f; /* the online bar: white 8.93:1 (its line of text was 5.92 at 92% opacity) */
 }
 @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .eh-drive { --dr-sun-link: initial; --dr-sun-go: initial; --dr-sun-quiet: initial; --dr-sun-sos: initial; }
+    :root:not([data-theme="light"]) .eh-drive { --dr-sun-link: initial; --dr-sun-go: initial; --dr-sun-quiet: initial; --dr-sun-sos: initial; --dr-sun-online: initial; }
 }
 .eh-drive .dr-textlink, .eh-drive .eh-link { color: var(--dr-sun-link, var(--eh-accent)); }
 .eh-drive .eh-badge--go { color: var(--dr-sun-go, var(--eh-go)); }
 .eh-drive [data-dr-switch-state] { color: var(--dr-sun-quiet, var(--eh-ink-3)); }
 .eh-drive .dr-sos-btn { background: var(--dr-sun-sos, var(--eh-stop-fill)); }
+.eh-drive .eh-statebar[data-state="online"] { background: var(--dr-sun-online, var(--eh-accent)); }
+:root:not([data-theme="dark"]) .eh-drive .eh-statebar[data-state="online"] .eh-statebar__sub { opacity: 1; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .eh-drive .eh-statebar[data-state="online"] .eh-statebar__sub { opacity: 0.92; } }
 
 /* Thumb reach (R-46 a11y, D-1717). On a phone in a cradle the lower part of the screen is where the thumb lands:
    offline and online, the console fills the screen and its one big control (Go online / Go offline) sits at the

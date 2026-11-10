@@ -29,6 +29,9 @@ try {
     await p.page.goto(`${BASE}/drive`); await sleep(800);
     if (await p.page.locator('[data-dr-go-online]').isVisible().catch(() => false)) await p.page.click('[data-dr-go-online]');
     await phone.settle(START);
+    await p.page.waitForSelector('[data-dr-view=online]:not([hidden])', { timeout: 10000 }).catch(() => {});
+    await sleep(600);
+    report('live: online, waiting for offers', await enhanced(p.page));
     const pax = await person(b, PEOPLE.passenger, { width: 390, geo: PICKUP });
     await pax.page.goto(`${BASE}/ride?new=1`); await sleep(1200);
     await search(pax.page, '#pax-pickup', 'Kloof'); await search(pax.page, '#pax-dropoff', 'Bree');
