@@ -222,7 +222,8 @@ class DriverApprovalGateTest extends TestCase
         Fleet::create(['status' => 'pending', 'name' => 'Queued Fleet Name', 'owner_user_id' => User::factory()->create()->id]);
 
         $this->actingAs(User::factory()->create())->get(route('operator.fleets.index'))->assertForbidden();
-        $this->actingAs($this->operator())->get(route('operator.fleets.index'))->assertOk()->assertSee('Queued Fleet Name');
+        $this->actingAs($this->operator())->get(route('operator.fleets.index'))->assertRedirect(route('ops.fleets'));
+        $this->actingAs($this->operator())->get(route('ops.fleets'))->assertOk()->assertSee('Queued Fleet Name');
     }
 
     public function test_an_application_cannot_target_a_fleet_that_is_still_pending(): void

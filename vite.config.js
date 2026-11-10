@@ -14,6 +14,7 @@ export default defineConfig({
                 'resources/css/business/portal.css',
                 'resources/js/business/book.js',
                 'resources/css/fleet/fleet.css',
+                'resources/js/ops/index.js',
                 'resources/css/comms/comms.css',
                 'resources/js/comms/comms.js',
             ],

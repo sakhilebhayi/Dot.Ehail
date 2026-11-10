@@ -80,7 +80,7 @@ class PaymentPrivacyTest extends TestCase
         $ride = $this->completedRide($passenger);
 
         $this->actingAs($passenger)->get(route('rides.show', $ride))->assertDontSee(self::TEST_KEY);
-        $this->actingAs($this->makeOperator())->get(route('operator.rides.index'))->assertDontSee(self::TEST_KEY);
+        $this->actingAs($this->makeOperator())->get(route('ops.rides'))->assertDontSee(self::TEST_KEY);
         Http::assertNothingSent();
     }
 
