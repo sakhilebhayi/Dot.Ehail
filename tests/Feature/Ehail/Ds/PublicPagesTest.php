@@ -35,9 +35,15 @@ class PublicPagesTest extends TestCase
         $xpath = $this->xpath($response);
         $host = parse_url(config('app.url'), PHP_URL_HOST);
         $urls = [];
-        foreach ($xpath->query('//script[@src]') as $n) { $urls[] = $n->getAttribute('src'); }
-        foreach ($xpath->query('//link[@href]') as $n) { $urls[] = $n->getAttribute('href'); }
-        foreach ($xpath->query('//img[@src] | //source[@src]') as $n) { $urls[] = $n->getAttribute('src'); }
+        foreach ($xpath->query('//script[@src]') as $n) {
+            $urls[] = $n->getAttribute('src');
+        }
+        foreach ($xpath->query('//link[@href]') as $n) {
+            $urls[] = $n->getAttribute('href');
+        }
+        foreach ($xpath->query('//img[@src] | //source[@src]') as $n) {
+            $urls[] = $n->getAttribute('src');
+        }
         foreach ($xpath->query('//*[@srcset] | //*[@imagesrcset]') as $n) {
             foreach (explode(',', $n->getAttribute('srcset').','.$n->getAttribute('imagesrcset')) as $candidate) {
                 $urls[] = trim(explode(' ', trim($candidate))[0] ?? '');
@@ -96,7 +102,8 @@ class PublicPagesTest extends TestCase
         foreach ([route('ride.home'), route('drive.home'), route('business.home'), route('fleet.home'), route('dashboard'), route('rides.index'), route('profile.show'), route('teams.show', $passenger->currentTeam)] as $url) {
             $this->assertNoExternalResources($this->actingAs($passenger)->get($url)->assertOk(), $url);
         }
-        $this->assertNoExternalResources($this->actingAs($this->makeOperator())->get(route('ops.home'))->assertOk(), 'ops');
+        // R-46 ops: /ops redirects to the operator's first screen; the live board is that screen for full access.
+        $this->assertNoExternalResources($this->actingAs($this->makeOperator())->get(route('ops.live'))->assertOk(), 'ops');
     }
 
     public function test_layouts_never_reference_a_third_party_runtime_host(): void

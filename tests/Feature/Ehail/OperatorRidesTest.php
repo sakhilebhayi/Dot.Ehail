@@ -51,7 +51,7 @@ class OperatorRidesTest extends TestCase
             'pickup_address' => 'Completed pickup at Claremont station',
         ]);
 
-        $this->actingAs($operator)->get(route('operator.rides.index'))
+        $this->actingAs($operator)->get(route('ops.rides'))
             ->assertOk()
             ->assertSee('Stuck pickup at Voortrekker Road depot')
             ->assertSee('Expired pickup at Bellville taxi rank')
@@ -64,11 +64,11 @@ class OperatorRidesTest extends TestCase
         Fleet::factory()->count(3)->create(['status' => 'pending']);
         Fleet::factory()->create(['status' => 'approved']);
 
-        $response = $this->actingAs($operator)->get(route('operator.rides.index'))->assertOk();
+        $response = $this->actingAs($operator)->get(route('ops.rides'))->assertOk();
 
         $response->assertSee('Fleets awaiting approval')
             ->assertSee('data-figure="pending-fleets">3<', false);
-        $response->assertSee(route('operator.fleets.index'), false);
+        $response->assertSee(route('ops.fleets'), false);
     }
 
     public function test_it_counts_driver_applications_still_pending(): void
@@ -77,7 +77,7 @@ class OperatorRidesTest extends TestCase
         DriverProfile::factory()->count(2)->create(['status' => 'pending']);
         DriverProfile::factory()->create(['status' => 'approved']);
 
-        $this->actingAs($operator)->get(route('operator.rides.index'))
+        $this->actingAs($operator)->get(route('ops.rides'))
             ->assertOk()
             ->assertSee('Driver applications pending')
             ->assertSee('data-figure="pending-applications">2<', false);
@@ -93,7 +93,7 @@ class OperatorRidesTest extends TestCase
         $this->makeRide(['status' => 'cancelled_by_passenger', 'estimated_fare' => 5123.45, 'final_fare' => 5123.45]);
         $this->makeRide(['status' => 'requested', 'estimated_fare' => 7234.56]);
 
-        $this->actingAs($operator)->get(route('operator.rides.index'))
+        $this->actingAs($operator)->get(route('ops.rides'))
             ->assertOk()
             ->assertSee('Estimated fare total, not collected')
             ->assertSee('R 200.00')
@@ -106,7 +106,7 @@ class OperatorRidesTest extends TestCase
     {
         $operator = $this->makeOperator();
 
-        $this->actingAs($operator)->get(route('operator.rides.index'))
+        $this->actingAs($operator)->get(route('ops.rides'))
             ->assertOk()
             ->assertSee('Nothing needs review.');
     }

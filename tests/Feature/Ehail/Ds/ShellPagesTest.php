@@ -79,7 +79,11 @@ class ShellPagesTest extends TestCase
         $this->assertSame(['Drive', 'Account'], $labels, 'earnings and trips are for drivers only');
         $this->assertSame('night', $xpath->query('//html')->item(0)->getAttribute('data-theme-default'));
 
-        $online = $this->makeApprovedDriver(online: true);
+        // Driver app (R-46 wave 2): "online" is dispatch's availability (the state offers come from), not the pre-R-46
+        // profile flag, so the driver goes online through dispatch here. Documents are not part of this shell test.
+        config(['ehail_safety.verification.require_documents' => false]);
+        $online = $this->makeApprovedDriver(online: false);
+        app(\App\Domain\Dispatch\AvailabilityService::class)->goOnline($online);
         $xpath = $this->xpath($this->actingAs($online)->get(route('drive.home'))->assertOk()->assertSee('You are online'));
         $this->assertSame(1, $xpath->query('//section[contains(@class, "eh-statebar")][@data-state="online"]')->length);
         $this->assertSame(1, $xpath->query('//main//a[@href="'.route('rides.available').'"]')->length, 'the working driver desk stays reachable');
@@ -92,13 +96,15 @@ class ShellPagesTest extends TestCase
     {
         $this->actingAs(User::factory()->withPersonalTeam()->create())->get(route('ops.home'))->assertForbidden();
 
-        $xpath = $this->xpath($this->actingAs($this->makeOperator())->get(route('ops.home'))->assertOk());
+        // R-46 ops: /ops sends an operator to the first screen their role opens.
+        $this->actingAs($this->makeOperator())->get(route('ops.home'))->assertRedirect(route('ops.live'));
+        $xpath = $this->xpath($this->actingAs($this->makeOperator())->get(route('ops.live'))->assertOk());
         $this->assertShellLandmarks($xpath, 'ops');
         $links = $xpath->query('//nav[@id="eh-side-nav"]//a[contains(@class, "eh-side__link")]');
         $hrefs = array_map(fn ($n) => $n->getAttribute('href'), iterator_to_array($links));
-        $this->assertContains(route('ops.home'), $hrefs);
-        $this->assertContains(route('operator.rides.index'), $hrefs);
-        $this->assertContains(route('operator.fleets.index'), $hrefs);
+        $this->assertContains(route('ops.live'), $hrefs);
+        $this->assertContains(route('ops.rides'), $hrefs);
+        $this->assertContains(route('ops.fleets'), $hrefs);
         $this->assertSame(1, $xpath->query('//button[@data-eh-drawer-open][@aria-controls="eh-side-nav"][@aria-expanded="false"]')->length);
     }
 

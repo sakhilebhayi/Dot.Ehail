@@ -24,12 +24,14 @@
         <header class="eh-side__bar" data-eh-drawer-behind>
             <x-eh.icon-button icon="menu" label="Open navigation" data-eh-drawer-open aria-controls="eh-side-nav" aria-expanded="false" />
             <x-eh.logo :href="Route::has($homeRoute) ? route($homeRoute) : url('/')" />
+            {{ $barExtra ?? '' }}
             @include('layouts.partials.eh-account', ['surface' => $surface])
         </header>
         <div class="eh-side__scrim" data-eh-drawer-close aria-hidden="true"></div>
         <nav class="eh-side__nav" id="eh-side-nav" aria-label="{{ $navLabel }}">
             <div class="eh-side__head">
                 <x-eh.logo :href="Route::has($homeRoute) ? route($homeRoute) : url('/')" />
+                {{ $barExtra ?? '' }}
                 <x-eh.icon-button class="eh-side__close" icon="close" label="Close navigation" data-eh-drawer-close />
             </div>
             <p class="eh-side__scope" style="margin:0"><strong>{{ $scopeTitle }}</strong>{{ $scopeSub ?? '' }}</p>

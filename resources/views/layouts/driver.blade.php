@@ -11,6 +11,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh" data-theme-key="eh-theme-drive" data-theme-default="night" data-sw="on">
 <head>
     @include('layouts.partials.eh-head', ['title' => $title ?? null])
+    @vite(['resources/css/comms/comms.css'])
     {{ $head ?? '' }}
 </head>
 <body>
@@ -21,6 +22,7 @@
             @include('layouts.partials.eh-topnav')
             <div class="eh-topbar__slot">
                 @isset($safety){{ $safety }}@else @include('layouts.partials.eh-safety', ['safetyRoute' => 'drive.safety']) @endisset
+                <x-comms::bell surface="driver" />
                 @include('layouts.partials.eh-account', ['surface' => 'driver'])
             </div>
         </header>

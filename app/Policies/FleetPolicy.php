@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Domain\Fleet\FleetAccess;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
 use App\Models\User;
@@ -9,12 +10,13 @@ use App\Models\User;
 class FleetPolicy
 {
     /**
-     * The fleet's owner and platform operators may view it (its
-     * pending/reviewed driver applications).
+     * The fleet's owner, its active managers (R-46 fleet members) and
+     * platform operators may view it (its pending/reviewed driver
+     * applications).
      */
     public function view(User $user, Fleet $fleet): bool
     {
-        return $user->id === $fleet->owner_user_id || $user->isPlatformOperator();
+        return $user->id === $fleet->owner_user_id || $user->isPlatformOperator() || app(FleetAccess::class)->isMember($user, $fleet);
     }
 
     /**
@@ -49,6 +51,6 @@ class FleetPolicy
     public function viewVehicles(User $user, Fleet $fleet): bool
     {
         return $user->isPlatformOperator()
-            || ($fleet->isApproved() && $user->id === $fleet->owner_user_id);
+            || ($fleet->isApproved() && ($user->id === $fleet->owner_user_id || app(FleetAccess::class)->can($user, $fleet, 'vehicles')));
     }
 }

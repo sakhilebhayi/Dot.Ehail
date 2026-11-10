@@ -44,7 +44,7 @@ class WalletAndSeamsTest extends TestCase
             ->assertJsonPath('card_payments.available', true)
             ->assertJsonPath('card_payments.test_mode', true)
             ->assertJsonPath('cash.enabled', false)
-            ->assertJsonPath('business_accounts.available', false)
+            ->assertJsonPath('business_accounts.available', true)
             ->assertJsonPath('payment_due.blocked', false);
 
         config(['paystack.secret_key' => '']);

@@ -27,7 +27,8 @@ class OperatorPaymentsTest extends TestCase
 
     private function desk()
     {
-        return $this->actingAs($this->operator)->get(route('operator.rides.index'));
+        // R-46 ops: the desk moved to /ops/rides (the old address redirects there).
+        return $this->actingAs($this->operator)->get(route('ops.rides'));
     }
 
     // ─── Waiving ─────────────────────────────────────────────────────────

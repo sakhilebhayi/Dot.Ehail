@@ -2,6 +2,7 @@
 
 namespace App\Support\Ui;
 
+use App\Domain\Business\PortalAccess;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -41,14 +42,19 @@ final class Navigation
             ['key' => 'fleets', 'label' => 'Fleets', 'icon' => 'fleet', 'routes' => ['ops.fleets', 'operator.fleets.index'], 'requires' => 'operator'],
             ['key' => 'business', 'label' => 'Business', 'icon' => 'briefcase', 'routes' => ['ops.business'], 'requires' => 'operator'],
             ['key' => 'insights', 'label' => 'Insights', 'icon' => 'chart', 'routes' => ['ops.insights'], 'requires' => 'operator'],
+            ['key' => 'audit', 'label' => 'Audit log', 'icon' => 'eye', 'routes' => ['ops.audit'], 'requires' => 'operator'],
+            ['key' => 'team', 'label' => 'Team and roles', 'icon' => 'key', 'routes' => ['ops.roles'], 'requires' => 'operator'],
+            ['key' => 'notifications', 'label' => 'Notifications', 'icon' => 'bell', 'routes' => ['ops.notifications'], 'requires' => 'operator'],
         ],
         'business' => [
             ['key' => 'overview', 'label' => 'Overview', 'icon' => 'briefcase', 'routes' => ['business.home']],
-            ['key' => 'trips', 'label' => 'Trips', 'icon' => 'history', 'routes' => ['business.trips']],
-            ['key' => 'people', 'label' => 'People', 'icon' => 'users', 'routes' => ['business.people']],
-            ['key' => 'policies', 'label' => 'Ride policies', 'icon' => 'document', 'routes' => ['business.policies']],
-            ['key' => 'invoices', 'label' => 'Invoices', 'icon' => 'receipt', 'routes' => ['business.invoices']],
-            ['key' => 'settings', 'label' => 'Settings', 'icon' => 'settings', 'routes' => ['business.settings']],
+            ['key' => 'book', 'label' => 'Book a ride', 'icon' => 'car', 'routes' => ['business.book'], 'requires' => 'business:ride'],
+            ['key' => 'approvals', 'label' => 'Approvals', 'icon' => 'check', 'routes' => ['business.approvals'], 'requires' => 'business:member'],
+            ['key' => 'trips', 'label' => 'Trips', 'icon' => 'history', 'routes' => ['business.trips'], 'requires' => 'business:member'],
+            ['key' => 'people', 'label' => 'People', 'icon' => 'users', 'routes' => ['business.people'], 'requires' => 'business:view_people'],
+            ['key' => 'policies', 'label' => 'Ride policies', 'icon' => 'document', 'routes' => ['business.policies'], 'requires' => 'business:view_policies'],
+            ['key' => 'invoices', 'label' => 'Statements', 'icon' => 'receipt', 'routes' => ['business.invoices'], 'requires' => 'business:view_statements'],
+            ['key' => 'settings', 'label' => 'Settings', 'icon' => 'settings', 'routes' => ['business.settings'], 'requires' => 'business:view_statements'],
         ],
         'fleet' => [
             ['key' => 'overview', 'label' => 'Overview', 'icon' => 'fleet', 'routes' => ['fleet.home']],
@@ -57,6 +63,9 @@ final class Navigation
             ['key' => 'earnings', 'label' => 'Earnings', 'icon' => 'coins', 'routes' => ['fleet.earnings']],
             ['key' => 'documents', 'label' => 'Documents', 'icon' => 'document-check', 'routes' => ['fleet.documents']],
             ['key' => 'maintenance', 'label' => 'Maintenance', 'icon' => 'wrench', 'routes' => ['fleet.maintenance']],
+            ['key' => 'trips', 'label' => 'Trips', 'icon' => 'history', 'routes' => ['fleet.trips']],
+            ['key' => 'alerts', 'label' => 'Alerts', 'icon' => 'alert', 'routes' => ['fleet.alerts']],
+            ['key' => 'settings', 'label' => 'Settings', 'icon' => 'settings', 'routes' => ['fleet.settings']],
         ],
     ];
 
@@ -135,7 +144,8 @@ final class Navigation
             'operator' => $user !== null && $this->roles->isOperator($user),
             'driver' => $user !== null && $this->roles->isDriver($user),
             'fleet' => $user !== null && $this->roles->ownsFleet($user),
-            default => false,
+            // Business portal items follow the person's role on their business account (business agent, D-1112).
+            default => str_starts_with((string) $requirement, 'business:') && $user !== null && app(PortalAccess::class)->allows($user, substr((string) $requirement, 9)),
         };
     }
 }

@@ -1,0 +1,165 @@
+/*
+ * Fleet portal (R-46 fleet agent). Built inside Route Line (DESIGN.md): tokens only, flat surfaces separated by a
+ * tone step, colour on state and the one primary action. Style: accent ladder (sign green at full strength only on
+ * small marks, its tint on areas). The fleet's face: number plates. A vehicle is shown as its plate everywhere,
+ * set in Barlow Condensed like the real thing.
+ *
+ * Grid arithmetic (desktop, inner width 80rem = 1280px): main 1fr + rail 24rem (384px) with a 1.5rem (24px) gap,
+ * so main = 1280 - 384 - 24 = 872px. One gap value everywhere: --fl-gap.
+ */
+
+.fl { --fl-gap: var(--eh-space-6); --fl-plate-bg: #ffffff; --fl-plate-ink: #0f1f19; --fl-plate-edge: #0f1f19; }
+
+/* Page head: title, the finding under it, actions on the right */
+.fl-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--eh-space-3) var(--eh-space-6); }
+.fl-head__text { display: grid; gap: var(--eh-space-2); min-width: 0; max-width: 46rem; }
+.fl-head__line { margin: 0; color: var(--eh-ink-2); font-size: var(--eh-text-md); }
+.fl-head__actions { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); align-items: center; }
+
+/* Fleet switcher: a plain GET form, works without script */
+.fl-switch { display: flex; align-items: center; gap: var(--eh-space-2); margin: 0; }
+.fl-switch .eh-select { min-height: 36px; padding-block: 0; }
+.fl-switch label { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+
+.fl-stack { display: grid; gap: var(--fl-gap); }
+.fl-stack--tight { gap: var(--eh-space-3); }
+
+/* One container split into equal cells: the KPIs as type, never tiles */
+.fl-strip { display: grid; grid-template-columns: repeat(var(--fl-cells, 5), minmax(0, 1fr)); background: var(--eh-surface); border-radius: var(--eh-radius); margin: 0; }
+.fl-strip__cell { display: grid; gap: var(--eh-space-1); align-content: start; padding: var(--eh-space-4) var(--eh-space-5); margin: 0; min-width: 0; }
+.fl-strip__cell + .fl-strip__cell { border-left: 1px solid var(--eh-rule); }
+.fl-strip dt { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.fl-strip dd { margin: 0; font-family: var(--eh-font-display); font-weight: 700; font-size: var(--eh-text-2xl); line-height: 1.05; font-variant-numeric: tabular-nums lining-nums; color: var(--eh-ink); }
+.fl-strip dd .eh-money { font-size: inherit; font-family: inherit; }
+.fl-strip__note { font-size: var(--eh-text-xs); color: var(--eh-ink-3); }
+.fl-strip__cell a { color: inherit; text-decoration: none; }
+.fl-strip__cell a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Main column and rail */
+.fl-grid { display: grid; grid-template-columns: minmax(0, 1fr) 24rem; gap: var(--fl-gap); align-items: start; }
+.fl-grid--even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.fl-panel { background: var(--eh-surface); border-radius: var(--eh-radius); padding: var(--eh-space-5); min-width: 0; }
+.fl-panel--flush { padding: var(--eh-space-2) 0 var(--eh-space-2); }
+.fl-panel--flush > .fl-panel__head { padding: var(--eh-space-3) var(--eh-space-5) 0; }
+.fl-panel__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--eh-space-2) var(--eh-space-4); margin-bottom: var(--eh-space-4); }
+.fl-panel__head h2, .fl-panel__head h3 { margin: 0; font-size: var(--eh-text-lg); font-weight: 700; line-height: 1.25; }
+.fl-panel__meta { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.fl-panel__foot { margin-top: var(--eh-space-4); display: flex; flex-wrap: wrap; gap: var(--eh-space-3); align-items: center; }
+.fl-rail-title { margin: 0 0 var(--eh-space-2); font-size: var(--eh-text-md); font-weight: 700; }
+
+/* The plate: the fleet's face */
+.fl-plate {
+    display: inline-flex; align-items: center; min-height: 26px; padding: 0 8px;
+    background: var(--fl-plate-bg); color: var(--fl-plate-ink);
+    border: 1.5px solid var(--fl-plate-edge); border-radius: var(--eh-radius-sm);
+    font-family: var(--eh-font-display); font-weight: 700; font-size: var(--eh-text-lg); line-height: 1; letter-spacing: 0.04em;
+    white-space: nowrap; font-variant-numeric: tabular-nums lining-nums;
+}
+.fl-plate--lg { min-height: 40px; padding: 0 14px; font-size: var(--eh-text-2xl); border-width: 2px; border-radius: var(--eh-radius-sm); }
+a.fl-plate { text-decoration: none; }
+a.fl-plate:hover { background: var(--eh-signal); }
+
+/* Tables: rules and alignment, no header band */
+.fl-table-wrap { overflow-x: auto; }
+.fl-table { width: 100%; border-collapse: collapse; font-size: var(--eh-text-sm); }
+.fl-table caption { text-align: left; }
+.fl-table th { text-align: left; font-weight: 500; font-size: var(--eh-text-xs); color: var(--eh-ink-2); padding: 0 var(--eh-space-3) var(--eh-space-2); white-space: nowrap; }
+.fl-table td { padding: var(--eh-space-3); border-top: 1px solid var(--eh-rule); vertical-align: middle; }
+.fl-table th:first-child, .fl-table td:first-child { padding-left: var(--eh-space-5); }
+.fl-table th:last-child, .fl-table td:last-child { padding-right: var(--eh-space-5); }
+.fl-table .num { text-align: right; font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.fl-table tbody tr:hover td { background: color-mix(in srgb, var(--eh-accent-tint) 35%, transparent); }
+.fl-table td .fl-sub { display: block; font-size: var(--eh-text-xs); color: var(--eh-ink-3); margin-top: 2px; }
+.fl-table tfoot td { font-weight: 700; border-top: 2px solid var(--eh-rule-strong); }
+.fl-name { font-weight: 600; color: var(--eh-ink); text-decoration: none; }
+a.fl-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+.fl-dash { color: var(--eh-ink-3); }
+.fl-nowrap { white-space: nowrap; }
+
+/* Key and value rows inside a panel */
+.fl-kv { display: grid; grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr); gap: var(--eh-space-2) var(--eh-space-5); margin: 0; font-size: var(--eh-text-sm); }
+.fl-kv dt { color: var(--eh-ink-2); }
+.fl-kv dd { margin: 0; color: var(--eh-ink); }
+
+/* Lists of short items (alerts, applications) */
+.fl-items { list-style: none; margin: 0; padding: 0; }
+.fl-items > li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--eh-space-1) var(--eh-space-3); align-items: start; padding: var(--eh-space-3) 0; }
+.fl-items > li + li { border-top: 1px solid var(--eh-rule); }
+.fl-items__title { margin: 0; font-weight: 600; font-size: var(--eh-text-sm); }
+.fl-items__detail { margin: 2px 0 0; font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+.fl-items__who { margin: 0; font-size: var(--eh-text-xs); color: var(--eh-ink-3); }
+.fl-items .eh-icon { --eh-icon: 20px; margin-top: 1px; }
+.fl-sev--stop { color: var(--eh-stop); }
+.fl-sev--caution { color: var(--eh-caution); }
+.fl-sev--info { color: var(--eh-info); }
+
+/* Filters: underline tabs plus a small form */
+.fl-filters { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--eh-space-3); }
+.fl-filters form { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); align-items: end; margin: 0; }
+.fl-filters .eh-field { min-width: 10rem; }
+
+/* Forms */
+.fl-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--eh-space-4) var(--eh-space-5); }
+.fl-form--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fl-form__full { grid-column: 1 / -1; }
+.fl-form__actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--eh-space-3); align-items: center; }
+.fl-checks { display: grid; gap: var(--eh-space-2); border: 0; padding: 0; margin: 0; }
+.fl-checks legend { font-weight: 600; font-size: var(--eh-text-sm); margin-bottom: var(--eh-space-2); padding: 0; }
+.fl-check { display: flex; gap: var(--eh-space-2); align-items: flex-start; font-size: var(--eh-text-sm); min-height: 32px; cursor: pointer; }
+.fl-check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--eh-accent); flex: none; }
+.fl-inline { display: inline-flex; flex-wrap: wrap; gap: var(--eh-space-2); align-items: center; margin: 0; }
+.fl-inline .eh-input, .fl-inline .eh-select { min-height: 36px; }
+.fl-inline .eh-select-wrap { min-width: 12rem; }
+
+/* Disclosure for secondary forms: inline, never a modal */
+.fl-disclose > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: var(--eh-space-2); font-weight: 600; color: var(--eh-accent); min-height: 36px; }
+.fl-disclose > summary::-webkit-details-marker { display: none; }
+.fl-disclose > summary:hover { text-decoration: underline; text-underline-offset: 3px; }
+.fl-disclose[open] > summary { margin-bottom: var(--eh-space-4); }
+
+/* Category eligibility: one row per ride category */
+.fl-cats { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--eh-space-2); }
+.fl-cats li { display: flex; gap: var(--eh-space-3); align-items: baseline; justify-content: space-between; font-size: var(--eh-text-sm); }
+.fl-cats__why { color: var(--eh-ink-3); font-size: var(--eh-text-xs); text-align: right; }
+
+/* Segmented period switch as links */
+.fl-seg { display: inline-flex; background: var(--eh-surface-2); border-radius: var(--eh-radius-pill); padding: 3px; gap: 2px; }
+.fl-seg a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 var(--eh-space-4); border-radius: var(--eh-radius-pill); font-size: var(--eh-text-sm); font-weight: 600; color: var(--eh-ink-2); text-decoration: none; }
+.fl-seg a[aria-current="page"] { background: var(--eh-surface); color: var(--eh-ink); }
+.fl-seg a:hover { color: var(--eh-ink); }
+
+.fl-note { margin: 0; font-size: var(--eh-text-sm); color: var(--eh-ink-2); max-width: 68ch; }
+.fl-errors { margin: 0; }
+
+@media (max-width: 1100px) {
+    .fl-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 800px) {
+    .fl { --fl-gap: var(--eh-space-4); }
+    .fl-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fl-strip__cell + .fl-strip__cell { border-left: 0; }
+    .fl-strip__cell { border-top: 1px solid var(--eh-rule); padding: var(--eh-space-3) var(--eh-space-4); }
+    .fl-strip__cell:nth-child(-n+2) { border-top: 0; }
+    .fl-strip__cell:nth-child(even) { border-left: 1px solid var(--eh-rule); }
+    .fl-strip__cell:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .fl-grid--even, .fl-form, .fl-form--3 { grid-template-columns: minmax(0, 1fr); }
+    .fl-panel { padding: var(--eh-space-4); }
+
+    /* Tables become two-line items: identity and the key figure first, the rest under it */
+    .fl-table--stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .fl-table--stack, .fl-table--stack tbody, .fl-table--stack tr, .fl-table--stack td { display: block; }
+    .fl-table--stack tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--eh-space-3); padding: var(--eh-space-3) var(--eh-space-4); border-top: 1px solid var(--eh-rule); }
+    .fl-table--stack td { border: 0; padding: 2px 0 !important; text-align: left; }
+    .fl-table--stack td.num { text-align: right; }
+    .fl-table--stack td[data-label]::before { content: attr(data-label) " "; color: var(--eh-ink-3); font-size: var(--eh-text-xs); }
+    .fl-table--stack td.fl-span { grid-column: 1 / -1; }
+    .fl-table--stack tfoot tr { border-top: 2px solid var(--eh-rule-strong); }
+    .fl-kv { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    .fl-kv dd { margin-bottom: var(--eh-space-2); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .fl-seg a, a.fl-plate, .fl-table tbody tr td { transition: background-color 160ms var(--eh-ease, ease-out), color 160ms var(--eh-ease, ease-out); }
+}
