@@ -92,7 +92,7 @@ A ride is a line between two stops. The logo's yellow disc is the stop and its g
 
 ## 5. Accessibility
 
-- Contrast, measured (WCAG relative luminance), all 42 checked pairs pass. Light: ink on ground 15.39, ink-2 on ground 8.45, ink-3 on surface-2 4.97, white on sign green 6.69, dark ink on yellow 10.19, go 5.32, caution 6.31, stop 5.38, info 6.58, focus ring 5.38 on ground, field border 3.22 on ground and 3.57 on surface. Night: ink 15.85, ink-2 9.85, ink-3 on surface-2 5.63, dark ink on mint 8.75, tint ink 8.83, stop 6.94, white on SOS red 5.47, focus 8.68, field border 3.88.
+- Contrast, measured (WCAG relative luminance), all 42 checked pairs pass. Light: ink on ground 15.39, ink-2 on ground 8.45, ink-3 on surface-2 4.97, white on sign green 6.69, dark ink on yellow 10.19, go 5.32, caution 6.31, stop 5.38, info 6.58, focus ring 5.38 on ground, field border 3.22 on ground and 3.57 on surface. Night (ground lifted to #13201b after the finish review): ink 14.47, ink-3 on surface-2 5.39, ink-2 on surface-2 7.21, dark ink on night green 7.45, night green on ground 6.53, tint ink 7.88, stop 6.28, white on SOS red 5.47, focus 7.92, field border 4.12 on ground and 3.75 on surface.
 - Focus: 3px ring in `--eh-focus`, offset 2px, on every interactive element; drawers trap nothing but make the content behind `inert`.
 - Targets: 44px minimum; driver primary actions 56px; tab bar items full height.
 - Landmarks: one `main#main`, a skip link first on every page, labelled navs, one `h1`.
@@ -112,13 +112,17 @@ A ride is a line between two stops. The logo's yellow disc is the stop and its g
 
 ## 8. Verification
 
-- PHP: full suite 603 before (596 pass, 7 skipped); after: see the report line in section 10. New tests: `tests/Feature/Ehail/Ds/{ShellPagesTest,NavigationTest,ComponentsTest,PublicPagesTest}.php`, `tests/Unit/MoneyFormatterTest.php`.
+- PHP: full suite 603 before (596 pass, 7 skipped); after 632 (625 pass, 7 skipped). No existing test was changed. New tests: `tests/Feature/Ehail/Ds/{ShellPagesTest,NavigationTest,ComponentsTest,PublicPagesTest}.php`, `tests/Unit/MoneyFormatterTest.php`.
 - JS: `node --test "tests/js/*.test.mjs"`: 3 tests (sheet snaps, nearest snap, theme rules); there were none before.
 - `npm run build`, `php artisan view:cache`, `php artisan route:cache` pass.
 - Screenshots: `docs/R46_screens/ds/<page>-<width>-<light|dark>.jpg` at 390, 768 and 1440 for landing, login, forgot password, 404, terms, ride, drive (not registered and online), business, fleet (none and with a fleet), dashboard, profile, driver desk, ops. Captured headless with images forced to load and reveals settled.
 - Detectors: impeccable `detect` clean on every new page; findings left only on pre-R-46 pages (Livewire's own progress-bar glow). Hallmark sloplint landing clean. Taste inspector landing 0 FAIL.
 
-## 9. Known limits and follow-ups
+## 9. Finish review (impeccable-finish-reviewer)
+
+Round 1 asked for a recapture (lazy photographs had not painted in the headless capture); the capture script now forces images to load, scrolls the page and settles reveals. Round 2 disposition `fix` with 8 material fixes: 6 applied (explanation pinned to its stop, commission promise for drivers, error-page kicker removed, business column alignment, night ground lifted off near-black, N1 crop on phones), 1 partial (account pages: sentence case and flat panels, but they stay in the legacy shell because `ResponsiveShellTest` pins that contract and wave 2 owns account surfaces), 1 declined (show example rand figures on the fare line: no pricing rules exist yet and the owner treats invented prices as defects; open owner decision). The verdict pass on the fixes is recorded in the ds report.
+
+## 10. Known limits and follow-ups
 
 - The legacy pages (dashboard, rides, driver desk, operator pages) keep their fixed-dark inline styles; the legacy shell pins the night theme for them until wave 2 replaces them. Their Material Symbols icons were swapped for the kit's icons.
 - `config/livewire` progress bar colour and its built-in glow style are Livewire's; not changed (not ds-owned).
