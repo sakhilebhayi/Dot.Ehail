@@ -22,8 +22,12 @@
     @endif
 
     @if ($needsAction || $item['satisfied'])
-        <details class="dr-docform" @if($needsAction) open @endif data-dr-typing>
-            <summary class="dr-textlink">{{ $verb }}</summary>
+        {{-- A document that needs the driver shows its upload straight away (no "Upload" link above an open form,
+             jury 30b); an approved one keeps "Replace" folded. --}}
+        @php($wrap = $needsAction ? 'div' : 'details')
+        <{{ $wrap }} class="dr-docform" data-dr-typing>
+            @unless ($needsAction)<summary class="dr-textlink">{{ $verb }}</summary>@endunless
+            @if ($needsAction && $verb !== 'Upload')<p class="dr-upload__verb">{{ $verb }}: take a new photo or choose the file again.</p>@endif
             <form class="dr-upload" method="POST" action="{{ route('drive.documents.upload') }}" enctype="multipart/form-data" data-dr-upload data-max-image-kb="{{ $limits['image_kb'] }}" data-max-pdf-kb="{{ $limits['pdf_kb'] }}">
                 @csrf
                 <input type="hidden" name="type" value="{{ $item['type'] }}">
@@ -45,6 +49,6 @@
                     <button type="button" class="eh-btn eh-btn--secondary eh-btn--driver" data-dr-upload-retry hidden>Try again</button>
                 </div>
             </form>
-        </details>
+        </{{ $wrap }}>
     @endif
 </li>
