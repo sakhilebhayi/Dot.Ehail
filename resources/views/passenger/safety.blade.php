@@ -76,7 +76,7 @@
             <p class="pax-lead">For something that happened on a trip or around one. Our safety team reviews every report; the other person is not told who reported.</p>
             <form class="eh-panel pax-form" data-pax-incident-form>
                 <x-eh.select label="What happened?" name="kind" id="incident-kind" :options="['harassment' => 'Harassment', 'accident' => 'Accident', 'other' => 'Another safety concern']" />
-                <x-eh.select label="Which trip?" name="ride_id" id="incident-ride" placeholder="Not about a specific trip" :options="$recentRides->mapWithKeys(fn ($r) => [$r->id => ($r->completed_at ?? $r->created_at)?->timezone(config('app.timezone'))->format('j M, H:i').': '.\Illuminate\Support\Str::before((string) $r->dropoff_address, ',')])->all()" />
+                <x-eh.select label="Which trip?" name="ride_id" id="incident-ride" placeholder="Not about a specific trip" :options="$recentRides->mapWithKeys(fn ($r) => [$r->id => ($r->completed_at ?? $r->created_at)?->timezone(\App\Support\Ui\LocalTime::timezone())->format('j M, H:i').': '.\Illuminate\Support\Str::before((string) $r->dropoff_address, ',')])->all()" />
                 <x-eh.field label="What should we know?" name="description" type="textarea" id="incident-description" />
                 <p class="pax-field__status" data-pax-incident-status role="status"></p>
                 <div><x-eh.button type="submit" variant="secondary">Send report</x-eh.button></div>
@@ -94,7 +94,7 @@
                             <a class="eh-row" href="{{ route('ride.safety.incident', $incident) }}">
                                 <span class="eh-row__main">
                                     <span class="eh-row__title">{{ $incident->kind->label() }} <span class="eh-muted">{{ $incident->reference }}</span></span>
-                                    <span class="eh-row__meta">{{ $incident->created_at->timezone(config('app.timezone'))->format('j M Y, H:i') }}, {{ ucfirst(str_replace('_', ' ', $incident->status->value)) }}</span>
+                                    <span class="eh-row__meta">{{ $incident->created_at->timezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y, H:i') }}, {{ ucfirst(str_replace('_', ' ', $incident->status->value)) }}</span>
                                 </span>
                                 <span class="eh-row__trail"><x-eh.icon name="chevron-right" /></span>
                             </a>

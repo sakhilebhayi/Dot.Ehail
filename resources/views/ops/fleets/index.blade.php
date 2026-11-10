@@ -9,7 +9,7 @@
                     @forelse ($pending as $fleet)
                         <li>
                             <span class="ops-queue__title">{{ $fleet->name }}</span>
-                            <span class="ops-queue__meta">Owner {{ $fleet->owner?->name }} · {{ $fleet->owner?->email }} · created {{ $fleet->created_at?->format('d M Y') }}</span>
+                            <span class="ops-queue__meta">Owner {{ $fleet->owner?->name }} · {{ $fleet->owner?->email }} · created {{ $fleet->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }}</span>
                             <span class="ops-queue__trail">
                                 <form method="POST" action="{{ route('operator.fleets.approve', $fleet) }}" data-ops-confirm="Approve {{ $fleet->name }}? Its owner can then accept drivers." style="margin:0">@csrf<x-eh.button type="submit" size="sm">Approve</x-eh.button></form>
                             </span>

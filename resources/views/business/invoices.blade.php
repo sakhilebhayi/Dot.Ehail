@@ -24,7 +24,7 @@
                                 <tr>
                                     <td data-label="Statement"><a class="eh-link" href="{{ route('business.statements.show', $s) }}">{{ $s->number }}</a></td>
                                     <td data-label="Period">{{ $s->snapshot['period_label'] ?? $s->period }}</td>
-                                    <td data-label="Due">{{ $s->due_at->format('j M Y') }}</td>
+                                    <td data-label="Due">{{ $s->due_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}</td>
                                     <td data-label="State"><x-eh.badge :tone="$s->statusTone()">{{ $s->statusLabel() }}</x-eh.badge></td>
                                     <td class="num" data-label="Total"><x-eh.money :minor="$s->closing_minor" :currency="$s->currency" /></td>
                                     <td class="num" data-label="Still owed">@php($o = $owed($s))<x-eh.money :minor="$o" :currency="$s->currency" :muted="$o === 0" /></td>
@@ -52,7 +52,7 @@
                     @else
                         <dl class="bz-facts">
                             @foreach ($payments as $p)
-                                <div><dt>{{ ($p->paid_at ?? $p->created_at)->format('j M') }} · {{ $p->method === 'card' ? 'Company card' : 'EFT' }} @if ($p->status !== 'paid')<x-eh.badge :tone="$p->status === 'failed' ? 'stop' : 'caution'">{{ $p->status === 'failed' ? 'Declined' : 'Checking' }}</x-eh.badge>@endif</dt><dd><x-eh.money :minor="$p->amount_minor" :currency="$p->currency" :muted="$p->status !== 'paid'" /></dd></div>
+                                <div><dt>{{ ($p->paid_at ?? $p->created_at)->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M') }} · {{ $p->method === 'card' ? 'Company card' : 'EFT' }} @if ($p->status !== 'paid')<x-eh.badge :tone="$p->status === 'failed' ? 'stop' : 'caution'">{{ $p->status === 'failed' ? 'Declined' : 'Checking' }}</x-eh.badge>@endif</dt><dd><x-eh.money :minor="$p->amount_minor" :currency="$p->currency" :muted="$p->status !== 'paid'" /></dd></div>
                             @endforeach
                         </dl>
                     @endif

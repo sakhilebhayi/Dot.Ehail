@@ -32,7 +32,7 @@
                                 <td>@include('ops.partials.state', ['row' => $availability[$profile->user_id] ?? null])</td>
                                 <td>{{ $profile->fleet?->name ?? 'Fleet '.$profile->fleet_id }}</td>
                                 <td class="num">{{ number_format((int) ($completed[$profile->user_id] ?? 0)) }}</td>
-                                <td class="num">{{ $profile->created_at?->format('d M Y') }}</td>
+                                <td class="num">{{ $profile->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }}</td>
                             </tr>
                         @endforeach
                     </tbody>

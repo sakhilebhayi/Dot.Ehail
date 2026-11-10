@@ -1,13 +1,22 @@
 @php
     use App\Domain\Payments\Money;
+    use App\Domain\Payments\OperatorIdentity;
+    use App\Support\Ui\LocalTime;
 
     $currency = $receipt->currency;
     $fmt = fn (int $minor) => Money::format($minor, $currency);
-    $tz = config('app.timezone', 'UTC');
-    $when = fn (?string $iso) => $iso ? \Illuminate\Support\Carbon::parse($iso)->timezone($tz)->format('j M Y, H:i') : null;
+    // Every time on the receipt is South African Standard Time (D-1906); the label is printed once, by the issue time.
+    $when = fn (?string $iso) => $iso ? LocalTime::format($iso, 'j M Y, H:i') : null;
+    $zone = LocalTime::label();
     $isRide = ($s['kind'] ?? 'ride') === 'ride';
-    $distanceKm = isset($s['distance_m']) && $s['distance_m'] !== null ? number_format($s['distance_m'] / 1000, 1) . ' km' : null;
+    $distanceKm = isset($s['distance_m']) && $s['distance_m'] !== null ? \App\Domain\Pricing\Engine\FareEngine::km((int) $s['distance_m']) : null;
     $minutes = isset($s['duration_s']) && $s['duration_s'] !== null ? max(1, (int) round($s['duration_s'] / 60)) . ' min' : null;
+    $billed = $s['billed'] ?? ['distance' => null, 'time' => null];
+    $quotedStood = ($s['fare_basis'] ?? null) === 'quoted_fare_stands';
+    // Older receipts froze only a name; newer ones freeze the whole configured identity (D-1905).
+    $op = $s['operator'] ?? ['brand' => config('app.name'), 'legal_name' => $s['operator_name'] ?? null, 'vat_status' => ! empty($s['vat_number']) ? OperatorIdentity::VAT_REGISTERED : OperatorIdentity::VAT_NOT_CONFIGURED, 'vat_number' => $s['vat_number'] ?? null, 'address_lines' => [], 'registration_number' => null, 'trading_name' => null];
+    $vatSentence = $s['vat_sentence'] ?? OperatorIdentity::vatSentence($op, (int) ($s['tax_minor'] ?? 0));
+    $supportEmail = ! empty($s['support_email']) && ! OperatorIdentity::isNoReply((string) $s['support_email']) ? $s['support_email'] : null;
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -16,28 +25,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Receipt {{ $receipt->number }}</title>
+    @vite(['resources/css/app.css'])
     <style>
         :root {
-            --r-paper: var(--eh-surface, #fbfaf7);
-            --r-ground: var(--eh-ground, #eceae4);
-            --r-ink: var(--eh-ink, #1b1c1e);
-            --r-ink-2: var(--eh-ink-2, #4a4c50);
-            --r-rule: var(--eh-rule, #d9d6ce);
-            --r-accent: var(--eh-go, #1f6b4a);
+            --r-paper: var(--eh-surface, #ffffff);
+            --r-ground: var(--eh-ground, #f1f4f0);
+            --r-ink: var(--eh-ink, #0f1f19);
+            --r-ink-2: var(--eh-ink-2, #3a4a43);
+            --r-rule: var(--eh-rule, #d3dbd5);
+            --r-accent: var(--eh-go, #0e6e3d);
             --r-focus: var(--eh-focus, #1f5fbf);
-            --r-font: var(--eh-font-ui, ui-sans-serif, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+            --r-font: var(--eh-font-ui, system-ui, sans-serif);
+            --r-display: var(--eh-font-display, var(--r-font));
             color-scheme: light dark;
-        }
-        @media screen and (prefers-color-scheme: dark) {
-            :root {
-                --r-paper: #1c1d1f;
-                --r-ground: #121314;
-                --r-ink: #ecebe7;
-                --r-ink-2: #b4b2ab;
-                --r-rule: #3a3b3e;
-                --r-accent: #6fcf9f;
-                --r-focus: #8ab4ff;
-            }
         }
         * { box-sizing: border-box; }
         ::selection { background: color-mix(in srgb, var(--r-accent) 28%, transparent); }
@@ -58,7 +58,7 @@
             box-shadow: 0 1px 2px rgb(0 0 0 / .06), 0 12px 32px -12px rgb(0 0 0 / .18);
         }
         header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-        h1 { font-size: 1.375rem; line-height: 1.2; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+        h1 { font-family: var(--r-display); font-size: 1.75rem; line-height: 1.1; font-weight: 700; margin: .75rem 0 0; }
         .operator { margin: .25rem 0 0; color: var(--r-ink-2); font-size: .875rem; }
         .number { text-align: right; font-size: .875rem; color: var(--r-ink-2); }
         .number strong { display: block; color: var(--r-ink); font-weight: 600; font-size: .9375rem; }
@@ -67,7 +67,7 @@
             display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
             padding-bottom: 1.25rem; border-bottom: 1px solid var(--r-rule);
         }
-        .paid .amount { font-size: 2.25rem; font-weight: 650; letter-spacing: -0.02em; line-height: 1; }
+        .paid .amount { font-family: var(--r-display); font-size: 2.5rem; font-weight: 650; letter-spacing: -0.02em; line-height: 1; }
         .paid .state { color: var(--r-accent); font-weight: 600; font-size: .9375rem; display: inline-flex; align-items: center; gap: .375rem; }
         .paid .state svg { width: 1rem; height: 1rem; }
         .route { list-style: none; margin: 0 0 1.25rem; padding: 0; }
@@ -85,6 +85,11 @@
         tr.discount td { color: var(--r-accent); }
         tr.total td { border-top: 1px solid var(--r-rule); padding-top: .75rem; font-weight: 650; font-size: 1.0625rem; }
         tr.tax td { color: var(--r-ink-2); font-size: .875rem; padding-top: .125rem; }
+        td .detail { display: block; color: var(--r-ink-2); font-size: .8125rem; }
+        .facts .note { flex-basis: 100%; font-size: .8125rem; }
+        .issuer { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--r-rule); font-size: .8125rem; color: var(--r-ink-2); }
+        .issuer p { margin: 0 0 .25rem; }
+        .issuer strong { color: var(--r-ink); font-weight: 600; }
         .meta { margin: 1.5rem 0 0; padding-top: 1.25rem; border-top: 1px solid var(--r-rule); display: grid; grid-template-columns: max-content 1fr; gap: .375rem 1.25rem; font-size: .875rem; }
         .meta dt { color: var(--r-ink-2); }
         .meta dd { margin: 0; }
@@ -118,10 +123,11 @@
 <main class="slip">
     <header>
         <div>
+            <x-eh.logo :size="28" />
             <h1>{{ $isRide ? 'Trip receipt' : 'Cancellation fee receipt' }}</h1>
-            <p class="operator">{{ $s['operator_name'] ?? config('app.name') }}@if(!empty($s['vat_number'])) &middot; VAT {{ $s['vat_number'] }}@endif</p>
+            @if(!empty($op['legal_name']) || !empty($op['vat_number']))<p class="operator">{{ implode(' · ', array_filter([$op['legal_name'] ?? null, !empty($op['vat_number']) ? 'VAT '.$op['vat_number'] : null])) }}</p>@endif
         </div>
-        <div class="number">Receipt<strong>{{ $receipt->number }}</strong>{{ $when($receipt->issued_at->toIso8601String()) }}</div>
+        <div class="number">Receipt<strong>{{ $receipt->number }}</strong>{{ $when($receipt->issued_at->toIso8601String()) }} {{ $zone }}</div>
     </header>
 
     <div class="paid">
@@ -137,7 +143,15 @@
         <li><span class="dot" aria-hidden="true"></span><div>{{ $s['dropoff_address'] ?? '' }}@if($isRide && $when($s['completed_at'] ?? null))<div class="when">Dropped off {{ $when($s['completed_at']) }}</div>@elseif(!$isRide && $when($s['cancelled_at'] ?? null))<div class="when">Cancelled {{ $when($s['cancelled_at']) }}</div>@endif</div></li>
     </ol>
 
-    @if($distanceKm || $minutes)
+    @if($billed['distance'] || $billed['time'])
+        {{-- The fare lines below are billed on these quantities (D-1904); the measured trip is shown beside them. --}}
+        <dl class="facts">
+            @if($billed['distance'])<div><dt>Billed distance</dt><dd>{{ $billed['distance'] }}</dd></div>@endif
+            @if($billed['time'])<div><dt>Billed time</dt><dd>{{ $billed['time'] }}</dd></div>@endif
+            @if($distanceKm || $minutes)<div><dt>Your trip</dt><dd>{{ implode(', ', array_filter([$distanceKm, $minutes])) }}</dd></div>@endif
+            @if($quotedStood)<p class="note">The trip stayed within the fare rules, so the quoted fare stood: distance and time are billed as quoted, not as measured.</p>@endif
+        </dl>
+    @elseif($distanceKm || $minutes)
         <dl class="facts">
             @if($distanceKm)<div><dt>Distance</dt><dd>{{ $distanceKm }}</dd></div>@endif
             @if($minutes)<div><dt>Duration</dt><dd>{{ $minutes }}</dd></div>@endif
@@ -148,7 +162,7 @@
         <caption>Fare</caption>
         <tbody>
         @foreach(($s['components'] ?? []) as $line)
-            <tr><td>{{ $line['label'] }}</td><td class="amt">{{ $fmt((int) $line['amount_minor']) }}</td></tr>
+            <tr><td>{{ $line['label'] }}@if(!empty($line['detail']) && isset($line['quantity']))<span class="detail">{{ $line['detail'] }}</span>@endif</td><td class="amt">{{ $fmt((int) $line['amount_minor']) }}</td></tr>
         @endforeach
         @if(($s['promotion_minor'] ?? 0) > 0)
             <tr class="discount"><td>Promotion</td><td class="amt">&minus;{{ $fmt((int) $s['promotion_minor']) }}</td></tr>
@@ -167,10 +181,21 @@
         <dt>Paid</dt><dd>{{ $when($s['paid_at'] ?? null) }}</dd>
     </dl>
 
+    <section class="issuer" aria-label="Issued by">
+        @if(!empty($op['legal_name']))<p><strong>{{ $op['legal_name'] }}</strong>@if(!empty($op['trading_name'])), trading as {{ $op['trading_name'] }}@endif</p>@endif
+        @if(!empty($op['registration_number']))<p>Registration number {{ $op['registration_number'] }}</p>@endif
+        @if(!empty($op['address_lines']))<p>{{ implode(', ', $op['address_lines']) }}</p>@endif
+        @if($vatSentence)<p>{{ $vatSentence }}</p>@endif
+        <p>Times are {{ $zone === 'SAST' ? 'South African Standard Time (SAST)' : $zone }}.</p>
+    </section>
+
     <footer>
         <span>
             Questions about this trip?
-            @if(!empty($s['support_url']))<a href="{{ $s['support_url'] }}">Contact support</a>@elseif(!empty($s['support_email']))<a href="mailto:{{ $s['support_email'] }}">{{ $s['support_email'] }}</a>@else Reply to the receipt email.@endif
+            @if(!empty($s['support_url']))<a href="{{ $s['support_url'] }}">Contact support</a>@endif
+            @if($supportEmail)<a href="mailto:{{ $supportEmail }}">{{ $supportEmail }}</a>@endif
+            @if(!empty($s['support_phone']))<a href="tel:{{ preg_replace('/[^+0-9]/', '', $s['support_phone']) }}">{{ $s['support_phone'] }}</a>@endif
+            @if(empty($s['support_url']) && ! $supportEmail && empty($s['support_phone']) && Route::has('ride.support'))<a href="{{ route('ride.support') }}">Open a help case in the app</a>@endif
         </span>
         <button type="button" class="print no-print" data-eh-print>Print or save as PDF</button>
     </footer>

@@ -21,7 +21,7 @@
                         <div class="fl-stack fl-stack--tight">
                             <div>
                                 <p class="fl-items__title">{{ $application->user?->name }}</p>
-                                <p class="fl-items__who">Applied {{ $application->created_at->format('j M Y') }}@if ($masked) · Licence {{ $mask($application->license_number) }} · ID {{ $mask($application->id_number) }}@endif</p>
+                                <p class="fl-items__who">Applied {{ $application->created_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}@if ($masked) · Licence {{ $mask($application->license_number) }} · ID {{ $mask($application->id_number) }}@endif</p>
                             </div>
                             @if ($canDecide($application))
                                 <div class="fl-inline">
@@ -113,7 +113,7 @@
 
     <p class="fl-note">
         Trips are rides completed {{ $periodLabel }}. Cancelled counts rides a driver cancelled or handed back after taking them. Completion is trips out of trips plus cancellations; acceptance is offers accepted out of offers answered or left to lapse. Ratings show a band, never a score, once a driver has {{ config('ehail_safety.ratings.min_count_for_band', 5) }} ratings.
-        Time online is time out of the offline state, measured {{ $performance['measured_since'] ? 'since '.$performance['measured_since']->format('j M Y') : 'from the first time a driver goes online after this release' }}; a driver whose app has closed counts as online until they go offline.
+        Time online is time out of the offline state, measured {{ $performance['measured_since'] ? 'since '.$performance['measured_since']->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') : 'from the first time a driver goes online after this release' }}; a driver whose app has closed counts as online until they go offline.
     </p>
 
     @if ($rejected->isNotEmpty())
@@ -123,7 +123,7 @@
                 @foreach ($rejected as $profile)
                     <li style="grid-template-columns: minmax(0,1fr) auto">
                         <div><p class="fl-items__title">{{ $profile->user?->name }}</p><p class="fl-items__detail">{{ $profile->rejected_reason }}</p></div>
-                        <p class="fl-items__who">{{ $profile->reviewed_at?->format('j M Y') }}</p>
+                        <p class="fl-items__who">{{ $profile->reviewed_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}</p>
                     </li>
                 @endforeach
             </ul>

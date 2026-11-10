@@ -195,13 +195,18 @@ class FareQuoterTest extends TestCase
         $comparison = $this->quoter()->compare(new QuoteRequest($this->capeTown(), $this->seaPoint(), null, $passenger));
 
         $this->assertInstanceOf(QuoteComparison::class, $comparison);
-        $this->assertSame(['economy'], array_map(fn ($o) => $o->category->key, $comparison->options));
+        // D-1902: a category with nobody online is still priced; its supply says so and it cannot be requested now.
+        $this->assertSame(['economy', 'premium'], array_map(fn ($o) => $o->category->key, $comparison->options));
         $this->assertSame('unknown', $comparison->options[0]->supply);
+        $this->assertSame('none', $comparison->options[1]->supply);
+        $this->assertFalse($comparison->options[1]->requestableNow());
+        $this->assertSame(0, $comparison->options[1]->driversNearby);
+        $this->assertStringContainsString('not guaranteed', strtolower($comparison->options[1]->toArray()['supply_note']));
         $reasons = collect($comparison->unavailable)->mapWithKeys(fn ($u) => [$u->categoryKey => $u->reason])->all();
-        $this->assertSame('no_supply', $reasons['premium']);
+        $this->assertArrayNotHasKey('premium', $reasons);
         $this->assertSame('no_tariff', $reasons['standard']);
         $this->assertArrayNotHasKey('parcel', $reasons, 'inactive categories are simply not offered');
-        $this->assertSame(1, FareQuote::count());
+        $this->assertSame(2, FareQuote::count());
     }
 
     public function test_compare_reports_routing_unavailable_once(): void

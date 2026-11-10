@@ -13,6 +13,7 @@ use App\Domain\Geo\Geometry\Haversine;
 use App\Domain\Geo\LatLng;
 use App\Domain\Perf\PollPolicy;
 use App\Domain\Rides\ScheduledRides;
+use App\Domain\Safety\TrustSignals;
 use App\Enums\RideStatus;
 use App\Models\DriverProfile;
 use App\Models\Ride;
@@ -349,12 +350,18 @@ class RideFeed
         ];
     }
 
-    private function driverRating(int $driverId): ?float
+    /**
+     * The driver's rating as the passenger may see it: a band from the counted ratings, never a decimal (D-1907).
+     * Was the profile's raw average, which the passenger app could not read as a band, so every driver showed
+     * "New on Dot.Ehail" however many ratings they had.
+     *
+     * @return array{band: string, label: string, count: int}
+     */
+    private function driverRating(int $driverId): array
     {
-        // DriverProfile carries HasUserScope (own row only); the passenger reads their driver's.
-        $rating = DriverProfile::withoutGlobalScope('user')->where('user_id', $driverId)->value('rating');
+        $stats = TrustSignals::ratingStats($driverId, RideRating::ROLE_DRIVER);
 
-        return $rating === null || (float) $rating === 0.0 ? null : (float) $rating;
+        return TrustSignals::band($stats['average'], $stats['count']);
     }
 
     private function firstName(?string $name): ?string

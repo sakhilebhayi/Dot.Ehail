@@ -35,7 +35,14 @@ final class PricedOption
         public readonly string $supply,
         public readonly CarbonInterface $pricedAt,
         public ?FareQuote $quote = null,
+        public readonly ?int $driversNearby = null,
     ) {}
+
+    /** Whether an on-demand ride can be requested at this price now (a scheduled ride does not need supply now). */
+    public function requestableNow(): bool
+    {
+        return $this->supply !== 'none';
+    }
 
     public function isEstimate(): bool
     {
@@ -56,6 +63,13 @@ final class PricedOption
             'expires_at' => $this->quote?->expires_at?->toIso8601String(),
             'category' => $this->category->toPublicArray(),
             'supply' => $this->supply,
+            'drivers_nearby' => $this->driversNearby,
+            'requestable_now' => $this->requestableNow(),
+            'supply_note' => match ($this->supply) {
+                'none' => 'No '.$this->category->name.' drivers are nearby right now. The price stands; a ride now cannot be requested until one is, and a scheduled ride is matched closer to its time. Drivers are never guaranteed.',
+                'available' => 'Drivers nearby now: '.$this->driversNearby.'. Not guaranteed: a driver still has to accept.',
+                default => 'Drivers nearby now: not known. Not guaranteed.',
+            },
             'route' => ['distance_m' => $this->route->distanceM, 'duration_s' => $this->route->durationS, 'provider' => $this->route->provider, 'kind' => 'road'],
             'fare' => $this->breakdown->toArray(),
             'tariff' => ['rule_set_id' => $this->ruleSet->id, 'version' => $this->ruleSet->version, 'name' => $this->ruleSet->name, 'is_example' => $this->ruleSet->is_example],

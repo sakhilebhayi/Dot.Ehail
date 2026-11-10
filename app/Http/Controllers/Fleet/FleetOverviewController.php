@@ -92,7 +92,7 @@ class FleetOverviewController extends FleetController
                 DriverAvailability::ON_TRIP => 'On a trip',
                 DriverAvailability::PAUSED => 'Paused',
                 default => 'Online',
-            }, 'tone' => 'go', 'note' => 'Since '.($availability->since?->format('H:i') ?? 'earlier')];
+            }, 'tone' => 'go', 'note' => 'Since '.($availability->since?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i') ?? 'earlier')];
         } else {
             $result = $holderUser ? $eligibility->canGoOnline($holderUser, $vehicle) : null;
             $state = $result !== null && $result->allowed()

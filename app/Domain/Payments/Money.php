@@ -41,12 +41,8 @@ final class Money
 
     public static function format(int $minor, ?string $currency = null): string
     {
-        $currency ??= self::currency();
-        $symbol = $currency === 'ZAR' ? 'R' : $currency.' ';
-        $sign = $minor < 0 ? '-' : '';
-        $abs = abs($minor);
-
-        return $sign.$symbol.number_format(intdiv($abs, 100)).'.'.str_pad((string) ($abs % 100), 2, '0', STR_PAD_LEFT);
+        // The platform's one money text (D-1903).
+        return \App\Support\Ui\MoneyFormatter::format($minor, $currency ?? self::currency());
     }
 
     /** Minor units as a plain decimal string for CSV ("125.50"). */

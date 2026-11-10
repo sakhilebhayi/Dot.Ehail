@@ -25,7 +25,7 @@ class EarningsService
      */
     public static function periodBounds(string $period, ?string $date = null): array
     {
-        $tz = config('app.timezone', 'UTC');
+        $tz = \App\Support\Ui\LocalTime::timezone();
         $anchor = $date === null ? CarbonImmutable::now($tz) : CarbonImmutable::parse($date, $tz);
 
         return match ($period) {
@@ -149,7 +149,7 @@ class EarningsService
         $trips = $rows->where('kind', DriverEarning::KIND_TRIP);
         $tripCount = $trips->count();
 
-        $byDay = $trips->groupBy(fn (DriverEarning $e) => $e->earned_at->copy()->timezone(config('app.timezone', 'UTC'))->toDateString());
+        $byDay = $trips->groupBy(fn (DriverEarning $e) => $e->earned_at->copy()->timezone(\App\Support\Ui\LocalTime::timezone())->toDateString());
         $activeDays = $byDay->count();
 
         return [

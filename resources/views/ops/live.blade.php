@@ -18,7 +18,7 @@
                 <p class="ops-head__finding" @if($finding[1]) data-tone="{{ $finding[1] }}" @endif>{{ $finding[0] }}</p>
             </div>
             <div class="ops-head__actions">
-                <span class="ops-stamp" data-live-stamp>Updated {{ \Illuminate\Support\Carbon::parse($board['generated_at'])->format('H:i:s') }}</span>
+                <span class="ops-stamp" data-live-stamp>Updated {{ \Illuminate\Support\Carbon::parse($board['generated_at'])->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i:s') }}</span>
                 @can('ops.rides.view')<x-eh.button size="sm" variant="secondary" :href="route('ops.rides')" icon="list">All rides</x-eh.button>@endcan
             </div>
         </header>

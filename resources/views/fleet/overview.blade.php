@@ -59,7 +59,7 @@
                                     <td class="fl-span"><x-eh.badge :tone="$row['state']['tone']">{{ $row['state']['label'] }}</x-eh.badge><span class="fl-sub">{{ $row['state']['note'] }}</span></td>
                                     <td data-label="Service">
                                         @if ($row['service']['on'] || $row['service']['km'])
-                                            <span class="fl-nowrap {{ $row['service']['overdue'] ? 'fl-sev--stop' : ($row['service']['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $row['service']['on']?->format('j M Y') }}{{ $row['service']['on'] && $row['service']['km'] ? ', ' : '' }}{{ $row['service']['km'] ? number_format($row['service']['km'], 0, '.', ' ').' km' : '' }}</span>
+                                            <span class="fl-nowrap {{ $row['service']['overdue'] ? 'fl-sev--stop' : ($row['service']['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $row['service']['on']?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y') }}{{ $row['service']['on'] && $row['service']['km'] ? ', ' : '' }}{{ $row['service']['km'] ? number_format($row['service']['km'], 0, '.', ' ').' km' : '' }}</span>
                                             @if ($row['service']['overdue'])<span class="fl-sub">Overdue</span>@elseif ($row['service']['due_soon'])<span class="fl-sub">Due soon</span>@endif
                                         @else
                                             <span class="fl-dash">Not recorded</span>

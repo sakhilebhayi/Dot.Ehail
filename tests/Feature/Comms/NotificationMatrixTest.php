@@ -232,7 +232,7 @@ class NotificationMatrixTest extends TestCase
         $payout->forceFill(['status' => Payout::PAID, 'paid_at' => now()])->save();
 
         $this->assertStringContainsString('could not be paid: Account closed', $this->inboxData($driver, 'payout_failed')->sole()['message']);
-        $this->assertStringContainsString('R1,250.00 (reference PO-TEST-1) has been paid out', $this->inboxData($driver, 'payout_paid')->sole()['message']);
+        $this->assertStringContainsString("R1\u{202F}250.00 (reference PO-TEST-1) has been paid out", $this->inboxData($driver, 'payout_paid')->sole()['message']);
         $this->assertSame('earnings', $this->delivery($driver, 'payout_paid', 'in_app')->category);
 
         $program = IncentiveProgram::create(['name' => 'Weekend 20 trips', 'kind' => 'trip_count', 'rules' => [], 'reward_minor' => 20000, 'currency' => 'ZAR', 'starts_at' => now()->subDay(), 'status' => 'active']);

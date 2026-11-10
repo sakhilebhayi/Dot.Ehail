@@ -1,5 +1,7 @@
 // Small geometry and formatting helpers for the driver app (no map engine needed).
 
+import { formatMinor } from '../passenger/money.js';
+
 const R = 6371008.8;
 
 /** Great-circle distance in metres. */
@@ -48,14 +50,9 @@ export function destinationArea(address) {
     return parts.slice(-2).join(', ');
 }
 
-/** Money from integer minor units, "R1 250.50" (narrow no-break space for thousands), minus as U+2212. */
+/** Money from integer minor units: the platform's one money text (passenger/money.js, D-1903), "R1 250.50". */
 export function formatMoney(minor, currency = 'ZAR') {
     if (minor === null || minor === undefined || !Number.isFinite(Number(minor))) return null;
-    const n = Number(minor);
-    const abs = Math.abs(n);
-    const whole = Math.floor(abs / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    const cents = String(abs % 100).padStart(2, '0');
-    const symbol = currency === 'ZAR' ? 'R' : `${currency} `;
 
-    return `${n < 0 ? '−' : ''}${symbol}${whole}.${cents}`;
+    return formatMinor(Math.trunc(Number(minor)), currency || 'ZAR');
 }

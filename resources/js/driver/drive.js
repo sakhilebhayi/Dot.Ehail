@@ -2,6 +2,7 @@
 // online, shows offers with their earnings, and walks the driver through the trip. Every decision is the server's:
 // this script only asks and shows the answer. See docs/R46_UI_DRIVER.md.
 
+import { timeLocal } from '../eh/time.js';
 import { api, ApiError, fill } from './api.js';
 import { clockOffset, startCountdown } from './countdown.js';
 import { countdownCue, createAnnouncer } from '../eh/announce.js';
@@ -69,7 +70,8 @@ function toast(message, tone = 'info') {
 }
 
 function clockTime(d) {
-    return [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
+    // Service-area time (D-1906), whatever zone the phone is set to.
+    return timeLocal(d, { seconds: true });
 }
 
 function online() {
@@ -572,9 +574,14 @@ async function loadOfferEarnings(offer) {
         if (state.shownOfferId !== offer.id) return;
         const rows = [['Fare (estimate)', formatMoney(data.fare_minor, data.currency)]];
         if (data.available) {
-            if (data.tolls_minor) rows.push(['Tolls, paid back to you', formatMoney(data.tolls_minor, data.currency)]);
-            (data.deductions || []).forEach((d) => rows.push([d.label + (d.detail ? ` (${d.detail})` : ''), formatMoney(-d.amount_minor, data.currency)]));
+            // The server's walk from fare to net (D-1901): every fee and the commission with its base, so the rows add up.
+            if (Array.isArray(data.lines)) {
+                data.lines.forEach((l) => rows.push([l.label + (l.detail && l.code === 'commission' ? ` (${l.detail})` : ''), formatMoney(l.amount_minor, data.currency)]));
+            } else {
+                (data.deductions || []).forEach((d) => rows.push([d.label + (d.detail ? ` (${d.detail})` : ''), formatMoney(-d.amount_minor, data.currency)]));
+            }
             rows.push(['You earn', data.net_minor !== null ? formatMoney(data.net_minor, data.currency) : 'not configured', true]);
+            if (data.tolls_minor) rows.push(['Of which tolls, paid back to you at cost', formatMoney(data.tolls_minor, data.currency)]);
         }
         ledger.replaceChildren(...rows.map(([k, v, total]) => ledgerRow(k, v, total)));
         const plan = $('[data-dr-offer-plan]');

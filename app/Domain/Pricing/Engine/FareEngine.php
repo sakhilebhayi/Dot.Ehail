@@ -12,7 +12,7 @@ use App\Domain\Pricing\Money\RoundingMode;
  * The fare formula (docs/R46_PRICING.md section "Formula"), pure and deterministic: same rule set + same inputs =
  * same breakdown, integers only.
  *
- *   trip      = base + per_km x km + per_minute x minutes + waiting (minutes beyond the free window)
+ *   trip      = base + per_km x km + per_minute x minutes + waiting (km and minutes in tenths, half up: D-1900)
  *   subtotal  = trip + booking_fee + zone fees + tolls
  *   minimum   = max(0, minimum - subtotal)                       (a visible "minimum fare" line)
  *   demand    = (subtotal + minimum - tolls) x (multiplier - 1)   (capped, only when enabled; tolls never uplifted)
@@ -32,11 +32,13 @@ final class FareEngine
 
         $components[] = new FareComponent('base', 'Base fare', $rules->base_minor);
 
-        $distanceMinor = IntegerMath::divide(IntegerMath::multiply($rules->per_km_minor, max(0, $in->distanceM)), 1000, $mode);
-        $components[] = new FareComponent('distance', 'Distance', $distanceMinor, self::km($in->distanceM).' x '.self::money($rules->per_km_minor, $currency).'/km');
+        // Metered lines bill the quantity they show (D-1900): distance in tenths of a km, time in tenths of a minute,
+        // each line = rate x that quantity rounded to the cent, so "5.7 km x R7.50/km = R42.75" holds on the page.
+        $kmTenths = self::kmTenths($in->distanceM);
+        $components[] = new FareComponent('distance', 'Distance', FareComponent::meteredAmount($rules->per_km_minor, $kmTenths, $mode), FareComponent::quantityText($kmTenths).' km x '.self::money($rules->per_km_minor, $currency).'/km', $kmTenths, 'km', $rules->per_km_minor);
 
-        $timeMinor = IntegerMath::divide(IntegerMath::multiply($rules->per_minute_minor, max(0, $in->durationS)), 60, $mode);
-        $components[] = new FareComponent('time', 'Time', $timeMinor, self::minutes($in->durationS).' x '.self::money($rules->per_minute_minor, $currency).'/min');
+        $minuteTenths = self::minuteTenths($in->durationS);
+        $components[] = new FareComponent('time', 'Time', FareComponent::meteredAmount($rules->per_minute_minor, $minuteTenths, $mode), FareComponent::quantityText($minuteTenths).' min x '.self::money($rules->per_minute_minor, $currency).'/min', $minuteTenths, 'min', $rules->per_minute_minor);
 
         $billableWaitMinutes = self::billableWaitMinutes($in->waitingSeconds, $rules->wait_free_minutes);
 
@@ -46,6 +48,9 @@ final class FareEngine
                 'Waiting time',
                 IntegerMath::multiply($billableWaitMinutes, $rules->wait_per_minute_minor),
                 $billableWaitMinutes.' min after '.$rules->wait_free_minutes.' free min x '.self::money($rules->wait_per_minute_minor, $currency).'/min',
+                $billableWaitMinutes * 10,
+                'min',
+                $rules->wait_per_minute_minor,
             );
         }
 
@@ -180,14 +185,26 @@ final class FareEngine
         return array_reduce($components, fn (int $s, FareComponent $c) => IntegerMath::add($s, $c->amountMinor), 0);
     }
 
+    /** Billable distance: tenths of a km, half up (5 714 m -> 57 = 5.7 km). */
+    public static function kmTenths(int $metres): int
+    {
+        return IntegerMath::divide(max(0, $metres), 100, RoundingMode::HalfUp);
+    }
+
+    /** Billable time: tenths of a minute, half up (686 s -> 114 = 11.4 min). */
+    public static function minuteTenths(int $seconds): int
+    {
+        return IntegerMath::divide(max(0, $seconds), 6, RoundingMode::HalfUp);
+    }
+
     public static function km(int $metres): string
     {
-        return MoneyFormatter::decimal(IntegerMath::divide($metres, 100), 1).' km';
+        return FareComponent::quantityText(self::kmTenths($metres)).' km';
     }
 
     public static function minutes(int $seconds): string
     {
-        return IntegerMath::divide($seconds, 60).' min';
+        return FareComponent::quantityText(self::minuteTenths($seconds)).' min';
     }
 
     private static function money(int $minor, string $currency): string

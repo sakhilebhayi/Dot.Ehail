@@ -12,7 +12,7 @@
     <x-slot:header>
         <div class="eh-pagehead__text">
             <h1 class="eh-h1" tabindex="-1" data-pax-focus>{{ $incident->kind->value === 'sos' ? 'SOS sent' : $whatWeDid['incident']['kind_label'] }}</h1>
-            <p class="eh-muted" style="margin:0">Reference {{ $whatWeDid['incident']['reference'] }}, {{ $incident->created_at->timezone(config('app.timezone'))->format('j M Y, H:i') }}</p>
+            <p class="eh-muted" style="margin:0">Reference {{ $whatWeDid['incident']['reference'] }}, {{ $incident->created_at->timezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y, H:i') }}</p>
         </div>
     </x-slot:header>
 

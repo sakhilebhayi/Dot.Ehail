@@ -11,7 +11,7 @@
         return match (true) {
             $at->isToday() => 'Today',
             $at->isYesterday() => 'Yesterday',
-            default => $at->format('l j F'),
+            default => $at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('l j F'),
         };
     });
 @endphp
@@ -29,7 +29,7 @@
                         <span class="comms-stop__dot" aria-hidden="true"></span>
                         <div class="comms-stop__body">
                             <p class="comms-stop__meta">
-                                <time datetime="{{ $item['created_at'] }}">{{ $at->format('H:i') }}</time>
+                                <time datetime="{{ $item['created_at'] }}">{{ $at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i') }}</time>
                                 <span>{{ $item['category_label'] }}</span>
                                 @if (! $item['read'])<span class="eh-sr-only">, unread</span>@endif
                             </p>

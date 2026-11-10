@@ -2,7 +2,7 @@
     $rate = fn ($v) => $v === null ? null : number_format($v, 1).'%';
     $docTypes = (array) config('ehail_safety.markets.ZA.document_types', []);
     $finding = match (true) {
-        $suspension !== null => ['Suspended since '.$suspension->suspended_at->format('d M Y').': '.$suspension->reasonLabel().($suspension->appeal_status === 'open' ? '. An appeal is waiting for a decision.' : '.'), 'stop'],
+        $suspension !== null => ['Suspended since '.$suspension->suspended_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y').': '.$suspension->reasonLabel().($suspension->appeal_status === 'open' ? '. An appeal is waiting for a decision.' : '.'), 'stop'],
         $profile->status === 'pending' => ['Application pending with fleet '.($profile->fleet?->name ?? $profile->fleet_id).': the fleet owner decides.', 'caution'],
         default => [$factsAll['completed_all'].' completed '.\Illuminate\Support\Str::plural('trip', $factsAll['completed_all']).'; '.$facts30['completed_window'].' in the last 30 days.', null],
     };
@@ -43,7 +43,7 @@
                                         <td><x-eh.status :status="$ride->status" /></td>
                                         <td>{{ $ride->passenger?->name }}</td>
                                         <td class="num">@if($ride->final_fare_minor !== null)<x-eh.money :minor="$ride->final_fare_minor" :currency="$ride->currency ?? 'ZAR'" />@elseif($ride->final_fare !== null){{ \App\Services\Ehail\FareCalculator::format($ride->final_fare) }}@else<span class="ops-dash">-</span>@endif</td>
-                                        <td class="num">{{ ($ride->requested_at ?? $ride->created_at)?->format('d M H:i') }}</td>
+                                        <td class="num">{{ ($ride->requested_at ?? $ride->created_at)?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -99,8 +99,8 @@
                                         <tr>
                                             <td><a href="{{ route('ops.verification.show', $doc->id) }}">{{ $docTypes[$doc->type]['label'] ?? str_replace('_', ' ', $doc->type) }}</a>@if($doc->vehicle_id)<span class="sub">vehicle {{ $doc->vehicle_id }}</span>@endif</td>
                                             <td><x-eh.badge :tone="match($docStatus){'approved'=>'go','pending'=>'caution','rejected','expired'=>'stop',default=>'neutral'}">{{ ucfirst(str_replace('_', ' ', $docStatus)) }}</x-eh.badge></td>
-                                            <td class="num">{{ $doc->expires_on ? \Illuminate\Support\Carbon::parse($doc->expires_on)->format('d M Y') : '-' }}</td>
-                                            <td class="num">{{ ($doc->submitted_at ?? $doc->created_at)?->format('d M Y') }}</td>
+                                            <td class="num">{{ $doc->expires_on ? \Illuminate\Support\Carbon::parse($doc->expires_on)->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') : '-' }}</td>
+                                            <td class="num">{{ ($doc->submitted_at ?? $doc->created_at)?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -117,7 +117,7 @@
                         <dl class="ops-facts">
                             <dt>Reason</dt><dd>{{ $suspension->reasonLabel() }}</dd>
                             @if ($suspension->note)<dt>Note</dt><dd>{{ $suspension->note }}</dd>@endif
-                            <dt>By</dt><dd>{{ $suspension->suspender?->name ?? 'an operator' }}, {{ $suspension->suspended_at->format('d M Y H:i') }}</dd>
+                            <dt>By</dt><dd>{{ $suspension->suspender?->name ?? 'an operator' }}, {{ $suspension->suspended_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') }}</dd>
                             <dt>Appeal</dt><dd>{{ match($suspension->appeal_status) { 'open' => 'Waiting for a decision', 'upheld' => 'Upheld', 'rejected' => 'Rejected', default => 'None yet' } }}</dd>
                             @if ($suspension->appeal_text)<dt>Driver wrote</dt><dd>{{ $suspension->appeal_text }}</dd>@endif
                         </dl>
@@ -166,7 +166,7 @@
                         <h3 style="font-size:var(--eh-text-sm);margin:var(--eh-space-4) 0 var(--eh-space-2)">Earlier suspensions</h3>
                         <ul class="ops-queue" style="margin:0 calc(-1 * var(--eh-space-5))">
                             @foreach ($history->where('lifted_at', '!=', null) as $past)
-                                <li><span class="ops-queue__title">{{ $past->reasonLabel() }}</span><span class="ops-queue__meta">{{ $past->suspended_at->format('d M Y') }} to {{ $past->lifted_at->format('d M Y') }} · lifted by {{ $past->lifter?->name ?? 'an operator' }}{{ $past->appeal_status !== 'none' ? ' · appeal '.$past->appeal_status : '' }}</span></li>
+                                <li><span class="ops-queue__title">{{ $past->reasonLabel() }}</span><span class="ops-queue__meta">{{ $past->suspended_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }} to {{ $past->lifted_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }} · lifted by {{ $past->lifter?->name ?? 'an operator' }}{{ $past->appeal_status !== 'none' ? ' · appeal '.$past->appeal_status : '' }}</span></li>
                             @endforeach
                         </ul>
                     @endif
@@ -177,8 +177,8 @@
                     <dl class="ops-facts">
                         <dt>Email</dt><dd>{{ $driver->email }}</dd>
                         <dt>Fleet</dt><dd>{{ $profile->fleet?->name ?? 'Fleet '.$profile->fleet_id }} {{ $profile->fleet && $profile->fleet->status !== 'approved' ? '(not approved yet)' : '' }}</dd>
-                        <dt>Joined</dt><dd class="num">{{ $profile->created_at?->format('d M Y') }}</dd>
-                        @if ($profile->reviewed_at)<dt>Reviewed</dt><dd class="num">{{ $profile->reviewed_at->format('d M Y') }}</dd>@endif
+                        <dt>Joined</dt><dd class="num">{{ $profile->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }}</dd>
+                        @if ($profile->reviewed_at)<dt>Reviewed</dt><dd class="num">{{ $profile->reviewed_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }}</dd>@endif
                         @if ($profile->rejected_reason)<dt>Rejected because</dt><dd>{{ $profile->rejected_reason }}</dd>@endif
                         @if ($availability?->last_heartbeat_at)<dt>Last heartbeat</dt><dd class="num">{{ $availability->last_heartbeat_at->diffForHumans() }}</dd>@endif
                     </dl>

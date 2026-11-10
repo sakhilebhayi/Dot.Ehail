@@ -3,7 +3,7 @@
 @php
     $short = \App\Support\Ui\Duration::short((int) $seconds);
     $spoken = \App\Support\Ui\Duration::spoken((int) $seconds);
-    $atText = $at ? \Illuminate\Support\Carbon::parse($at)->format('H:i') : null;
+    $atText = $at ? \Illuminate\Support\Carbon::parse($at)->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i') : null;
 @endphp
 <span {{ $attributes->class('eh-eta'.($size === 'lg' ? ' eh-eta--lg' : '')) }} aria-label="{{ trim(($prefix ? $prefix.' ' : '').$spoken.($atText ? ', arriving at '.$atText : '')) }}">
     <span aria-hidden="true">@if($prefix){{ $prefix }} @endif<span class="eh-eta__value">{{ $short }}</span></span>

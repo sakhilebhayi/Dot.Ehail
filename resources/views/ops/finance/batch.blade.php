@@ -2,7 +2,7 @@
 <x-ops-layout :title="'Payout batch '.$batch->id">
     <x-slot:head>@include('ops.partials.assets')</x-slot:head>
     <div class="ops">
-        <p class="ops-crumb"><a href="{{ route('ops.finance.payouts') }}">Payouts</a> / earnings to {{ $batch->period_end?->format('d M Y') }}</p>
+        <p class="ops-crumb"><a href="{{ route('ops.finance.payouts') }}">Payouts</a> / earnings to {{ $batch->period_end?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y') }}</p>
         <header class="ops-head">
             <div class="ops-head__text">
                 <h1>Payout batch {{ $batch->id }} <x-eh.badge :tone="match($batch->status){'completed','paid'=>'go','failed'=>'stop','draft'=>'info',default=>'caution'}">{{ str_replace('_', ' ', $batch->status) }}</x-eh.badge></h1>

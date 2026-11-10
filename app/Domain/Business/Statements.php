@@ -2,6 +2,8 @@
 
 namespace App\Domain\Business;
 
+use App\Domain\Payments\OperatorIdentity;
+
 use App\Domain\Business\Models\BusinessAccount;
 use App\Domain\Business\Models\BusinessCharge;
 use App\Domain\Business\Models\BusinessPayment;
@@ -116,12 +118,13 @@ class Statements
         }
 
         $figures = $this->figures($account, $period);
-        $vatShown = (bool) config('money.vat.registered') && filled(config('money.vat.number')) && $figures['tax'] > 0;
+        $operator = OperatorIdentity::forDocument();
+        $vatShown = $operator['vat_status'] === OperatorIdentity::VAT_REGISTERED && $figures['tax'] > 0;
         $issuedAt = now();
         $dueAt = $account->billing_mode === BusinessAccount::CARD ? $issuedAt : CarbonImmutable::instance($issuedAt)->addDays((int) $account->terms_days);
 
         try {
-            $statement = DB::transaction(function () use ($account, $period, $start, $end, $figures, $vatShown, $issuedAt, $dueAt) {
+            $statement = DB::transaction(function () use ($account, $period, $start, $end, $figures, $vatShown, $issuedAt, $dueAt, $operator) {
                 $statement = BusinessStatement::create([
                     'business_account_id' => $account->id,
                     'number' => sprintf('%s-%s-%05d', config('ehail_business.statement_prefix', 'EHB'), str_replace('-', '', $period), $account->id),
@@ -148,11 +151,10 @@ class Statements
                             'billing_email' => $account->billing_email,
                             'address' => array_values(array_filter([$account->address_line1, $account->address_line2, $account->city, $account->postal_code, config("ehail_business.countries.{$account->country}.name", $account->country)])),
                         ],
-                        'operator' => [
-                            'name' => (string) config('money.receipts.operator_name'),
-                            'vat_number' => $vatShown ? config('money.vat.number') : null,
-                            'support_email' => config('money.receipts.support_email'),
-                        ],
+                        // The configured operator identity, frozen with the statement (D-1905): nothing invented, EFT
+                        // details only when all of them are set, and the VAT sentence from the stated VAT position.
+                        'operator' => ['name' => $operator['legal_name'] ?? $operator['brand'], 'vat_number' => $operator['vat_number']] + $operator,
+                        'vat_sentence' => OperatorIdentity::vatSentence($operator, $vatShown ? $figures['tax'] : 0),
                         'vat_shown' => $vatShown,
                         'vat_rate_percent' => $vatShown ? config('money.vat.rate_percent') : null,
                         'terms_days' => $account->terms_days,
@@ -204,7 +206,7 @@ class Statements
     public function csv(array $lines, string $currency): string
     {
         $out = fopen('php://temp', 'r+');
-        fputcsv($out, ['Date', 'Reference', 'Type', 'Ride', 'Rider', 'Booked by', 'Department', 'Cost centre', 'Purpose', 'Category', 'From', 'To', 'Amount', 'Tax included', 'Currency'], escape: '\\');
+        fputcsv($out, ['Date (SAST)', 'Reference', 'Type', 'Ride', 'Rider', 'Booked by', 'Department', 'Cost centre', 'Purpose', 'Category', 'From', 'To', 'Amount', 'Tax included', 'Currency'], escape: '\\');
 
         foreach ($lines as $line) {
             fputcsv($out, array_map([$this, 'neutralise'], [

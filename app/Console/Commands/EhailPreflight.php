@@ -95,6 +95,7 @@ class EhailPreflight extends Command
         $this->frontend();
         $this->queueAndSchedule($databaseUp);
         $this->providers();
+        $this->operatorIdentity();
 
         if ($databaseUp) {
             $this->referenceData();
@@ -989,6 +990,21 @@ class EhailPreflight extends Command
             'Verification',
             ($enforced ? 'documents required (EHAIL_VERIFICATION_REQUIRE_DOCUMENTS=true). ' : 'documents NOT required (transition window; logged on every go-online). ')
             ."{$approved} approved driver(s): {$eligible} may go online now, {$blocked} are blocked until their documents are uploaded and approved by an operator in /ops.{$why}",
+        );
+    }
+
+    /** Operator identity on receipts and statements (D-1905): never invented, so ops must see what is missing. */
+    private function operatorIdentity(): void
+    {
+        $missing = \App\Domain\Payments\OperatorIdentity::missing();
+
+        $this->add(
+            $missing === [] ? self::PASS : self::WARN,
+            'Money documents',
+            'Operator details',
+            $missing === []
+                ? 'legal name, registration, address, VAT position, support contact and EFT details are set'
+                : 'Operator details not configured: '.implode('; ', $missing).'. Receipts and statements leave these lines off until they are set.',
         );
     }
 

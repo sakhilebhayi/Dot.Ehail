@@ -34,7 +34,15 @@ final class MoneyFormatter
      */
     public static function format(int $minor, string $currency = 'ZAR', bool $signed = false, bool $wholeUnits = false): string
     {
-        $exponent = self::exponent($currency);
+        return self::withSymbol($minor, self::symbol($currency), self::exponent($currency), $signed, $wholeUnits);
+    }
+
+    /**
+     * The one money text of the platform (D-1903): every formatter (pricing Money, payments Money, the legacy
+     * FareCalculator, Blade, JS money.js) produces exactly this shape.
+     */
+    public static function withSymbol(int $minor, string $symbol, int $exponent = 2, bool $signed = false, bool $wholeUnits = false): string
+    {
         $negative = $minor < 0;
         $absolute = abs($minor);
         $divisor = 10 ** $exponent;
@@ -48,7 +56,10 @@ final class MoneyFormatter
 
         $sign = $negative ? "\u{2212}" : ($signed && $minor > 0 ? '+' : '');
 
-        return $sign.self::symbol($currency).$number;
+        // A bare ISO code ("USD") is separated from the number; a symbol ("R", "N$") is not.
+        $symbol = trim($symbol);
+
+        return $sign.$symbol.(preg_match('/^[A-Z]{3}$/', $symbol) ? ' ' : '').$number;
     }
 
     /** Words for screen readers: "R125.50" is read well; a minus sign glyph is not, so negative amounts say "minus". */

@@ -24,7 +24,7 @@
                         <ol class="ops-thread">
                             @foreach ($case->messages->sortBy('id') as $m)
                                 <li data-visibility="{{ $m->visibility }}" data-author="{{ $m->author_role }}">
-                                    <div class="ops-thread__meta"><strong>{{ $m->author?->name ?? 'System' }}</strong><span>{{ $m->author_role }}</span><span>{{ $m->visibility === 'internal' ? 'internal note' : ($m->visibility === 'participants' ? 'to everyone on the case' : 'to the requester') }}</span><time>{{ $m->created_at?->format('d M H:i') }}</time></div>
+                                    <div class="ops-thread__meta"><strong>{{ $m->author?->name ?? 'System' }}</strong><span>{{ $m->author_role }}</span><span>{{ $m->visibility === 'internal' ? 'internal note' : ($m->visibility === 'participants' ? 'to everyone on the case' : 'to the requester') }}</span><time>{{ $m->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i') }}</time></div>
                                     @if ($m->body)<p>{{ $m->body }}</p>@endif
                                     @if ($m->attachment_name)<p><a class="eh-link" href="{{ route('support.attachments.show', $m->id) }}" target="_blank" rel="noopener">{{ $m->attachment_name }}</a> <span class="ops-stamp">opening it is logged</span></p>@endif
                                 </li>
@@ -52,8 +52,8 @@
                         @if ($counterparty)<dt>Other party</dt><dd>{{ $counterparty->name }} <span class="ops-stamp">sees "the {{ $case->requester_role === 'driver' ? 'driver' : 'passenger' }}", contact details masked</span></dd>@endif
                         <dt>Owner</dt><dd>{{ $case->owner?->name ?? 'Nobody' }}</dd>
                         <dt>Priority</dt><dd>{{ ucfirst($case->priority->value) }}</dd>
-                        <dt>Opened</dt><dd class="num">{{ $case->created_at->format('d M Y H:i') }}</dd>
-                        <dt>First reply</dt><dd class="num">{{ $case->first_responded_at?->format('d M Y H:i') ?? 'not yet' }}</dd>
+                        <dt>Opened</dt><dd class="num">{{ $case->created_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') }}</dd>
+                        <dt>First reply</dt><dd class="num">{{ $case->first_responded_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M Y H:i') ?? 'not yet' }}</dd>
                         @if ($case->ride_id)<dt>Ride</dt><dd>@can('ops.rides.view')<a class="eh-link" href="{{ route('ops.rides.show', $case->ride_id) }}">Ride {{ $case->ride_id }}</a>@else Ride {{ $case->ride_id }} @endcan</dd>@endif
                         @if ($payment)<dt>Payment</dt><dd>@can('ops.finance.view')<a class="eh-link" href="{{ route('ops.finance.payment', $payment->id) }}">{{ $payment->reference }}</a>@else{{ $payment->reference }}@endcan · {{ $payment->status }}</dd>@endif
                         @if ($case->safety_incident_id)<dt>Incident</dt><dd>@can('ops.safety.view')<a class="eh-link" href="{{ route('ops.safety.show', $case->safety_incident_id) }}">{{ $case->incident?->reference }}</a>@else{{ $case->incident?->reference }}@endcan</dd>@endif
