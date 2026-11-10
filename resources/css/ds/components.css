@@ -393,3 +393,6 @@ button.eh-row { width: 100%; border: 0; background: none; text-align: left; curs
     }
     .eh-sheet--dock-desktop .eh-sheet__handle { display: none; }
 }
+@media (max-width: 767.98px) {
+    .eh-app .eh-tabbar ~ .eh-sheet, .eh-app:has(.eh-tabbar) .eh-sheet { bottom: calc(var(--eh-tabbar) + env(safe-area-inset-bottom, 0px)); height: calc(100dvh - var(--eh-topbar) - var(--eh-tabbar) - var(--eh-space-4)); }
+}

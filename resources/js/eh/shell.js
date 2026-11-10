@@ -1,17 +1,11 @@
 // Dot.Ehail shell behaviour (ds, R-46): theme choice, side drawer, account menu, bottom sheet, tabs, dialogs,
 // toasts and service-worker registration. No dependencies; every feature is progressive (markup works without it).
 import { initSheets } from './sheet.js';
+import { resolveTheme } from './theme.js';
 
 const doc = document;
 const root = doc.documentElement;
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-// Theme: system, light, dark, or night (driver default: dark 18:00 to 06:00, otherwise the system choice).
-export function resolveTheme(choice, hour = new Date().getHours(), prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    if (choice === 'light' || choice === 'dark') return choice;
-    if (choice === 'night') return hour >= 18 || hour < 6 ? 'dark' : prefersDark ? 'dark' : 'light';
-    return null;
-}
 
 function applyTheme(choice) {
     if (root.hasAttribute('data-theme-lock')) return;

@@ -2,6 +2,19 @@
 
 <div style="padding:2rem 2.5rem;max-width:1400px;">
 
+    {{-- R-46: route people to the home of their role (passenger, driver, operator); this overview stays for its figures. --}}
+    @php
+        $roleHome = app(\App\Support\Ui\RoleHome::class);
+        $roleSurfaces = auth()->check() ? $roleHome->surfaces(auth()->user()) : [];
+    @endphp
+    @if (count($roleSurfaces))
+        <nav aria-label="Your Dot.Ehail apps" style="display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;margin-bottom:1.75rem;">
+            @foreach ($roleSurfaces as $roleSurface)
+                <x-eh.button :variant="$loop->first ? 'primary' : 'secondary'" :href="route(\App\Support\Ui\RoleHome::HOME_ROUTES[$roleSurface])" icon-right="arrow-right">{{ $loop->first ? 'Go to '.\App\Support\Ui\RoleHome::LABELS[$roleSurface] : \App\Support\Ui\RoleHome::LABELS[$roleSurface] }}</x-eh.button>
+            @endforeach
+        </nav>
+    @endif
+
     {{-- Page header --}}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
         <div>
@@ -31,7 +44,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
                 <span style="font-size:0.7rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Total Rides</span>
                 <div style="width:32px;height:32px;border-radius:8px;background:rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center;">
-                    <span class="material-symbols-rounded" style="font-size:16px;color:#818cf8;">local_taxi</span>
+                    <x-eh.icon name="car" size="16" style="color:#818cf8;" />
                 </div>
             </div>
             <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#f4f4f5;line-height:1;">{{ number_format($totalRides) }}</div>
@@ -43,7 +56,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
                 <span style="font-size:0.7rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Active Now</span>
                 <div style="width:32px;height:32px;border-radius:8px;background:rgba(34,197,94,0.12);display:flex;align-items:center;justify-content:center;position:relative;">
-                    <span class="material-symbols-rounded" style="font-size:16px;color:#4ade80;">near_me</span>
+                    <x-eh.icon name="navigation" size="16" style="color:#4ade80;" />
                     @if($activeRides > 0)
                     <div style="position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:9999px;background:#22c55e;animation:pulse 2s infinite;"></div>
                     @endif
@@ -58,7 +71,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
                 <span style="font-size:0.7rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Completed</span>
                 <div style="width:32px;height:32px;border-radius:8px;background:rgba(34,197,94,0.12);display:flex;align-items:center;justify-content:center;">
-                    <span class="material-symbols-rounded" style="font-size:16px;color:#4ade80;">check_circle</span>
+                    <x-eh.icon name="success" size="16" style="color:#4ade80;" />
                 </div>
             </div>
             <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#f4f4f5;line-height:1;">{{ number_format($completedRides) }}</div>
@@ -82,7 +95,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
                 <span style="font-size:0.7rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Total Drivers</span>
                 <div style="width:32px;height:32px;border-radius:8px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;">
-                    <span class="material-symbols-rounded" style="font-size:16px;color:#a78bfa;">person_pin_circle</span>
+                    <x-eh.icon name="pickup" size="16" style="color:#a78bfa;" />
                 </div>
             </div>
             <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#f4f4f5;line-height:1;">{{ number_format($totalDrivers) }}</div>
@@ -94,7 +107,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
                 <span style="font-size:0.7rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Available Now</span>
                 <div style="width:32px;height:32px;border-radius:8px;background:rgba(8,145,178,0.12);display:flex;align-items:center;justify-content:center;">
-                    <span class="material-symbols-rounded" style="font-size:16px;color:#67e8f9;">wifi_tethering</span>
+                    <x-eh.icon name="online" size="16" style="color:#67e8f9;" />
                 </div>
             </div>
             <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#67e8f9;line-height:1;">{{ number_format($availableDrivers) }}</div>
@@ -106,7 +119,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
                 <span style="font-size:0.7rem;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.12em;">Estimated fare total, not collected</span>
                 <div style="width:32px;height:32px;border-radius:8px;background:rgba(34,197,94,0.12);display:flex;align-items:center;justify-content:center;">
-                    <span class="material-symbols-rounded" style="font-size:16px;color:#4ade80;">payments</span>
+                    <x-eh.icon name="cash" size="16" style="color:#4ade80;" />
                 </div>
             </div>
             <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#4ade80;line-height:1;">
@@ -235,7 +248,7 @@
 
         @if($recentRides->isEmpty())
         <div style="padding:3rem;text-align:center;color:#71717a;">
-            <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:0.75rem;opacity:0.3;">local_taxi</span>
+            <x-eh.icon name="car" size="48" style="display:block;margin-bottom:0.75rem;opacity:0.3;" />
             <p style="font-size:0.85rem;margin:0;">No rides recorded yet.</p>
         </div>
         @else
@@ -275,7 +288,7 @@
                         <td style="padding:0.85rem 1rem;max-width:220px;">
                             <div style="font-size:0.75rem;color:#f4f4f5;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $pickup }}</div>
                             <div style="display:flex;align-items:center;gap:0.3rem;margin-top:0.2rem;">
-                                <span class="material-symbols-rounded" style="font-size:11px;color:#0891b2;">arrow_downward</span>
+                                <x-eh.icon name="chevron-down" size="11" style="color:#0891b2;" />
                                 <span style="font-size:0.7rem;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $dropoff }}</span>
                             </div>
                         </td>
