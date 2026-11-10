@@ -11,8 +11,9 @@ use Illuminate\Support\Facades\Route;
 // Under /api/ so validation and auth failures render as JSON (bootstrap/app.php shouldRenderJsonWhen api/*).
 Route::prefix('api/ehail')->name('ehail.dispatch.')->group(function () {
     // Passenger
-    Route::post('/rides', [PassengerRideController::class, 'store'])->middleware('throttle:ehail-ride-request')->name('rides.store');
+    Route::post('/rides', [PassengerRideController::class, 'store'])->middleware(['throttle:ehail-ride-request', 'ehail.payment-clear'])->name('rides.store');
     Route::get('/rides/{ride}/feed', [PassengerRideController::class, 'feed'])->middleware('throttle:ehail-feed')->name('rides.feed');
+    Route::post('/rides/{ride}/trip-change', [PassengerRideController::class, 'changeTrip'])->middleware('throttle:ehail-ride-action')->name('rides.trip-change');
     Route::post('/rides/{ride}/cancel', [PassengerRideController::class, 'cancel'])->middleware('throttle:ehail-ride-action')->name('rides.cancel');
     Route::patch('/rides/{ride}/schedule', [PassengerRideController::class, 'reschedule'])->middleware('throttle:ehail-ride-action')->name('rides.reschedule');
     Route::post('/rides/{ride}/requote/accept', [PassengerRideController::class, 'acceptRequote'])->middleware('throttle:ehail-ride-action')->name('rides.requote.accept');

@@ -12,6 +12,8 @@ export default defineConfig({
                 'resources/js/eh/shell.js',
                 'resources/js/eh/landing.js',
                 'resources/css/fleet/fleet.css',
+                'resources/css/comms/comms.css',
+                'resources/js/comms/comms.js',
             ],
             refresh: true,
         }),

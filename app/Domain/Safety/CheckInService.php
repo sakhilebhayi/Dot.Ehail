@@ -41,7 +41,8 @@ class CheckInService
             }
 
             try {
-                $checkIn = SafetyCheckIn::create([
+                // Savepoint: a duplicate must not abort an enclosing PostgreSQL transaction (D-715).
+                $checkIn = DB::transaction(fn () => SafetyCheckIn::create([
                     'ride_id' => $ride->id,
                     'user_id' => $userId,
                     'role' => $role,
@@ -51,7 +52,7 @@ class CheckInService
                     'respond_by' => now()->addMinutes((int) config('ehail_safety.check_ins.respond_within_minutes', 3)),
                     'context' => $context,
                     'dedupe_key' => "{$ride->id}:{$trigger}:{$userId}:{$bucket}",
-                ]);
+                ]));
             } catch (UniqueConstraintViolationException) {
                 continue;
             }

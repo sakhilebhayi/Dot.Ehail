@@ -14,3 +14,12 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | `ui-ux-pro-max` | unavailable | | `~/.claude/skills/ui-ux-pro-max` is a dangling symlink (target missing). Not claimed. |
 | `emil-design-eng` | unavailable | | `~/.claude/skills/emil-design-eng` is a dangling symlink (target missing). Not claimed. |
 | `gsap-*`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark` | not used | | No motion library: the landing's motion (reveals, hero crossfade, fare line) is 1 KB of plain JS and CSS, which fits the data budget. |
+
+## comms agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | inbox, settings, bell (Operate mode) | `impeccable context` loaded PRODUCT.md and DESIGN.md (no surface brief for these pages; no question channel in this unattended run, inferred from the brief); worked inside the locked Route Line world; craft floor and operate reference read before UI code; `impeccable detect` on `resources/views/comms` and `comms.css`: one advisory (2px radius) fixed, then clean. Finish-reviewer subagent not spawned (bounded run). |
+| `design-taste-frontend` | invoked | app-screen run | Read `references/app-screens.md` (settings layout: label column beside a panel, one save model per view, "show what the setting produces" applied as the last real notification per category; empty states that teach; honest states). Draw skipped: the design system is locked (`--keep palette,type` would deal composition only, and the shells fix it). `lint.mjs`: shadow on the badge replaced by an outline; list dividers kept with `taste-skill-ignore` (same as the kit's `.eh-list`, allowed for app screens); then 0 FAIL. `inspect.mjs` not run: the pages need a signed-in session; checked by eye in the browser at 390 and 1440, light and night. |
+| `gsap-*` | not used | | No motion needed beyond the kit's switch transition. |
+| `ui-ux-pro-max`, `emil-design-eng` | not invoked | | Recorded as dangling symlinks by ds; not claimed. |
