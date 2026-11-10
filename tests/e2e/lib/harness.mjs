@@ -71,8 +71,12 @@ export async function stub(body) {
 }
 export async function mailsTo(address) { return (await stub()).mails.filter((m) => m.to.includes(address)); }
 
+// Hosts the browser asks for but Playwright answers from the stubs (never contacted): not "third-party hosts".
+const routedHosts = new Set();
+
 /** Paystack's hosted checkout inside the browser: checkout.paystack.com is routed to the local stub, never contacted. */
 export async function interceptCheckout(context) {
+    routedHosts.add('checkout.paystack.com');
     await context.route('https://checkout.paystack.com/**', async (route) => {
         const url = new URL(route.request().url());
         const [code, action] = url.pathname.split('/').filter(Boolean);
@@ -136,7 +140,7 @@ export function watch(page, store = {}) {
 
 /** Hosts a page contacted other than the app itself and the configured (local) tile host. */
 export function externalHosts(urls) {
-    const allowed = new Set([new URL(env.base).host, env.tiles]);
+    const allowed = new Set([new URL(env.base).host, env.tiles, ...routedHosts]);
     return [...new Set(urls.filter((u) => /^https?:/.test(u)).map((u) => new URL(u).host).filter((h) => !allowed.has(h)))];
 }
 
