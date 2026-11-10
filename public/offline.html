@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>You are offline | Dot.Ehail</title>
+<meta name="robots" content="noindex">
+<style>
+@font-face { font-family: "Barlow"; font-weight: 400; font-display: swap; src: url("/fonts/barlow-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Barlow"; font-weight: 600; font-display: swap; src: url("/fonts/barlow-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Barlow Condensed"; font-weight: 700; font-display: swap; src: url("/fonts/barlow-condensed-latin-700-normal.woff2") format("woff2"); }
+:root { --ground: #f1f4f0; --ink: #0f1f19; --ink-2: #3a4a43; --accent: #0b6a3c; --accent-ink: #ffffff; --signal: #f2c230; --focus: #1d5bd6; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --ground: #0d1613; --ink: #e8f0eb; --ink-2: #b3c1b9; --accent: #5cc48c; --accent-ink: #05140c; --focus: #86b3ff; color-scheme: dark; } }
+html, body { margin: 0; background: var(--ground); color: var(--ink); font-family: "Barlow", system-ui, sans-serif; overflow-x: clip; }
+main { min-height: 100dvh; box-sizing: border-box; display: grid; align-content: center; gap: 1.5rem; padding: 2rem 1rem; max-width: 34rem; margin: 0 auto; }
+.line { display: flex; align-items: center; }
+.stop { width: 18px; height: 18px; border-radius: 50%; border: 4px solid var(--accent); box-sizing: border-box; }
+.stop.end { background: var(--signal); border-color: var(--ink); }
+.gap { width: 72px; border-top: 4px dashed var(--accent); }
+h1 { font-family: "Barlow Condensed", "Barlow", sans-serif; font-size: 3rem; line-height: 1; margin: 0; }
+p { margin: 0; color: var(--ink-2); font-size: 1.125rem; line-height: 1.5; }
+a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.5rem; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-weight: 600; text-decoration: none; justify-self: start; }
+a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.sos { font-size: 1rem; }
+.sos a { background: transparent; color: var(--ink); padding: 0; min-height: 44px; text-decoration: underline; border-radius: 0; }
+</style>
+</head>
+<body>
+<main>
+    <div class="line" aria-hidden="true"><span class="stop"></span><span class="gap"></span><span class="stop end"></span></div>
+    <h1>You are offline</h1>
+    <p>Dot.Ehail needs a connection to find a driver, show your fare and follow your trip. Nothing on this phone was lost. Try again when you have signal.</p>
+    <a href="/home">Try again</a>
+    <p class="sos">In an emergency, call <a href="tel:10111">10111</a> (police), <a href="tel:10177">10177</a> (ambulance) or <a href="tel:112">112</a> from a mobile. Calls work without data.</p>
+</main>
+</body>
+</html>

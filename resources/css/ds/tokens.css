@@ -34,6 +34,11 @@
     --eh-signal: #f2c230;
     --eh-signal-ink: #0f1f19;
 
+    /* Brand marks from public/images/logo.png (logo only, never UI colours) */
+    --eh-brand-yellow: #f1c62f;
+    --eh-brand-green: #9dcb86;
+    --eh-brand-white: #ffffff;
+
     /* State */
     --eh-go: #0e6e3d;
     --eh-go-bg: #ddf0e3;
