@@ -57,6 +57,12 @@
         @endif
 
         <ul class="eh-list">
+            @if (Route::has('drive.notifications'))
+                <x-eh.list-row title="Notifications" meta="Your inbox: offers, trips, documents and payouts" icon="bell" :href="route('drive.notifications')" />
+            @endif
+            @if (Route::has('drive.notifications.settings'))
+                <x-eh.list-row title="Notification settings" meta="Push, email and SMS, and what each one reached" icon="settings" :href="route('drive.notifications.settings')" />
+            @endif
             <x-eh.list-row title="Profile and password" icon="account" :href="route('profile.show')" />
         </ul>
     </div>
