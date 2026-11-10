@@ -16,12 +16,19 @@
     </x-slot:head>
     <x-slot:header>
         <div class="dr-head">
-            <h1>{{ \Illuminate\Support\Str::limit($s['dropoff'], 60) }}</h1>
-            <p>From {{ $s['pickup'] }}. <x-eh.status :status="$s['status']" />@if($s['completed_at']) {{ \App\Http\Controllers\Driver\Support\Local::at($s['completed_at'])->isoFormat('D MMMM YYYY, HH:mm') }}@endif</p>
+            <h1>{{ \App\Http\Controllers\Driver\Support\Place::short($s['dropoff']) }}</h1>
+            <p>From {{ \App\Http\Controllers\Driver\Support\Place::short($s['pickup']) }}. <x-eh.status :status="$s['status']" />@if($s['completed_at']) {{ \App\Http\Controllers\Driver\Support\Local::at($s['completed_at'])->isoFormat('D MMMM YYYY, HH:mm') }}@endif</p>
         </div>
     </x-slot:header>
 
     <div class="dr-page">
+        <details class="dr-more">
+            <summary>Full addresses</summary>
+            <dl class="dr-ledger dr-more__body dr-addresses">
+                <div><dt>Pickup</dt><dd>{{ $s['pickup'] }}</dd></div>
+                <div><dt>Drop-off</dt><dd>{{ $s['dropoff'] }}</dd></div>
+            </dl>
+        </details>
         <section class="dr-panel" aria-labelledby="fare-h">
             <h2 id="fare-h">Fare and earnings</h2>
             <dl class="dr-ledger">

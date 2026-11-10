@@ -154,4 +154,21 @@ class ApprovalsTest extends TestCase
         $this->actingAs($traveller->user)->postJson(route('business.api.approvals.store'), ['profile_id' => $traveller->payment_method_id, 'quote_id' => $quote->id])
             ->assertStatus(409)->assertJsonPath('error', 'business_approval_not_needed');
     }
+
+    public function test_the_queue_names_a_pinned_trip_in_words_with_a_small_map(): void
+    {
+        [, $manager, $traveller] = $this->world();
+        $approval = $this->ask($traveller);
+        $approval->forceFill([
+            'pickup_address' => 'Pinned location (-26.14570, 28.04130)', 'pickup_lat' => -26.1457, 'pickup_lng' => 28.0413,
+            'dropoff_address' => 'Montecasino Boulevard, Fourways, Sandton, 2191, South Africa',
+        ])->save();
+
+        $this->actingAs($manager->user)->get(route('business.approvals'))->assertOk()
+            ->assertDontSee('Pinned location (')
+            ->assertDontSee('-26.14570, 28.04130')
+            ->assertSee('A pinned point ')
+            ->assertSee('Montecasino Boulevard, Fourways, Sandton')
+            ->assertSee('data-eh-stopmap', false);
+    }
 }

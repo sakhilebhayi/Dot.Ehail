@@ -5,7 +5,7 @@
 --}}
 @props(['items' => [], 'routePrefix' => 'ride'])
 @php
-    $tz = config('ehail_pricing.default_timezone', 'Africa/Johannesburg');
+    $tz = \App\Support\Ui\LocalTime::timezone();
     $groups = collect($items)->groupBy(function ($item) use ($tz) {
         $at = \Illuminate\Support\Carbon::parse($item['created_at'])->setTimezone($tz);
         return match (true) {

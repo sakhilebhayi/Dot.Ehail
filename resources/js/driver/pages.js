@@ -3,6 +3,7 @@
 
 import { api, ApiError } from './api.js';
 import { MotionMode, sharedMoving, shareMoving } from './motion.js';
+import { bindAlertSettings } from './alerts.js';
 import { NAV_APPS, readPrefs, writePrefs } from './nav.js';
 
 const $ = (sel, el = document) => el.querySelector(sel);
@@ -190,19 +191,9 @@ function bindPrefs() {
     if (!form) return;
     const prefs = readPrefs();
     $$('input[name="nav"]', form).forEach((r) => (r.checked = r.value === prefs.nav));
-    $('input[name="sound"]', form).checked = prefs.sound;
-    $('input[name="vibrate"]', form).checked = prefs.vibrate;
-    const sync = () => {
-        $$('[data-dr-switch-state]', form).forEach((el) => (el.textContent = $(`input[name="${el.dataset.drSwitchState}"]`, form).checked ? 'On' : 'Off'));
-    };
-    sync();
+    // Sound and vibration live in the offer alerts panel next to this form (alerts.js).
     form.addEventListener('change', () => {
-        const ok = writePrefs({
-            nav: $('input[name="nav"]:checked', form)?.value || 'google',
-            sound: $('input[name="sound"]', form).checked,
-            vibrate: $('input[name="vibrate"]', form).checked,
-        });
-        sync();
+        const ok = writePrefs({ nav: $('input[name="nav"]:checked', form)?.value || 'google' });
         toast(ok ? `Saved on this phone. Navigation opens in ${NAV_APPS[readPrefs().nav]}.` : 'This browser would not save settings (private mode?).', ok ? 'success' : 'error');
     });
 }
@@ -214,8 +205,12 @@ function bindSos() {
     if (!open) return;
     const box = $('[data-dr-sos]');
     let timer = null;
+    let cancelled = null;
 
     open.addEventListener('click', () => {
+        // A new countdown never sits under the notice of the last one (jury 41).
+        cancelled?.remove();
+        cancelled = null;
         box.hidden = false;
         $('[data-dr-sos-arming]').hidden = false;
         $('[data-dr-sos-result]').hidden = true;
@@ -251,7 +246,7 @@ function bindSos() {
     $('[data-dr-sos-cancel]').addEventListener('click', () => {
         clearInterval(timer);
         box.hidden = true;
-        toast('SOS cancelled. Nothing was sent.', 'info');
+        cancelled = window.ehToast?.('SOS cancelled. Nothing was sent.', { tone: 'info' }) ?? null;
     });
     $('[data-dr-sos-close]').addEventListener('click', () => (box.hidden = true));
 }
@@ -260,4 +255,5 @@ watchMotion();
 bindUploads();
 bindJsonForms();
 bindPrefs();
+bindAlertSettings();
 bindSos();

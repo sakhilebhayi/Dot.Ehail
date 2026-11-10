@@ -9,6 +9,7 @@ use App\Domain\Payments\Money;
 use App\Models\Ride;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Support\Ui\LocalTime;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Route;
 
@@ -236,6 +237,6 @@ final class Templates
 
     private function localTime(CarbonInterface $at, string $format): string
     {
-        return $at->copy()->setTimezone((string) config('ehail_pricing.default_timezone', 'Africa/Johannesburg'))->format($format);
+        return $at->copy()->setTimezone(LocalTime::timezone())->format($format);
     }
 }

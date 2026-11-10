@@ -23,6 +23,8 @@
             </div>
         </header>
 
+        @include('ops.partials.takeover', ['items' => $board['takeover'] ?? []])
+
         <dl class="ops-figures" aria-label="Right now">
             <div data-tone="{{ ($c['searching'] ?? 0) > 0 ? 'caution' : '' }}"><dt>Waiting for a driver</dt><dd data-live-count="searching">{{ $c['searching'] }}</dd></div>
             <div><dt>Rides with a driver</dt><dd data-live-count="on_trip">{{ $c['on_trip'] }}</dd></div>
@@ -48,6 +50,7 @@
                         @endif
                         <li><span class="ops-dot ops-dot--pickup"></span>Pickup of an open ride</li>
                         <li><span class="ops-dot ops-dot--review"></span>Needs review</li>
+                        <li data-sos-legend @if (empty($board['takeover'])) hidden @endif><span class="ops-dot ops-dot--sos"></span>Emergency</li>
                     </ul>
                 </div>
                 <div class="ops-map" data-eh-map data-map-state="pending">

@@ -3,7 +3,7 @@
     @php
         $s = $statement->snapshot;
         $cur = $statement->currency;
-        $tz = config('ehail_business.timezone');
+        $tz = \App\Domain\Business\BusinessClock::timezone();
     @endphp
     <div class="bz-doc__bar">
         <a class="eh-link" href="{{ route('business.invoices') }}">All statements</a>

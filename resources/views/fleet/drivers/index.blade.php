@@ -80,18 +80,18 @@
                             <tr>
                                 <td><a class="fl-name" href="{{ route('fleet.drivers.show', $row['profile_id']) }}">{{ $row['name'] }}</a>@if ($row['status'] === 'suspended')<span class="fl-sub">Suspended by operations</span>@endif</td>
                                 <td><x-eh.badge :tone="$state === 'offline' ? 'neutral' : 'go'">{{ $stateLabel[$state] ?? ucfirst($state) }}</x-eh.badge></td>
-                                <td data-label="Has">
+                                <td data-label="Has"><span class="fl-val">
                                     @forelse ($holding->get($row['profile_id'], collect()) as $assignment)
                                         <span class="fl-plate">{{ $assignment->vehicle?->plate_number }}</span>
                                     @empty
                                         <span class="fl-dash">Own vehicle or none</span>
                                     @endforelse
-                                </td>
+                                </span></td>
                                 <td class="num" data-label="Trips">{{ $row['trips'] }}</td>
                                 <td class="num" data-label="Cancelled">{{ $row['cancellations'] }}</td>
                                 <td class="num" data-label="Completion">{!! $pct($row['completion_bp']) ?? '<span class="fl-dash">&#8212;</span>' !!}</td>
-                                <td class="num" data-label="Acceptance">{!! $pct($row['acceptance_bp']) ? e($pct($row['acceptance_bp'])).'<span class="fl-sub">'.$row['offers'].' offers</span>' : '<span class="fl-dash">&#8212;</span>' !!}</td>
-                                <td data-label="Rating">{{ $row['rating']['label'] }}<span class="fl-sub">{{ $row['rating']['count'] }} {{ \Illuminate\Support\Str::plural('rating', $row['rating']['count']) }}</span></td>
+                                <td class="num" data-label="Acceptance"><span class="fl-val">{!! $pct($row['acceptance_bp']) ? e($pct($row['acceptance_bp'])).'<span class="fl-sub">'.$row['offers'].' '.\Illuminate\Support\Str::plural('offer', (int) $row['offers']).'</span>' : '<span class="fl-dash">&#8212;</span>' !!}</span></td>
+                                <td data-label="Rating"><span class="fl-val">{{ $row['rating']['label'] }}<span class="fl-sub">{{ $row['rating']['count'] }} {{ \Illuminate\Support\Str::plural('rating', $row['rating']['count']) }}</span></span></td>
                                 <td class="num" data-label="Online">{!! $hours($row['online_seconds']) ? e($hours($row['online_seconds'])) : '<span class="fl-dash">Not measured</span>' !!}</td>
                             </tr>
                         @endforeach

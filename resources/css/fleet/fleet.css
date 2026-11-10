@@ -171,3 +171,15 @@ a.fl-name:hover { text-decoration: underline; text-underline-offset: 3px; }
     .fl-seg a { min-height: var(--eh-target); }
     .fl-disclose > summary { min-height: var(--eh-target); }
 }
+
+/* Phones (R-46 polish, D-2209): a stacked row is the name on its own line, then one figure per line with its label on
+   the left and the value on the right, so a total row lines up with the rows above it (jury 72 at 390). */
+@media (max-width: 800px) {
+    .fl-table--stack tfoot { display: block; }
+    .fl-table--stack tr { grid-template-columns: minmax(0, 1fr); row-gap: 2px; }
+    .fl-table--stack td:first-child { font-weight: 600; padding-bottom: var(--eh-space-1) !important; }
+    .fl-table--stack td[data-label]:is(.num, :has(> .fl-val)) { display: flex; justify-content: space-between; align-items: baseline; gap: var(--eh-space-3); }
+    .fl-table--stack td[data-label]:is(.num, :has(> .fl-val))::before { font-size: var(--eh-text-sm); color: var(--eh-ink-2); flex: none; }
+    .fl-table--stack td[data-label] .fl-val { text-align: right; min-width: 0; }
+    .fl-table--stack tfoot td { font-weight: 700; border-top: 0 !important; }
+}

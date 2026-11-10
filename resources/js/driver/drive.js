@@ -7,9 +7,11 @@ import { api, ApiError, fill } from './api.js';
 import { clockOffset, startCountdown } from './countdown.js';
 import { countdownCue, createAnnouncer } from '../eh/announce.js';
 import { isolate } from '../eh/isolate.js';
-import { destinationArea, formatClock, formatDistance, formatDuration, formatMoney, haversine } from './geometry.js';
+import { alertOffer, bindAlertSettings } from './alerts.js';
+import { destinationArea, formatClock, formatDistance, formatDuration, formatMoney, haversine, shortAddress } from './geometry.js';
 import { MotionMode, shareMoving } from './motion.js';
 import { navLink, NAV_APPS, readPrefs } from './nav.js';
+import { offerLines, ratingText } from './offer.js';
 import { PinPad } from './pin.js';
 import { LocationThrottler, shouldSave } from './throttle.js';
 
@@ -66,7 +68,31 @@ const homeFocus = () => {
 };
 
 function toast(message, tone = 'info') {
-    if (typeof window.ehToast === 'function') window.ehToast(message, { tone });
+    return typeof window.ehToast === 'function' ? window.ehToast(message, { tone }) : null;
+}
+
+// Addresses on the driver's screens are short (street and suburb); a tap shows the full address (D-2102).
+function setAddress(el, full) {
+    if (!el) return;
+    const text = full || 'Address not given';
+    const short = shortAddress(text) || text;
+    if (el.dataset.full === text) return;
+    el.dataset.full = text;
+    el.dataset.short = short;
+    const expandable = short !== text;
+    el.setAttribute('aria-expanded', 'false');
+    el.disabled = !expandable;
+    el.textContent = short;
+    if (expandable) el.setAttribute('aria-label', `${short}. Show the full address`);
+    else el.removeAttribute('aria-label');
+}
+
+function toggleAddress(el) {
+    const open = el.getAttribute('aria-expanded') !== 'true';
+    el.setAttribute('aria-expanded', String(open));
+    el.textContent = open ? el.dataset.full : el.dataset.short;
+    if (open) el.removeAttribute('aria-label');
+    else el.setAttribute('aria-label', `${el.dataset.short}. Show the full address`);
 }
 
 function clockTime(d) {
@@ -115,37 +141,14 @@ function setStatebar(kind, title, sub) {
     setText('[data-dr-state-sub]', sub);
 }
 
-// ---------- sound and vibration for offers (user setting) ----------
+// ---------- sound and vibration for offers (user setting, alerts.js) ----------
 
-let audio = null;
+const chime = bindAlertSettings();
 function unlockAudio() {
-    if (!prefs.sound || audio) return;
-    try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (Ctx) audio = new Ctx();
-    } catch {
-        audio = null;
-    }
+    chime.unlock();
 }
-function chime() {
-    if (prefs.vibrate && navigator.vibrate) navigator.vibrate([200, 100, 200]);
-    if (!prefs.sound || !audio) return;
-    try {
-        audio.resume?.();
-        [0, 0.22].forEach((at, i) => {
-            const osc = audio.createOscillator();
-            const gain = audio.createGain();
-            osc.frequency.value = i === 0 ? 660 : 880;
-            gain.gain.setValueAtTime(0.0001, audio.currentTime + at);
-            gain.gain.exponentialRampToValueAtTime(0.25, audio.currentTime + at + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + at + 0.18);
-            osc.connect(gain).connect(audio.destination);
-            osc.start(audio.currentTime + at);
-            osc.stop(audio.currentTime + at + 0.2);
-        });
-    } catch {
-        /* sound is a courtesy; the card is the signal */
-    }
+function chimeForOffer() {
+    alertOffer(chime, readPrefs());
 }
 
 // ---------- the feed ----------
@@ -227,7 +230,7 @@ function render() {
     } else if (state.ride) {
         setStatebar('busy', 'On a trip', DRIVER_LABELS[state.ride.status] || state.ride.status_label || 'Trip in progress');
     } else if (a.state === 'online') {
-        setStatebar('online', 'You are online', 'Waiting for ride offers. Keep this screen open.');
+        setStatebar('online', 'You are online', 'Waiting for ride offers. They arrive while this screen is open.');
     } else if (a.state === 'paused') {
         setStatebar('offline', 'Paused', 'No offers until you resume. You are still signed in.');
     } else {
@@ -243,11 +246,14 @@ function render() {
         const staleMs = (policy.heartbeat_stale_s ?? 45) * 1000;
         if (lastHeartbeatOk && Date.now() - lastHeartbeatOk > staleMs) alertOn('stale', 'caution', `Dispatch has not heard from your phone for over ${policy.heartbeat_stale_s ?? 45} seconds. You get no offers until it does.`);
         else alertOff('stale');
+        if (!state.wakeLock && !wakeAsked) keepAwake();
     } else {
         stopLocation();
         alertOff('stale');
         alertOff('background');
+        if (state.wakeLock) releaseAwake();
     }
+    renderWake();
 
     renderOffer();
     if (state.ride) renderTrip();
@@ -319,20 +325,47 @@ async function goOffline(button) {
     }
 }
 
+// Screen Wake Lock while online (D-2105): the screen stays on so offers can be seen and the page keeps running. The
+// browser drops the lock when the page is hidden; it is asked for again when the page is shown, and released on
+// going offline. Where the API is missing or refused (battery saver), the online screen says so.
+let wakeAsked = false;
+let wakeRefused = false;
 async function keepAwake() {
+    wakeAsked = true;
     try {
-        if ('wakeLock' in navigator && !state.wakeLock) {
+        if ('wakeLock' in navigator && !state.wakeLock && document.visibilityState === 'visible') {
             state.wakeLock = await navigator.wakeLock.request('screen');
-            state.wakeLock.addEventListener?.('release', () => (state.wakeLock = null));
+            wakeRefused = false;
+            state.wakeLock.addEventListener?.('release', () => {
+                state.wakeLock = null;
+                renderWake();
+            });
+            if (!online()) releaseAwake();
         }
     } catch {
         state.wakeLock = null;
+        wakeRefused = true;
     }
+    renderWake();
 }
 
 function releaseAwake() {
-    state.wakeLock?.release?.();
+    const lock = state.wakeLock;
     state.wakeLock = null;
+    wakeAsked = false;
+    lock?.release?.().catch?.(() => {});
+}
+
+function renderWake() {
+    const el = $('[data-dr-wake-status]');
+    if (!el) return;
+    let text = '';
+    if (online()) {
+        if (!('wakeLock' in navigator)) text = 'This browser cannot keep the screen on. Set a longer screen timeout in your phone settings while you drive.';
+        else if (state.wakeLock) text = 'The screen stays on while you are online.';
+        else if (wakeRefused) text = 'This phone did not let the screen stay on (battery saver or a browser setting). Set a longer screen timeout while you drive.';
+    }
+    setText(el, text);
 }
 
 // ---------- location while online ----------
@@ -502,8 +535,8 @@ function renderOffer() {
     releaseOffer?.();
     releaseOffer = isolate(card);
     let lastSeconds = null;
-    $('[data-dr-decline-form]').hidden = true;
-    $('.dr-offer__actions').hidden = false;
+    showDeclineReasons(false);
+    $('[data-dr-offer-body]')?.scrollTo?.(0, 0);
 
     // Earnings first: the number before the ask.
     const net = offer.earnings_estimate_minor;
@@ -514,14 +547,15 @@ function renderOffer() {
 
     const pickupBits = [formatDistance(offer.pickup_distance_m), offer.pickup_eta_s ? `about ${formatDuration(offer.pickup_eta_s)}` : null].filter(Boolean).join(', ');
     setText('[data-dr-offer-pickup-distance]', pickupBits ? `${pickupBits} away${offer.eta_method === 'straight_line_estimate' ? ' (straight-line estimate)' : ''}` : '');
-    setText('[data-dr-offer-pickup]', offer.pickup?.address);
+    setAddress($('[data-dr-offer-pickup]'), offer.pickup?.address);
     const tripBits = [formatDistance(offer.trip_distance_m), formatDuration(offer.trip_duration_s)].filter(Boolean).join(', ');
     setText('[data-dr-offer-trip]', tripBits || 'distance not known');
     setText('[data-dr-offer-dropoff]', policy.destination_detail === 'address' ? offer.dropoff?.address : `Towards ${destinationArea(offer.dropoff?.address) || 'the destination'} (full address after you accept)`);
 
     // The catalogue name the passenger booked ("Comfort"), never the internal key ("standard").
     const category = offer.category_name || (offer.category ? String(offer.category).replace(/_/g, ' ') : null);
-    const tags = [category ? category.charAt(0).toUpperCase() + category.slice(1) : null, paymentLabel(offer.payment_method), offer.passenger?.first_name ? `${offer.passenger.first_name}, rating ${offer.passenger.rating_band}` : null].filter(Boolean);
+    const rating = ratingText(offer.passenger);
+    const tags = [category ? category.charAt(0).toUpperCase() + category.slice(1) : null, paymentLabel(offer.payment_method), offer.passenger?.first_name ? `${offer.passenger.first_name}${rating ? `, ${rating}` : ''}` : null].filter(Boolean);
     setText('[data-dr-offer-tags]', tags.join(' · '));
 
     state.stopCountdown?.();
@@ -544,7 +578,7 @@ function renderOffer() {
         },
     });
 
-    chime();
+    chimeForOffer();
     $('[data-dr-accept]')?.focus();
     api(fill(urls.offer_seen, offer.id), { method: 'POST' }).catch(() => {});
 }
@@ -572,18 +606,13 @@ async function loadOfferEarnings(offer) {
         const { data } = state.earnings[offer.id] ? { data: state.earnings[offer.id] } : await api(fill(urls.offer_earnings, offer.id));
         state.earnings[offer.id] = data;
         if (state.shownOfferId !== offer.id) return;
-        const rows = [['Fare (estimate)', formatMoney(data.fare_minor, data.currency)]];
-        if (data.available) {
-            // The server's walk from fare to net (D-1901): every fee and the commission with its base, so the rows add up.
-            if (Array.isArray(data.lines)) {
-                data.lines.forEach((l) => rows.push([l.label + (l.detail && l.code === 'commission' ? ` (${l.detail})` : ''), formatMoney(l.amount_minor, data.currency)]));
-            } else {
-                (data.deductions || []).forEach((d) => rows.push([d.label + (d.detail ? ` (${d.detail})` : ''), formatMoney(-d.amount_minor, data.currency)]));
-            }
-            rows.push(['You earn', data.net_minor !== null ? formatMoney(data.net_minor, data.currency) : 'not configured', true]);
-            if (data.tolls_minor) rows.push(['Of which tolls, paid back to you at cost', formatMoney(data.tolls_minor, data.currency)]);
-        }
-        ledger.replaceChildren(...rows.map(([k, v, total]) => ledgerRow(k, v, total)));
+        const { rows, reconciles, currency } = offerLines(data);
+        const out = rows.map((r) => {
+            const value = r.total && (r.minor === null || r.minor === undefined) ? 'not configured' : formatMoney(r.minor, currency);
+            return lineRow(r.label, value, { total: r.total, detail: r.detail || r.note });
+        });
+        if (!reconciles) out.push(lineRow('These lines do not add up to what you earn. Ask support about this offer before relying on it.', '', { warn: true }));
+        ledger.replaceChildren(...out);
         const plan = $('[data-dr-offer-plan]');
         if (plan) plan.hidden = !data.plan?.is_example;
         if (data.net_minor !== null && data.net_minor !== undefined) {
@@ -593,8 +622,28 @@ async function loadOfferEarnings(offer) {
             setText('[data-dr-offer-net-label]', `Passenger fare. ${data.note}`);
         }
     } catch {
-        ledger.replaceChildren(ledgerRow('Breakdown', 'Could not load. The figure above is the estimate dispatch sent.'));
+        ledger.replaceChildren(lineRow('Breakdown', 'Could not load. The figure above is the estimate dispatch sent.'));
     }
+}
+
+/** One line of the offer's arithmetic: label (and its basis under it), signed amount. */
+function lineRow(label, value, { total = false, detail = null, warn = false } = {}) {
+    const div = document.createElement('div');
+    if (total) div.className = 'is-total';
+    if (warn) div.className = 'is-warn';
+    const dt = document.createElement('dt');
+    dt.textContent = label;
+    if (detail) {
+        const small = document.createElement('span');
+        small.className = 'dr-lines__detail';
+        small.textContent = detail;
+        dt.append(small);
+    }
+    const dd = document.createElement('dd');
+    dd.textContent = value ?? '';
+    div.append(dt, dd);
+
+    return div;
 }
 
 function ledgerRow(label, value, strong = false) {
@@ -607,6 +656,15 @@ function ledgerRow(label, value, strong = false) {
     div.append(dt, dd);
 
     return div;
+}
+
+function showDeclineReasons(show) {
+    const card = $('[data-dr-offer]');
+    if (card) card.dataset.step = show ? 'reasons' : 'answer';
+    $('.dr-offer__actions').hidden = show;
+    $('[data-dr-decline-form]').hidden = !show;
+    if (show) $('[data-dr-decline-form] input')?.focus();
+    else if (card && !card.hidden) $('[data-dr-accept]')?.focus();
 }
 
 async function acceptOffer(button) {
@@ -675,7 +733,7 @@ function renderTrip() {
 
     const target = tripTarget(ride);
     setText('[data-dr-stop-label]', stage === 'in_progress' ? 'Drop-off' : stage === 'arrived' ? 'At the pickup' : 'Pickup');
-    setText('[data-dr-stop-address]', target?.address || 'Address not given');
+    setAddress($('[data-dr-stop-address]'), target?.address);
     const rider = state.riders[ride.id];
     if (rider === undefined) loadRider(ride.id);
     const about = rider?.on_behalf ? [rider.guest ? 'guest' : null, rider.account || null].filter(Boolean) : [];
@@ -1014,10 +1072,14 @@ function closeSummary() {
 // ---------- SOS: one tap, 3 seconds to cancel, then the incident (same honest flow as passengers) ----------
 
 let sosTimer = null;
+let sosCancelledToast = null;
 function openSos() {
     const ride = state.ride;
     if (!ride) return;
     const box = $('[data-dr-sos]');
+    // A new countdown never sits under the notice of the last cancelled one (jury 41).
+    sosCancelledToast?.remove();
+    sosCancelledToast = null;
     box.hidden = false;
     $('[data-dr-sos-arming]').hidden = false;
     $('[data-dr-sos-result]').hidden = true;
@@ -1075,13 +1137,10 @@ document.addEventListener('click', (e) => {
     else if (t.matches('[data-dr-pause]')) stageAction(urls.pause, undefined, 'Paused. No offers until you resume.');
     else if (t.matches('[data-dr-resume]')) stageAction(urls.resume, undefined, 'Offers resumed.');
     else if (t.matches('[data-dr-accept]')) acceptOffer(t);
-    else if (t.matches('[data-dr-decline]')) {
-        $('.dr-offer__actions').hidden = true;
-        $('[data-dr-decline-form]').hidden = false;
-    } else if (t.matches('[data-dr-decline-back]')) {
-        $('.dr-offer__actions').hidden = false;
-        $('[data-dr-decline-form]').hidden = true;
-    } else if (t.matches('[data-dr-arrived]')) markArrived(false);
+    else if (t.matches('[data-dr-decline]')) showDeclineReasons(true);
+    else if (t.matches('[data-dr-decline-back]')) showDeclineReasons(false);
+    else if (t.matches('[data-dr-addr]')) toggleAddress(t);
+    else if (t.matches('[data-dr-arrived]')) markArrived(false);
     else if (t.matches('[data-dr-far-confirm]')) {
         document.getElementById('dr-far-dialog')?.close();
         markArrived(true);
@@ -1119,7 +1178,7 @@ document.addEventListener('click', (e) => {
         $('[data-dr-sos]').hidden = true;
         releaseSos?.($('[data-dr-sos-open]'));
         releaseSos = null;
-        toast('SOS cancelled. Nothing was sent.', 'info');
+        sosCancelledToast = toast('SOS cancelled. Nothing was sent.', 'info');
     } else if (t.matches('[data-dr-sos-close]')) {
         $('[data-dr-sos]').hidden = true;
         releaseSos?.(homeFocus());

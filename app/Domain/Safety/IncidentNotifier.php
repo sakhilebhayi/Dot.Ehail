@@ -11,7 +11,9 @@ use App\Domain\Safety\Notifications\SafetyIncidentAlertNotification;
 use App\Domain\Safety\Sms\SmsGateway;
 use App\Models\User;
 use App\Services\Notify\NotifyClient;
+use App\Support\Ui\LocalTime;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -56,7 +58,7 @@ class IncidentNotifier
                 (string) $contact->name,
                 $firstName,
                 $incident->reference,
-                $incident->created_at->copy()->timezone(\App\Support\Ui\LocalTime::timezone())->format('j M Y, H:i').' '.\App\Support\Ui\LocalTime::label(),
+                $incident->created_at->copy()->timezone(LocalTime::timezone())->format('j M Y, H:i').' '.LocalTime::label(),
                 $shareUrl,
                 $vehicle,
                 $location,
@@ -172,11 +174,11 @@ class IncidentNotifier
         $who = $kind === 'operations' ? 'operations team' : 'on-call escalation';
 
         if ($delivered > 0) {
-            $this->record($incident, 'database', $kind, null, "In-app alert to {$delivered} {$who} member(s)", $purpose, IncidentNotification::SENT);
+            $this->record($incident, 'database', $kind, null, "In-app alert to {$delivered} {$who} ".Str::plural('member', $delivered), $purpose, IncidentNotification::SENT);
         }
 
         if ($failed > 0) {
-            $this->record($incident, 'database', $kind, null, "In-app alert to {$failed} {$who} member(s)", $purpose, IncidentNotification::FAILED, 'notification_error');
+            $this->record($incident, 'database', $kind, null, "In-app alert to {$failed} {$who} ".Str::plural('member', $failed), $purpose, IncidentNotification::FAILED, 'notification_error');
         }
 
         if ($this->notify->enabled()) {

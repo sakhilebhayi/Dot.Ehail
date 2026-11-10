@@ -5,6 +5,7 @@ import { mountMap } from '../geo/index.js';
 import { formatDuration } from './helpers.js';
 import { timeLocal } from '../eh/time.js';
 import { createAnnouncer, risesSentence } from '../eh/announce.js';
+import { renderTakeover, createAlarm } from './takeover.js';
 
 // Said aloud (politely) when one of these goes up; the figures themselves stay quiet (R-46 a11y, D-1702).
 const RISES = { needs_review: 'Needs review', stuck: 'Stuck', incidents: 'Open incidents', searching: 'Waiting for a driver' };
@@ -13,7 +14,8 @@ const VISIBLE_MS = 5000;
 const HIDDEN_MS = 30000;
 
 function markerIcon(L, kind, label) {
-    return L.divIcon({ className: 'ops-marker-wrap', html: `<span class="ops-marker ops-marker--${kind}" aria-hidden="true"></span>`, iconSize: [16, 16], iconAnchor: [8, 8], tooltipAnchor: [0, -10], title: label });
+    const size = kind === 'sos' ? 22 : 16;
+    return L.divIcon({ className: 'ops-marker-wrap', html: `<span class="ops-marker ops-marker--${kind}" aria-hidden="true"></span>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2], tooltipAnchor: [0, -12], title: label });
 }
 
 function setText(root, selector, value) {
@@ -78,7 +80,7 @@ export async function startLive(root) {
             seen.add(key);
             let marker = layers.get(key);
             if (!marker) {
-                marker = L.marker([lat, lng], { icon: markerIcon(L, kind, label), keyboard: false, riseOnHover: true }).addTo(map.map);
+                marker = L.marker([lat, lng], { icon: markerIcon(L, kind, label), keyboard: false, riseOnHover: true, zIndexOffset: kind === 'sos' ? 1000 : 0 }).addTo(map.map);
                 marker.bindTooltip(label, { direction: 'top' });
                 if (href) marker.on('click', () => window.location.assign(href));
                 layers.set(key, marker);
@@ -98,6 +100,11 @@ export async function startLive(root) {
             const kind = r.status === 'needs_review' ? 'review' : 'pickup';
             place(`r${r.id}`, r.pickup.lat, r.pickup.lng, kind, `Ride ${r.id}: ${r.status_label}`, r.href);
         });
+        // Emergencies last, so their red markers sit on top of everything else.
+        (payload.takeover || []).forEach((i) => {
+            if (i.lat === null || i.lng === null) return;
+            place(`i${i.id}`, i.lat, i.lng, 'sos', `${i.kind} ${i.reference}: ${i.owner_text}`, i.href);
+        });
         layers.forEach((marker, key) => {
             if (!seen.has(key)) { marker.remove(); layers.delete(key); }
         });
@@ -115,6 +122,7 @@ export async function startLive(root) {
     };
 
     const voice = createAnnouncer(document);
+    const alarm = createAlarm(root.querySelector('[data-live-takeover]'));
     let lastCounts = null;
     const apply = (payload) => {
         const rise = risesSentence(lastCounts, payload.counts, RISES);
@@ -126,6 +134,8 @@ export async function startLive(root) {
             const list = root.querySelector(`[data-live-queue="${key}"]`);
             renderQueue(list, items, list?.dataset.empty || 'Nothing here.');
         });
+        renderTakeover(root, payload.takeover || []);
+        alarm.update(payload.takeover || []);
         draw(payload);
     };
 
