@@ -29,7 +29,7 @@
                                 </td>
                                 <td>{{ $row['label'] }}</td>
                                 <td class="fl-span"><x-eh.badge :tone="! $row['satisfied'] ? 'stop' : ($row['expiring'] ? 'caution' : 'go')">{{ ucfirst($docState($row['state'])) }}</x-eh.badge>@if ($row['renewal_pending'])<span class="fl-sub">Renewal waiting for review</span>@endif</td>
-                                <td class="num" data-label="Expires">{!! $row['expires_on'] ? e(\Illuminate\Support\Carbon::parse($row['expires_on'])->format('j M Y')) : '<span class="fl-dash">No expiry</span>' !!}</td>
+                                <td class="num" @if($row['expires_on']) data-label="Expires" @endif>{!! $row['expires_on'] ? e(\Illuminate\Support\Carbon::parse($row['expires_on'])->format('j M Y')) : '<span class="fl-dash">No expiry</span>' !!}</td>
                                 <td class="num" data-label="Days left">{!! $row['days_left'] !== null ? ($row['days_left'] < 0 ? '<span class="fl-sev--stop">'.abs($row['days_left']).' ago</span>' : e($row['days_left'])) : '<span class="fl-dash">&#8212;</span>' !!}</td>
                             </tr>
                         @endforeach

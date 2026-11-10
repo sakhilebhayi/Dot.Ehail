@@ -33,6 +33,7 @@
     </dl>
 
     <div class="fl-grid">
+        <div class="fl-stack">
         <section class="fl-panel fl-panel--flush" aria-labelledby="yard-title">
             <div class="fl-panel__head">
                 <h2 id="yard-title">Vehicles today</h2>
@@ -58,7 +59,7 @@
                                     <td class="fl-span"><x-eh.badge :tone="$row['state']['tone']">{{ $row['state']['label'] }}</x-eh.badge><span class="fl-sub">{{ $row['state']['note'] }}</span></td>
                                     <td data-label="Service">
                                         @if ($row['service']['on'] || $row['service']['km'])
-                                            <span class="{{ $row['service']['overdue'] ? 'fl-sev--stop' : ($row['service']['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $row['service']['on']?->format('j M Y') }}{{ $row['service']['on'] && $row['service']['km'] ? ', ' : '' }}{{ $row['service']['km'] ? number_format($row['service']['km'], 0, '.', ' ').' km' : '' }}</span>
+                                            <span class="fl-nowrap {{ $row['service']['overdue'] ? 'fl-sev--stop' : ($row['service']['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $row['service']['on']?->format('j M Y') }}{{ $row['service']['on'] && $row['service']['km'] ? ', ' : '' }}{{ $row['service']['km'] ? number_format($row['service']['km'], 0, '.', ' ').' km' : '' }}</span>
                                             @if ($row['service']['overdue'])<span class="fl-sub">Overdue</span>@elseif ($row['service']['due_soon'])<span class="fl-sub">Due soon</span>@endif
                                         @else
                                             <span class="fl-dash">Not recorded</span>
@@ -71,6 +72,30 @@
                 </div>
             @endif
         </section>
+            @if ($applications->isNotEmpty() || ! $fleet->isIndependent())
+                <section aria-labelledby="apps-title">
+                    <h2 class="fl-rail-title" id="apps-title">Applications waiting</h2>
+                    <div class="fl-panel">
+                        @if ($applications->isEmpty())
+                            <p class="fl-note">No driver is waiting for a decision. Drivers apply from the driver app by choosing this fleet once it is approved.</p>
+                        @else
+                            <ul class="fl-items">
+                                @foreach ($applications as $application)
+                                    <li style="grid-template-columns: auto minmax(0,1fr)">
+                                        <x-eh.avatar :name="$application->user?->name ?? 'Driver'" :size="32" />
+                                        <div>
+                                            <p class="fl-items__title">{{ $application->user?->name }}</p>
+                                            <p class="fl-items__who">Applied {{ $application->created_at->diffForHumans() }}</p>
+                                        </div>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            <div class="fl-panel__foot"><x-eh.button :href="route('fleet.drivers')" variant="secondary" size="sm">Review applications</x-eh.button></div>
+                        @endif
+                    </div>
+                </section>
+            @endif
+        </div>
 
         <div class="fl-stack">
             <section aria-labelledby="alerts-title">
@@ -102,29 +127,6 @@
                 </div>
             </section>
 
-            @if ($applications->isNotEmpty() || ! $fleet->isIndependent())
-                <section aria-labelledby="apps-title">
-                    <h2 class="fl-rail-title" id="apps-title">Applications waiting</h2>
-                    <div class="fl-panel">
-                        @if ($applications->isEmpty())
-                            <p class="fl-note">No driver is waiting for a decision. Drivers apply from the driver app by choosing this fleet once it is approved.</p>
-                        @else
-                            <ul class="fl-items">
-                                @foreach ($applications as $application)
-                                    <li style="grid-template-columns: auto minmax(0,1fr)">
-                                        <x-eh.avatar :name="$application->user?->name ?? 'Driver'" :size="32" />
-                                        <div>
-                                            <p class="fl-items__title">{{ $application->user?->name }}</p>
-                                            <p class="fl-items__who">Applied {{ $application->created_at->diffForHumans() }}</p>
-                                        </div>
-                                    </li>
-                                @endforeach
-                            </ul>
-                            <div class="fl-panel__foot"><x-eh.button :href="route('fleet.drivers')" variant="secondary" size="sm">Review applications</x-eh.button></div>
-                        @endif
-                    </div>
-                </section>
-            @endif
         </div>
     </div>
 </x-fleet.page>

@@ -39,6 +39,15 @@ class Vehicle extends Model
         return $this->belongsTo(DriverProfile::class);
     }
 
+    /**
+     * The driver profile holding this vehicle, for fleet pages: DriverProfile's per-user scope would hide every
+     * holder who is not the person looking.
+     */
+    public function holder(): BelongsTo
+    {
+        return $this->belongsTo(DriverProfile::class, 'driver_profile_id')->withoutGlobalScope('user');
+    }
+
     public function fleet(): BelongsTo
     {
         return $this->belongsTo(Fleet::class);

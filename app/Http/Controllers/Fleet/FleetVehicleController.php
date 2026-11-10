@@ -37,7 +37,7 @@ class FleetVehicleController extends FleetController
             ->when($show === 'retired', fn ($q) => $q->whereNotNull('retired_at'), fn ($q) => $q->whereNull('retired_at'))
             ->when($show === 'fleet', fn ($q) => $q->where('owned_by', 'fleet'))
             ->when($show === 'drivers', fn ($q) => $q->where('owned_by', 'driver'))
-            ->with('driverProfile.user:id,name')
+            ->with('holder.user:id,name')
             ->orderBy('plate_number')
             ->get();
 
@@ -77,7 +77,7 @@ class FleetVehicleController extends FleetController
     {
         $fleet = $this->fleet($request, 'vehicles');
         $user = $request->user();
-        $model = $this->access->vehicleQuery($user, $fleet)->with('driverProfile.user:id,name')->findOrFail($vehicle);
+        $model = $this->access->vehicleQuery($user, $fleet)->with('holder.user:id,name')->findOrFail($vehicle);
 
         $catalogue = RideCategory::query()->activeRides()->with('vehicleRules')->orderBy('display_order')->get()
             ->map(fn (RideCategory $c) => ['category' => $c, 'failures' => $categories->vehicleFailures($c, $model)]);

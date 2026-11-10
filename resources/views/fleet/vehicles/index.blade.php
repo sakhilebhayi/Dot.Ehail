@@ -28,7 +28,7 @@
                                 <td><a class="fl-plate" href="{{ route('fleet.vehicles.show', $v) }}">{{ $v->plate_number }}</a></td>
                                 <td>{{ $v->year }} {{ $v->make }} {{ $v->model }}<span class="fl-sub">{{ $v->color }}, {{ $v->seats }} seats{{ $v->owned_by === 'driver' ? ", driver's own" : '' }}</span></td>
                                 <td data-label="Class">{{ $v->type === 'suv' ? 'SUV' : ucfirst($v->type) }}</td>
-                                <td data-label="Driver">{!! $v->driverProfile?->user?->name ? e($v->driverProfile->user->name) : '<span class="fl-dash">Nobody</span>' !!}</td>
+                                <td data-label="Driver">{!! $v->holder?->user?->name ? e($v->holder->user->name) : '<span class="fl-dash">Nobody</span>' !!}</td>
                                 <td class="fl-span">
                                     @if ($v->retired_at)<x-eh.badge>Retired</x-eh.badge>
                                     @elseif ($v->out_of_service_at)<x-eh.badge tone="stop">Out of service</x-eh.badge>
@@ -39,7 +39,7 @@
                                 <td class="num" data-label="Odometer">{!! $v->odometer_km !== null ? e(number_format($v->odometer_km, 0, '.', ' ')).' km' : '<span class="fl-dash">&#8212;</span>' !!}</td>
                                 <td data-label="Service">
                                     @if ($next['on'] || $next['km'])
-                                        <span class="{{ $next['overdue'] ? 'fl-sev--stop' : ($next['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $next['on']?->format('j M Y') }}{{ $next['on'] && $next['km'] ? ', ' : '' }}{{ $next['km'] ? number_format($next['km'], 0, '.', ' ').' km' : '' }}</span>
+                                        <span class="fl-nowrap {{ $next['overdue'] ? 'fl-sev--stop' : ($next['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $next['on']?->format('j M Y') }}{{ $next['on'] && $next['km'] ? ', ' : '' }}{{ $next['km'] ? number_format($next['km'], 0, '.', ' ').' km' : '' }}</span>
                                     @else<span class="fl-dash">Not recorded</span>@endif
                                 </td>
                             </tr>

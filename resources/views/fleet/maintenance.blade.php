@@ -20,12 +20,12 @@
                             @php($n = $row['next'])
                             <tr>
                                 <td><a class="fl-plate" href="{{ route('fleet.vehicles.show', $v) }}#maint-title">{{ $v->plate_number }}</a><span class="fl-sub">{{ $v->make }} {{ $v->model }}</span></td>
-                                <td data-label="Driver">{!! $v->driverProfile?->user?->name ? e($v->driverProfile->user->name) : '<span class="fl-dash">Nobody</span>' !!}</td>
+                                <td data-label="Driver">{!! $v->holder?->user?->name ? e($v->holder->user->name) : '<span class="fl-dash">Nobody</span>' !!}</td>
                                 <td class="fl-span">@if ($v->out_of_service_at)<x-eh.badge tone="stop">Out of service</x-eh.badge><span class="fl-sub">{{ $v->out_of_service_reason }}</span>@else<x-eh.badge tone="go">In service</x-eh.badge>@endif</td>
                                 <td class="num" data-label="Odometer">{!! $v->odometer_km !== null ? e(number_format($v->odometer_km, 0, '.', ' ')).' km' : '<span class="fl-dash">&#8212;</span>' !!}</td>
                                 <td data-label="Next">
                                     @if ($n['on'] || $n['km'])
-                                        <span class="{{ $n['overdue'] ? 'fl-sev--stop' : ($n['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $n['on']?->format('j M Y') }}{{ $n['on'] && $n['km'] ? ' or ' : '' }}{{ $n['km'] ? number_format($n['km'], 0, '.', ' ').' km' : '' }}</span>
+                                        <span class="fl-nowrap {{ $n['overdue'] ? 'fl-sev--stop' : ($n['due_soon'] ? 'fl-sev--caution' : '') }}">{{ $n['on']?->format('j M Y') }}{{ $n['on'] && $n['km'] ? ' or ' : '' }}{{ $n['km'] ? number_format($n['km'], 0, '.', ' ').' km' : '' }}</span>
                                         <span class="fl-sub">{{ $n['overdue'] ? 'Overdue' : ($n['due_soon'] ? 'Due soon' : '') }}{{ $n['km_left'] !== null ? ($n['overdue'] || $n['due_soon'] ? ', ' : '').number_format(abs($n['km_left']), 0, '.', ' ').' km '.($n['km_left'] < 0 ? 'over' : 'to go') : '' }}</span>
                                     @else<span class="fl-dash">Not recorded</span>@endif
                                 </td>

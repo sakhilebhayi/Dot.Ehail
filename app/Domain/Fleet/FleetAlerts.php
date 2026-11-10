@@ -34,24 +34,31 @@ final class FleetAlerts
         $alerts = [];
 
         if ($this->access->can($viewer, $fleet, 'documents')) {
-            foreach ($this->documents->rows($viewer, $fleet) as $row) {
-                if (! $row['satisfied']) {
-                    $alerts[] = [
-                        'kind' => 'document', 'severity' => 'stop',
-                        'title' => $row['label'].': '.self::stateLabel($row['state']),
-                        'detail' => $row['subject'] === 'driver' ? 'This driver cannot go online until it is sorted.' : 'Nobody can go online in this vehicle until it is sorted.',
-                        'subject' => $row['subject_label'],
-                        'link' => ['area' => $row['subject'] === 'driver' ? 'drivers' : 'vehicles', 'id' => $row['subject_id']],
-                    ];
-                } elseif ($row['expiring']) {
-                    $alerts[] = [
-                        'kind' => 'document', 'severity' => 'caution',
-                        'title' => $row['label'].' expires '.Carbon::parse($row['expires_on'])->format('j M Y'),
-                        'detail' => ($row['days_left'] === 0 ? 'Today.' : $row['days_left'].' days left.').($row['renewal_pending'] ? ' A renewal is waiting for review.' : ' Upload the renewal before then.'),
-                        'subject' => $row['subject_label'],
-                        'link' => ['area' => $row['subject'] === 'driver' ? 'drivers' : 'vehicles', 'id' => $row['subject_id']],
-                    ];
-                }
+            $rows = collect($this->documents->rows($viewer, $fleet));
+
+            // One alert per driver or vehicle for what blocks it, naming every document involved.
+            foreach ($rows->where('satisfied', false)->groupBy(fn ($r) => $r['subject'].':'.$r['subject_id']) as $group) {
+                $first = $group->first();
+                $alerts[] = [
+                    'kind' => 'document', 'severity' => 'stop',
+                    'title' => $group->count() === 1
+                        ? $first['label'].': '.self::stateLabel($first['state'])
+                        : $group->count().' documents to sort out',
+                    'detail' => ($group->count() === 1 ? '' : $group->take(3)->map(fn ($r) => $r['label'].' ('.self::stateLabel($r['state']).')')->implode('; ').($group->count() > 3 ? ' and '.($group->count() - 3).' more' : '').'. ')
+                        .($first['subject'] === 'driver' ? 'This driver cannot go online until they are sorted.' : 'Nobody can go online in this vehicle until they are sorted.'),
+                    'subject' => $first['subject_label'],
+                    'link' => ['area' => $first['subject'] === 'driver' ? 'drivers' : 'vehicles', 'id' => $first['subject_id']],
+                ];
+            }
+
+            foreach ($rows->where('expiring', true) as $row) {
+                $alerts[] = [
+                    'kind' => 'document', 'severity' => 'caution',
+                    'title' => $row['label'].' expires '.Carbon::parse($row['expires_on'])->format('j M Y'),
+                    'detail' => ($row['days_left'] === 0 ? 'Today.' : $row['days_left'].' days left.').($row['renewal_pending'] ? ' A renewal is waiting for review.' : ' The renewal needs uploading before then.'),
+                    'subject' => $row['subject_label'],
+                    'link' => ['area' => $row['subject'] === 'driver' ? 'drivers' : 'vehicles', 'id' => $row['subject_id']],
+                ];
             }
         }
 

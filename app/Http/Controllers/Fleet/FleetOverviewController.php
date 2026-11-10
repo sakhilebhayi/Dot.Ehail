@@ -36,7 +36,7 @@ class FleetOverviewController extends FleetController
         $driverIds = $drivers->pluck('user_id')->map(fn ($id) => (int) $id)->all();
         $working = DriverAvailability::query()->whereIn('user_id', $driverIds)->where('state', '!=', DriverAvailability::OFFLINE)->get()->keyBy('user_id');
 
-        $yard = $this->access->vehicleQuery($user, $fleet)->whereNull('retired_at')->with('driverProfile.user:id,name')->orderBy('plate_number')->get()
+        $yard = $this->access->vehicleQuery($user, $fleet)->whereNull('retired_at')->with('holder.user:id,name')->orderBy('plate_number')->get()
             ->map(fn (Vehicle $v) => $this->yardRow($v, $working, $eligibility, $vehicles));
 
         [$from, $to] = EarningsService::periodBounds('week');
@@ -78,7 +78,7 @@ class FleetOverviewController extends FleetController
      */
     private function yardRow(Vehicle $vehicle, $working, DriverEligibility $eligibility, FleetVehicles $vehicles): array
     {
-        $holder = $vehicle->driverProfile;
+        $holder = $vehicle->holder;
         $holderUser = $holder?->user;
         $availability = $holderUser ? $working->get($holderUser->id) : null;
         $inIt = $availability !== null && (int) $availability->vehicle_id === (int) $vehicle->id;

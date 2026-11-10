@@ -1,7 +1,7 @@
 @php
     $docState = fn (string $s) => \App\Domain\Fleet\FleetAlerts::stateLabel($s);
     $missingDocs = collect($documents['items'])->where('satisfied', false);
-    $holder = $vehicle->driverProfile;
+    $holder = $vehicle->holder;
     $fleetOwned = $vehicle->owned_by === 'fleet';
     $failureText = fn (string $code) => match (true) {
         $code === 'vehicle_class' => 'class not accepted',
@@ -128,7 +128,7 @@
                             <tr>
                                 <td>{{ $item['label'] }}</td>
                                 <td><x-eh.badge :tone="$item['satisfied'] ? ($item['expiring_soon'] ? 'caution' : 'go') : 'stop'">{{ ucfirst($docState($item['state'])) }}</x-eh.badge>@if ($item['renewal_pending'])<span class="fl-sub">Renewal waiting for review</span>@endif</td>
-                                <td class="num" data-label="Expires">{!! $item['expires_on'] ? e(\Illuminate\Support\Carbon::parse($item['expires_on'])->format('j M Y')) : '<span class="fl-dash">No expiry</span>' !!}</td>
+                                <td class="num" @if($item['expires_on']) data-label="Expires" @endif>{!! $item['expires_on'] ? e(\Illuminate\Support\Carbon::parse($item['expires_on'])->format('j M Y')) : '<span class="fl-dash">No expiry</span>' !!}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -234,19 +234,24 @@
             <section>
                 <h2 class="fl-rail-title">Details</h2>
                 <div class="fl-panel">
+                    <dl class="fl-kv">
+                        <dt>Class</dt><dd>{{ $vehicle->type === 'suv' ? 'SUV' : ucfirst($vehicle->type) }}</dd>
+                        <dt>Colour</dt><dd>{{ $vehicle->color }}</dd>
+                        <dt>Seats</dt><dd>{{ $vehicle->seats }}</dd>
+                        <dt>Doors</dt><dd>{{ $vehicle->doors ?? 'Not recorded' }}</dd>
+                        <dt>Odometer</dt><dd>{{ $vehicle->odometer_km !== null ? number_format($vehicle->odometer_km, 0, '.', ' ').' km' : 'Not recorded' }}</dd>
+                        <dt>Features</dt><dd>{{ collect($vehicle->features ?? [])->map(fn ($f) => \Illuminate\Support\Str::before($features[$f] ?? $f, ' ('))->implode(', ') ?: 'None declared' }}</dd>
+                        <dt>Owned by</dt><dd>{{ $fleetOwned ? 'The fleet' : 'The driver' }}</dd>
+                    </dl>
                     @if ($canWrite)
-                        <form method="POST" action="{{ route('fleet.vehicles.update', $vehicle) }}" class="fl-form" style="grid-template-columns: minmax(0,1fr)">
-                            @csrf @method('PATCH')
-                            @include('fleet.vehicles._details', ['vehicle' => $vehicle])
-                            <div class="fl-form__actions"><x-eh.button type="submit" size="sm">Save details</x-eh.button></div>
-                        </form>
-                    @else
-                        <dl class="fl-kv">
-                            <dt>Class</dt><dd>{{ $vehicle->type === 'suv' ? 'SUV' : ucfirst($vehicle->type) }}</dd>
-                            <dt>Colour</dt><dd>{{ $vehicle->color }}</dd>
-                            <dt>Seats</dt><dd>{{ $vehicle->seats }}</dd>
-                            <dt>Doors</dt><dd>{{ $vehicle->doors ?? 'Not recorded' }}</dd>
-                        </dl>
+                        <details class="fl-disclose" style="margin-top: var(--eh-space-4)" @if($errors->hasAny(['plate_number', 'make', 'model', 'year', 'color', 'type', 'seats', 'doors', 'odometer_km', 'features'])) open @endif>
+                            <summary>Edit details</summary>
+                            <form method="POST" action="{{ route('fleet.vehicles.update', $vehicle) }}" class="fl-form" style="grid-template-columns: minmax(0,1fr)">
+                                @csrf @method('PATCH')
+                                @include('fleet.vehicles._details', ['vehicle' => $vehicle])
+                                <div class="fl-form__actions"><x-eh.button type="submit" size="sm">Save details</x-eh.button></div>
+                            </form>
+                        </details>
                     @endif
                 </div>
             </section>
@@ -267,7 +272,7 @@
 
             @if ($history->isNotEmpty())
                 <section>
-                    <h2 class="fl-rail-title">Earlier drivers</h2>
+                    <h2 class="fl-rail-title">Driver history</h2>
                     <div class="fl-panel">
                         <ul class="fl-items">
                             @foreach ($history as $a)

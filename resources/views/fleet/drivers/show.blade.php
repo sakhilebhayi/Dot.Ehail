@@ -30,7 +30,7 @@
                                 <tr>
                                     <td>{{ $item['label'] }}</td>
                                     <td><x-eh.badge :tone="$item['satisfied'] ? ($item['expiring_soon'] ? 'caution' : 'go') : 'stop'">{{ ucfirst($docState($item['state'])) }}</x-eh.badge>@if ($item['renewal_pending'])<span class="fl-sub">Renewal waiting for review</span>@endif</td>
-                                    <td class="num" data-label="Expires">{!! $item['expires_on'] ? e(\Illuminate\Support\Carbon::parse($item['expires_on'])->format('j M Y')) : '<span class="fl-dash">No expiry</span>' !!}</td>
+                                    <td class="num" @if($item['expires_on']) data-label="Expires" @endif>{!! $item['expires_on'] ? e(\Illuminate\Support\Carbon::parse($item['expires_on'])->format('j M Y')) : '<span class="fl-dash">No expiry</span>' !!}</td>
                                 </tr>
                             @endforeach
                         </tbody>

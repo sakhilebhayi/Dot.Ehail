@@ -22,7 +22,7 @@ class FleetMaintenanceController extends FleetController
     {
         $fleet = $this->fleet($request, 'maintenance');
         $user = $request->user();
-        $list = $this->access->vehicleQuery($user, $fleet)->whereNull('retired_at')->with('driverProfile.user:id,name')->orderBy('plate_number')->get();
+        $list = $this->access->vehicleQuery($user, $fleet)->whereNull('retired_at')->with('holder.user:id,name')->orderBy('plate_number')->get();
 
         $rows = $list->map(fn (Vehicle $v) => ['vehicle' => $v, 'next' => $vehicles->nextService($v, (int) config('ehail_fleet.alerts.service_due_days'), (int) config('ehail_fleet.alerts.service_due_km'))])
             ->sortBy(fn ($r) => [$r['vehicle']->out_of_service_at === null ? 1 : 0, $r['next']['overdue'] ? 0 : ($r['next']['due_soon'] ? 1 : 2), $r['vehicle']->plate_number])
