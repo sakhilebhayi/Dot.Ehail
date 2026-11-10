@@ -33,6 +33,9 @@ class InvitationController extends BusinessController
 
     public function acceptListed(Request $request, int $member, BusinessAccounts $accounts): RedirectResponse
     {
+        // Without a proven email the portal match proves nothing; the emailed link (token) still works (S-01).
+        abort_if($request->user()->email_verified_at === null, 404);
+
         $invitation = BusinessMember::where('status', BusinessMember::INVITED)->where('email', strtolower((string) $request->user()->email))->findOrFail($member);
 
         return $this->accepted($request, $accounts->accept($invitation, $request->user()));

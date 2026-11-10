@@ -69,7 +69,7 @@
 
         <p class="eh-fine">This link stops working at <time class="eh-mono" data-field="expires" datetime="{{ $payload['expires_at'] }}">{{ \Illuminate\Support\Carbon::parse($payload['expires_at'])->timezone(config('app.timezone'))->format('H:i, j M') }}</time>. Updated <time class="eh-mono" data-field="checked" datetime="{{ $payload['checked_at'] }}">{{ \Illuminate\Support\Carbon::parse($payload['checked_at'])->timezone(config('app.timezone'))->format('H:i:s') }}</time>. <span data-field="stale"></span></p>
 
-        <script>
+        <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
         (function () {
             var board = document.querySelector('[data-share]');
             if (!board || !window.fetch) { return; }

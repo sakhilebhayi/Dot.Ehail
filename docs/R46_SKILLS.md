@@ -33,6 +33,15 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | `gsap-*` | not used | | No motion needed beyond the kit's switch transition. |
 | `ui-ux-pro-max`, `emil-design-eng` | not invoked | | Recorded as dangling symlinks by ds; not claimed. |
 
+## passenger agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `impeccable` | invoked | booking, live ride, safety centre, trips, help, account, fare calculator (Operate mode, inside the locked Route Line world) | `impeccable context` loaded PRODUCT.md and DESIGN.md (no surface brief; the probe for questions was not possible in this unattended run, so the brief was the source); `craft-floor.md` and `operate.md` applied: one action colour, states for every control (loading `aria-busy`, disabled, error text next to the action), skeletons not spinners, empty states that teach, 150 to 320 ms transitions only for state, reduced motion respected. `impeccable detect` on `resources/views/passenger`, `resources/css/passenger.css`, `resources/js/passenger`: first run 1 warning (width transition on the search progress, now `transform: scaleX`) and 8 advisories (radii and two font sizes off the scale, now tokens); final run clean (`[]`). |
+| `design-taste-frontend` | invoked | app-screen run | Read `references/app-screens.md` whole. No new draw: DESIGN.md fixes palette, type and components, so the run kept the ds direction (the "existing design system" special case). Applied: the screen's one question first (booking: "what will this trip cost and how soon can a car come"; live ride: "where is my driver and what do I do now"), the product's own element (the fare drawn as a route line of stops ending in the yellow total; the SA number plate; the PIN as the yellow stop), numbers right-aligned in tabular figures, empty sections keep their frame with one sentence, errors inside the block that failed with a retry. `lint.mjs`: 8 FAIL first (ring shadows on route stops, the plate frame, the pin's drop shadow, two bar edges), each kept with a `taste-skill-ignore` reason (they are drawn marks or real overlays, not elevation); final 0 FAIL, 4 WARN (zero-padding for clocks and dates, legitimate). `inspect.mjs --app` on `/fares`: 2 FAIL defended (Leaflet's "Report a map issue" attribution 8 px from the edge is geo's map control; the docked sheet's shadow is a real overlay on the map), 1 fixed (title 36 px to 28 px). Authenticated pages were checked with my own Playwright walkthrough instead (inspect cannot sign in). |
+| `gsap-*` | not used | | No motion library: motion is the kit's sheet transition, the map's driver glide (geo) and the search progress bar. |
+| `hallmark` | not invoked | | Not a new world: the pages are built inside the locked DESIGN.md system. |
+| `ui-ux-pro-max`, `emil-design-eng` | unavailable | | Empty folders in `~/.claude/skills` (checked); not claimed. |
 ## driver agent (2026-11-10)
 
 | Skill | Status | Used for | What was applied |
@@ -60,3 +69,10 @@ Global owner rule: all UI work goes through the installed design skills. This fi
 | `dataviz` | invoked | insights and ledger charts | Followed the procedure: form first (columns for counts and money per period, a table for how rides ended with inline bars, a sequential one-hue heat table for retention cohorts, figures not charts where a few numbers say it), one hue, `validate_palette.js` run for the light hue (#0b6a3c, pass) and the night hue (#48b17b failed the lightness band; #3f9f6c passes on the night surface and is used), mark specs (columns at most 24 px, 4 px data end, hairline grid, top tick above the maximum), hover and focus tooltip, the same values in a table under each chart. |
 | `gsap-*`, `scroll-world`, `react-bits`, `canvas-ui`, `terminal-dark`, `hallmark` | not used | | Operate surface: motion is feedback only; hallmark is for new pages outside a locked system. |
 | `ui-ux-pro-max`, `emil-design-eng` | not invoked | | Recorded as dangling symlinks by ds; not claimed. |
+## security agent (2026-11-10)
+
+| Skill | Status | Used for | What was applied |
+|---|---|---|---|
+| `security-audit` | invoked | the whole review | Guidance mode (D-1400): the boundary-and-result evidence bar for every finding, severity anchors, smallest source fix; three focused read-only hunters; mutation check that the router-wide test catches a removed policy check. Full-audit mode not run (it forbids fixing and writes outside the repo). |
+| `impeccable` | invoked | one "Download my data" row on the driver account page | `impeccable context` loaded PRODUCT.md and DESIGN.md; craft floor read; existing `<x-eh.list-row>` and the kit's `download` icon reused, same copy as the passenger row; checked at 375 px in the browser (passenger page) and by a feature test (driver page). No new styles. |
+| others | not used | | No new surface or visual change: the CSP work moved inline handlers to data attributes with identical behaviour; the hover tint on legacy ride rows moved from inline handlers to a two-line `.eh-row-link` hover rule in app.css (same colour). |

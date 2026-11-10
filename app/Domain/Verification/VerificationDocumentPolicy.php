@@ -15,7 +15,8 @@ class VerificationDocumentPolicy
     public function view(User $user, VerificationDocument $document): bool
     {
         return $user->id === $document->user_id
-            || $user->id === $document->assigned_reviewer_id
+            // An assignment outlives a removed operator; it only counts while the reviewer is still one (S-06).
+            || ($user->id === $document->assigned_reviewer_id && $user->isPlatformOperator())
             || $user->isPlatformOperator();
     }
 

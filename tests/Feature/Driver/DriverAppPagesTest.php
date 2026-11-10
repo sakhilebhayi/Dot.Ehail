@@ -9,9 +9,11 @@ use App\Domain\Earnings\Models\PayoutBatch;
 use App\Domain\Payments\Models\DriverMoneySetting;
 use App\Domain\Verification\DocumentStatus;
 use App\Domain\Verification\Models\VerificationDocument;
+use App\Http\Middleware\RequireRecentSignIn;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
 use App\Models\User;
+use App\Models\Vehicle;
 use DOMDocument;
 use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -62,7 +64,7 @@ class DriverAppPagesTest extends TestCase
     {
         $user = User::factory()->withPersonalTeam()->create();
         $profile = DriverProfile::factory()->for($user)->create(['status' => 'pending', 'is_online' => false]);
-        \App\Models\Vehicle::factory()->for($profile, 'driverProfile')->create(['is_active' => true]);
+        Vehicle::factory()->for($profile, 'driverProfile')->create(['is_active' => true]);
 
         $this->actingAs($user)->get('/drive')
             ->assertOk()
@@ -161,7 +163,8 @@ class DriverAppPagesTest extends TestCase
     {
         [$me] = $this->makeVerifiedDriver();
 
-        $this->actingAs($me)->post(route('drive.earnings.bank-account'), [
+        // A bank account change needs a recent sign-in (R-46 security S-15).
+        $this->actingAs($me)->withSession([RequireRecentSignIn::SIGNED_IN_AT => time()])->post(route('drive.earnings.bank-account'), [
             'account_holder' => 'T Mokoena', 'account_number' => '62 1234 5678', 'bank_code' => '250655', 'bank_name' => 'FNB', 'account_type' => 'personal',
         ])->assertRedirect(route('drive.earnings.payouts'));
 

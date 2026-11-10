@@ -105,6 +105,13 @@ class PayoutService
                     continue;
                 }
 
+                // A just-changed account is still in its cooling-off period (R-46 security S-15).
+                if ($sent > 0 && $account->payable_from !== null && $account->payable_from->isFuture()) {
+                    $carried[] = ['payee_user_id' => (int) $payeeId, 'reason' => 'account_cooling_off', 'amount_minor' => $sent];
+
+                    continue;
+                }
+
                 $payout = Payout::create([
                     'payout_batch_id' => $batch->id,
                     'payee_user_id' => (int) $payeeId,
@@ -289,7 +296,9 @@ class PayoutService
         foreach ($batch->payouts()->with('account')->where('status', Payout::SCHEDULED)->where('amount_minor', '>', 0)->get() as $payout) {
             $account = $payout->account;
 
-            if ($account === null || $account->verification_status === 'failed') {
+            // Automatic transfers only reach an account Paystack verified; anything else is paid by hand from the
+            // export after the operator checks it (R-46 security S-15).
+            if ($account === null || $account->verification_status !== 'verified') {
                 $counts['skipped']++;
 
                 continue;

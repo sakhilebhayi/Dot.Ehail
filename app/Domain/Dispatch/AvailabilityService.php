@@ -86,7 +86,8 @@ class AvailabilityService
 
             $this->withdrawPendingOffer($driver, 'driver_went_offline');
 
-            $row->forceFill(['state' => DriverAvailability::OFFLINE, 'since' => now(), 'online_since' => null])->save();
+            // An offline driver's position is not kept here (D-406; R-46 security S-22).
+            $row->forceFill(['state' => DriverAvailability::OFFLINE, 'since' => now(), 'online_since' => null, 'last_lat' => null, 'last_lng' => null])->save();
 
             DriverProfile::withoutGlobalScope('user')->where('user_id', $driver->id)->update(['is_online' => false]);
 

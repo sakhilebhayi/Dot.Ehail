@@ -1,5 +1,6 @@
 // Dot.Ehail shell behaviour (ds, R-46): theme choice, side drawer, account menu, bottom sheet, tabs, dialogs,
 // toasts and service-worker registration. No dependencies; every feature is progressive (markup works without it).
+import { initInlineActions } from './inline-actions.js';
 import { initSheets } from './sheet.js';
 import { resolveTheme } from './theme.js';
 
@@ -163,6 +164,7 @@ function initServiceWorker() {
 }
 
 window.ehToast = toast;
+initInlineActions();
 initTheme();
 initDrawer();
 initMenus();

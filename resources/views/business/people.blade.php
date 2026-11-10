@@ -62,7 +62,7 @@
                                             @endif
                                         </div>
                                     </form>
-                                    <form id="remove-{{ $person->id }}" method="POST" action="{{ route('business.people.destroy', $person->id) }}" onsubmit="return confirm('Remove {{ addslashes($person->displayName()) }}? Their business profile stops working; trips already booked still complete.')">@csrf @method('DELETE')</form>
+                                    <form id="remove-{{ $person->id }}" method="POST" action="{{ route('business.people.destroy', $person->id) }}" data-eh-confirm="Remove {{ $person->displayName() }}? Their business profile stops working; trips already booked still complete.">@csrf @method('DELETE')</form>
                                 @else
                                     <p class="bz-hint">Only account admins can change this person.</p>
                                 @endif
@@ -137,7 +137,7 @@
                                                 <x-eh.button type="submit" size="sm" variant="ghost" icon="trash" form="dept-del-{{ $d->id }}">Remove</x-eh.button>
                                             </div>
                                         </form>
-                                        <form id="dept-del-{{ $d->id }}" method="POST" action="{{ route('business.departments.destroy', $d->id) }}" onsubmit="return confirm('Remove the {{ addslashes($d->name) }} department?')">@csrf @method('DELETE')</form>
+                                        <form id="dept-del-{{ $d->id }}" method="POST" action="{{ route('business.departments.destroy', $d->id) }}" data-eh-confirm="Remove the {{ $d->name }} department?">@csrf @method('DELETE')</form>
                                     @else
                                         <p class="bz-hint">Account admins change departments and budgets.</p>
                                     @endif

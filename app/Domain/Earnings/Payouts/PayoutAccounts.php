@@ -7,6 +7,7 @@ use App\Domain\Ledger\FinanceIssues;
 use App\Exceptions\Payments\PaymentGatewayException;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Notifications\SecurityNoticeNotification;
 use App\Services\Payments\Paystack\PaystackClient;
 use App\Services\Payments\Paystack\PaystackConfig;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,9 @@ class PayoutAccounts
         $number = preg_replace('/\D/', '', $data['account_number']);
         $index = PayoutAccount::blindIndex($number, $data['bank_code']);
 
-        $account = DB::transaction(function () use ($user, $data, $number, $index) {
+        $isChange = PayoutAccount::where('user_id', $user->id)->where('payee_type', $data['payee_type'])->exists();
+
+        $account = DB::transaction(function () use ($user, $data, $number, $index, $isChange) {
             PayoutAccount::where('user_id', $user->id)->where('payee_type', $data['payee_type'])->update(['is_active' => false]);
 
             return PayoutAccount::create([
@@ -49,8 +52,19 @@ class PayoutAccounts
                 'account_type' => $data['account_type'],
                 'verification_status' => 'unverified',
                 'is_active' => true,
+                // A replaced account waits before it receives money (R-46 security S-15); a first account does not.
+                'payable_from' => $isChange ? now()->addHours(max(0, (int) config('ehail_security.payout_account_cooling_off_hours', 72))) : null,
             ]);
         });
+
+        // The holder hears about every bank account change by email and in the app, at once.
+        $user->notify(new SecurityNoticeNotification(
+            'payout_account',
+            $isChange ? 'Payout bank account changed' : 'Payout bank account added',
+            ($isChange ? 'Your payouts now go to ' : 'Payouts will go to ').$account->bank_name.' account ending '.$account->account_last4.'.'
+                .($account->payable_from !== null ? ' For your protection, nothing is paid to it until '.$account->payable_from->timezone('Africa/Johannesburg')->format('j M Y H:i').'.' : ''),
+            route('drive.earnings.payouts'),
+        ));
 
         AuditLog::record('money.payout_account_added', $user, $account, ['bank' => $account->bank_name, 'last4' => $account->account_last4]);
 

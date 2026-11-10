@@ -12,6 +12,7 @@
 <head>
     @include('layouts.partials.eh-head', ['title' => $title ?? null])
     {{ $head ?? '' }}
+    @vite(['resources/css/comms/comms.css'])
 </head>
 <body>
     <a class="eh-skip" href="#main">Skip to content</a>
@@ -21,6 +22,7 @@
             @include('layouts.partials.eh-topnav')
             <div class="eh-topbar__slot">
                 @isset($safety){{ $safety }}@else @include('layouts.partials.eh-safety', ['safetyRoute' => 'ride.safety']) @endisset
+                <x-comms::bell surface="passenger" />
                 @include('layouts.partials.eh-account', ['surface' => 'passenger'])
             </div>
         </header>

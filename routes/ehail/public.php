@@ -4,3 +4,5 @@
 require __DIR__.'/safety-public.php';
 
 require __DIR__.'/pricing-public.php';
+
+require __DIR__.'/passenger-public.php';

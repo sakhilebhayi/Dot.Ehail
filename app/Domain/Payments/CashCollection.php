@@ -91,6 +91,11 @@ class CashCollection
         DriverEarning::where('source_key', "trip:{$ride->id}")->update(['cash_collected_minor' => $receivedMinor]);
 
         if ($short > (int) config('money.cash.discrepancy_tolerance_minor', 0)) {
+            // The trip earning waits for an operator: otherwise a driver who reports less cash than they took is
+            // paid their full share by bank and keeps the cash (R-46 security S-13). Resolving the issue releases it.
+            DriverEarning::where('source_key', "trip:{$ride->id}")->where('status', DriverEarning::AVAILABLE)
+                ->update(['status' => DriverEarning::PENDING, 'available_at' => null, 'updated_at' => now()]);
+
             $summary = "Ride #{$ride->id}: driver confirmed ".Money::format($receivedMinor, $payment->currency).' cash for a '.Money::format($payment->amountMinor(), $payment->currency).' fare';
             $caseRef = $this->support->open('cash_discrepancy', $ride, $driver, $summary);
 
