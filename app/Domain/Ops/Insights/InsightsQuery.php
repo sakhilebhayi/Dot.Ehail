@@ -19,18 +19,21 @@ class InsightsQuery
 {
     public const CACHE_SECONDS = 60;
 
-    /** @var array<string, string> exact definitions shown on the page and in the CSV */
+    /**
+     * @var array<string, string> exact definitions shown on the page and in the CSV, in plain words: no table or
+     *                            column names (D-1914). The queries below are the technical record.
+     */
     public const DEFINITIONS = [
-        'ride_volume' => 'count of rides by the day they were created (every request, scheduled or not, whatever happened next)',
-        'completed_trips' => 'count of rides with status completed, by the day of completed_at',
-        'cancellations' => 'rides created in the period that ended in each state / all rides created in the period',
-        'pickup_eta' => 'for rides that reached the pickup in the period: estimated = pickup ETA on the accepted offer (ride_offers.pickup_eta_s, with its method); actual = arrived_at - accepted_at',
-        'trip_duration' => 'average of completed_at - started_at over rides completed in the period',
-        'utilisation' => 'time in the on_trip state (assignment to trip end) / time in online or on_trip, from measured availability spans clipped to the period (paused and offline excluded)',
-        'retention' => 'passengers grouped by the month of their first completed ride; each later month = share of the group with at least one completed ride in that month',
-        'revenue' => 'from the ledger: credits - debits on platform_revenue_commission and platform_revenue_fees; driver earnings = credits - debits on driver and fleet payable excluding payouts',
-        'coverage' => 'rides created in the period whose pickup lies in each active service area (polygon test); expired rate = rides ending expired (no driver found) / rides created there',
-        'incidents' => 'safety incidents by the day they were opened, by severity',
+        'ride_volume' => 'Every ride requested, counted on the day it was requested (scheduled or not, whatever happened next).',
+        'completed_trips' => 'Rides that finished, counted on the day they finished.',
+        'cancellations' => 'Of the rides requested in the period, the share that ended each way.',
+        'pickup_eta' => 'For rides whose driver reached the pickup in the period: estimated is the pickup time the driver was shown when accepting (with how it was estimated); actual is the time from accepting to arriving.',
+        'trip_duration' => 'Average time from the trip starting to the trip ending, over rides that finished in the period.',
+        'utilisation' => 'Time drivers spent with a ride (from being assigned to the trip ending) as a share of all their time online, measured inside the period. Paused and offline time is left out.',
+        'retention' => 'Passengers grouped by the month of their first finished ride; each later month shows the share of that group who finished at least one ride in it.',
+        'revenue' => 'From the money ledger: platform revenue is commission and fees kept, less any reversed; driver earnings are what drivers and fleets were credited for trips, less any reversed, before payouts.',
+        'coverage' => 'Rides requested in the period whose pickup lies inside each active service area; the expired rate is the share of those that ended with no driver found.',
+        'incidents' => 'Safety incidents counted on the day they were opened, by severity.',
     ];
 
     public function __construct(private readonly LedgerPeriods $ledger) {}

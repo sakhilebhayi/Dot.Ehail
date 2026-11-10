@@ -13,7 +13,7 @@
         <p class="ops-crumb"><a href="{{ route('ops.drivers') }}">Drivers</a> / {{ $driver->name }}</p>
         <header class="ops-head">
             <div class="ops-head__text">
-                <h1>{{ $driver->name }} @include('ops.partials.profile-status', ['status' => $profile->status]) @include('ops.partials.state', ['row' => $availability])</h1>
+                <h1>{{ $driver->name }} @include('ops.partials.profile-status', ['status' => $profile->status, 'documents' => app(\App\Domain\Verification\VerificationService::class)->driverStatus($profile)['status']]) @include('ops.partials.state', ['row' => $availability])</h1>
                 <p class="ops-head__finding" @if($finding[1]) data-tone="{{ $finding[1] }}" @endif>{{ $finding[0] }}</p>
             </div>
         </header>

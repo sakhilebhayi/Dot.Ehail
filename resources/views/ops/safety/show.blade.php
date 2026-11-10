@@ -76,7 +76,7 @@
                                 <span class="ops-route__stop" aria-hidden="true"></span>
                                 <span class="ops-route__what">{{ ucfirst(str_replace('_', ' ', (string) $event->type)) }}</span>
                                 <time class="ops-route__when">{{ $event->created_at?->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('d M H:i:s') }}</time>
-                                <span class="ops-route__detail">{{ $event->actor_id ? 'by user '.$event->actor_id : 'system' }}{{ isset($data['note']) && is_string($data['note']) ? ' · "'.$data['note'].'"' : '' }}{{ isset($data['reason']) && is_string($data['reason']) ? ' · '.str_replace('_', ' ', $data['reason']) : '' }}{{ isset($data['level']) ? ' · level '.$data['level'] : '' }}</span>
+                                <span class="ops-route__detail">{{ $event->actor_id ? 'by '.\App\Support\Ui\PersonNames::of($event->actor_id) : 'system' }}{{ isset($data['note']) && is_string($data['note']) ? ' · "'.$data['note'].'"' : '' }}{{ isset($data['reason']) && is_string($data['reason']) ? ' · '.str_replace('_', ' ', $data['reason']) : '' }}{{ isset($data['level']) ? ' · level '.$data['level'] : '' }}</span>
                             </li>
                         @endforeach
                     </ol>
