@@ -187,7 +187,9 @@ class DispatcherTest extends TestCase
 
     public function test_vehicle_category_paused_and_on_trip_drivers_are_skipped(): void
     {
-        $premium = $this->onlineDriverAt(...$this->northOfPickup(100), vehicleType: 'premium');
+        // Since integration the ride-category catalogue decides (D-700): the "standard" (Comfort) category
+        // takes standard and premium vehicles, so an economy car is the one that cannot serve it.
+        $economy = $this->onlineDriverAt(...$this->northOfPickup(100), vehicleType: 'economy');
         $paused = $this->onlineDriverAt(...$this->northOfPickup(150));
         app(AvailabilityService::class)->pause($paused);
         $standard = $this->onlineDriverAt(...$this->northOfPickup(2500));
@@ -195,7 +197,7 @@ class DispatcherTest extends TestCase
         $ride = $this->requestRide();
 
         $this->assertSame($standard->id, $this->pendingOffer($ride)->driver_id);
-        $this->assertNotContains($premium->id, RideOffer::pluck('driver_id')->all());
+        $this->assertNotContains($economy->id, RideOffer::pluck('driver_id')->all());
     }
 
     public function test_the_passenger_is_never_offered_their_own_ride(): void

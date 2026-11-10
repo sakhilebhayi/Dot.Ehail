@@ -5,6 +5,7 @@ namespace App\Domain\Dispatch\Seams;
 use App\Domain\Dispatch\Contracts\PaymentMethodResolver;
 use App\Domain\Dispatch\Data\PaymentChoice;
 use App\Domain\Dispatch\Exceptions\PaymentMethodUnavailable;
+use App\Models\Ride;
 use App\Models\User;
 
 /**
@@ -22,4 +23,6 @@ class CashOnlyPaymentMethods implements PaymentMethodResolver
 
         throw new PaymentMethodUnavailable('Only cash can be chosen when requesting a ride right now.');
     }
+
+    public function attach(Ride $ride, User $passenger, PaymentChoice $choice): void {}
 }

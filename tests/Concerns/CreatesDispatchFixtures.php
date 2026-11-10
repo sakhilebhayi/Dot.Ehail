@@ -17,6 +17,8 @@ use Tests\Doubles\FakeFareQuotes;
  */
 trait CreatesDispatchFixtures
 {
+    use ApprovesDriverDocuments;
+
     protected FakeFareQuotes $quotes;
 
     /** Kloof Street, Gardens, Cape Town: the pickup every fake quote uses unless told otherwise. */
@@ -26,6 +28,9 @@ trait CreatesDispatchFixtures
     {
         $this->quotes = new FakeFareQuotes;
         $this->app->instance(FareQuoteGateway::class, $this->quotes);
+        // Dispatch tests run without a payment provider; the money resolver then needs cash to be accepted
+        // (otherwise there is no way to pay and requests are refused, D-706).
+        config(['money.cash.enabled' => true]);
 
         return $this->quotes;
     }
@@ -36,13 +41,15 @@ trait CreatesDispatchFixtures
     }
 
     /**
-     * An approved driver with an active vehicle, online, with a fresh heartbeat at the given point.
+     * An approved driver with an active vehicle and every mandatory document approved (the safety
+     * verification gate), online, with a fresh heartbeat at the given point.
      */
     protected function onlineDriverAt(float $lat, float $lng, string $vehicleType = 'standard', ?string $name = null): User
     {
         $user = User::factory()->withPersonalTeam()->create($name ? ['name' => $name] : []);
         $profile = DriverProfile::factory()->for($user)->create(['status' => 'approved', 'is_online' => false]);
-        Vehicle::factory()->for($profile, 'driverProfile')->create(['is_active' => true, 'type' => $vehicleType]);
+        $vehicle = Vehicle::factory()->for($profile, 'driverProfile')->create(['is_active' => true, 'type' => $vehicleType, 'seats' => $vehicleType === 'suv' ? 6 : 4]);
+        $this->approveAllDocuments($profile, $vehicle);
 
         $availability = app(AvailabilityService::class);
         $availability->goOnline($user);

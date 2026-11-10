@@ -18,7 +18,8 @@ trait CreatesEhailFixtures
     {
         $user = User::factory()->withPersonalTeam()->create();
         $profile = DriverProfile::factory()->for($user)->create(['status' => 'approved', 'is_online' => $online]);
-        Vehicle::factory()->for($profile, 'driverProfile')->create(['is_active' => true, 'type' => $vehicleType]);
+        // An SUV seats six: the XL category it continues requires it (ride-category catalogue, pricing D-311).
+        Vehicle::factory()->for($profile, 'driverProfile')->create(['is_active' => true, 'type' => $vehicleType, 'seats' => $vehicleType === 'suv' ? 6 : 4]);
 
         return $user;
     }
