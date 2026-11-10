@@ -206,3 +206,11 @@ initSheets({ reducedMotion });
 initFlashes();
 initScrollRegions();
 initServiceWorker();
+
+// <x-eh.file>: the chosen file's name under the action (the input itself is drawn by the kit, not the browser).
+document.addEventListener('change', (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || input.type !== 'file') return;
+    const out = input.closest('[data-eh-file]')?.querySelector('[data-eh-file-name]');
+    if (out) out.textContent = input.files?.length ? [...input.files].map((f) => f.name).join(', ') : 'No file chosen';
+});

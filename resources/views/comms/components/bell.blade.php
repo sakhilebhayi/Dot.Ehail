@@ -13,6 +13,6 @@
 <a href="{{ route($bellRoute) }}" {{ $attributes->class('eh-iconbtn eh-iconbtn--ghost comms-bell') }} aria-label="{{ $bellLabel }}" title="{{ $bellLabel }}"
    @if(request()->routeIs($bellRoute, $bellRoute.'.*')) aria-current="page" @endif>
     <x-eh.icon name="bell" />
-    @if ($bellCount > 0)<span class="comms-bell__count" aria-hidden="true">{{ $bellCount > 99 ? '99+' : $bellCount }}</span>@endif
+    @if ($bellCount > 0)<span class="comms-bell__count" aria-hidden="true">{{ $bellCount > 9 ? '9+' : $bellCount }}</span>@endif
 </a>
 @endif

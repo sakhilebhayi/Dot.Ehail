@@ -14,10 +14,7 @@
             <h2 id="case-reply">Reply</h2>
             <form class="eh-panel pax-form" data-pax-reply>
                 <x-eh.field label="Message" name="body" type="textarea" id="reply-body" />
-                <div class="eh-field">
-                    <label class="eh-field__label" for="reply-file">Photo or document <span class="eh-field__optional">optional</span></label>
-                    <input id="reply-file" name="attachment" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
-                </div>
+                <x-eh.file id="reply-file" name="attachment" label="Photo or document" :optional="true" accept="image/jpeg,image/png,image/webp,application/pdf" hint="A photo (JPEG, PNG or WebP) or a PDF." />
                 <p class="pax-field__status" data-pax-reply-status role="status"></p>
                 <div><x-eh.button type="submit">Send</x-eh.button></div>
             </form>

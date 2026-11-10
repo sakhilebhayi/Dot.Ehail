@@ -50,7 +50,7 @@
     --eh-stop-fill-ink: #ffffff;
     --eh-info: #1d4f9c;
     --eh-info-bg: #e1ebf8;
-    --eh-focus: #1d5bd6;
+    --eh-focus: #0a4a2b; /* brand focus: deep sign green, 9.5:1 on the ground (R-46 ppass, D-2007) */
 
     /* Map palette (the geo agent's map style reads these) */
     --eh-map-land: #eef1ec;
@@ -163,7 +163,7 @@
         --eh-stop-fill-ink: #ffffff;
         --eh-info: #a5c6ff;
         --eh-info-bg: #1e3350;
-        --eh-focus: #8fbaff;
+        --eh-focus: #f2c230;
         --eh-map-land: #182721;
         --eh-map-road: #2a3b34;
         --eh-map-road-casing: #0b120f;
@@ -216,7 +216,7 @@
     --eh-stop-fill-ink: #ffffff;
     --eh-info: #a5c6ff;
     --eh-info-bg: #1e3350;
-    --eh-focus: #8fbaff;
+    --eh-focus: #f2c230;
     --eh-map-land: #182721;
     --eh-map-road: #2a3b34;
     --eh-map-road-casing: #0b120f;
