@@ -33,3 +33,16 @@ Auth/SSO/teams, the lifecycle's locking and audit approach, Paystack webhook ver
 
 ## Domain audits
 (appended by the wave-1 agents)
+
+### Dispatch domain audit (dispatch agent, 2026-11-10)
+| Area | Before (class) | Finding | After this branch |
+|---|---|---|---|
+| Lifecycle | I | Enum with actor-per-edge rules and row locks; no searching/assigned split, no no-show, PIN, failure, scheduled states; `transition()` returned null on a lost race; audit only in audit_logs | F: v2 edge table (15 states), guards and effects per edge, append-only `ride_events` timeline, idempotent transition keys, domain events after commit, data migration of old values |
+| Concurrency | I | Accept guarded by a row lock and `driver_id IS NULL`, but nothing stopped one driver holding two accepted rides; SQLite ignores `lockForUpdate` | F: database-level guards (nullable unique columns) for driver, passenger, offers; CAS offer acceptance; tick lease; tested with forked processes |
+| Dispatch | P | Pull list, first to accept wins, no location, no ranking, no timeouts per driver | F (with stated limits): sequential ETA-ranked offers with 15 s timeout, widening rings, fairness terms logged per offer, requeue with priority, expiry; the pull list kept as a delayed open board |
+| Availability | P | `DriverProfile::is_online` boolean only; no heartbeat, no position, no on-trip state | F: offline/online/on_trip/paused, heartbeat staleness, eligibility seam with reasons, offline blocked on trip |
+| Ride request | B (vs brief) | Fare computed from client-entered coordinates with straight-line distance; no idempotency; duplicate active rides possible | F behind the pricing seam: quote-only requests, Idempotency-Key, one active ride per passenger; honest 503 until pricing is bound. The old form route still exists for the old page (wave 2 replaces it) |
+| Scheduled rides | M | None | F: book ahead, reminder, allocation at lead time, price guarantee with re-quote acceptance, reschedule/cancel rules, missed-slot expiry |
+| Real-time | P | Reverb broadcast that the live host cannot run | F: versioned delta polling with ETag/304, Retry-After, stale flags, per-role payloads; broadcast variants kept for Reverb hosts |
+| Operations | P | Complete/cancel stuck trips from a page | F (API): live list, timeline with offer score terms, force-cancel, reassign (search or named driver), flag, resolve; all audited |
+| Not done here | | UI for any of it (wave 2), batched matching, PostgreSQL concurrency run (wave 3 perf), comms delivery of reminder/requote events (wave 2) | |
