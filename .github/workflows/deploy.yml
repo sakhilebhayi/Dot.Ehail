@@ -20,45 +20,65 @@ name: Deploy to Production
 #           local host-before-adopt-* branch) WITHOUT deleting anything untracked
 #           (.env, storage/, database/, uploads) and then continues as a deploy,
 #           except that pending migrations are only LISTED unless `migrate` is
-#           also given (the rollback copy covers a SQLite file, not Postgres or
-#           MySQL: take a database backup first).
+#           also given.
 #   deploy  Every release after that: needs the checkout on this pipeline.
 #
+# Optional inputs: skip_db_dump=skip (deploy without the pre-migration database
+# copy: only when the host cannot make one and you took your own), and
+# install_example_tariff=install (also install the PLACEHOLDER example tariff:
+# never for real passengers; see docs/R46_OPERATIONS.md).
+#
 # What a run does, in order:
-#   0. Refuses to run from any branch but main (the runner builds the
-#      frontend and runs the CI gate from the branch the run was started on,
-#      the host deploys origin/main: they must be the same code).
-#   1. CI gate (ci.yml): the PHPUnit suite on PHP 8.4 against in-memory SQLite.
-#      ci.yml has no Pint and no asset build; the build is checked in step 2.
-#   2. Builds the frontend on the runner (the host has no Node) with
-#      `npm ci && npm run build`, checks public/build/manifest.json lists every
-#      file an @vite() call in resources/views asks for, and syncs the build to
-#      public/build.incoming on the host. The build gets no VITE_REVERB_*
-#      values, so the bundle never opens a websocket (see REVERB below).
-#   3. On the host: rollback copy, maintenance mode, code to origin/main,
-#      composer install, production invariants (APP_DEBUG forced false; APP_ENV
-#      forced to production; warnings, not changes, for an http APP_URL, a
-#      reverb broadcaster, redis or sync drivers), swap in the new
-#      public/build, keep the docroot's build/ in step, migrations, caches.
+#   0. Refuses to run from any branch but main, or while a deploy secret is
+#      missing (before any test minute is spent).
+#   1. CI gate (ci.yml): PHPUnit on SQLite and on PostgreSQL 16, the upgrade
+#      rehearsal on a populated pre-R-46 database (both engines), the JS suite,
+#      the Vite build with the manifest check, and the signed-in production-like
+#      smoke (passenger, driver, operator, fleet owner, business admin).
+#   2. Builds the frontend on the runner (the host has no Node) and proves the
+#      manifest against every @vite entry in the views
+#      (scripts/ops/check-vite-manifest.mjs), then stages it in
+#      public/build.incoming on the host. No VITE_REVERB_* value is baked in, so
+#      the bundle never opens a websocket (see REVERB below).
+#   3. On the host, BEFORE maintenance mode: a rollback copy of the files and a
+#      copy of the database (pg_dump custom format, or an online SQLite backup;
+#      a failure here leaves the live site untouched). Then maintenance mode,
+#      code to origin/main, composer install, production invariants (APP_DEBUG
+#      forced false, APP_ENV forced production, warnings for an http APP_URL,
+#      a reverb broadcaster, redis or sync drivers), the new public/build swapped
+#      in, the docroot's copies of build/ AND of every other public file (fonts,
+#      icons, images, manifest.webmanifest, sw.js, offline.html, favicons) kept
+#      in step, migrations, reference installs (ehail:geo-reference-areas: the
+#      approximate service areas and airport zones, never overwriting edits; the
+#      ride categories come from a migration; the example tariff only on
+#      request), caches, ehail:preflight (a FAIL leaves the site down with the
+#      reason), `php artisan up`.
 #   4. Installs this app's cron lines through the account's shared crontab
 #      (the file every Dot app on this cPanel account writes to):
-#        `schedule:run` -- routes/console.php schedules ehail:expire-rides every minute;
-#        without this line requested rides never expire and stuck rides are never
-#        flagged for review, with no error.
-#        `queue:work` -- cron-driven (--stop-when-empty --max-time=50, one worker per
-#        minute; cPanel allows no daemon). Queued work: SendNotifyEvent (open stacked PR)
-#        and the RideStatusUpdated broadcast.
+#        `schedule:run` every minute: the dispatch tick and ride expiry, safety,
+#        money, business and comms sweeps, retention purges, verification
+#        expiry, payout drafts, statements, the Analytics snapshot (18 tasks;
+#        ehail:preflight lists them). Without it offers only move on while
+#        someone polls, rides never expire and failed charges are never retried.
+#        `queue:work` -- cron-driven (--stop-when-empty --max-time=50, every
+#        second minute on this app's parity; cPanel allows no daemon). Queued:
+#        ride settlement and charges, Paystack webhooks, receipts, notifications.
 #      The write takes the shared flock, reads the crontab with a retry
 #      (crontab -l can transiently answer EMPTY; nothing is written after an
 #      empty read), replaces only lines carrying this app's marker
 #      ("# dot-ehail"), and verifies the read-back: other apps' lines before and
 #      after must match or the previous crontab is restored. Then it runs
-#      queue:restart so a worker started before the release exits and the next
-#      minute's worker runs the new code.
-#   5. Smoke check from the runner, like a browser: / and /login answer 200,
-#      the built CSS and JS answer 200, /up answers 200, a harmless POST /up (a
-#      405) does not return a debug page, and the app folder itself (.env,
-#      artisan, database/database.sqlite) is not served over HTTP.
+#      queue:restart so a worker started before the release exits.
+#   5. Smoke check from the runner, like a browser: /, /login, /fares, /up and the
+#      fare-categories JSON answer 200; /up/realtime answers honestly (503
+#      "degraded" without Reverb, never a 500); /ride redirects a guest to the
+#      login; a bogus /t/<token> trip-share link answers the neutral 404 with no
+#      cookie and noindex; the security headers (and the CSP mode) are present;
+#      every built CSS/JS file, every self-hosted font, the web manifest, the
+#      service worker at the site root with a JavaScript type, the offline page
+#      and one file of every static folder answer 200 from the DOCROOT; private
+#      storage and the app folder are not served; a POST /up (a harmless 405)
+#      is not a debug page.
 #
 # A failure after maintenance mode starts LEAVES the site down on purpose, with
 # the rollback copy's name in the log, rather than guessing at an automatic
@@ -69,20 +89,17 @@ name: Deploy to Production
 # the new release and the run is red because a cron line or a check failed.
 #
 # REVERB: Reverb cannot run on shared cPanel (it is a long-lived websocket
-# server; the account allows no daemons). The repository ships
-# deploy/reverb.service for a VPS. THIS PIPELINE NEVER STARTS, RELOADS OR
-# PROXIES REVERB. What degrades:
-#   the ride page stops updating on its own while a passenger or driver
-#   watches it (resources/views/rides/show.blade.php subscribes to private-
-#   ride.{id} and returns without window.Echo). Nothing else in Ehail is live.
-# Nothing polls (no wire:poll, no timers): a page reload shows the current
-# state. Set BROADCAST_CONNECTION=log in the host .env, otherwise every
-# broadcast is queued for a Reverb server that does not exist and fails.
+# server; the account allows no daemons). THIS PIPELINE NEVER STARTS, RELOADS
+# OR PROXIES REVERB, and nothing needs it: the passenger, driver and operations
+# screens poll short versioned feeds (2-3 s while active). Set
+# BROADCAST_CONNECTION=log and EHAIL_BROADCAST_RIDE_EVENTS=false in the host
+# .env, otherwise every broadcast is queued for a server that does not exist.
 #
 # Repository secrets: DEPLOY_HOST (ehail.infodot.co.za), DEPLOY_USER,
 # DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS. DEPLOY_PATH is optional: left unset, the
 # app folder is found as the one `artisan` under the docroot ~/<DEPLOY_HOST>.
-# See docs/deployment.md for everything else the host needs.
+# docs/deployment.md has the host checklist; docs/R46_OPERATIONS.md the owner
+# runbook (first steps after the first R-46 deploy).
 on:
   workflow_dispatch:
     inputs:
@@ -91,6 +108,12 @@ on:
         required: true
       migrate:
         description: 'adopt only: type "migrate" to also run pending migrations (a normal deploy always migrates)'
+        required: false
+      skip_db_dump:
+        description: 'type "skip" to deploy WITHOUT the pre-migration database copy (only if the host cannot make one and you took your own)'
+        required: false
+      install_example_tariff:
+        description: 'type "install" to ALSO install the placeholder example tariff (never for real passengers; the owner publishes real prices in /ops)'
         required: false
 
 concurrency:
@@ -103,8 +126,7 @@ permissions:
 env:
   SITE_URL: https://ehail.infodot.co.za
   REPO_URL: https://github.com/sakhilebhayi/Dot.Ehail.git
-  # The branch the host runs. This is the unmerged trunk; when it lands on
-  # main, change this one line to main.
+  # The branch the host runs (and the only branch a run may start from).
   DEPLOY_BRANCH: main
 
 jobs:
@@ -114,11 +136,19 @@ jobs:
     outputs:
       mode: ${{ steps.in.outputs.mode }}
       migrate: ${{ steps.in.outputs.migrate }}
+      skipdump: ${{ steps.in.outputs.skipdump }}
+      tariff: ${{ steps.in.outputs.tariff }}
     steps:
       - id: in
         env:
           CONFIRM: ${{ github.event.inputs.confirm }}
           MIGRATE_INPUT: ${{ github.event.inputs.migrate }}
+          SKIP_DUMP_INPUT: ${{ github.event.inputs.skip_db_dump }}
+          TARIFF_INPUT: ${{ github.event.inputs.install_example_tariff }}
+          HAVE_HOST: ${{ secrets.DEPLOY_HOST != '' }}
+          HAVE_USER: ${{ secrets.DEPLOY_USER != '' }}
+          HAVE_KEY: ${{ secrets.DEPLOY_SSH_KEY != '' }}
+          HAVE_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS != '' }}
         run: |
           case "$CONFIRM" in
             deploy|adopt) ;;
@@ -128,7 +158,19 @@ jobs:
             echo "::error::Started from '$GITHUB_REF_NAME'. Use workflow from branch '$DEPLOY_BRANCH': the build and the CI gate must run on the code the host will check out."
             exit 1
           fi
+          # Only the names of missing secrets are printed, never a value.
+          MISSING=""
+          [ "$HAVE_HOST" = "true" ] || MISSING="$MISSING DEPLOY_HOST"
+          [ "$HAVE_USER" = "true" ] || MISSING="$MISSING DEPLOY_USER"
+          [ "$HAVE_KEY" = "true" ] || MISSING="$MISSING DEPLOY_SSH_KEY"
+          [ "$HAVE_KNOWN_HOSTS" = "true" ] || MISSING="$MISSING DEPLOY_KNOWN_HOSTS"
+          if [ -n "$MISSING" ]; then
+            echo "::error::Repository secret(s) not set:$MISSING. The host is not set up for this pipeline yet; see docs/deployment.md. Nothing was run."
+            exit 1
+          fi
           echo "mode=$CONFIRM" >> "$GITHUB_OUTPUT"
+          if [ "$SKIP_DUMP_INPUT" = "skip" ]; then echo "skipdump=yes" >> "$GITHUB_OUTPUT"; else echo "skipdump=no" >> "$GITHUB_OUTPUT"; fi
+          if [ "$TARIFF_INPUT" = "install" ]; then echo "tariff=install" >> "$GITHUB_OUTPUT"; else echo "tariff=no" >> "$GITHUB_OUTPUT"; fi
           # A normal release always migrates; the takeover only on request.
           if [ "$CONFIRM" = "deploy" ] || [ "$MIGRATE_INPUT" = "migrate" ]; then
             echo "migrate=yes" >> "$GITHUB_OUTPUT"
@@ -155,42 +197,16 @@ jobs:
           node-version: '22'
           cache: npm
 
-      # No VITE_* values are set here, so resources/js/echo|bootstrap.js sees no
-      # VITE_REVERB_APP_KEY and leaves window.Echo unset (live updates off).
+      # No VITE_* values are set here, so the bundle sees no VITE_REVERB_APP_KEY and never opens a websocket.
       - name: Build the frontend
         run: |
           npm ci --no-audit --no-fund
           npm run build
           test -s public/build/manifest.json
-          # Every path an @vite() call in the views names must be a manifest
-          # key, and every file the entries point at must exist and be non-empty
-          # ("Unable to locate file in Vite manifest" is a 500 on every page).
-          python3 - <<'MANIFEST'
-          import json, os, re, sys
-          build = 'public/build'
-          manifest = json.load(open(os.path.join(build, 'manifest.json')))
-          entries = {k: v for k, v in manifest.items() if v.get('isEntry')}
-          if not entries:
-              sys.exit('manifest.json lists no entry points')
-          wanted = set()
-          for root, _, names in os.walk('resources/views'):
-              for name in names:
-                  path = os.path.join(root, name)
-                  text = open(path, encoding='utf-8', errors='replace').read()
-                  if '@vite' in text:
-                      wanted.update(re.findall(r'resources/(?:css|js)/[A-Za-z0-9_./-]+', text))
-          absent = sorted(w for w in wanted if w not in manifest)
-          if not wanted or absent:
-              sys.exit('views ask for %s; not in the manifest: %s' % (sorted(wanted) or 'nothing', absent or 'n/a'))
-          files = set()
-          for v in entries.values():
-              files.add(v['file'])
-              files.update(v.get('css', []))
-          bad = sorted(f for f in files if not os.path.isfile(os.path.join(build, f)) or os.path.getsize(os.path.join(build, f)) == 0)
-          if bad:
-              sys.exit('built files missing or empty: %s' % bad)
-          print('manifest ok: %d entries, %d files, views need %s' % (len(entries), len(files), sorted(wanted)))
-          MANIFEST
+          # Every @vite entry named in a Blade view is in the manifest, every manifest file exists, and no view that
+          # uses @vite names a resources/ path that is not a real entry (a comment did that to Dot.Auction's deploy).
+          # "Unable to locate file in Vite manifest" is a 500 on every page.
+          node scripts/ops/check-vite-manifest.mjs
 
       - name: Set up SSH
         run: |
@@ -240,6 +256,8 @@ jobs:
               DEPLOY_PATH="$APP_PATH" \
               MODE="${{ needs.confirm.outputs.mode }}" \
               MIGRATE="${{ needs.confirm.outputs.migrate }}" \
+              SKIP_DB_DUMP="${{ needs.confirm.outputs.skipdump }}" \
+              EXAMPLE_TARIFF="${{ needs.confirm.outputs.tariff }}" \
               REPO_URL="$REPO_URL" \
               BRANCH="$DEPLOY_BRANCH" \
               'bash -s' <<'DEPLOY'
@@ -263,11 +281,45 @@ jobs:
           chmod 600 "$BACKUP"
           ls -1t "$HOME"/dot-ehail-*.tgz | tail -n +4 | xargs -r rm -f
           echo "== Rollback copy: $BACKUP ($(du -h "$BACKUP" | cut -f1))  [restore: stop writes, tar xzf it over $DEPLOY_PATH]"
-          DBDRIVER="$(grep -E '^DB_CONNECTION=' .env | tail -1 | cut -d= -f2- | tr -d "\"' " || true)"
-          case "${DBDRIVER:-}" in
-            sqlite) echo "== Database: sqlite. The database file is inside the rollback copy." ;;
-            *) echo "== Database: ${DBDRIVER:-unset}. It is NOT inside the rollback copy: confirm a database backup exists before migrations run." ;;
-          esac
+          # ---- database copy, BEFORE maintenance mode and before any migration
+          # The tar above holds a SQLite file only when it lives inside the app folder, and never a PostgreSQL or
+          # MySQL database. R-46 rewrites ride statuses and fills new guards (scripts/ops/upgrade-rehearsal.sh proves
+          # it on a populated database), so a restore point is taken here from the credentials in the host .env.
+          # A failure here leaves the live site on the previous release: maintenance mode has not started.
+          envval() { { grep -E "^$1=" .env || true; } | tail -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"; }
+          DBC="$(envval DB_CONNECTION)"
+          DBDUMP=""
+          if [ "$SKIP_DB_DUMP" = "yes" ]; then
+            echo "::warning::skip_db_dump=skip: NO database copy was taken by this run. Make sure you have your own."
+          elif [ "$DBC" = "pgsql" ]; then
+            command -v pg_dump >/dev/null 2>&1 || { echo "::error::pg_dump is not installed for this account, so no database restore point can be taken. Take your own dump, then run again with skip_db_dump=skip. The live site is untouched."; exit 1; }
+            DBDUMP="$HOME/dot-ehail-db-$MODE-$STAMP.dump"
+            if ! PGPASSWORD="$(envval DB_PASSWORD)" pg_dump --format=custom --no-owner --file="$DBDUMP" \
+                 --host="$(envval DB_HOST)" --port="$(envval DB_PORT)" --username="$(envval DB_USERNAME)" "$(envval DB_DATABASE)"; then
+              rm -f "$DBDUMP"
+              echo "::error::pg_dump failed (see above), so no database restore point exists. The live site is untouched. Fix the cause, or take your own dump and run again with skip_db_dump=skip."; exit 1
+            fi
+            echo "== Database restore point: $DBDUMP ($(du -h "$DBDUMP" | cut -f1))  [restore: pg_restore --clean --if-exists --no-owner -d <database> <file>]"
+          elif [ "$DBC" = "sqlite" ]; then
+            SQLITE_FILE="$(envval DB_DATABASE)"
+            [ -n "$SQLITE_FILE" ] || SQLITE_FILE="database/database.sqlite"
+            case "$SQLITE_FILE" in /*) ;; *) SQLITE_FILE="$DEPLOY_PATH/$SQLITE_FILE" ;; esac
+            [ -f "$SQLITE_FILE" ] || { echo "::error::DB_CONNECTION=sqlite but $SQLITE_FILE does not exist. The live site is untouched."; exit 1; }
+            DBDUMP="$HOME/dot-ehail-db-$MODE-$STAMP.sqlite"
+            # The online backup API copies a consistent snapshot while the site keeps writing (a plain cp of a busy
+            # SQLite file, or of its -wal sidecar, can be torn). The PHP the app already runs on does it.
+            if ! $PHP -r '$s = new SQLite3($argv[1], SQLITE3_OPEN_READONLY); $s->busyTimeout(10000); $d = new SQLite3($argv[2]); if (! $s->backup($d)) { exit(1); } $ok = $d->querySingle("PRAGMA integrity_check"); exit($ok === "ok" ? 0 : 1);' "$SQLITE_FILE" "$DBDUMP"; then
+              rm -f "$DBDUMP"
+              echo "::error::The SQLite backup failed (is the sqlite3 PHP extension enabled?). The live site is untouched. Copy the file yourself and run again with skip_db_dump=skip."; exit 1
+            fi
+            echo "== Database restore point: $DBDUMP ($(du -h "$DBDUMP" | cut -f1)), integrity ok  [restore: php artisan down, copy it over $SQLITE_FILE, remove $SQLITE_FILE-wal and -shm, php artisan up]"
+          else
+            echo "::error::DB_CONNECTION is '${DBC:-unset}': this pipeline can copy pgsql and sqlite only. Take your own database backup and run again with skip_db_dump=skip. The live site is untouched."; exit 1
+          fi
+          if [ -n "$DBDUMP" ]; then
+            chmod 600 "$DBDUMP"
+            ls -1t "$HOME"/dot-ehail-db-* 2>/dev/null | tail -n +4 | xargs -r rm -f
+          fi
 
           # ---- keep the application folder from being served over HTTP
           # 2026-10-20: platforms whose pipeline never wrote this file served their
@@ -279,6 +331,7 @@ jobs:
           # `git reset --hard` below does not remove it; an existing .htaccess is kept
           # as .htaccess.before-guard. Skipped when this folder does not look like an
           # app folder under a docroot (then .htaccess here would be the site's own).
+          DOCROOT_IS_PUBLIC=0
           set +e
           # Once the subdomain's document root is <app>/public (the docroot move, InfoDot docs S-2e) the app
           # folder is not served at all, and a deny file in it would block the whole site: do not write one.
@@ -287,6 +340,7 @@ jobs:
           CURRENT_DOCROOT="$(uapi --output=json DomainInfo single_domain_data domain=ehail.infodot.co.za 2>/dev/null | sed -n 's/.*"documentroot" *: *"\([^"]*\)".*/\1/p' | head -1)"
           if [ -n "$APP_REAL" ] && { [ "$CURRENT_DOCROOT" = "$APP_REAL/public" ] || [ -f "$DEPLOY_PATH/.docroot-is-public" ]; }; then
             echo "== app-folder guard: skipped (the document root is $APP_REAL/public; the app folder is not served)"
+            DOCROOT_IS_PUBLIC=1
           elif [ "$DOCROOT" = "$HOME" ] || [ -e index.php ] || [ ! -f artisan ] || [ ! -f public/index.php ]; then
             echo "== app-folder guard: skipped ($APPDIR is not an app folder under a docroot)"
           elif [ -f .htaccess ] && grep -q 'Require all denied' .htaccess; then
@@ -308,7 +362,7 @@ jobs:
 
           # A failure leaves the site exactly as it is -- DOWN if maintenance
           # mode had started -- and says which, with the way back.
-          trap 'if [ -f storage/framework/down ]; then echo "::error::The deploy failed AFTER maintenance mode started. The site was left DOWN on purpose. Rollback copy: $BACKUP. Inspect the log above (or the newest storage/logs/laravel-*.log on the host) and run this workflow again, or restore the copy and run: php artisan up"; else echo "::error::The deploy failed BEFORE maintenance mode started; the site is still serving the previous release. Rollback copy: $BACKUP."; fi' ERR
+          trap 'if [ -f storage/framework/down ]; then echo "::error::The deploy failed AFTER maintenance mode started. The site was left DOWN on purpose. Rollback copy: $BACKUP. Database copy: ${DBDUMP:-none}. Inspect the log above (or the newest storage/logs/laravel-*.log on the host) and run this workflow again, or restore the copies and run: php artisan up"; else echo "::error::The deploy failed BEFORE maintenance mode started; the site is still serving the previous release. Rollback copy: $BACKUP."; fi' ERR
 
           # Git hooks on the host never run during a release. The Forms host's old
           # checkout carried a Git LFS post-checkout hook but no git-lfs, so its
@@ -389,10 +443,10 @@ jobs:
             printf '\nAPP_DEBUG=false\n' >> .env
           fi
           echo "== APP_DEBUG forced to false: $(grep '^APP_DEBUG=' .env | tail -1)"
-          # APP_ENV=local on a live site mislabels errors and lets any package that
-          # branches on the environment behave as in development. Checked for
-          # Dot.Ehail: no environment() or isLocal() call in app/, config/, routes/, resources/, database/, so forcing it is safe
-          # here, as APP_DEBUG is above.
+          # APP_ENV=local on a live site mislabels errors and lets code that branches
+          # on the environment behave as in development. Dot.Ehail's own checks all
+          # want production here: the Demo* seeders and the example-tariff command
+          # refuse it, /geo/demo answers 404 outside local, ehail:preflight judges by it.
           if grep -q '^APP_ENV=' .env; then
             sed -i 's/^APP_ENV=.*/APP_ENV=production/' .env
           else
@@ -401,9 +455,11 @@ jobs:
           echo "== APP_ENV forced to production: $(grep '^APP_ENV=' .env | tail -1)"
           # Not changed here (each is a choice about this host), but never silent.
           if grep -qE '^APP_URL=http://' .env; then echo "::warning::APP_URL is http://, not https://; set it to the https address."; fi
-          envval() { grep -E "^$1=" .env | tail -1 | cut -d= -f2- | tr -d "\"' " || true; }
           if [ "$(envval BROADCAST_CONNECTION)" = "reverb" ]; then
             echo "::warning::BROADCAST_CONNECTION=reverb, but Reverb cannot run on shared cPanel: every broadcast is queued for a server that is not there and fails. Set BROADCAST_CONNECTION=log (live updates stay off either way)."
+          fi
+          if [ "$(envval EHAIL_BROADCAST_RIDE_EVENTS)" = "true" ] && [ "$(envval BROADCAST_CONNECTION)" != "reverb" ]; then
+            echo "::warning::EHAIL_BROADCAST_RIDE_EVENTS=true without Reverb: the extra broadcasts go nowhere. Set it to false."
           fi
           for KEYNAME in QUEUE_CONNECTION CACHE_STORE SESSION_DRIVER; do
             if [ "$(envval "$KEYNAME")" = "redis" ]; then echo "::warning::$KEYNAME=redis, but this host has no Redis. Use database."; fi
@@ -422,7 +478,9 @@ jobs:
           mv public/build.incoming public/build
           rm -rf public/build.old
           LINK="$DOCROOT/build"
-          if [ -L "$LINK" ]; then
+          if [ "$DOCROOT_IS_PUBLIC" = "1" ]; then
+            echo "== docroot is $APPDIR/public itself; build/ is served directly"
+          elif [ -L "$LINK" ]; then
             echo "== docroot build/ is a symlink; nothing to copy"
           elif [ -d "$LINK" ]; then
             rsync -a --delete public/build/ "$LINK/"
@@ -432,11 +490,69 @@ jobs:
             echo "== docroot build/ did not exist; linked to $APPDIR/public/build"
           fi
 
+          # ---- every other public file: fonts/, icons/, images/, manifest.webmanifest, sw.js, offline.html, favicons
+          # Same trap as build/: the docroot may hold COPIES of public/ files that git never refreshes (InfoDot R-17,
+          # the Dopemine pilot). A stale sw.js would precache files that no longer exist and a stale manifest would name
+          # the wrong icons, so every top-level entry of public/ except the build folders, index.php, .htaccess, hot and
+          # storage is kept in step, and a new static file is picked up without editing this workflow:
+          #   a folder - missing in the docroot: linked to <app>/public/<name>; a symlink: left alone; a real folder:
+          #              rsync -a (adds and overwrites the files the app ships, DELETES nothing);
+          #   a file   - missing: linked; a symlink or identical: left alone; different: the docroot copy is moved to
+          #              ~/dot-ehail-docroot-before-<time>/ (outside every web root) and replaced by a link.
+          # sw.js must sit at the docroot ROOT: its scope is the folder it is served from, and the app registers it as /sw.js.
+          # Nothing under storage/ is ever synced: driver documents live on the private disk and must never be reachable.
+          if [ "$DOCROOT_IS_PUBLIC" = "1" ]; then
+            echo "== static files: the document root is $APPDIR/public itself; nothing to sync"
+          else
+            KEPT="$HOME/dot-ehail-docroot-before-$STAMP"
+            for ENTRY in $(cd public && ls -A); do
+              case "$ENTRY" in
+                build|build.incoming|build.old|index.php|.htaccess|hot|storage|.gitignore|.DS_Store) continue ;;
+              esac
+              SRC="public/$ENTRY"; DST="$DOCROOT/$ENTRY"
+              if [ -d "$SRC" ] && [ ! -L "$SRC" ]; then
+                if [ -L "$DST" ]; then echo "== static $ENTRY/: docroot entry is a symlink; nothing to copy"
+                elif [ -d "$DST" ]; then
+                  rsync -a "$SRC/" "$DST/"
+                  echo "== static $ENTRY/: docroot is a real directory; mirrored from public/$ENTRY (nothing deleted)"
+                elif [ -e "$DST" ]; then echo "::warning::static $ENTRY: $DST exists and is not a directory; left alone"
+                else
+                  ln -s "$APPDIR/public/$ENTRY" "$DST"
+                  echo "== static $ENTRY/: did not exist in the docroot; linked to $APPDIR/public/$ENTRY"
+                fi
+              else
+                if [ -L "$DST" ]; then :
+                elif [ ! -e "$DST" ]; then
+                  ln -s "$APPDIR/public/$ENTRY" "$DST"
+                  echo "== static file $ENTRY: linked into the docroot"
+                elif [ -f "$DST" ] && ! cmp -s "$SRC" "$DST"; then
+                  mkdir -p "$KEPT" && chmod 700 "$KEPT"
+                  mv "$DST" "$KEPT/$ENTRY"
+                  ln -s "$APPDIR/public/$ENTRY" "$DST"
+                  echo "== static file $ENTRY: the docroot held an older copy (kept in $KEPT); now linked to the app's file"
+                fi
+              fi
+            done
+          fi
+
+          # ---- private storage the app writes to (never under the docroot)
+          mkdir -p storage/app/private/driver-documents storage/app/private/safety-files storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+
           # ---- database
           echo "== Pending migrations:"
           $PHP artisan migrate:status --pending 2>&1 | tail -25 || true
           if [ "$MIGRATE" = "yes" ]; then
             $PHP artisan migrate --force
+            # ---- reference data. The ride-category catalogue is installed by its migration (2026_11_10_500100). The
+            # approximate South African service areas and airport zones are created when missing; rows an operator
+            # edited are never overwritten (idempotent: a second run creates nothing).
+            $PHP artisan ehail:geo-reference-areas
+            # Prices are the owner's: no tariff is installed unless the run asked for the PLACEHOLDER example
+            # ("Example tariff: review before launch", shown to passengers as such).
+            if [ "$EXAMPLE_TARIFF" = "install" ]; then
+              echo "::warning::install_example_tariff=install: installing the PLACEHOLDER example tariff. Passengers see 'Example tariff: review before launch'. Publish the real prices in /ops and retire it before launch."
+              $PHP artisan ehail:pricing:install-example-tariff --force
+            fi
           else
             echo "== Migrations NOT run (takeover). Read the list above; the next confirm=deploy runs them, or re-run with migrate=migrate."
           fi
@@ -454,6 +570,19 @@ jobs:
           $PHP artisan route:cache
           $PHP artisan view:cache
           $PHP artisan event:cache
+          $PHP artisan schedule:list
+
+          # ---- the environment, the data and the build, judged by the app itself. FAIL lines stop the release with
+          # the site still in maintenance mode; WARN, INFO and OFF lines never do (the routing provider, the tariff, the
+          # payment keys are owner steps the preflight names loudly: read its "Readiness" line). Skipped on a takeover
+          # that did not migrate: the schema is knowingly behind then.
+          if [ "$MIGRATE" = "yes" ]; then
+            if ! $PHP artisan ehail:preflight; then
+              echo "::error::ehail:preflight reported FAIL lines (above). The site stays in maintenance mode on purpose. Fix the cause (usually .env or a PHP extension in cPanel) and run the workflow again; it brings the site back up itself. Rollback copy: $BACKUP. Database copy: ${DBDUMP:-none}."; exit 1
+            fi
+          else
+            echo "== ehail:preflight skipped: this takeover did not run migrations."
+          fi
 
           $PHP artisan up
           trap - ERR
@@ -559,33 +688,93 @@ jobs:
           set -uo pipefail
           WORK="$(mktemp -d)"
           FAILED=0
+          bad() { echo "::error::$*"; FAILED=1; }
           # The shared host's edge firewall now and then refuses a runner IP
           # (403) or a request times out (000): ask up to three times before
           # calling a page broken, as the Dot.Agents scheduler watchdog does.
-          status() {
-            local code="" i
+          # fetch URL WANT [curl args...]: headers in $WORK/h, body in $WORK/b, prints the final code.
+          fetch() {
+            local url="$1" want="$2" code="" i; shift 2
             for i in 1 2 3; do
-              code=$(curl -s --max-time 30 -o /dev/null -w '%{http_code}' "$1" || true)
-              [ "$code" = "200" ] && break
-              [ "$i" -lt 3 ] && sleep 5
+              code=$(curl -s --max-time 30 -D "$WORK/h" -o "$WORK/b" -w '%{http_code}' "$@" "$url" || true)
+              [ "$code" = "$want" ] && break
+              case "$code" in 403|000|502|503|504) [ "$i" -lt 3 ] && sleep 5 ;; *) break ;; esac
             done
             printf '%s' "$code"
           }
-          for PAGE in "/" "/login" "/up"; do
-            CODE=$(status "$SITE_URL$PAGE")
-            if [ "$CODE" = "200" ]; then echo "200 $SITE_URL$PAGE"; else echo "::error::$SITE_URL$PAGE answered ${CODE:-no response} (expected 200)"; FAILED=1; fi
+
+          # ---- pages and JSON a guest can open
+          for PAGE in "/" "/login" "/fares" "/up"; do
+            CODE=$(fetch "$SITE_URL$PAGE" 200)
+            if [ "$CODE" = "200" ]; then echo "200 $PAGE"; else bad "$SITE_URL$PAGE answered ${CODE:-no response} (expected 200)"; fi
           done
+          CODE=$(fetch "$SITE_URL/fare-estimate/categories" 200 -H 'Accept: application/json')
+          if [ "$CODE" = "200" ] && python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$WORK/b" 2>/dev/null; then echo "200 /fare-estimate/categories (JSON)"; else bad "/fare-estimate/categories answered ${CODE:-no response} or not JSON"; fi
+          # /up/realtime is honest: without Reverb (always, on this host) it answers 503 {"status":"degraded"}, never a 500.
+          CODE=$(curl -s --max-time 30 -o "$WORK/b" -w '%{http_code}' "$SITE_URL/up/realtime" || true)
+          if { [ "$CODE" = "503" ] && grep -q '"degraded"' "$WORK/b"; } || { [ "$CODE" = "200" ] && grep -q '"ok"' "$WORK/b"; }; then echo "$CODE /up/realtime $(head -c 60 "$WORK/b") (no Reverb on shared hosting: degraded is the honest answer)"; else bad "/up/realtime answered ${CODE:-no response}: $(head -c 120 "$WORK/b")"; fi
+          # A signed-in area redirects a guest to the login (a 200 would mean the auth middleware is gone, a 500 broken routes).
+          curl -s --max-time 30 -D "$WORK/h" -o /dev/null "$SITE_URL/ride" || true
+          if head -1 "$WORK/h" | grep -qE ' 30[12] ' && grep -qi '^location:.*/login' "$WORK/h"; then echo "302 /ride -> /login"; else bad "/ride did not redirect a guest to /login: $(head -1 "$WORK/h" | tr -d '\r')"; fi
+          # A trip-share link that does not exist answers the same plain 404 as an expired one, with no cookie and noindex.
+          BOGUS="$(python3 -c 'import secrets; print(secrets.token_hex(24))')"  # no tr|head pipe: under pipefail it dies of SIGPIPE
+          CODE=$(fetch "$SITE_URL/t/$BOGUS" 404)
+          if [ "$CODE" != "404" ]; then bad "/t/<unknown token> answered ${CODE:-no response}, expected 404"
+          elif grep -qi '^set-cookie:' "$WORK/h"; then bad "/t/<unknown token> set a cookie; the trip-share routes must not start a session"
+          elif ! grep -qi '^x-robots-tag:.*noindex' "$WORK/h"; then bad "/t/<unknown token> lacks X-Robots-Tag noindex"
+          elif grep -qiE 'stack trace|vendor/laravel' "$WORK/b"; then bad "/t/<unknown token> leaks internals"
+          else echo "404 /t/<unknown token>, no cookie, noindex, nothing leaked"; fi
+          # Security headers (SecurityHeaders middleware) on a guest page, and which CSP mode is live.
+          fetch "$SITE_URL/login" 200 > /dev/null
+          for HDR in x-content-type-options x-frame-options referrer-policy permissions-policy; do
+            if grep -Eqi "^$HDR:" "$WORK/h"; then echo "header $HDR present"; else bad "header $HDR missing on /login"; fi
+          done
+          if grep -qi '^strict-transport-security:' "$WORK/h"; then echo "header strict-transport-security present"; else echo "::warning::no Strict-Transport-Security on /login (SECURITY_HSTS_SECONDS=0 in the host .env?)"; fi
+          if grep -qi '^content-security-policy:' "$WORK/h"; then echo "Content-Security-Policy: ENFORCED"
+          elif grep -qi '^content-security-policy-report-only:' "$WORK/h"; then echo "::warning::Content-Security-Policy is REPORT-ONLY on the live site (SECURITY_CSP_REPORT_ONLY=true in the host .env): nothing is blocked."
+          else bad "no Content-Security-Policy header on /login"; fi
+
+          # ---- what the DOCROOT must serve: the build, fonts, the installable app
           for ASSET in $(python3 -c "import json; m=json.load(open('public/build/manifest.json')); print(' '.join(sorted({v['file'] for v in m.values() if v.get('isEntry')} | {f for v in m.values() if v.get('isEntry') for f in v.get('css', [])})))"); do
-            CODE=$(status "$SITE_URL/build/$ASSET")
-            if [ "$CODE" = "200" ]; then echo "200 $SITE_URL/build/$ASSET"; else echo "::error::$SITE_URL/build/$ASSET answered ${CODE:-no response} (expected 200): the docroot is not serving the new build"; FAILED=1; fi
+            CODE=$(fetch "$SITE_URL/build/$ASSET" 200)
+            if [ "$CODE" = "200" ]; then echo "200 /build/$ASSET"; else bad "$SITE_URL/build/$ASSET answered ${CODE:-no response} (expected 200): the docroot is not serving the new build"; fi
+          done
+          for F in $(cd public && ls fonts/*.woff2); do
+            CODE=$(fetch "$SITE_URL/$F" 200)
+            CT=$(grep -i '^content-type:' "$WORK/h" | tail -1 | tr -d '\r' | tr '[:upper:]' '[:lower:]')
+            if [ "$CODE" = "200" ] && [ "$(head -c4 "$WORK/b")" = "wOF2" ] && ! echo "$CT" | grep -q 'text/html'; then echo "200 /$F (${CT#content-type: })"
+            else bad "$SITE_URL/$F answered ${CODE:-no response} / $CT / not a woff2 file: the docroot is not serving the fonts"; fi
+          done
+          CODE=$(fetch "$SITE_URL/manifest.webmanifest" 200)
+          if [ "$CODE" = "200" ] && python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d.get("icons")' "$WORK/b" 2>/dev/null; then echo "200 /manifest.webmanifest (JSON with icons)"; else bad "/manifest.webmanifest answered ${CODE:-no response} or is not the web manifest"; fi
+          CODE=$(fetch "$SITE_URL/sw.js" 200)
+          CT=$(grep -i '^content-type:' "$WORK/h" | tail -1 | tr -d '\r' | tr '[:upper:]' '[:lower:]')
+          if [ "$CODE" = "200" ] && cmp -s "$WORK/b" public/sw.js && echo "$CT" | grep -qE '(application|text)/javascript'; then echo "200 /sw.js at the site root, this release's copy, ${CT#content-type: } (scope /)"
+          else
+            SAME="NOT this release's copy"; cmp -s "$WORK/b" public/sw.js && SAME="this release's copy"
+            bad "/sw.js answered ${CODE:-no response}, type ${CT:-none}, $SAME: the service worker would be refused or stale"
+          fi
+          # One file from every static folder and every static root file the checkout ships.
+          for ENTRY in $(cd public && ls -A); do
+            case "$ENTRY" in build|build.incoming|build.old|index.php|.htaccess|hot|storage|.gitignore|.DS_Store|sw.js|manifest.webmanifest|fonts) continue ;; esac
+            if [ -d "public/$ENTRY" ]; then PROBE="$ENTRY/$(cd "public/$ENTRY" && find . -type f ! -name 'LICEN*' ! -name '.*' | sort | head -1 | sed 's#^\./##')"; else PROBE="$ENTRY"; fi
+            [ -s "public/$PROBE" ] || continue  # an empty placeholder (favicon.ico) proves nothing
+            CODE=$(fetch "$SITE_URL/$PROBE" 200)
+            if [ "$CODE" = "200" ]; then echo "200 /$PROBE"; else bad "$SITE_URL/$PROBE answered ${CODE:-no response} (expected 200): the docroot does not serve public/$ENTRY"; fi
+          done
+
+          # ---- never served
+          for P in storage/app/private/driver-documents storage/app/private/safety-files storage/app/private storage/logs/laravel.log .env; do
+            CODE=$(curl -s --max-time 15 -o /dev/null -w '%{http_code}' "$SITE_URL/$P" || true)
+            if [ "$CODE" = "200" ]; then bad "$SITE_URL/$P answered 200: private storage is exposed"; else echo "${CODE:-000} /$P (not served)"; fi
           done
           # A GET-only route answering POST is a harmless 405: ~1 KB in
           # production, an ~840 KB stack-trace page when APP_DEBUG is on.
           curl -s --max-time 30 -o "$WORK/probe.html" -X POST "$SITE_URL/up" || true
           if grep -qiE 'vendor/laravel|stack trace' "$WORK/probe.html"; then
-            echo "::error::POST $SITE_URL/up answered with a debug error page: APP_DEBUG is still on."; FAILED=1
+            bad "POST $SITE_URL/up answered with a debug error page: APP_DEBUG is still on."
           else
-            echo "No debug page on POST $SITE_URL/up ($(wc -c < "$WORK/probe.html" | tr -d ' ') bytes)"
+            echo "No debug page on POST /up ($(wc -c < "$WORK/probe.html" | tr -d ' ') bytes)"
           fi
           # The app folder sits inside the docroot: its .env, artisan and a
           # SQLite file must not be downloadable (Dot.Central's health check
@@ -593,7 +782,7 @@ jobs:
           APPDIR="$(basename "$APP_PATH")"
           for LEAK in ".env" "artisan" "database/database.sqlite"; do
             CODE=$(curl -s --max-time 30 -o /dev/null -w '%{http_code}' "$SITE_URL/$APPDIR/$LEAK" || true)
-            if [ "$CODE" = "200" ]; then echo "::error::$SITE_URL/$APPDIR/$LEAK answered 200: the application folder is readable over HTTP."; FAILED=1; else echo "Not served: $SITE_URL/$APPDIR/$LEAK (${CODE:-no response})"; fi
+            if [ "$CODE" = "200" ]; then bad "$SITE_URL/$APPDIR/$LEAK answered 200: the application folder is readable over HTTP."; else echo "Not served: /$APPDIR/$LEAK (${CODE:-no response})"; fi
           done
           rm -rf "$WORK"
           [ "$FAILED" -eq 0 ] || { echo "::error::Smoke check failed: the deploy is NOT healthy."; exit 1; }

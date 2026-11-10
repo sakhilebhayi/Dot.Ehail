@@ -32,7 +32,7 @@
             <div><dt>Drivers on a trip</dt><dd data-live-count="drivers_on_trip">{{ $c['drivers_on_trip'] }}</dd></div>
             <div><dt title="No heartbeat within {{ config('ehail_dispatch.heartbeat_stale_seconds', 45) }} seconds: not offered rides">No signal</dt><dd data-live-count="drivers_stale">{{ $c['drivers_stale'] }}</dd></div>
             @isset($c['incidents'])
-                <div data-tone="{{ $c['incidents'] > 0 ? 'stop' : '' }}"><a href="{{ route('ops.safety') }}"><dt>Open incidents</dt><dd data-live-count="incidents">{{ $c['incidents'] }}</dd></a></div>
+                <div data-tone="{{ $c['incidents'] > 0 ? 'stop' : '' }}"><dt><a href="{{ route('ops.safety') }}">Open incidents</a></dt><dd data-live-count="incidents">{{ $c['incidents'] }}</dd></div>
             @endisset
         </dl>
 

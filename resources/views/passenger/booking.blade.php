@@ -109,7 +109,7 @@
                     <li class="pax-route__stop pax-route__stop--drop"><span class="pax-route__dot" aria-hidden="true"></span><span class="pax-route__text"><span class="pax-route__label">Destination</span><span class="pax-route__address" data-pax-sum="dropoff"></span></span></li>
                 </ol>
                 <p class="pax-net" data-pax-net hidden><x-eh.icon name="wifi-off" /><span>You are offline. Prices refresh when you are back.</span></p>
-                <div data-pax-options-body aria-live="polite" aria-busy="true">
+                <div data-pax-options-body aria-busy="true">
                     <x-eh.skeleton :lines="4" />
                 </div>
             </section>

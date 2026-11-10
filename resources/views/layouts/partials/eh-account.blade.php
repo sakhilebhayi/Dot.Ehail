@@ -5,7 +5,7 @@
 @endphp
 @if ($accountUser)
 <details class="eh-account" data-eh-menu>
-    <summary aria-label="Account menu for {{ $accountUser->name }}"><x-eh.avatar :name="$accountUser->name" size="36" /></summary>
+    <summary aria-label="Account menu for {{ $accountUser->name }}"><x-eh.avatar :name="$accountUser->name" size="36" :mark="true" /></summary>
     <div class="eh-account__menu">
         <div class="eh-account__who">
             <span class="eh-account__name">{{ $accountUser->name }}</span>

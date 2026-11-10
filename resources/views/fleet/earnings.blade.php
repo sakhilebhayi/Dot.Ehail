@@ -32,11 +32,11 @@
     </div>
 
     <dl class="fl-strip" style="--fl-cells: 5" aria-label="Totals for {{ $range }}">
-        <div class="fl-strip__cell"><dt>Fares</dt><dd><x-eh.money :minor="$t['fare_minor']" :currency="$cur" /></dd><span class="fl-strip__note">{{ $t['trips'] }} {{ \Illuminate\Support\Str::plural('trip', $t['trips']) }}</span></div>
-        <div class="fl-strip__cell"><dt>Commission</dt><dd><x-eh.money :minor="$t['commission_minor']" :currency="$cur" /></dd><span class="fl-strip__note">kept by the platform</span></div>
-        <div class="fl-strip__cell"><dt>Drivers' net</dt><dd><x-eh.money :minor="$t['net_minor']" :currency="$cur" /></dd><span class="fl-strip__note">incl. incentives <x-eh.money :minor="$t['incentives_minor']" :currency="$cur" /></span></div>
-        <div class="fl-strip__cell"><dt>Cash collected</dt><dd><x-eh.money :minor="$t['cash_collected_minor']" :currency="$cur" /></dd><span class="fl-strip__note">held by drivers</span></div>
-        <div class="fl-strip__cell"><dt>Not paid out yet</dt><dd><x-eh.money :minor="$t['unpaid_minor']" :currency="$cur" /></dd><span class="fl-strip__note"><x-eh.money :minor="$t['paid_minor']" :currency="$cur" /> paid</span></div>
+        <div class="fl-strip__cell"><dt>Fares</dt><dd><x-eh.money :minor="$t['fare_minor']" :currency="$cur" /></dd><dd class="fl-strip__note">{{ $t['trips'] }} {{ \Illuminate\Support\Str::plural('trip', $t['trips']) }}</dd></div>
+        <div class="fl-strip__cell"><dt>Commission</dt><dd><x-eh.money :minor="$t['commission_minor']" :currency="$cur" /></dd><dd class="fl-strip__note">kept by the platform</dd></div>
+        <div class="fl-strip__cell"><dt>Drivers' net</dt><dd><x-eh.money :minor="$t['net_minor']" :currency="$cur" /></dd><dd class="fl-strip__note">incl. incentives <x-eh.money :minor="$t['incentives_minor']" :currency="$cur" /></dd></div>
+        <div class="fl-strip__cell"><dt>Cash collected</dt><dd><x-eh.money :minor="$t['cash_collected_minor']" :currency="$cur" /></dd><dd class="fl-strip__note">held by drivers</dd></div>
+        <div class="fl-strip__cell"><dt>Not paid out yet</dt><dd><x-eh.money :minor="$t['unpaid_minor']" :currency="$cur" /></dd><dd class="fl-strip__note"><x-eh.money :minor="$t['paid_minor']" :currency="$cur" /> paid</dd></div>
     </dl>
 
     <div class="fl-grid fl-grid--even">

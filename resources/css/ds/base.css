@@ -32,6 +32,9 @@ html.eh {
 
 .eh ::selection { background: var(--eh-signal); color: var(--eh-signal-ink); }
 :where(.eh) :focus { outline: none; }
+/* Chrome does not match :focus-visible on file and date inputs reached by keyboard (focus sits in their inner
+   parts), so they show the ring on any focus (R-46 a11y). */
+:where(.eh) input:is([type="file"], [type="date"], [type="datetime-local"], [type="time"]):focus-within { outline: 3px solid var(--eh-focus); outline-offset: 2px; }
 :where(.eh) :focus-visible {
     outline: 3px solid var(--eh-focus);
     outline-offset: 2px;

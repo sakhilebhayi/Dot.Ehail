@@ -108,13 +108,18 @@
     background: var(--eh-surface-2, #e4eae4);
 }
 
-/* Attribution stays readable and visible (OSMF policy: never hidden). */
+/* Attribution stays readable and visible (OSMF policy: never hidden). The doubled class outranks Leaflet's own
+   `.leaflet-container .leaflet-control-attribution` (white at 80%), which loads later with the map chunk and left
+   night-theme text on a white panel (1.2:1). */
+.eh-map.leaflet-container .leaflet-control-attribution,
 .eh-map .leaflet-control-attribution {
     padding: 2px 8px;
     font-size: 0.75rem;
     line-height: 1.5;
     color: var(--eh-geo-ink-2);
-    background: color-mix(in srgb, var(--eh-geo-surface) 88%, transparent);
+    /* Solid (R-46 a11y, D-1708): a see-through panel over map tiles cannot promise contrast, and older Android
+       browsers without color-mix() drew no panel at all (light night text straight on the map). */
+    background: var(--eh-geo-surface);
     border-top-left-radius: var(--eh-radius-sm, 6px);
 }
 
@@ -128,7 +133,9 @@
 .eh-map-banner {
     position: absolute;
     z-index: 1000;
-    top: var(--eh-space-3, 0.75rem);
+    /* Below the zoom buttons and the attribution, never over them (R-46 a11y: a banner on top of the zoom
+       buttons hid them from keyboard focus, WCAG 2.4.11). */
+    top: calc(var(--eh-space-3, 0.75rem) + 7rem);
     left: var(--eh-space-3, 0.75rem);
     right: var(--eh-space-3, 0.75rem);
     margin: 0;
@@ -236,7 +243,8 @@
 
 .eh-search__field:focus-within {
     border-color: var(--eh-geo-focus);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--eh-geo-focus) 25%, transparent);
+    /* A solid ring like every other focus in the kit (a 25% tint did not reach 3:1 against the surface). */
+    box-shadow: 0 0 0 2px var(--eh-geo-focus);
 }
 
 .eh-search__marker {
@@ -408,4 +416,9 @@
     .eh-geo-button:active {
         transform: none;
     }
+}
+
+/* Zoom buttons reach 44 px on phones and touch screens (R-46 a11y, D-1712). */
+@media (max-width: 767.98px), (pointer: coarse) {
+    .eh-map.leaflet-container .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: var(--eh-text-xl); }
 }

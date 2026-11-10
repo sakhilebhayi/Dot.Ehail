@@ -148,7 +148,7 @@
                         <dt>Passenger</dt><dd>{{ $ride->passenger?->name ?? 'unknown' }} <span class="ops-stamp">user {{ $ride->passenger_id }}</span></dd>
                         <dt>Driver</dt><dd>@if($ride->driver_id)@can('ops.drivers.view')<a class="eh-link" href="{{ route('ops.drivers.show', $ride->driver_id) }}">{{ $ride->driver?->name }}</a>@else{{ $ride->driver?->name }}@endcan @else<span class="ops-dash">none assigned</span>@endif</dd>
                         <dt>Vehicle</dt><dd>{{ $ride->vehicle ? trim($ride->vehicle->color.' '.$ride->vehicle->make.' '.$ride->vehicle->model).' · '.$ride->vehicle->plate_number : '-' }}</dd>
-                        <dt>Category</dt><dd>{{ ucfirst(str_replace('_', ' ', (string) ($ride->category_code ?? $ride->vehicle_type))) }}</dd>
+                        <dt>Category</dt><dd>{{ \App\Domain\Business\CategoryNames::for($ride->category_code ?? $ride->vehicle_type) }}</dd>
                         <dt>Requested</dt><dd class="num">{{ ($ride->requested_at ?? $ride->created_at)?->format('d M Y H:i') }}</dd>
                         @if ($ride->scheduled_for)<dt>Scheduled for</dt><dd class="num">{{ $ride->scheduled_for->format('d M Y H:i') }}</dd>@endif
                         @if ($ride->route_distance_m)<dt>Quoted route</dt><dd class="num">{{ number_format($ride->route_distance_m / 1000, 1) }} km · {{ Durations::short((int) $ride->route_duration_s) }}</dd>@endif

@@ -23,8 +23,8 @@ class DriverIdentifiersTest extends TestCase
 
     public function test_nothing_in_nothing_out(): void
     {
-        $this->assertSame('—', DriverIdentifiers::mask(null));
-        $this->assertSame('—', DriverIdentifiers::mask(''));
+        $this->assertSame('Not given', DriverIdentifiers::mask(null));
+        $this->assertSame('Not given', DriverIdentifiers::mask(''));
     }
 
     public function test_the_blind_index_ignores_case_and_surrounding_space_but_not_content(): void

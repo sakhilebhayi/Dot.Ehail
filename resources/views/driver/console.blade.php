@@ -28,12 +28,12 @@
     </x-slot:safety>
 
     <x-slot:state>
-        <section class="eh-statebar" data-state="{{ $statebar[0] }}" aria-labelledby="drive-state-title" data-dr-statebar>
+        <section class="eh-statebar" data-state="{{ $statebar[0] }}" aria-label="Driver status" data-dr-statebar>
             @foreach (['offline', 'online', 'route'] as $mark)
                 <span data-dr-mark="{{ $mark }}" class="eh-statebar__mark" @if($mark !== $statebar[3]) hidden @endif><x-eh.icon :name="$mark" /></span>
             @endforeach
             <div class="eh-statebar__text">
-                <h1 class="eh-statebar__title" id="drive-state-title" data-dr-state-title>{{ $statebar[1] }}</h1>
+                <h1 class="eh-statebar__title" id="drive-state-title" data-dr-state-title tabindex="-1">{{ $statebar[1] }}</h1>
                 <p class="eh-statebar__sub" data-dr-state-sub aria-live="polite">{{ $statebar[2] }}</p>
             </div>
         </section>
@@ -161,9 +161,10 @@
 
                     <div class="dr-pin" data-dr-pin hidden>
                         <p class="dr-pin__label" id="dr-pin-label">Ask the passenger for their 4-digit PIN</p>
-                        <div class="dr-pin__boxes" aria-labelledby="dr-pin-label" data-dr-pin-boxes role="status">
+                        <div class="dr-pin__boxes" data-dr-pin-boxes aria-hidden="true">
                             <span></span><span></span><span></span><span></span>
                         </div>
+                        <p class="eh-sr-only" data-dr-pin-said aria-live="polite">0 of 4 digits entered</p>
                         <p class="dr-pin__error" data-dr-pin-error role="alert"></p>
                         <div class="dr-keypad" role="group" aria-label="PIN keypad">
                             @foreach ([1, 2, 3, 4, 5, 6, 7, 8, 9] as $digit)
@@ -279,12 +280,12 @@
     {{-- SOS: one tap, then 3 seconds to cancel, then the incident is raised. --}}
     <div class="dr-sos" data-dr-sos hidden role="alertdialog" aria-modal="true" aria-labelledby="dr-sos-title">
         <div data-dr-sos-arming>
-            <h2 class="dr-sos__title" id="dr-sos-title">Sending SOS in <span data-dr-sos-count>3</span></h2>
+            <h2 class="dr-sos__title" id="dr-sos-title">Sending SOS in <span data-dr-sos-count>3</span><span class="eh-sr-only"> seconds</span></h2>
             <p>Dot.Ehail will record an emergency, alert the operations team and your confirmed trusted contacts.</p>
             <button type="button" class="dr-sos__cancel" data-dr-sos-cancel>Cancel</button>
         </div>
         <div data-dr-sos-result hidden>
-            <h2 class="dr-sos__title">What we did</h2>
+            <h2 class="dr-sos__title" tabindex="-1" data-dr-sos-result-title>What we did</h2>
             <ul class="dr-sos__done" data-dr-sos-done></ul>
             <p class="dr-sos__not" data-dr-sos-not></p>
             <x-eh.banner tone="safety" title="Call for help now if you are in danger" emergency />

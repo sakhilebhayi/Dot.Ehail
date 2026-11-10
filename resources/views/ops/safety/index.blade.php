@@ -16,8 +16,8 @@
             <div data-tone="{{ $counts['critical'] > 0 ? 'stop' : '' }}"><dt>Critical, open</dt><dd>{{ $counts['critical'] }}</dd></div>
             <div data-tone="{{ $counts['unacknowledged'] > 0 ? 'stop' : '' }}"><dt>Not acknowledged</dt><dd>{{ $counts['unacknowledged'] }}</dd></div>
             <div data-tone="{{ $counts['overdue'] > 0 ? 'stop' : '' }}"><dt title="Open incidents past their escalation time (critical 2 min, high 5, medium 15, low 60)">Past the timer</dt><dd>{{ $counts['overdue'] }}</dd></div>
-            <div><a href="{{ route('ops.safety.check-ins') }}"><dt>Check-ins waiting</dt><dd>{{ $counts['checkins'] }}</dd></a></div>
-            <div><a href="{{ route('ops.safety.reports') }}"><dt>Reports to review</dt><dd>{{ $counts['reports'] }}</dd></a></div>
+            <div><dt><a href="{{ route('ops.safety.check-ins') }}">Check-ins waiting</a></dt><dd>{{ $counts['checkins'] }}</dd></div>
+            <div><dt><a href="{{ route('ops.safety.reports') }}">Reports to review</a></dt><dd>{{ $counts['reports'] }}</dd></div>
         </dl>
         <form class="ops-filter" method="GET" action="{{ route('ops.safety') }}">
             <x-eh.select label="Incidents" name="status" :options="['active' => 'Open now', 'resolved' => 'Resolved', 'closed' => 'Closed', 'all' => 'All']" :value="$status" />

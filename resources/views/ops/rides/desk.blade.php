@@ -28,8 +28,8 @@
         <dl class="ops-figures" aria-label="Queue">
             <div data-tone="{{ $openRequests > 0 ? 'caution' : '' }}"><dt>Open ride requests</dt><dd data-figure="open-requests">{{ number_format($openRequests) }}<small>{{ $waitMinutes !== null ? 'oldest '.$waitMinutes.' min' : '' }}</small></dd></div>
             @can('ops.fleets.review')
-                <div><a href="{{ route('ops.fleets') }}"><dt>Fleets awaiting approval</dt><dd data-figure="pending-fleets">{{ number_format($pendingFleets) }}</dd></a></div>
-                <div><a href="{{ route('ops.drivers', ['status' => 'pending']) }}"><dt>Driver applications pending</dt><dd data-figure="pending-applications">{{ number_format($pendingApplications) }}</dd></a></div>
+                <div><dt><a href="{{ route('ops.fleets') }}">Fleets awaiting approval</a></dt><dd data-figure="pending-fleets">{{ number_format($pendingFleets) }}</dd></div>
+                <div><dt><a href="{{ route('ops.drivers', ['status' => 'pending']) }}">Driver applications pending</a></dt><dd data-figure="pending-applications">{{ number_format($pendingApplications) }}</dd></div>
             @endcan
             <div><dt>Requests expired in the last 7 days</dt><dd data-figure="expired-week">{{ number_format($expiredLastWeek) }}</dd></div>
             <div><dt title="A sum of recorded fares on {{ number_format($completedCount) }} completed {{ \Illuminate\Support\Str::plural('ride', $completedCount) }}; not money collected">Estimated fare total, not collected</dt><dd data-figure="fare-total">{{ $fmt($completedFareTotal) }}</dd></div>
@@ -82,7 +82,7 @@
                                     <tr>
                                         <td><a href="{{ route('ops.rides.show', $ride->id) }}">{{ $ride->id }}</a><span class="sub">{{ $ride->pickup_address }} to {{ $ride->dropoff_address }}</span></td>
                                         <td>{{ $ride->passenger?->name ?? 'unknown' }}</td>
-                                        <td>{{ ucfirst((string) ($ride->category_code ?? $ride->vehicle_type)) }}</td>
+                                        <td>{{ \App\Domain\Business\CategoryNames::for($ride->category_code ?? $ride->vehicle_type) }}</td>
                                         <td class="num">{{ $ride->reassignment_count > 0 ? $ride->reassignment_count.'x' : '0' }}</td>
                                         <td class="num">{{ $ride->expired_at?->diffForHumans() ?? 'earlier' }}</td>
                                     </tr>

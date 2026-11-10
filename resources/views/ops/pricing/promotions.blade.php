@@ -10,7 +10,7 @@
                     <p class="ops-none" style="padding:var(--eh-space-5)">No promotion has been created.</p>
                 @else
                     <div class="ops-tablewrap"><table class="ops-table">
-                        <thead><tr><th>Promotion</th><th>Discount</th><th>Window</th><th class="num">Used</th><th class="num">Budget spent</th><th></th></tr></thead>
+                        <thead><tr><th>Promotion</th><th>Discount</th><th>Window</th><th class="num">Used</th><th class="num">Budget spent</th><th><span class="eh-sr-only">Actions</span></th></tr></thead>
                         <tbody>
                             @foreach ($promotions as $p)
                                 <tr>
