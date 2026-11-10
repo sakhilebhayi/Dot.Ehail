@@ -107,6 +107,7 @@ class ChargeAttempts
 
                 default: // pending or unavailable: outcome unknown, verified later
                     $payment->forceFill(['status' => Payment::PENDING, 'summary' => $summary])->save();
+                    $this->setRideStatus($ride, $payment, PaymentStatus::Pending);
             }
 
             return $payment;

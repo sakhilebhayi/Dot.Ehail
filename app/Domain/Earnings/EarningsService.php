@@ -85,10 +85,13 @@ class EarningsService
         $pending = (int) DriverEarning::where('driver_id', $driver->id)->where('status', DriverEarning::PENDING)->sum('net_minor');
         $cashHeld = max(0, $this->ledger->balance(Account::cashWithDriver($driver->id), $currency));
 
+        // Cash fares the driver holds belong to the platform; they are netted against what the
+        // platform owes. What is left either way is the next payout or the commission still owed.
         return [
             'available_minor' => $available,
             'pending_minor' => $pending,
-            'cash_commission_owed_minor' => $cashHeld,
+            'cash_held_minor' => $cashHeld,
+            'cash_commission_owed_minor' => max(0, $cashHeld - $available),
             'next_payout_estimate_minor' => max(0, $available - $cashHeld),
         ];
     }
