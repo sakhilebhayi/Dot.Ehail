@@ -33,57 +33,58 @@
                 </x-eh.banner>
             @endif
 
-            {{-- Step 1: where to --}}
-            <section data-step="where" aria-labelledby="pax-where-title">
-                <h2 class="eh-sheet__title" id="pax-where-title" tabindex="-1" style="margin-bottom: var(--eh-space-3)">Where to?</h2>
+            {{-- Step 1: where to. One field leads; the pickup is a compact chip (current location by default). --}}
+            <section data-step="where" aria-labelledby="pax-where-title" class="pax-where">
                 <p class="pax-net" data-pax-net hidden><x-eh.icon name="wifi-off" /><span>You are offline. Your choices are kept; prices load when you are back.</span></p>
 
-                <div class="pax-field" data-pax-search="pickup">
-                    <label class="pax-field__label" for="pax-pickup"><span class="pax-route__dot" aria-hidden="true"></span>Pickup</label>
-                    <div class="pax-field__row">
-                        <input id="pax-pickup" class="eh-input" type="search" placeholder="Street and suburb" enterkeyhint="search">
-                        <x-eh.button variant="secondary" size="md" data-geo-search-submit icon="search">Search</x-eh.button>
-                    </div>
-                    <p class="pax-field__hint" data-geo-search-hint></p>
-                    <ul class="pax-results" data-geo-search-list></ul>
-                    <p class="pax-field__status" data-geo-search-status></p>
+                <div class="pax-from" data-pax-from>
+                    <button type="button" class="pax-from__chip" data-pax-pickup-chip aria-expanded="false" aria-controls="pax-pickup-edit">
+                        <span class="pax-from__dot" aria-hidden="true"></span>
+                        <span class="pax-from__text"><span class="pax-from__label">Pickup</span><span class="pax-from__value" data-pax-pickup-value>Set your pickup</span></span>
+                        <x-eh.icon name="edit" class="pax-from__edit" />
+                    </button>
+                    <button type="button" class="pax-from__when" data-pax-when-chip aria-expanded="false" aria-controls="pax-later">
+                        <x-eh.icon name="clock" /><span data-pax-when-value>Now</span><x-eh.icon name="chevron-down" />
+                    </button>
+                </div>
+
+                <div class="pax-from__edit-box" id="pax-pickup-edit" data-pax-pickup-edit hidden>
+                    <x-eh.place-field id="pax-pickup" label="Pickup" placeholder="Street and suburb" dot="pickup" data-pax-search="pickup" />
                     <div class="pax-field__tools">
-                        <x-eh.button variant="ghost" size="sm" icon="locate" data-pax-locate>Use my location</x-eh.button>
+                        <x-eh.button variant="secondary" size="sm" icon="locate" data-pax-locate>Use my location</x-eh.button>
                         <x-eh.button variant="ghost" size="sm" icon="pin" data-pax-adjust disabled>Move the pin</x-eh.button>
                     </div>
                     <p class="pax-field__status" data-pax-locate-status role="status" aria-live="polite"></p>
                 </div>
 
-                <div class="pax-field" data-pax-search="dropoff">
-                    <label class="pax-field__label" for="pax-dropoff"><span class="pax-route__dot pax-route__dot--drop" aria-hidden="true"></span>Destination</label>
-                    <div class="pax-field__row">
-                        <input id="pax-dropoff" class="eh-input" type="search" placeholder="Where are you going?" enterkeyhint="search">
-                        <x-eh.button variant="secondary" size="md" data-geo-search-submit icon="search">Search</x-eh.button>
+                <div class="pax-later" id="pax-later" data-pax-later hidden>
+                    <x-eh.datetime id="pax-later-at" label="When should we pick you up?" />
+                    <p class="pax-rule">Book {{ $schedule['min_lead_minutes'] }} minutes to {{ $schedule['max_lead_days'] }} days ahead. We start finding your driver {{ $schedule['allocation_lead_minutes'] }} minutes before pickup. Your booked fare is kept if a fresh price then is within {{ $schedule['price_tolerance_percent'] }}%; if it is higher, we ask you before we dispatch.</p>
+                    <div class="pax-later__actions">
+                        <x-eh.button variant="ghost" size="sm" data-pax-now>Ride now instead</x-eh.button>
                     </div>
-                    <p class="pax-field__hint" data-geo-search-hint></p>
-                    <ul class="pax-results" data-geo-search-list></ul>
-                    <p class="pax-field__status" data-geo-search-status></p>
                 </div>
 
-                <div class="pax-places" data-pax-places role="group" aria-label="Saved places" @if($places->isEmpty()) hidden @endif>
-                    @foreach ($places as $place)
-                        <button type="button" class="eh-chip" data-pax-place="{{ $place['id'] }}"><x-eh.icon :name="$place['kind'] === 'work' ? 'briefcase' : ($place['kind'] === 'home' ? 'home' : 'pin')" />{{ $place['label'] }}</button>
-                    @endforeach
+                <h2 class="eh-sr-only" id="pax-where-title" tabindex="-1">Where to?</h2>
+                <x-eh.place-field id="pax-dropoff" label="Where to?" placeholder="Search a place or address" size="lg" class="pax-to" data-pax-search="dropoff" />
+
+                <div class="pax-places" data-pax-places>
+                    <h3 class="pax-places__title" data-pax-places-title @if($places->isEmpty() && $recent->isEmpty()) hidden @endif>Your places</h3>
+                    <ul class="pax-places__list" data-pax-place-list>
+                        @foreach ($places as $place)
+                            <li><button type="button" class="pax-place" data-pax-place="{{ $place['id'] }}"><span class="pax-place__icon"><x-eh.icon :name="$place['kind'] === 'work' ? 'briefcase' : ($place['kind'] === 'home' ? 'home' : 'star')" /></span><span class="pax-place__text"><span class="pax-place__name">{{ $place['label'] }}</span><span class="pax-place__detail">{{ $place['address'] }}</span></span></button></li>
+                        @endforeach
+                        @foreach ($recent as $item)
+                            <li><button type="button" class="pax-place" data-pax-recent="{{ $loop->index }}"><span class="pax-place__icon"><x-eh.icon name="history" /></span><span class="pax-place__text"><span class="pax-place__name">{{ $item['name'] }}</span><span class="pax-place__detail">{{ $item['detail'] }}</span></span></button></li>
+                        @endforeach
+                    </ul>
+                    <p class="pax-places__empty" data-pax-places-empty @if($places->isNotEmpty() || $recent->isNotEmpty()) hidden @endif>Search above, or tap the map to drop a pin. Places you save in your account and trips you take show here.</p>
                 </div>
                 <p class="pax-attribution" data-pax-geo-attribution></p>
 
-                <div class="pax-when" data-pax-when>
-                    <x-eh.segmented legend="When do you need the ride?" name="when" :options="['now' => 'Now', 'later' => ['Later', 'calendar-clock']]" value="now" id-prefix="pax-when" />
-                    <div class="pax-when__later" data-pax-later hidden>
-                        <label class="eh-field__label" for="pax-later-at">Pickup date and time</label>
-                        <input id="pax-later-at" class="eh-input" type="datetime-local" step="300">
-                        <p class="pax-rule">Book {{ $schedule['min_lead_minutes'] }} minutes to {{ $schedule['max_lead_days'] }} days ahead. We start finding your driver {{ $schedule['allocation_lead_minutes'] }} minutes before pickup; until then the ride shows "awaiting driver". Your booked fare is kept if a fresh price at that time is within {{ $schedule['price_tolerance_percent'] }}%; if it is higher, we ask you before we dispatch.</p>
-                    </div>
-                </div>
-
-                <div class="pax-actions">
+                <div class="pax-actions pax-go" data-pax-go hidden>
                     <x-eh.button size="lg" :block="true" icon-right="arrow-right" data-pax-see-prices disabled>See prices</x-eh.button>
-                    <p class="pax-rule" data-pax-where-hint>Set a pickup and a destination to see every ride type with its full fare.</p>
+                    <p class="pax-rule" data-pax-where-hint role="status"></p>
                 </div>
             </section>
 
@@ -100,14 +101,18 @@
                 </div>
             </section>
 
-            {{-- Step 3: compare, pay, request --}}
+            {{-- Step 3: compare, pay, request. Compact rows so three or four rides show at half height over the route. --}}
             <section data-step="options" aria-labelledby="pax-options-title" hidden>
-                <x-eh.button variant="ghost" size="sm" icon="arrow-left" class="pax-back" data-pax-back>Change route</x-eh.button>
-                <h2 class="eh-sheet__title" id="pax-options-title" tabindex="-1">Choose a ride</h2>
-                <ol class="pax-route" style="margin-top: var(--eh-space-3)">
-                    <li class="pax-route__stop"><span class="pax-route__dot" aria-hidden="true"></span><span class="pax-route__text"><span class="pax-route__label">Pickup</span><span class="pax-route__address" data-pax-sum="pickup"></span></span></li>
-                    <li class="pax-route__stop pax-route__stop--drop"><span class="pax-route__dot" aria-hidden="true"></span><span class="pax-route__text"><span class="pax-route__label">Destination</span><span class="pax-route__address" data-pax-sum="dropoff"></span></span></li>
-                </ol>
+                <div class="pax-opthead">
+                    <h2 class="pax-opthead__title" id="pax-options-title" tabindex="-1">Choose a ride</h2>
+                    <span class="pax-opthead__trip" data-pax-sum="trip"></span>
+                </div>
+                <button type="button" class="pax-miniroute" data-pax-back aria-label="Change route">
+                    <span class="pax-miniroute__stop"><span class="pax-from__dot" aria-hidden="true"></span><span data-pax-sum="pickup"></span></span>
+                    <x-eh.icon name="arrow-right" class="pax-miniroute__arrow" />
+                    <span class="pax-miniroute__stop"><span class="pax-miniroute__drop" aria-hidden="true"></span><span data-pax-sum="dropoff"></span></span>
+                    <x-eh.icon name="edit" class="pax-miniroute__edit" />
+                </button>
                 <p class="pax-net" data-pax-net hidden><x-eh.icon name="wifi-off" /><span>You are offline. Prices refresh when you are back.</span></p>
                 <div data-pax-options-body aria-busy="true">
                     <x-eh.skeleton :lines="4" />
@@ -121,7 +126,7 @@
 
     {{-- Icons the script clones into the cards it draws (one set, same stroke as the rest of the kit). --}}
     <template id="pax-icons">
-        @foreach (['car', 'car-sedan', 'car-xl', 'car-hatch', 'accessibility', 'luggage', 'users', 'clock', 'chevron-down', 'card', 'cash', 'briefcase', 'plus', 'info', 'warning', 'route', 'refresh', 'tag'] as $iconName)
+        @foreach (['car', 'car-sedan', 'car-xl', 'car-hatch', 'accessibility', 'luggage', 'users', 'user', 'clock', 'chevron-down', 'card', 'cash', 'briefcase', 'plus', 'info', 'warning', 'route', 'refresh', 'tag', 'home', 'star', 'history', 'pin'] as $iconName)
             <span data-icon="{{ $iconName }}"><x-eh.icon :name="$iconName" /></span>
         @endforeach
     </template>
@@ -129,6 +134,7 @@
     <script type="application/json" data-geo-config>@json($geoConfig)</script>
     @php $paxIsland = [
         'places' => $places,
+        'recent' => $recent,
         'again' => $again,
         'schedule' => $schedule,
         'paymentDue' => $paymentDue,
