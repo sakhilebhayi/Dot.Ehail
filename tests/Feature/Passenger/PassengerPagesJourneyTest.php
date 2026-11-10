@@ -114,5 +114,10 @@ class PassengerPagesJourneyTest extends TestCase
 
         $this->assertSame(1, SafetyIncident::count());
         $this->actingAs($passenger)->get(route('ride.safety'))->assertSee('Emergency (SOS)');
+
+        // Once operations resolve it, the passenger's page says so (QA, D-1618) and stops offering "I am safe now".
+        SafetyIncident::find($sos)->forceFill(['status' => 'resolved', 'resolved_at' => now()])->save();
+        $this->actingAs($passenger)->get(route('ride.safety.incident', $sos))->assertOk()
+            ->assertSee('Our operations team resolved this on')->assertDontSee('I am safe now')->assertSee('What we did not do');
     }
 }
