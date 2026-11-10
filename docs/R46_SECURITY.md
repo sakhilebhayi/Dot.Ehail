@@ -96,4 +96,4 @@ Operator permission map: every `/ops`, `/money/ops`, `/safety/ops`, `/support/op
 
 ## 6. Test counts
 
-PHP: 1,294 tests at the branch point (1,286 passed, 8 skipped) -> see the final report for the count after the trunk merge; every new test lives in `tests/Feature/Security/` plus the updated assertions listed in D-1402, D-1407, D-1414. JS: 78 passed.
+PHP (SQLite): 1,294 tests at the branch point (1,286 passed, 8 skipped); after this work and the trunk merge 1,356 (1,348 passed, 8 skipped), run twice. The 53 security tests also pass on PostgreSQL 16 (`bin/test-pgsql.sh --filter Tests\\Feature\\Security`), which exercises account closure against the immutable-ledger triggers. JS: 78 passed. `view:cache` and `route:cache` pass.
