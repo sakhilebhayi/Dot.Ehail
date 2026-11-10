@@ -216,6 +216,8 @@ class RideFeed
             'recorded_at' => $position->recordedAt->toIso8601String(),
             'age_s' => (int) $position->recordedAt->diffInSeconds(now(), true),
             'stale' => $position->recordedAt->lt(now()->subSeconds($staleAfter)),
+            // The client ages the position between feed bodies (a silent phone changes no version).
+            'stale_after_s' => $staleAfter,
             'eta_s' => $eta?->seconds,
             'eta_to' => $status === RideStatus::InProgress ? 'dropoff' : 'pickup',
             'eta_method' => $eta?->method,

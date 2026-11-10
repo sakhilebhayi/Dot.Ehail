@@ -48,7 +48,7 @@ class RideFeedTest extends TestCase
                 'version', 'server_time', 'poll_after_s',
                 'ride' => ['id', 'status', 'status_label', 'pickup' => ['address', 'lat', 'lng'], 'dropoff', 'category',
                     'fare' => ['quoted_total_minor', 'final_total_minor', 'currency'], 'pin', 'driver' => ['first_name', 'rating', 'vehicle' => ['make', 'model', 'color', 'plate']], 'timestamps'],
-                'driver_position' => ['lat', 'lng', 'heading', 'recorded_at', 'age_s', 'stale', 'eta_s', 'eta_to', 'eta_method'],
+                'driver_position' => ['lat', 'lng', 'heading', 'recorded_at', 'age_s', 'stale', 'stale_after_s', 'eta_s', 'eta_to', 'eta_method'],
                 'connection' => ['driver_position'],
             ])
             ->assertJsonPath('ride.status', 'driver_assigned')
@@ -96,7 +96,7 @@ class RideFeedTest extends TestCase
         $this->travel(2)->minutes();
 
         $this->actingAs($passenger)->getJson(route('ehail.dispatch.rides.feed', $ride))
-            ->assertOk()->assertJsonPath('driver_position.stale', true)->assertJsonPath('connection.driver_position', 'stale');
+            ->assertOk()->assertJsonPath('driver_position.stale', true)->assertJsonPath('driver_position.stale_after_s', (int) config('ehail_dispatch.heartbeat_stale_seconds'))->assertJsonPath('connection.driver_position', 'stale');
     }
 
     public function test_only_the_rides_passenger_may_read_the_passenger_feed(): void
