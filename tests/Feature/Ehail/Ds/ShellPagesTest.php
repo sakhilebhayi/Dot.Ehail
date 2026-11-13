@@ -131,9 +131,10 @@ class ShellPagesTest extends TestCase
     {
         $driver = $this->makeApprovedDriver();
         $xpath = $this->xpath($this->actingAs($driver)->get(route('dashboard'))->assertOk());
+        // R-50: the person's own home is the landing's one primary action; their other spaces follow as plain links.
+        $this->assertSame(route('drive.home'), $xpath->query('//main//a[@data-primary-action]')->item(0)->getAttribute('href'), 'primary home first');
         $links = $xpath->query('//nav[@aria-label="Your Dot.Ehail apps"]//a');
-        $this->assertSame(route('drive.home'), $links->item(0)->getAttribute('href'), 'primary home first');
-        $this->assertSame(route('ride.home'), $links->item(1)->getAttribute('href'));
+        $this->assertSame(route('ride.home'), $links->item(0)->getAttribute('href'));
     }
 
     public function test_the_account_menu_offers_only_surfaces_the_person_has(): void

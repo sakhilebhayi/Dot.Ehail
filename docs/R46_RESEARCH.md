@@ -119,9 +119,9 @@ Reported Paystack ZA pricing: local cards 2.9% + R1 (R1 waived under R10), Insta
 - **Driver complaints that shape the design.** Opaque deductions (drivers cannot see how the fare became their earnings) and effective take rates above the advertised commission are the recurring public complaint. Every earning row here carries fare, commission, deductions, net, cash collected, the pricing plan label and estimate-vs-actual with reasons; every payout lists the exact earnings and cash netted.
 - **Payout cadence.** Weekly payouts are the norm drivers expect from the large platforms, with instant/daily cash-out offered at a fee by some *(prior knowledge; not re-verified today)*. Paystack's own merchant settlement in ZA is reported as T+1 or T+2 business days (sources disagree). The build drafts a weekly batch (configurable day), pays only settled ("available") earnings, carries forward amounts below the minimum, and nets cash commission owed.
 
-### Dot.Billing and Dot.Finance
+### Dot.Finance
 
-Read-only check of both repositories (`~/Dot/Dot.Billing`, `~/Dot/Dot.Finance`, and the current R-44 Dot.Finance clone): Dot.Billing exposes no API for another platform to post revenue or invoices. Dot.Finance's only signed server-to-server inbound endpoints are `/api/ecosystem/membership` (InfoDot) and `/api/integrations/emall/sales` (an Emall-specific contract, `docs/integrations/emall-sales-contract.md`). **There is no Ehail contract, so no integration was built** (D-614). Ehail offers the ledger CSV export (`/money/ops/ledger/export.csv`) for the operator's accountant instead; an Ehail-to-Finance contract would need a Finance-side change first.
+Read-only check of the repository (`~/Dot/Dot.Finance`, and the current R-44 Dot.Finance clone): Dot.Finance's only signed server-to-server inbound endpoints are `/api/ecosystem/membership` (InfoDot) and `/api/integrations/emall/sales` (an Emall-specific contract, `docs/integrations/emall-sales-contract.md`). **There is no Ehail contract, so no integration was built** (D-614). Ehail offers the ledger CSV export (`/money/ops/ledger/export.csv`) for the operator's accountant instead; an Ehail-to-Finance contract would need a Finance-side change first.
 
 ### Sources
 

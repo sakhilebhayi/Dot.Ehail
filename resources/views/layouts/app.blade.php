@@ -3,10 +3,11 @@
     Legacy app shell for the pre-R-46 pages (rides, driver desk, operator pages, profile and teams) until wave 2
     replaces them with the passenger, driver and ops shells. Restyled in Dot.Ehail tokens; no third-party hosts.
     The old ride and operator pages are written with fixed dark inline styles, so this shell pins the dark theme
-    for them; the account pages (profile, teams, API tokens) follow the person's theme.
+    for them; the landing (dashboard, rebuilt in tokens for R-50) and the account pages (profile, teams, API tokens)
+    follow the person's theme.
 --}}
 @php
-    $legacyPinDark = ! request()->routeIs('profile.*', 'teams.*', 'api-tokens.*');
+    $legacyPinDark = ! request()->routeIs('dashboard', 'profile.*', 'teams.*', 'api-tokens.*');
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh eh-legacy {{ $legacyPinDark ? 'dark' : '' }}" @if($legacyPinDark) data-theme="dark" data-theme-lock @endif data-theme-key="eh-theme">
 <head>

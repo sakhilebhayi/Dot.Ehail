@@ -76,7 +76,7 @@ Refusal codes: `business_profile_unknown`, `business_account_pending`, `business
 
 ## 7. Integrations checked
 
-- **Dot.Billing / Dot.Finance:** re-checked 2026-11-10: the only mentions are the ecosystem app-switcher links in `config/ecosystem.php` (a name and a URL each) and a code comment; there is no client, credentials, endpoint or data contract for either. No fake integration was built; the accountant uses the statement CSV and money's ledger CSV.
+- **Dot.Finance:** re-checked 2026-11-10: the only mentions are the ecosystem app-switcher link in `config/ecosystem.php` (a name and a URL) and a code comment; there is no client, credentials, endpoint or data contract. No fake integration was built; the accountant uses the statement CSV and money's ledger CSV.
 - **InfoDot companies:** a business account can be linked to a Jetstream team that `SyncTeamsFromInfoDot` created from an InfoDot company (owner/admin only). Members are still invited by email; team membership does not grant business roles (a company member is not automatically allowed to bill rides).
 
 ## 8. Retention (POPIA)

@@ -1,0 +1,73 @@
+/*
+ * The signed-in landing (/dashboard, R-50): the page a person arrives on from InfoDot. Route Line tokens only.
+ * One dominant action; everything else is a text link, a figure in a sentence row or a table. The product visual is
+ * the route line itself: the latest real ride from pickup to drop-off, or the setup line while bookings are closed.
+ */
+.eh-home { max-width: var(--eh-container); margin: 0 auto; padding: var(--eh-space-6) var(--eh-gutter) var(--eh-space-16); color: var(--eh-ink); }
+@media (min-width: 860px) { .eh-home { padding: var(--eh-space-8) var(--eh-space-8) var(--eh-space-24); } }
+
+/* Brand row: the original logo file (never the redrawn mark) and the way back to the ecosystem. */
+.eh-home__brand { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-4); }
+.eh-home__logo { display: block; width: auto; height: 96px; margin-left: -18px; }
+@media (min-width: 860px) { .eh-home__logo { height: 132px; margin-left: -26px; } }
+.eh-home__logo--night { display: none; }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .eh-home__logo--day { display: none; }
+    :root:not([data-theme="light"]) .eh-home__logo--night { display: block; }
+}
+:root[data-theme="dark"] .eh-home__logo--day { display: none; }
+:root[data-theme="dark"] .eh-home__logo--night { display: block; }
+.eh-home__back { display: flex; flex-wrap: wrap; justify-content: flex-end; column-gap: var(--eh-space-2); margin: 0; padding: 0; list-style: none; }
+.eh-home__back a, .eh-home__more a { display: inline-flex; align-items: center; min-height: var(--eh-target); padding: 0 var(--eh-space-2); color: var(--eh-ink-2); font-weight: 600; text-decoration: underline; text-decoration-color: var(--eh-rule-strong); border-radius: var(--eh-radius-sm); }
+.eh-home__back a:hover, .eh-home__more a:hover { color: var(--eh-ink); text-decoration-color: currentColor; }
+
+/* Lead: headline, welcome, the one action; the route beside it on wide screens. */
+.eh-home__lead { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-10); margin-top: var(--eh-space-6); }
+@media (min-width: 1100px) { .eh-home__lead { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--eh-space-16); align-items: start; } }
+.eh-home__title { font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem); line-height: 0.95; letter-spacing: -0.015em; margin: 0; max-width: 14em; }
+.eh-home__welcome { margin: var(--eh-space-5) 0 0; font-size: var(--eh-text-lg); line-height: 1.5; color: var(--eh-ink); max-width: 56ch; }
+.eh-home__welcome + .eh-home__welcome { margin-top: var(--eh-space-2); color: var(--eh-ink-2); }
+.eh-home__notice { margin: var(--eh-space-5) 0 0; padding: var(--eh-space-3) var(--eh-space-4); max-width: 56ch; border-radius: var(--eh-radius); background: var(--eh-caution-bg); color: var(--eh-caution); font-weight: 600; }
+.eh-home__act { display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-3) var(--eh-space-5); margin-top: var(--eh-space-8); }
+.eh-home__act .eh-btn { min-height: 56px; padding-inline: var(--eh-space-8); font-size: var(--eh-text-lg); }
+.eh-home__more { display: flex; flex-wrap: wrap; column-gap: var(--eh-space-2); margin: 0; padding: 0; list-style: none; }
+@media (max-width: 479.98px) { .eh-home__act .eh-btn { width: 100%; } }
+
+/* The route: a panel on the surface tone, one radius, no shadow. */
+.eh-home__route { background: var(--eh-surface); border-radius: var(--eh-radius); padding: var(--eh-space-6); min-width: 0; }
+.eh-home__route > .eh-h2 { margin-bottom: var(--eh-space-5); }
+.eh-home__route .eh-stepper__label { overflow-wrap: anywhere; }
+.eh-home__route .eh-stepper__step[data-state="todo"] .eh-stepper__label { color: var(--eh-ink); font-weight: 600; }
+.eh-home__route .eh-stepper__meta { margin-top: 2px; max-width: 48ch; }
+.eh-home__route-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-2) var(--eh-space-4); margin-top: var(--eh-space-5); padding-top: var(--eh-space-4); border-top: 1px solid var(--eh-rule); color: var(--eh-ink-2); font-size: var(--eh-text-sm); }
+.eh-home__route-foot .eh-money { color: var(--eh-ink); font-weight: 700; font-size: var(--eh-text-md); }
+.eh-home__route .eh-empty { padding: 0; }
+
+/* Context: figures as sentence rows, the ride table. */
+.eh-home__context { margin-top: var(--eh-space-16); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-10); }
+.eh-home__block { min-width: 0; }
+.eh-home__block > .eh-h2 { margin-bottom: var(--eh-space-4); }
+.eh-home__block .eh-statline dd { font-family: var(--eh-font-display); font-size: var(--eh-text-3xl); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums lining-nums; margin: 0; }
+.eh-home__block .eh-statline { column-gap: var(--eh-space-10); row-gap: var(--eh-space-4); }
+.eh-home__note { margin: var(--eh-space-3) 0 0; color: var(--eh-ink-2); font-size: var(--eh-text-sm); max-width: 68ch; }
+.eh-home__table { width: 100%; min-width: 44rem; border-collapse: collapse; font-size: var(--eh-text-sm); }
+.eh-home__table th { text-align: left; font-weight: 600; color: var(--eh-ink-2); padding: var(--eh-space-2) var(--eh-space-4) var(--eh-space-2) 0; border-bottom: 1px solid var(--eh-rule-strong); white-space: nowrap; }
+.eh-home__table td { padding: var(--eh-space-3) var(--eh-space-4) var(--eh-space-3) 0; border-bottom: 1px solid var(--eh-rule); vertical-align: top; }
+.eh-home__table :is(th, td):last-child { padding-right: 0; }
+.eh-home__table .eh-home__num { text-align: right; font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.eh-home__table a { font-weight: 600; text-decoration: underline; text-decoration-color: var(--eh-rule-strong); }
+.eh-home__table a:hover { text-decoration-color: currentColor; }
+.eh-home__table .eh-home__to { display: block; color: var(--eh-ink-2); }
+
+/* Narrow screens: stand-alone links and row links reach the 44px target. */
+@media (max-width: 859.98px) {
+    .eh-home__table td:first-child a, .eh-home__note > .eh-link:only-child { display: inline-flex; align-items: center; min-height: var(--eh-target); }
+    .eh-home__table .eh-home__to { margin-top: -8px; }
+}
+
+/* One authored moment: the headline block and the action settle in. Visible by default; none with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+    .eh-home__enter { animation: eh-home-enter 420ms var(--eh-ease) backwards; }
+    .eh-home__enter--late { animation-delay: 80ms; }
+    @keyframes eh-home-enter { from { opacity: 0.4; transform: translateY(12px); } }
+}

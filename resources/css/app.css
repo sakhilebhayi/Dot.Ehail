@@ -10,6 +10,7 @@
 @import "./ds/shells.css";
 @import "./ds/work.css";
 @import "./ds/landing.css";
+@import "./ds/home.css";
 @import "./ds/jetstream.css";
 
 @tailwind base;
