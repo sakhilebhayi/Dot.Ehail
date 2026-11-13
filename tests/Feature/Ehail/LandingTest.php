@@ -29,6 +29,14 @@ class LandingTest extends TestCase
         'images/logo-light.png' => 'c224468195ae9a0b9f498509ef196a49b8cf4f2f0695ff0399bc57b40a4e835d',
     ];
 
+    /** The state the live site is in until the owner finishes setup, whatever the local .env says. */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['ehail-geo.routing.driver' => 'none', 'money.cash.enabled' => false, 'paystack.secret_key' => '']);
+    }
+
     private function xpath(TestResponse $response): DOMXPath
     {
         $document = new DOMDocument;
