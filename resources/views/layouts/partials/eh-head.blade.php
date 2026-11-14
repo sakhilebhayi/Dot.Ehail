@@ -15,7 +15,7 @@
 <link rel="preload" href="{{ asset('fonts/barlow-latin-600-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
 <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">(function(d){try{var r=d.documentElement;r.classList.add('js');if(r.hasAttribute('data-theme-lock'))return;var k=r.dataset.themeKey||'eh-theme',v=localStorage.getItem(k)||r.dataset.themeDefault||'system',h=new Date().getHours(),dk=matchMedia('(prefers-color-scheme: dark)').matches;if(v==='night'){v=(h>=18||h<6||dk)?'dark':'light'}if(v==='light'||v==='dark'){r.dataset.theme=v}r.classList.toggle('dark',v==='dark'||(v==='system'&&dk))}catch(e){}})(document);</script>
 @auth
-{{-- Shared Dot UI (the platform switcher, the compact filter), served from this site's own public/dot-ui: CSP 'self', no inline style or script. The host mapping is resources/css/ds/dot-ui.css. --}}
+{{-- Shared Dot UI (the platform switcher, the compact filter), served from this site's own public/dot-ui: CSP 'self', no inline style or script. The host token mapping lives in the design system's dot-ui stylesheet (imported by app.css). --}}
 <link rel="stylesheet" href="{{ asset('dot-ui/css/dot-fonts.css') }}">
 <link rel="stylesheet" href="{{ asset('dot-ui/css/dot-tokens.css') }}">
 <link rel="stylesheet" href="{{ asset('dot-ui/css/dot-search.css') }}">
