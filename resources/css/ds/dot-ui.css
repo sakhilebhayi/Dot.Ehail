@@ -34,7 +34,6 @@ body {
     --dsw-ink-2: var(--eh-ink-2);
     --dsw-rule: var(--eh-rule-strong);
     --dsw-tile-ink: #1b2124;
-    --dsw-tile-tag-ink: #f6f4ee; /* the tag is dark ink with paper text: paper must stay light when the sheet is dark */
 }
 
 /* Where the switcher sits. The panel hangs from the nearest positioned ancestor, which is each shell's header. */
@@ -60,11 +59,12 @@ body {
 .eh-topbar__apps:empty { display: none; }
 
 /* 768 to 1099px: brand, four tabs, the switcher, Safety, bell and account do not all fit in one row. The switcher shows its
-   grid icon only (it keeps its accessible name), and the tabs give up some side padding, so the account menu is never pushed
+   grid icon only (it keeps its accessible name; the package's own `compact` is any-width, so only the label rule stays here and the
+   square size comes from --dsw-btn-min-w / --dsw-btn-pad-x), and the tabs give up some side padding, so the account menu is never pushed
    off the screen. From 1100px the label returns. */
 @media (min-width: 768px) and (max-width: 1099px) {
     .eh-topbar .dsw-btn__label { display: none; }
-    .eh-topbar .dsw-btn { min-width: var(--eh-target); padding-inline: 0; justify-content: center; }
+    .eh-topbar .dsw { --dsw-btn-min-w: var(--eh-target); --dsw-btn-pad-x: 0; }
     .eh-topbar__nav a { padding: 0 var(--eh-space-2); gap: var(--eh-space-1); }
     .eh-topbar { gap: var(--eh-space-2); }
 }
