@@ -1,0 +1,74 @@
+/* Host token mapping for the shared Dot UI (public/dot-ui, copied by dot-ui/sync.sh; never edited here).
+   Dot.Ehail has no header search pill, so only the compact in-page filter (.dsr-filter) and the platform switcher (.dsw)
+   are mapped. Every package default is under :where() (zero specificity), so this plain mapping wins in light and dark,
+   in either load order. Route Line tokens only: the surfaces flip with the theme because the --eh-* tokens do. */
+body {
+    --dsr-panel: var(--eh-surface);
+    --dsr-hover: var(--eh-surface-2);
+    --dsr-rule: var(--eh-rule);
+    --dsr-rule-strong: var(--eh-rule-strong);
+    --dsr-text: var(--eh-ink);
+    --dsr-text-2: var(--eh-ink-2);
+    --dsr-text-3: var(--eh-ink-3);
+    --dsr-radius-panel: var(--eh-radius-sm);
+    /* The package derives the filter tokens from the ones above on :root, so they are restated for the body values. */
+    --dsr-filter-radius: var(--eh-radius-sm);
+    --dsr-filter-bg: var(--eh-surface);
+    --dsr-filter-ink: var(--eh-ink);
+    --dsr-filter-placeholder: var(--eh-ink-3);
+    --dsr-filter-border: var(--eh-rule-strong);
+    --dsr-filter-border-hover: var(--eh-ink-3);
+    --dsr-filter-border-focus: var(--eh-ink);
+}
+
+.dsw {
+    --dsw-btn-ink: var(--eh-ink);
+    --dsw-btn-border: var(--eh-rule-strong);
+    --dsw-btn-bg-hover: var(--eh-surface-2);
+    --dsw-focus: var(--eh-focus);
+    --dsw-radius: var(--eh-radius-pill);
+    --dsw-btn-h: var(--eh-target);
+    /* The sheet follows the theme; the logo plate stays white (the logos are drawn for white), so its text stays dark. */
+    --dsw-paper: var(--eh-surface);
+    --dsw-ink: var(--eh-ink);
+    --dsw-ink-2: var(--eh-ink-2);
+    --dsw-rule: var(--eh-rule-strong);
+    --dsw-tile-ink: #1b2124;
+    --dsw-tile-tag-ink: #f6f4ee; /* the tag is dark ink with paper text: paper must stay light when the sheet is dark */
+}
+
+/* Where the switcher sits. The panel hangs from the nearest positioned ancestor, which is each shell's header. */
+.eh-topbar__apps { display: flex; align-items: center; }
+.eh-side__apps { display: none; }
+.eh-side__bar .dsw { margin-left: auto; }
+.eh-side__bar .eh-logo { margin-right: 0; }
+.eh-legacy .topbar .dsw { margin-left: auto; }
+.eh-legacy .topbar-title { flex: 1 1 auto; }
+
+@media (min-width: 1024px) {
+    .eh-side { grid-template-rows: auto 1fr; }
+    .eh-side__main { grid-row: 2; }
+    /* The side shells (ops, business, fleet) have no header at this width; this slim strip over the page is their header,
+       so the switcher has the same place in every shell and its panel a bar to hang from. */
+    .eh-side__apps {
+        position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: flex-end;
+        grid-column: 2; grid-row: 1; height: var(--eh-topbar); padding: 0 var(--eh-space-10);
+        background: var(--eh-ground); border-bottom: 1px solid var(--eh-rule);
+    }
+}
+
+.eh-topbar__apps:empty { display: none; }
+
+/* 768 to 1099px: brand, four tabs, the switcher, Safety, bell and account do not all fit in one row. The switcher shows its
+   grid icon only (it keeps its accessible name), and the tabs give up some side padding, so the account menu is never pushed
+   off the screen. From 1100px the label returns. */
+@media (min-width: 768px) and (max-width: 1099px) {
+    .eh-topbar .dsw-btn__label { display: none; }
+    .eh-topbar .dsw-btn { min-width: var(--eh-target); padding-inline: 0; justify-content: center; }
+    .eh-topbar__nav a { padding: 0 var(--eh-space-2); gap: var(--eh-space-1); }
+    .eh-topbar { gap: var(--eh-space-2); }
+}
+/* The driver bar sets larger type, so at the very bottom of that range the tabs drop their icons (the words stay). */
+@media (min-width: 768px) and (max-width: 819px) {
+    .eh-drive .eh-topbar__nav a > svg { display: none; }
+}

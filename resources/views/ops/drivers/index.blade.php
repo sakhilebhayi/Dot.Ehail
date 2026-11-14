@@ -14,7 +14,7 @@
         <form class="ops-filter" method="GET" action="{{ route('ops.drivers') }}" role="search" aria-label="Filter drivers">
             <x-eh.select label="Account" name="status" :options="['pending' => 'Application pending', 'approved' => 'Approved', 'suspended' => 'Suspended', 'rejected' => 'Rejected']" placeholder="Any" :value="$filters['status'] ?? ''" />
             <x-eh.select label="Right now" name="state" :options="['online' => 'Online', 'on_trip' => 'On a trip', 'paused' => 'Paused', 'offline' => 'Offline']" placeholder="Any" :value="$filters['state'] ?? ''" />
-            <div class="eh-field eh-field--grow"><label class="eh-field__label" for="f-dq">Name or email</label><input id="f-dq" class="eh-input" type="search" name="q" value="{{ $filters['q'] ?? '' }}" maxlength="80"></div>
+            <div class="eh-field eh-field--grow"><label class="eh-field__label" for="f-dq">Name or email</label><x-dot.filter-search id="f-dq" name="q" :value="$filters['q'] ?? ''" label="Name or email" placeholder="" maxlength="80" /></div>
             <x-eh.button type="submit" size="sm" icon="filter">Apply</x-eh.button>
         </form>
 

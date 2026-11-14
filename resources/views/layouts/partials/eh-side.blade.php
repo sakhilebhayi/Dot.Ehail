@@ -11,6 +11,7 @@
         if ($groupItems) { $grouped[] = [$groupLabel, $groupItems]; }
     }
     $homeRoute = \App\Support\Ui\RoleHome::HOME_ROUTES[$surface];
+    $appsModel = \App\Support\Ui\AppsSwitcher::model(auth()->user(), request()->route()?->getName());
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh" data-theme-key="eh-theme" data-sw="on">
@@ -25,8 +26,13 @@
             <x-eh.icon-button icon="menu" label="Open navigation" data-eh-drawer-open aria-controls="eh-side-nav" aria-expanded="false" />
             <x-eh.logo :href="Route::has($homeRoute) ? route($homeRoute) : url('/')" />
             {{ $barExtra ?? '' }}
+            @include('layouts.partials.eh-apps', ['appsModel' => $appsModel, 'appsId' => 'dsw-panel'])
             @include('layouts.partials.eh-account', ['surface' => $surface])
         </header>
+        {{-- The desktop header: the side shells show no bar from 1024px up, so this slim strip carries the switcher there. --}}
+        @if (! empty($appsModel))
+        <div class="eh-side__apps">@include('layouts.partials.eh-apps', ['appsModel' => $appsModel, 'appsId' => 'dsw-panel-desk'])</div>
+        @endif
         <div class="eh-side__scrim" data-eh-drawer-close aria-hidden="true"></div>
         <nav class="eh-side__nav" id="eh-side-nav" aria-label="{{ $navLabel }}">
             <div class="eh-side__head">

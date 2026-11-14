@@ -75,6 +75,10 @@ return [
         // R-50: during a session, ask InfoDot whether the current company still holds this platform (cached ten
         // minutes per company; an outage or a misconfiguration never locks anyone out). See EnsureCompanyEntitled.
         'entitlement_check' => (bool) env('EHAIL_ENTITLEMENT_CHECK', true),
+
+        // R-51: the header's platform switcher reads the same InfoDot endpoint for display only. One second, not the
+        // package's three: a slow InfoDot must not hold a page. Trip screens never ask at all (App\Support\Ui\AppsSwitcher).
+        'switcher_timeout' => (int) env('INFODOT_SWITCHER_TIMEOUT', 1),
     ],
 
 ];

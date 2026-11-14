@@ -12,7 +12,7 @@
             <x-eh.field label="From" name="from" type="date" :value="$filters['from'] ?? null" />
             <x-eh.field label="To" name="to" type="date" :value="$filters['to'] ?? null" />
             <x-eh.select label="Status" name="status" :options="['initiated' => 'Checkout opened', 'pending' => 'Pending', 'paid' => 'Paid', 'failed' => 'Failed', 'expired' => 'Expired', 'unmatched' => 'Unmatched', 'awaiting_cash' => 'Awaiting cash']" placeholder="Any status" :value="$filters['status'] ?? ''" />
-            <div class="eh-field eh-field--grow"><label class="eh-field__label" for="f-pq">Reference or ride number</label><input id="f-pq" class="eh-input" type="search" name="q" value="{{ $filters['q'] ?? '' }}" maxlength="80"></div>
+            <div class="eh-field eh-field--grow"><label class="eh-field__label" for="f-pq">Reference or ride number</label><x-dot.filter-search id="f-pq" name="q" :value="$filters['q'] ?? ''" label="Reference or ride number" placeholder="" maxlength="80" /></div>
             <x-eh.button type="submit" size="sm" icon="filter">Apply</x-eh.button>
         </form>
         <section class="ops-panel ops-panel--flush" aria-label="Payments">

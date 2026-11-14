@@ -8,6 +8,7 @@
 --}}
 @php
     $legacyPinDark = ! request()->routeIs('dashboard', 'profile.*', 'teams.*', 'api-tokens.*');
+    $appsModel = \App\Support\Ui\AppsSwitcher::model(auth()->user(), request()->route()?->getName());
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh eh-legacy {{ $legacyPinDark ? 'dark' : '' }}" @if($legacyPinDark) data-theme="dark" data-theme-lock @endif data-theme-key="eh-theme">
 <head>
@@ -140,6 +141,7 @@
             @isset($header){{ $header }}@else Dot.Ehail
             @endisset
         </div>
+        @include('layouts.partials.eh-apps', ['appsModel' => $appsModel])
         @auth
         <span class="topbar-team">{{ Auth::user()->currentTeam->name ?? 'Personal' }}</span>
         <livewire:notification-bell />
