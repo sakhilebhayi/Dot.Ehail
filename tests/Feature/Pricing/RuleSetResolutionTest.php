@@ -51,6 +51,10 @@ class RuleSetResolutionTest extends TestCase
 
     public function test_time_window_rule_set_applies_only_inside_its_window_and_beats_an_unwindowed_peer(): void
     {
+        // Pin the clock: the rule sets are effective from now() - 1 day and the instants below are fixed on 2026-11-10/11,
+        // so an unpinned clock puts them before effective_from on any real date after 2026-11-11.
+        $this->travelTo(CarbonImmutable::parse('2026-11-10 12:00', 'Africa/Johannesburg'));
+
         $always = $this->publishedRuleSet(['name' => 'always']);
         $night = $this->publishedRuleSet(['name' => 'night', 'time_windows' => [['start' => '22:00', 'end' => '05:00']]]);
 
