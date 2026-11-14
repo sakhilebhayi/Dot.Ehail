@@ -222,21 +222,32 @@ class LandingTest extends TestCase
         }
 
         $xpath = $this->xpath($this->actingAs(User::factory()->withPersonalTeam()->create())->get(route('dashboard'))->assertOk());
-        $main = '//main[@id="main-content"]';
 
-        $this->assertSame(1, $xpath->query($main.'//img[@data-landing-logo][@alt="Dot.Ehail"][contains(@src, "/images/logo.png")]')->length);
-        $this->assertSame(1, $xpath->query($main.'//img[contains(@src, "/images/logo-light.png")]')->length);
-        $this->assertSame(0, $xpath->query($main.'//*[contains(@class, "eh-logo")]')->length, 'the redrawn mark is not used on the landing');
+        // R-51: the logo lives once, in the sidebar (original files, never redrawn); the page body carries no second copy.
+        $this->assertSame(1, $xpath->query('//aside//img[@alt="Dot.Ehail"][contains(@src, "/images/logo.png")]')->length);
+        $this->assertSame(1, $xpath->query('//aside//img[contains(@src, "/images/logo-light.png")]')->length);
+        $this->assertSame(0, $xpath->query('//main[@id="main-content"]//img[contains(@src, "/images/logo")]')->length, 'no second logo in the page body');
+        $this->assertSame(0, $xpath->query('//main[@id="main-content"]//*[contains(@class, "eh-logo")]')->length);
     }
 
-    public function test_the_way_back_to_infodot_and_the_platforms_page(): void
+    public function test_the_way_back_to_infodot_is_a_quiet_foot_link_only_when_the_switcher_is_not_shown(): void
     {
+        // A person whose switcher prints (here a personal workspace) is not given a second way back in the foot.
         $xpath = $this->xpath($this->actingAs(User::factory()->withPersonalTeam()->create())->get(route('dashboard'))->assertOk());
-        $links = $xpath->query('//nav[@aria-label="Dot ecosystem"]//a');
+        $this->assertSame(0, $xpath->query('//footer[contains(@class, "eh-dash__foot")]//a')->length);
+        $this->assertSame(0, $xpath->query('//nav[@aria-label="Dot ecosystem"]')->length, 'the in-content link list is gone');
 
-        $this->assertSame(2, $links->length);
+        // A company member mid-ride whose switcher has no cached answer prints none, so the foot link keeps them from being stranded.
+        \Illuminate\Support\Facades\Http::preventStrayRequests();
+        $rider = $this->inCompany(User::factory()->withPersonalTeam()->create(), 'Kloof Street Studio');
+        $rider->currentTeam->forceFill(['infodot_team_uuid' => '11111111-1111-4111-8111-111111111111'])->save();
+        $driver = $this->makeApprovedDriver();
+        $this->makeRide(['status' => 'in_progress', 'driver_id' => $driver->id], $rider);
+
+        $xpath = $this->xpath($this->actingAs($rider->fresh())->get(route('dashboard'))->assertOk());
+        $links = $xpath->query('//footer[contains(@class, "eh-dash__foot")]//a');
+        $this->assertSame(1, $links->length);
         $this->assertSame(['https://infodot.co.za/home', 'InfoDot'], [$links->item(0)->getAttribute('href'), trim($links->item(0)->textContent)]);
-        $this->assertSame(['https://infodot.co.za/platforms', 'Platforms'], [$links->item(1)->getAttribute('href'), trim($links->item(1)->textContent)]);
     }
 
     public function test_a_new_member_sees_an_honest_empty_state_and_no_figures(): void
@@ -248,8 +259,9 @@ class LandingTest extends TestCase
         $this->assertSame(0, $xpath->query('//*[@data-landing-figures]')->length);
         $this->assertSame(0, $xpath->query('//*[@data-landing-fleet-figures]')->length);
         $this->assertSame(0, $xpath->query('//main//table')->length);
-        // Nothing in the landing is a number: there are no records to count.
-        $this->assertDoesNotMatchRegularExpression('/\d/', $xpath->query('//div[contains(@class, "eh-home")]')->item(0)->textContent);
+        // Nothing to count: no figure is animated or listed because there are no records.
+        $this->assertSame(0, $xpath->query('//*[@data-count]')->length);
+        $this->assertSame(0, $xpath->query('//*[@data-landing-latest]')->length);
     }
 
     public function test_every_figure_comes_from_the_seeded_records(): void
@@ -271,6 +283,7 @@ class LandingTest extends TestCase
         // drivers, approved, online now, completed fares
         $this->assertSame(['1', '1', '1', MoneyFormatter::format(35050)], $figures('data-landing-fleet-figures'));
         $this->assertSame(3, $xpath->query('//div[@aria-label="Recent rides"]//tbody/tr')->length);
+        $this->assertSame(['3', '0', '0', '2', '1'], array_map(fn ($n) => $n->getAttribute('data-count'), iterator_to_array($xpath->query('//*[@data-landing-figures]//dd'))), 'the animated count ends on the true value');
     }
 
     public function test_the_platform_list_holds_only_current_platforms(): void

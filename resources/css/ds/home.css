@@ -1,73 +1,158 @@
 /*
- * The signed-in landing (/dashboard, R-50): the page a person arrives on from InfoDot. Route Line tokens only.
- * One dominant action; everything else is a text link, a figure in a sentence row or a table. The product visual is
- * the route line itself: the latest real ride from pickup to drop-off, or the setup line while bookings are closed.
+ * The signed-in landing (/dashboard, R-51): the page a person arrives on from InfoDot. Route Line tokens only.
+ * Layout: an arrival band (one true sentence, one action, the route line), then a desk (what needs doing, the ride
+ * ledger) beside a detail column (the selected ride, the figures). Rows are hairlines on shared heights; no cards.
+ * Identity note: the dashboard standard prefers hairline-free surfaces, the platform's own highway-sign language keeps
+ * its hairlines and pill controls, so the platform identity wins there (recorded in the PR).
+ * Motion: chrome never moves. Content arrives once (transform and opacity, 120-400 ms, ease-out), nothing animates at
+ * rest, every rule sits in no-preference, and the live screens are untouched.
  */
-.eh-home { max-width: var(--eh-container); margin: 0 auto; padding: var(--eh-space-6) var(--eh-gutter) var(--eh-space-16); color: var(--eh-ink); }
-@media (min-width: 860px) { .eh-home { padding: var(--eh-space-8) var(--eh-space-8) var(--eh-space-24); } }
+.eh-dash { max-width: 74rem; margin: 0 auto; padding: var(--eh-space-6) var(--eh-gutter) var(--eh-space-12); color: var(--eh-ink); }
+@media (min-width: 1024px) { .eh-dash { padding: var(--eh-space-8) var(--eh-space-8) var(--eh-space-16); } }
 
-/* Brand row: the original logo file (never the redrawn mark) and the way back to the ecosystem. */
-.eh-home__brand { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-4); }
-.eh-home__logo { display: block; width: auto; height: 96px; margin-left: -18px; }
-@media (min-width: 860px) { .eh-home__logo { height: 132px; margin-left: -26px; } }
-.eh-home__logo--night { display: none; }
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .eh-home__logo--day { display: none; }
-    :root:not([data-theme="light"]) .eh-home__logo--night { display: block; }
-}
-:root[data-theme="dark"] .eh-home__logo--day { display: none; }
-:root[data-theme="dark"] .eh-home__logo--night { display: block; }
-.eh-home__back { display: flex; flex-wrap: wrap; justify-content: flex-end; column-gap: var(--eh-space-2); margin: 0; padding: 0; list-style: none; }
-.eh-home__back a, .eh-home__more a { display: inline-flex; align-items: center; min-height: var(--eh-target); padding: 0 var(--eh-space-2); color: var(--eh-ink-2); font-weight: 600; text-decoration: underline; text-decoration-color: var(--eh-rule-strong); border-radius: var(--eh-radius-sm); }
-.eh-home__back a:hover, .eh-home__more a:hover { color: var(--eh-ink); text-decoration-color: currentColor; }
-
-/* Lead: headline, welcome, the one action; the route beside it on wide screens. */
-.eh-home__lead { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-10); margin-top: var(--eh-space-6); }
-@media (min-width: 1100px) { .eh-home__lead { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--eh-space-16); align-items: start; } }
-.eh-home__title { font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem); line-height: 0.95; letter-spacing: -0.015em; margin: 0; max-width: 14em; }
-.eh-home__welcome { margin: var(--eh-space-5) 0 0; font-size: var(--eh-text-lg); line-height: 1.5; color: var(--eh-ink); max-width: 56ch; }
-.eh-home__welcome + .eh-home__welcome { margin-top: var(--eh-space-2); color: var(--eh-ink-2); }
-.eh-home__notice { margin: var(--eh-space-5) 0 0; padding: var(--eh-space-3) var(--eh-space-4); max-width: 56ch; border-radius: var(--eh-radius); background: var(--eh-caution-bg); color: var(--eh-caution); font-weight: 600; }
-.eh-home__act { display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-3) var(--eh-space-5); margin-top: var(--eh-space-8); }
-.eh-home__act .eh-btn { min-height: 56px; padding-inline: var(--eh-space-8); font-size: var(--eh-text-lg); }
-.eh-home__more { display: flex; flex-wrap: wrap; column-gap: var(--eh-space-2); margin: 0; padding: 0; list-style: none; }
-@media (max-width: 479.98px) { .eh-home__act .eh-btn { width: 100%; } }
-
-/* The route: a panel on the surface tone, one radius, no shadow. */
-.eh-home__route { background: var(--eh-surface); border-radius: var(--eh-radius); padding: var(--eh-space-6); min-width: 0; }
-.eh-home__route > .eh-h2 { margin-bottom: var(--eh-space-5); }
-.eh-home__route .eh-stepper__label { overflow-wrap: anywhere; }
-.eh-home__route .eh-stepper__step[data-state="todo"] .eh-stepper__label { color: var(--eh-ink); font-weight: 600; }
-.eh-home__route .eh-stepper__meta { margin-top: 2px; max-width: 48ch; }
-.eh-home__route-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-2) var(--eh-space-4); margin-top: var(--eh-space-5); padding-top: var(--eh-space-4); border-top: 1px solid var(--eh-rule); color: var(--eh-ink-2); font-size: var(--eh-text-sm); }
-.eh-home__route-foot .eh-money { color: var(--eh-ink); font-weight: 700; font-size: var(--eh-text-md); }
-.eh-home__route .eh-empty { padding: 0; }
-
-/* Context: figures as sentence rows, the ride table. */
-.eh-home__context { margin-top: var(--eh-space-16); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-10); }
-.eh-home__block { min-width: 0; }
-.eh-home__block > .eh-h2 { margin-bottom: var(--eh-space-4); }
-.eh-home__block .eh-statline dd { font-family: var(--eh-font-display); font-size: var(--eh-text-3xl); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums lining-nums; margin: 0; }
-.eh-home__block .eh-statline { column-gap: var(--eh-space-10); row-gap: var(--eh-space-4); }
-.eh-home__note { margin: var(--eh-space-3) 0 0; color: var(--eh-ink-2); font-size: var(--eh-text-sm); max-width: 68ch; }
-.eh-home__table { width: 100%; min-width: 44rem; border-collapse: collapse; font-size: var(--eh-text-sm); }
-.eh-home__table th { text-align: left; font-weight: 600; color: var(--eh-ink-2); padding: var(--eh-space-2) var(--eh-space-4) var(--eh-space-2) 0; border-bottom: 1px solid var(--eh-rule-strong); white-space: nowrap; }
-.eh-home__table td { padding: var(--eh-space-3) var(--eh-space-4) var(--eh-space-3) 0; border-bottom: 1px solid var(--eh-rule); vertical-align: top; }
-.eh-home__table :is(th, td):last-child { padding-right: 0; }
-.eh-home__table .eh-home__num { text-align: right; font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
-.eh-home__table a { font-weight: 600; text-decoration: underline; text-decoration-color: var(--eh-rule-strong); }
-.eh-home__table a:hover { text-decoration-color: currentColor; }
-.eh-home__table .eh-home__to { display: block; color: var(--eh-ink-2); }
-
-/* Narrow screens: stand-alone links and row links reach the 44px target. */
-@media (max-width: 859.98px) {
-    .eh-home__table td:first-child a, .eh-home__note > .eh-link:only-child { display: inline-flex; align-items: center; min-height: var(--eh-target); }
-    .eh-home__table .eh-home__to { margin-top: -8px; }
+/* ---------- arrive: one sentence of state, one action, the route line ---------- */
+.eh-dash__arrive { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-4); }
+.eh-dash__arrive-txt { display: grid; gap: var(--eh-space-3); align-content: start; }
+.eh-dash__title { margin: 0; font-family: var(--eh-font-display); font-weight: 700; font-size: clamp(2rem, 1.4rem + 2vw, 2.5rem); line-height: 1; letter-spacing: -0.01em; text-wrap: balance; max-width: 20ch; }
+.eh-dash__lede { margin: 0; max-width: 62ch; color: var(--eh-ink-2); }
+.eh-dash__welcome { margin: 0; font-size: var(--eh-text-sm); color: var(--eh-ink-3); }
+.eh-dash__notice { margin: 0; max-width: 62ch; color: var(--eh-caution); font-weight: 600; }
+.eh-dash__arrive-act { display: flex; flex-wrap: wrap; align-items: center; gap: var(--eh-space-2) var(--eh-space-6); }
+.eh-dash__spaces { display: flex; flex-wrap: wrap; column-gap: var(--eh-space-2); margin: 0; padding: 0; list-style: none; }
+.eh-dash__spaces a, .eh-dash__link { display: inline-flex; align-items: center; min-height: var(--eh-target); padding: 0 var(--eh-space-2); color: var(--eh-ink-2); font-weight: 600; text-decoration: underline; text-decoration-color: var(--eh-rule-strong); text-underline-offset: 3px; border-radius: var(--eh-radius-sm); }
+.eh-dash__spaces a:hover, .eh-dash__link:hover { color: var(--eh-ink); text-decoration-color: currentColor; }
+@media (max-width: 639.98px) { .eh-dash__arrive-act .eh-btn { width: 100%; } }
+@media (min-width: 1024px) {
+    .eh-dash__arrive { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--eh-space-12); align-items: end; }
+    .eh-dash__arrive-act { justify-content: flex-end; }
 }
 
-/* One authored moment: the headline block and the action settle in. Visible by default; none with reduced motion. */
+/* The route line: stops joined by a line, spanning the band. It is the divider, drawn from real state. */
+.eh-dash__route { position: relative; grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; height: 28px; margin-top: var(--eh-space-2); }
+.eh-dash__route-line { position: absolute; left: 14px; right: 14px; top: 50%; height: 2px; margin-top: -1px; background: var(--eh-rule-strong); transform-origin: left center; }
+.eh-dash__route-stop { position: relative; z-index: 1; width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--eh-accent); background: var(--eh-ground); box-sizing: border-box; flex: none; }
+.eh-dash__route-stop--done { background: var(--eh-accent); }
+.eh-dash__route-stop--todo { border-color: var(--eh-rule-strong); }
+.eh-dash__route-stop:last-child { background: var(--eh-signal); border-color: var(--eh-ink); }
+.eh-dash__route-stop--done:last-child { background: var(--eh-accent); border-color: var(--eh-accent); }
+.eh-dash__route-stop--todo:last-child { background: var(--eh-ground); border-color: var(--eh-rule-strong); }
+
+/* ---------- desk: master and detail ---------- */
+.eh-dash__desk { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--eh-space-8); padding-top: var(--eh-space-6); }
+@media (min-width: 1100px) {
+    .eh-dash__desk { grid-template-columns: minmax(0, 7fr) minmax(19rem, 4fr); gap: 0 var(--eh-space-8); }
+    .eh-dash__detail { border-left: 1px solid var(--eh-rule); padding-left: var(--eh-space-8); }
+}
+@media (max-width: 1099.98px) { .eh-dash__detail { border-top: 1px solid var(--eh-rule); padding-top: var(--eh-space-6); } }
+.eh-dash__main, .eh-dash__detail { min-width: 0; }
+.eh-dash__block + .eh-dash__block, .eh-dash__trip + .eh-dash__block { margin-top: var(--eh-space-8); }
+.eh-dash__block-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--eh-space-4); margin: 0 0 var(--eh-space-2); }
+.eh-dash__block-head h2, .eh-dash__detail h2, .eh-dash__trip h2 { margin: 0 0 var(--eh-space-2); font-size: var(--eh-text-xl); line-height: 1.2; font-weight: 700; font-family: var(--eh-font-ui); }
+.eh-dash__block-head h2 { margin: 0; }
+.eh-dash__block-head .eh-dash__link { min-height: 32px; font-size: var(--eh-text-sm); }
+.eh-dash__note { margin: var(--eh-space-3) 0 0; color: var(--eh-ink-2); font-size: var(--eh-text-sm); max-width: 62ch; }
+.eh-dash__calm { margin: 0 0 var(--eh-space-3); color: var(--eh-ink-2); }
+.eh-dash__state-word { font-size: var(--eh-text-xs); font-weight: 600; white-space: nowrap; color: var(--eh-ink-3); }
+.eh-dash__state-word--go { color: var(--eh-go); }
+
+/* rows: hairlines on shared heights; the whole row is the link */
+.eh-dash__rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--eh-rule-strong); }
+.eh-dash__rows > li { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--eh-space-4); min-height: 52px; padding: var(--eh-space-2) var(--eh-space-3); border-bottom: 1px solid var(--eh-rule); transition: background-color 120ms var(--eh-ease); }
+.eh-dash__rows > li:hover:has(a) { background: var(--eh-surface-2); }
+.eh-dash__row-link { font-weight: 600; text-decoration: none; }
+.eh-dash__row-link::after { content: ""; position: absolute; inset: 0; }
+.eh-dash__val { font-family: var(--eh-font-display); font-weight: 700; font-size: var(--eh-text-xl); line-height: 1; font-variant-numeric: tabular-nums lining-nums; }
+.eh-dash__val--zero { color: var(--eh-ink-3); }
+@media (max-width: 639.98px) { .eh-dash__rows > li { min-height: 56px; } }
+
+/* setup line: the route motif, stops joined by a line */
+.eh-dash__setup { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--eh-rule-strong); }
+.eh-dash__setup > li { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: var(--eh-space-3); align-items: start; min-height: 52px; padding: var(--eh-space-3) var(--eh-space-3) var(--eh-space-3) 0; border-bottom: 1px solid var(--eh-rule); }
+.eh-dash__setup > li::before { content: ""; position: absolute; left: 13px; top: 0; bottom: 0; width: 2px; background: var(--eh-rule); }
+.eh-dash__setup > li[data-state="done"]::before { background: var(--eh-accent); }
+.eh-dash__setup > li:first-child::before { top: 50%; }
+.eh-dash__setup > li:last-child::before { bottom: 50%; }
+.eh-dash__stop { position: relative; z-index: 1; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--eh-rule-strong); background: var(--eh-ground); color: var(--eh-accent-ink); }
+[data-state="done"] > .eh-dash__stop { background: var(--eh-accent); border-color: var(--eh-accent); }
+.eh-dash__stop svg { width: 16px; height: 16px; }
+.eh-dash__setup b { display: block; font-weight: 600; }
+.eh-dash__setup small { display: block; color: var(--eh-ink-2); font-size: var(--eh-text-sm); max-width: 58ch; }
+.eh-dash__setup .eh-dash__link { min-height: 32px; font-size: var(--eh-text-sm); }
+
+/* trip strip: the one live handoff row (static) */
+.eh-dash__trip { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--eh-space-4); align-items: center; padding: var(--eh-space-4) 0; border-top: 1px solid var(--eh-rule-strong); border-bottom: 1px solid var(--eh-rule); margin-bottom: var(--eh-space-8); }
+.eh-dash__trip p { margin: 0; color: var(--eh-ink-2); font-size: var(--eh-text-sm); overflow-wrap: anywhere; }
+@media (max-width: 639.98px) { .eh-dash__trip { grid-template-columns: 1fr; } }
+
+/* ledger table */
+.eh-dash__ledger { width: 100%; border-collapse: collapse; }
+.eh-dash__ledger th { height: 32px; padding: 0 var(--eh-space-3); text-align: left; font-size: var(--eh-text-xs); font-weight: 600; color: var(--eh-ink-2); border-bottom: 1px solid var(--eh-rule-strong); white-space: nowrap; }
+.eh-dash__ledger tbody tr { position: relative; }
+.eh-dash__ledger td { height: 52px; padding: var(--eh-space-2) var(--eh-space-3); border-bottom: 1px solid var(--eh-rule); vertical-align: middle; transition: background-color 120ms var(--eh-ease); }
+.eh-dash__ledger tbody tr:hover td { background: var(--eh-surface-2); }
+.eh-dash__ledger tr[aria-selected="true"] td { background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink, var(--eh-ink)); }
+.eh-dash__ledger td a { font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.eh-dash__ledger td a::after { content: ""; position: absolute; inset: 0; }
+.eh-dash__to { display: block; color: var(--eh-ink-2); font-size: var(--eh-text-xs); font-weight: 400; overflow-wrap: anywhere; }
+.eh-dash__ledger [aria-selected="true"] .eh-dash__to { color: inherit; }
+.eh-dash__num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums lining-nums; }
+.eh-dash__m-only { display: none; }
+@media (max-width: 639.98px) {
+    .eh-dash__ledger :is(th, td):nth-child(2), .eh-dash__ledger :is(th, td):nth-child(n+4) { display: none; }
+    .eh-dash__ledger td { height: 64px; }
+    .eh-dash__m-only { display: block; }
+}
+@media (min-width: 640px) and (max-width: 1099.98px) { .eh-dash__hide-md { display: none; } }
+
+/* facts: one label/value layout */
+.eh-dash__facts { margin: 0; display: grid; grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr); border-top: 1px solid var(--eh-rule-strong); }
+.eh-dash__facts dt, .eh-dash__facts dd { margin: 0; min-height: 40px; padding: var(--eh-space-2) 0; border-bottom: 1px solid var(--eh-rule); display: flex; align-items: center; }
+.eh-dash__facts dt { color: var(--eh-ink-2); font-size: var(--eh-text-sm); }
+.eh-dash__facts dd { font-weight: 600; gap: var(--eh-space-2); flex-wrap: wrap; font-variant-numeric: tabular-nums lining-nums; }
+.eh-dash__facts dd.eh-dash__big { font-family: var(--eh-font-display); font-weight: 700; font-size: var(--eh-text-2xl); line-height: 1; }
+.eh-dash__facts dd.eh-dash__big .eh-money { font-size: inherit; }
+.eh-dash__est { font-family: var(--eh-font-ui); font-size: var(--eh-text-sm); font-weight: 500; color: var(--eh-ink-2); }
+.eh-dash__facts + .eh-dash__facts { margin-top: var(--eh-space-4); }
+.eh-dash__detail .eh-dash__block + .eh-dash__block { margin-top: var(--eh-space-8); }
+.eh-dash__after { margin: var(--eh-space-4) 0 0; }
+.eh-dash__stops { list-style: none; margin: 0 0 var(--eh-space-4); padding: 0; }
+.eh-dash__stops li { position: relative; padding: 0 0 var(--eh-space-4) var(--eh-space-8); min-height: 52px; }
+.eh-dash__stops li::before { content: ""; position: absolute; left: 8px; top: 18px; bottom: -2px; width: 2px; background: var(--eh-accent); }
+.eh-dash__stops li:last-child::before { display: none; }
+.eh-dash__stops li::after { content: ""; position: absolute; left: 0; top: 2px; width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--eh-accent); background: var(--eh-ground); box-sizing: border-box; }
+.eh-dash__stops li:last-child::after { background: var(--eh-signal); border-color: var(--eh-ink); }
+.eh-dash__stops b { display: block; font-weight: 600; overflow-wrap: anywhere; }
+.eh-dash__stops small { color: var(--eh-ink-2); font-size: var(--eh-text-xs); }
+
+/* foot: live counts only */
+.eh-dash__foot { margin-top: var(--eh-space-12); padding-top: var(--eh-space-4); border-top: 1px solid var(--eh-rule); display: flex; flex-wrap: wrap; gap: var(--eh-space-2) var(--eh-space-6); color: var(--eh-ink-2); font-size: var(--eh-text-sm); }
+.eh-dash__foot a { color: var(--eh-ink-2); }
+
+/* the sticky/fixed topbar is shared chrome; the dashboard owns only its content */
+.eh-dash .eh-empty { padding: var(--eh-space-4) 0; }
+.eh-dash a.eh-btn:active { transform: scale(0.98); }
+
+/* ---------- motion: one arrival, then still ---------- */
 @media (prefers-reduced-motion: no-preference) {
-    .eh-home__enter { animation: eh-home-enter 420ms var(--eh-ease) backwards; }
-    .eh-home__enter--late { animation-delay: 80ms; }
-    @keyframes eh-home-enter { from { opacity: 0.4; transform: translateY(12px); } }
+    /* 1. the headline settles, the lede and the action follow (60 ms steps) */
+    .eh-dash__title, .eh-dash__lede, .eh-dash__welcome, .eh-dash__notice, .eh-dash__arrive-act { animation: eh-dash-rise 320ms var(--eh-ease) backwards; }
+    .eh-dash__lede { animation-delay: 60ms; }
+    .eh-dash__welcome, .eh-dash__notice { animation-delay: 110ms; }
+    .eh-dash__arrive-act { animation-delay: 140ms; }
+    /* 2. the route line is drawn left to right; each stop lands as the line reaches it */
+    .eh-dash__route-line { animation: eh-dash-draw 520ms var(--eh-ease) 120ms backwards; }
+    .eh-dash__route-stop { animation: eh-dash-pop 240ms var(--eh-ease) backwards; animation-delay: calc(120ms + (var(--i, 0) / max(var(--stops, 2) - 1, 1)) * 440ms); }
+    /* 3. the desk blocks arrive, then the ledger rows stagger in */
+    .eh-dash__main > .eh-dash__block, .eh-dash__detail > .eh-dash__block { animation: eh-dash-rise 280ms var(--eh-ease) 200ms backwards; }
+    .eh-dash__ledger tbody tr, .eh-dash__rows > li, .eh-dash__setup > li { animation: eh-dash-rise 240ms var(--eh-ease) backwards; animation-delay: calc(260ms + var(--i, 0) * 28ms); }
+    .eh-dash__rows > li:nth-child(2) { --i: 1; } .eh-dash__rows > li:nth-child(3) { --i: 2; } .eh-dash__rows > li:nth-child(4) { --i: 3; }
+    .eh-dash__setup > li:nth-child(2) { --i: 1; } .eh-dash__setup > li:nth-child(3) { --i: 2; } .eh-dash__setup > li:nth-child(4) { --i: 3; } .eh-dash__setup > li:nth-child(5) { --i: 4; }
+    /* 4. the selected-ride panel settles each time a row is chosen (a fresh load of ?ride=) */
+    .eh-dash__panel .eh-dash__stops, .eh-dash__panel .eh-dash__facts { animation: eh-dash-rise 200ms var(--eh-ease) 260ms backwards; }
+    @keyframes eh-dash-rise { from { opacity: 0; transform: translateY(8px); } }
+    @keyframes eh-dash-draw { from { transform: scaleX(0); } }
+    @keyframes eh-dash-pop { from { opacity: 0; transform: scale(0.6); } }
+}
+@media (prefers-reduced-motion: reduce) {
+    .eh-dash *, .eh-dash *::before, .eh-dash *::after { animation: none !important; transition: none !important; }
 }
