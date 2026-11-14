@@ -14,15 +14,7 @@
 
     <form method="GET" action="{{ route('rides.index') }}" style="margin-bottom:1.5rem;display:flex;gap:0.6rem;max-width:480px;">
         <div style="position:relative;flex:1;">
-            <x-eh.icon name="search" size="17" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#a1a1aa;" />
-            <input aria-label="Search rides"
-                type="text"
-                name="q"
-                value="{{ $search }}"
-                placeholder="Search pickup, dropoff, driver, or passenger…"
-                class="dot-input"
-                style="padding-left:34px;"
-            >
+            <x-dot.filter-search name="q" :value="$search" label="Search rides" placeholder="Search pickup, dropoff, driver, or passenger…" />
         </div>
         <button type="submit" class="dot-btn dot-btn-primary">Search</button>
         @if($search !== '')

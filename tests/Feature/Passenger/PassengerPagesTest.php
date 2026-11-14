@@ -193,7 +193,10 @@ class PassengerPagesTest extends TestCase
 
     private function assertOnlyOwnHostsAndTiles(TestResponse $page): void
     {
-        preg_match_all('#(?:src|href)="(https?://[^"/]+)#', $page->getContent(), $m);
+        // The header's "Dot Apps" switcher (shared dot-ui) is the one place that links to InfoDot, always through its /go;
+        // it is taken out first and checked on its own (DotUiHeaderTest), so everything else still has to be own-host.
+        $html = preg_replace('/<div class="dsw dsw--header".*?<p class="dsw-sr" data-dsw-live[^>]*><\/p>\s*<\/div>\s*<\/div>\s*<\/div>/s', '', $page->getContent());
+        preg_match_all('#(?:src|href)="(https?://[^"/]+)#', $html, $m);
         foreach (array_unique($m[1]) as $origin) {
             $this->assertSame(rtrim(config('app.url'), '/'), $origin, 'no third-party host is loaded');
         }
