@@ -34,6 +34,7 @@ body {
     --dsw-ink-2: var(--eh-ink-2);
     --dsw-rule: var(--eh-rule-strong);
     --dsw-tile-ink: #1b2124;
+    --dsw-tile-tag-ink: #f6f4ee; /* the tag is dark ink with paper text: paper must stay light when the sheet is dark */
 }
 
 /* Where the switcher sits. The panel hangs from the nearest positioned ancestor, which is each shell's header. */
