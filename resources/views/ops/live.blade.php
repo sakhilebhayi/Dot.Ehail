@@ -19,24 +19,11 @@
             </div>
             <div class="ops-head__actions">
                 <span class="ops-stamp" data-live-stamp>Updated {{ \Illuminate\Support\Carbon::parse($board['generated_at'])->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('H:i:s') }}</span>
-                @can('ops.rides.view')<x-eh.button size="sm" variant="secondary" :href="route('ops.rides')" icon="list">All rides</x-eh.button>@endcan
+                @can('ops.rides.view')<x-eh.button size="sm" variant="primary" :href="route('ops.rides')" icon="list">All rides</x-eh.button>@endcan
             </div>
         </header>
 
         @include('ops.partials.takeover', ['items' => $board['takeover'] ?? []])
-
-        <dl class="ops-figures" aria-label="Right now">
-            <div data-tone="{{ ($c['searching'] ?? 0) > 0 ? 'caution' : '' }}"><dt>Waiting for a driver</dt><dd data-live-count="searching">{{ $c['searching'] }}</dd></div>
-            <div><dt>Rides with a driver</dt><dd data-live-count="on_trip">{{ $c['on_trip'] }}</dd></div>
-            <div data-tone="{{ ($c['needs_review'] ?? 0) > 0 ? 'stop' : '' }}"><dt>Needs review</dt><dd data-live-count="needs_review">{{ $c['needs_review'] }}</dd></div>
-            <div data-tone="{{ ($c['stuck'] ?? 0) > 0 ? 'stop' : '' }}"><dt>Stuck</dt><dd data-live-count="stuck">{{ $c['stuck'] }}</dd></div>
-            <div><dt>Drivers online, free</dt><dd data-live-count="drivers_online">{{ $c['drivers_online'] }}</dd></div>
-            <div><dt>Drivers on a trip</dt><dd data-live-count="drivers_on_trip">{{ $c['drivers_on_trip'] }}</dd></div>
-            <div><dt title="No heartbeat within {{ config('ehail_dispatch.heartbeat_stale_seconds', 45) }} seconds: not offered rides">No signal</dt><dd data-live-count="drivers_stale">{{ $c['drivers_stale'] }}</dd></div>
-            @isset($c['incidents'])
-                <div data-tone="{{ $c['incidents'] > 0 ? 'stop' : '' }}"><dt><a href="{{ route('ops.safety') }}">Open incidents</a></dt><dd data-live-count="incidents">{{ $c['incidents'] }}</dd></div>
-            @endisset
-        </dl>
 
         <div class="ops-live">
             <section class="ops-panel ops-panel--flush" aria-labelledby="live-map-h">
@@ -60,6 +47,21 @@
             </section>
 
             <div class="ops-stack">
+                <section class="ops-now" aria-labelledby="live-now-h">
+                    <h2 id="live-now-h" class="ops-now__h">Now</h2>
+            <dl class="ops-figures ops-figures--list" aria-label="Right now">
+                <div data-tone="{{ ($c['searching'] ?? 0) > 0 ? 'caution' : '' }}"><dt>Waiting for a driver</dt><dd data-live-count="searching">{{ $c['searching'] }}</dd></div>
+                <div><dt>Rides with a driver</dt><dd data-live-count="on_trip">{{ $c['on_trip'] }}</dd></div>
+                <div data-tone="{{ ($c['needs_review'] ?? 0) > 0 ? 'stop' : '' }}"><dt>Needs review</dt><dd data-live-count="needs_review">{{ $c['needs_review'] }}</dd></div>
+                <div data-tone="{{ ($c['stuck'] ?? 0) > 0 ? 'stop' : '' }}"><dt>Stuck</dt><dd data-live-count="stuck">{{ $c['stuck'] }}</dd></div>
+                <div><dt>Drivers online, free</dt><dd data-live-count="drivers_online">{{ $c['drivers_online'] }}</dd></div>
+                <div><dt>Drivers on a trip</dt><dd data-live-count="drivers_on_trip">{{ $c['drivers_on_trip'] }}</dd></div>
+                <div><dt title="No heartbeat within {{ config('ehail_dispatch.heartbeat_stale_seconds', 45) }} seconds: not offered rides">No signal</dt><dd data-live-count="drivers_stale">{{ $c['drivers_stale'] }}</dd></div>
+                @isset($c['incidents'])
+                    <div data-tone="{{ $c['incidents'] > 0 ? 'stop' : '' }}"><dt><a href="{{ route('ops.safety') }}">Open incidents</a></dt><dd data-live-count="incidents">{{ $c['incidents'] }}</dd></div>
+                @endisset
+            </dl>
+                </section>
                 <section class="ops-panel ops-panel--flush" aria-labelledby="q-review-h">
                     <div class="ops-panel__head"><h2 id="q-review-h">Needs review</h2><span class="ops-panel__meta">oldest first</span></div>
                     @include('ops.partials.queue', ['key' => 'needs_review', 'items' => $board['queues']['needs_review'], 'empty' => 'Nothing is flagged for review.'])
