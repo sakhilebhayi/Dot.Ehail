@@ -47,7 +47,7 @@
             <div class="lp-hero__card">
             <header class="lp-bar">
                     <div class="lp-bar__in">
-                        <x-eh.logo href="{{ url('/') }}" />
+                        <x-eh.logo href="{{ url('/') }}" size="96" />
                         <nav class="lp-bar__links" aria-label="Sections">
                             <a href="#fares">Fares</a>
                             <a href="#safety">Safety</a>
