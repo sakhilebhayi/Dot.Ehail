@@ -8,7 +8,7 @@
 
 @section('bar')
     <header class="eh-error__bar">
-        <x-eh.logo href="{{ url('/') }}" />
+        <x-eh.logo href="{{ url('/') }}" size="88" />
         @auth
             <form method="POST" action="{{ route('logout') }}" class="eh-gate__out">
                 @csrf

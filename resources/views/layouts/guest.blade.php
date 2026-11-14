@@ -11,7 +11,7 @@
     <a class="eh-skip" href="#main">Skip to content</a>
     <div class="eh-guest">
         <aside class="eh-guest__aside" aria-label="Dot.Ehail">
-            <x-eh.logo href="{{ url('/') }}" size="40" />
+            <x-eh.logo href="{{ url('/') }}" size="120" tone="night" />
             <ol class="eh-guest__line">
                 <li><span class="eh-guest__stop" aria-hidden="true"></span><span>Your journey.<small>Every part of the fare is on screen before you request.</small></span></li>
                 <li><span class="eh-guest__stop" aria-hidden="true"></span><span>Your safety.<small>Trip PIN, live trip sharing and SOS on every ride.</small></span></li>

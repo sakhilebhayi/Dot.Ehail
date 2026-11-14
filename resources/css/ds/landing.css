@@ -186,12 +186,9 @@ html.lp body { font-size: var(--lp-step-2); }
 
 /* Footer: the mark, built large */
 .lp-foot { background: var(--eh-accent); color: var(--eh-accent-ink); padding: var(--eh-space-12) 0 var(--eh-space-8); }
-.lp-foot__mark { display: flex; align-items: center; gap: 4px; height: clamp(120px, 26svh, 300px); }
-.lp-foot__disc { height: 100%; aspect-ratio: 1; border-radius: 50%; background: var(--eh-brand-yellow); display: grid; place-items: center; }
-.lp-foot__disc svg { width: 58%; height: auto; }
-.lp-foot__chev { height: 100%; aspect-ratio: 0.62; }
-.lp-foot__word { margin-left: var(--eh-space-6); font-family: var(--eh-font-display); font-weight: 700; font-size: clamp(3rem, 10vw, 9rem); line-height: 0.85; letter-spacing: -0.02em; }
-.lp-foot__word span { color: var(--eh-signal); }
+.lp-foot__mark { display: block; }
+/* The original light-on-dark file, shown whole; the clear space it carries is trimmed with margins, not by cropping. */
+.lp-foot__logo { display: block; width: auto; --eh-logo: clamp(160px, 30svh, 300px); height: var(--eh-logo); margin: calc(var(--eh-logo) * -0.14) 0 calc(var(--eh-logo) * -0.14) calc(var(--eh-logo) * -0.22); }
 .lp-foot__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--eh-space-6); margin-top: var(--eh-space-10); }
 @media (min-width: 960px) { .lp-foot__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .lp-foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
@@ -201,7 +198,6 @@ html.lp body { font-size: var(--lp-step-2); }
 .lp-foot__fine { margin-top: var(--eh-space-10); display: grid; gap: var(--eh-space-3); font-size: var(--lp-step-1); }
 .lp-foot__fine p { margin: 0; max-width: 72ch; }
 .lp-foot__fine a { min-height: 0; display: inline; }
-@media (max-width: 599px) { .lp-foot__word { display: none; } }
 
 /* Motion: one reveal for the parts of each section, visible by default without script */
 .js [data-lp-reveal] > * { opacity: 0; transform: translateY(24px); transition: opacity 600ms var(--eh-ease), transform 600ms var(--eh-ease); }

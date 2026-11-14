@@ -15,7 +15,7 @@
     <article class="bz-doc" aria-labelledby="bz-doc-title">
         <header class="bz-doc__head">
             <div>
-                <x-eh.logo />
+                <x-eh.logo :size="56" tone="day" />
                 <h1 class="bz-doc__title" id="bz-doc-title">Statement</h1>
                 <p style="margin:0">{{ $statement->number }} · {{ $s['period_label'] ?? $statement->period }}</p>
             </div>

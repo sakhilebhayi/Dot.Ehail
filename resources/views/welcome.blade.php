@@ -47,7 +47,7 @@
             <div class="lp-hero__card">
             <header class="lp-bar">
                     <div class="lp-bar__in">
-                        <x-eh.logo href="{{ url('/') }}" size="34" />
+                        <x-eh.logo href="{{ url('/') }}" size="96" />
                         <nav class="lp-bar__links" aria-label="Sections">
                             <a href="#fares">Fares</a>
                             <a href="#safety">Safety</a>
@@ -230,10 +230,8 @@
 
     <footer class="lp-foot">
         <div class="lp-wrap">
-            <div class="lp-foot__mark" aria-hidden="true">
-                <span class="lp-foot__disc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color: var(--eh-brand-white)">{!! \App\Support\Ui\Icons::body('car-sedan') !!}</svg></span>
-                <svg class="lp-foot__chev" viewBox="0 0 62 100"><path d="M14 12l34 38-34 38" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" style="color: var(--eh-brand-green)"/></svg>
-                <span class="lp-foot__word">Dot<span>.</span>Ehail</span>
+            <div class="lp-foot__mark">
+                <img class="lp-foot__logo" src="{{ asset('images/logo-light.png') }}" alt="Dot.Ehail" width="1181" height="886">
             </div>
             <div class="lp-foot__grid">
                 <nav aria-label="Ride">

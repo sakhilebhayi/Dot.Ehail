@@ -31,7 +31,7 @@
 </head>
 <body class="shr">
 <header class="shr-top">
-    <x-eh.logo :size="28" />
+    <x-eh.logo :size="56" />
     <span class="shr-top__tag">Shared trip</span>
 </header>
 

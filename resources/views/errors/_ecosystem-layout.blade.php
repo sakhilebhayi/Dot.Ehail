@@ -39,7 +39,7 @@
                 @yield('bar')
             @else
             <header class="eh-error__bar">
-                <x-eh.logo href="{{ url('/') }}" />
+                <x-eh.logo href="{{ url('/') }}" size="88" />
                 @auth
                     <x-eh.button size="sm" :href="Route::has('home') ? route('home') : route('dashboard')">Open the app</x-eh.button>
                 @else
