@@ -40,6 +40,10 @@ class PromotionAndCatalogTest extends TestCase
 
     public function test_promotion_eligibility_rules(): void
     {
+        // Pin the clock: the quotes below are at fixed instants on 2026-11-10, and fixture rule sets are effective from
+        // now() - 1 day, so an unpinned clock makes them "not yet effective" on any real date after 2026-11-11.
+        $this->travelTo(CarbonImmutable::parse('2026-11-10 12:00', 'Africa/Johannesburg'));
+
         $this->publishedRuleSet();
         $this->fakeRoute();
         $passenger = User::factory()->withPersonalTeam()->create();
@@ -131,6 +135,10 @@ class PromotionAndCatalogTest extends TestCase
 
     public function test_availability_only_lists_offered_priced_categories_with_supply(): void
     {
+        // Pin the clock: the quotes below are at fixed instants on 2026-11-10, and fixture rule sets are effective from
+        // now() - 1 day, so an unpinned clock makes them "not yet effective" on any real date after 2026-11-11.
+        $this->travelTo(CarbonImmutable::parse('2026-11-10 12:00', 'Africa/Johannesburg'));
+
         $this->publishedRuleSet(['ride_category_id' => $this->category('economy')->id]);
         $this->publishedRuleSet(['ride_category_id' => $this->category('premium')->id]);
         $this->publishedRuleSet(['ride_category_id' => $this->category('xl')->id]);
