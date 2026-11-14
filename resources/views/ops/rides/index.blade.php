@@ -17,7 +17,7 @@
             <x-eh.field label="From" name="from" type="date" :value="$filters['from'] ?? null" />
             <x-eh.field label="To" name="to" type="date" :value="$filters['to'] ?? null" />
             <x-eh.select label="Status" name="status" :options="$statuses" placeholder="Any status" :value="$filters['status'] ?? ''" />
-            <div class="eh-field eh-field--grow"><label class="eh-field__label" for="f-q">Ride number, person or address</label><input id="f-q" class="eh-input" type="search" name="q" value="{{ $filters['q'] ?? '' }}" maxlength="80"></div>
+            <div class="eh-field eh-field--grow"><label class="eh-field__label" for="f-q">Ride number, person or address</label><x-dot.filter-search id="f-q" name="q" :value="$filters['q'] ?? ''" label="Ride number, person or address" placeholder="" maxlength="80" /></div>
             <x-eh.button type="submit" size="sm" icon="filter">Apply</x-eh.button>
             @if (array_filter(\Illuminate\Support\Arr::except($filters, ['view'])))<x-eh.button size="sm" variant="ghost" :href="route('ops.rides', ['view' => 'all'])">Clear</x-eh.button>@endif
         </form>

@@ -6,6 +6,7 @@
 @php
     $navItems = app(\App\Support\Ui\Navigation::class)->items('driver', auth()->user());
     $navLabel = 'Driver';
+    $appsModel = \App\Support\Ui\AppsSwitcher::model(auth()->user(), request()->route()?->getName());
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh" data-theme-key="eh-theme-drive" data-theme-default="night" data-sw="on">
@@ -20,6 +21,7 @@
         <header class="eh-topbar">
             <div class="eh-topbar__brand"><x-eh.logo :href="Route::has('drive.home') ? route('drive.home') : url('/')" /></div>
             @include('layouts.partials.eh-topnav')
+            <div class="eh-topbar__apps">@include('layouts.partials.eh-apps', ['appsModel' => $appsModel])</div>
             <div class="eh-topbar__slot">
                 @isset($safety){{ $safety }}@else @include('layouts.partials.eh-safety', ['safetyRoute' => 'drive.safety']) @endisset
                 <x-comms::bell surface="driver" />
