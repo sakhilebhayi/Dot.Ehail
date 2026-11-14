@@ -140,7 +140,7 @@
     @endif
     <header>
         <div>
-            <x-eh.logo :size="28" />
+            <x-eh.logo :size="56" tone="day" />
             <h1>{{ $isRide ? 'Trip receipt' : 'Cancellation fee receipt' }}</h1>
             @if($operatorLine !== '')<p class="operator">{{ $operatorLine }}</p>@endif
         </div>

@@ -195,8 +195,6 @@ html.eh-drawer-open .eh-side__scrim { opacity: 1; visibility: visible; transitio
         min-height: 100dvh; padding: var(--eh-space-10);
         background: var(--eh-accent); color: var(--eh-accent-ink);
     }
-    .eh-guest__aside .eh-logo { color: var(--eh-accent-ink); }
-    .eh-guest__aside .eh-logo__word span { color: var(--eh-signal); }
     .eh-guest__main { align-content: center; padding: var(--eh-space-12) var(--eh-space-10); }
     .eh-guest__top .eh-logo { visibility: hidden; }
 }

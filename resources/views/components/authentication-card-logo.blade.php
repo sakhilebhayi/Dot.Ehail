@@ -1,1 +1,1 @@
-<x-eh.logo href="{{ url('/') }}" size="48" />
+<x-eh.logo href="{{ url('/') }}" />

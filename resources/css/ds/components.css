@@ -359,14 +359,20 @@ button.eh-row { width: 100%; border: 0; background: none; text-align: left; curs
 .eh-panel--quiet { background: var(--eh-surface-2); }
 .eh-panel__head { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-3); margin-bottom: var(--eh-space-4); }
 
-/* Logo (vector redraw of public/images/logo.png: yellow disc with the car, green chevron) */
-.eh-logo { display: inline-flex; align-items: center; gap: var(--eh-space-2); color: var(--eh-ink); text-decoration: none; }
-.eh-logo__mark { width: var(--eh-logo, 32px); height: auto; flex: none; }
-.eh-logo__disc { fill: var(--eh-brand-yellow); }
-.eh-logo__car { fill: var(--eh-brand-white); }
-.eh-logo__chevron { stroke: var(--eh-brand-green); }
-.eh-logo__word { font-family: var(--eh-font-display); font-weight: 700; font-size: 1.375rem; letter-spacing: 0; line-height: 1; }
-.eh-logo__word span { color: var(--eh-accent); }
+/* Logo: the original image files (public/images/logo.png, logo-light.png for dark). Size, placement and clear space only.
+   The files carry about 26% clear space left and 17% top and bottom; the negative margins trade that for layout room
+   without cropping or touching the artwork. */
+.eh-logo { display: inline-flex; align-items: center; color: var(--eh-ink); text-decoration: none; }
+.eh-logo__img { display: block; flex: none; height: var(--eh-logo, 72px); width: auto; max-width: none;
+    margin: calc(var(--eh-logo, 72px) * -0.14) 0 calc(var(--eh-logo, 72px) * -0.14) calc(var(--eh-logo, 72px) * -0.22); }
+.eh-logo__img--night { display: none; }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .eh-logo--auto .eh-logo__img--day { display: none; }
+    :root:not([data-theme="light"]) .eh-logo--auto .eh-logo__img--night { display: block; }
+}
+:root[data-theme="dark"] .eh-logo--auto .eh-logo__img--day { display: none; }
+:root[data-theme="dark"] .eh-logo--auto .eh-logo__img--night { display: block; }
+.eh-logo--night .eh-logo__img--night { display: block; }
 
 /* Bottom sheet with snap points (peek, half, full). Non-modal over the map; keyboard and reduced-motion safe. */
 .eh-sheet {
