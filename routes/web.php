@@ -17,6 +17,7 @@ use App\Http\Controllers\Ehail\RideRatingController;
 use App\Http\Controllers\Ehail\RideRequestController;
 use App\Http\Controllers\Ehail\VehicleController;
 use App\Http\Controllers\RealtimeHealthController;
+use App\Http\Middleware\EnsureCompanyEntitled;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -79,6 +80,9 @@ Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
+    // R-50: the person's company must still hold Dot.Ehail; trips in progress, safety, dispatch, location pings and
+    // payment settlement are never refused (see EnsureCompanyEntitled). Public pages and the webhook sit outside.
+    EnsureCompanyEntitled::class,
 ])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
