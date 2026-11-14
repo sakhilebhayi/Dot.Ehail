@@ -247,3 +247,14 @@ html:has(.eh-topbar) { scroll-padding-top: calc(var(--eh-topbar) + env(safe-area
 @media (max-width: 767.98px) {
     html:has(.eh-tabbar) { scroll-padding-bottom: calc(var(--eh-tabbar) + env(safe-area-inset-bottom, 0px) + var(--eh-space-2)); }
 }
+
+/* R-50: the entitlement refusal (entitlement/refused) sits on the error layout; these are its two quiet extras. */
+.eh-gate__out { margin: 0; }
+.eh-gate__out .eh-link, .eh-gate__list .eh-link { background: none; border: 0; padding: 0 var(--eh-space-2); min-height: var(--eh-target); font: inherit; font-weight: 600; color: var(--eh-ink-2); text-decoration: underline; text-decoration-color: var(--eh-rule-strong); cursor: pointer; border-radius: var(--eh-radius-sm); }
+.eh-gate__out .eh-link:hover, .eh-gate__list .eh-link:hover { color: var(--eh-ink); text-decoration-color: currentColor; }
+.eh-gate__others { margin-top: var(--eh-space-6); max-width: 32rem; }
+.eh-gate__h2 { margin: 0 0 var(--eh-space-2); font-size: var(--eh-text-md); font-weight: 600; color: var(--eh-ink-2); }
+.eh-gate__list { list-style: none; margin: 0; padding: 0; }
+.eh-gate__list li { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-3); padding: var(--eh-space-1) 0; border-bottom: 1px solid var(--eh-rule); }
+.eh-gate__list b { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.eh-gate__list form { margin: 0; flex: none; }

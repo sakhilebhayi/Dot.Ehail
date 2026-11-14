@@ -112,7 +112,7 @@ Preserved: sign-in through InfoDot, teams, the lifecycle's locking and audit app
   - Monthly statements with EFT details from configuration.
   - Spend that matches the department budget lines.
 
-**Partial:** Dot.Billing and Dot.Finance are not integrated (documented seams only).
+**Partial:** Dot.Finance is not integrated (documented seams only).
 
 ## 10. Operations command centre (brief section 18)
 
@@ -250,5 +250,5 @@ Merged to `main` as `38fd725` ([PR #33](https://github.com/sakhilebhayi/Dot.Ehai
 | | Items |
 |---|---|
 | **Complete** | Every area in sections 3 to 15, tested as stated there; the jury's 18 defects addressed |
-| **Partial** | Real-phone testing; SMS end to end; virus scanning (no scanner on the host); Dot.Billing and Dot.Finance integration (seams only); no second jury score |
+| **Partial** | Real-phone testing; SMS end to end; virus scanning (no scanner on the host); Dot.Finance integration (seams only); no second jury score |
 | **Future** | Batched dispatch; WebSockets on a VPS; native apps; Paystack Transfers turned on; airport fees (when a documented charge exists); demand pricing (built, off) |

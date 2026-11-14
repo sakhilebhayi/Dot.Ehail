@@ -6,10 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Fleet;
 use App\Models\Ride;
+use App\Models\Team;
+use App\Support\Ui\BookingReadiness;
+use App\Support\Ui\LandingAction;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
+ * The signed-in landing (R-50): one dominant action per role (App\Support\Ui\LandingAction), an honest answer to
+ * "can a passenger book?" (App\Support\Ui\BookingReadiness), then the figures the old dashboard carried.
+ *
  * Role-aware dashboard. Ride figures are always limited to the rides the
  * viewer may see (Ride::scopeVisibleTo). Revenue and driver counts are
  * business figures: platform-wide for a platform operator, scoped to their
@@ -17,7 +23,7 @@ use Illuminate\View\View;
  */
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request, BookingReadiness $booking, LandingAction $landing): View
     {
         $user = $request->user();
         $isOperator = $user->isPlatformOperator();
@@ -66,7 +72,16 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        return view('dashboard', compact(
+        $team = $user->currentTeam;
+
+        return view('dashboard', [
+            'firstName' => trim((string) strtok(trim((string) $user->name), ' ')),
+            // A personal team is the person, not a company: only a real company name is greeted.
+            'companyName' => $team instanceof Team && ! $team->personal_team ? trim((string) $team->name) : '',
+            'landing' => $landing->for($user, $booking),
+            'booking' => $booking,
+            'infodotUrl' => rtrim((string) config('ecosystem.platforms.infodot.url'), '/'),
+        ] + compact(
             'totalRides', 'activeRides', 'completedRides', 'cancelledRides', 'requestedRides',
             'totalDrivers', 'availableDrivers', 'approvedDrivers',
             'totalRevenue', 'statusCounts', 'recentRides', 'showFleetStats'

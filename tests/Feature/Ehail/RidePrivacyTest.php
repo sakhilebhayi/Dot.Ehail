@@ -7,6 +7,7 @@ use App\Models\Fleet;
 use App\Models\Ride;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Support\Ui\MoneyFormatter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -187,9 +188,9 @@ class RidePrivacyTest extends TestCase
         $response = $this->actingAs($user)->get('/dashboard')->assertOk();
 
         $response->assertDontSee('Estimated fare total, not collected');
-        $response->assertDontSee('1,234.56');
-        $response->assertDontSee('Total Drivers');
-        $response->assertDontSee('Driver Fleet');
+        $response->assertDontSee(MoneyFormatter::format(123456));
+        $response->assertDontSee('Drivers and fares');
+        $response->assertDontSee('Your fleet');
         $response->assertDontSee($foreign->pickup_address);
         $response->assertViewHas('totalRides', 0);
         $response->assertViewHas('showFleetStats', false);
@@ -203,7 +204,7 @@ class RidePrivacyTest extends TestCase
         $response = $this->actingAs($this->operator())->get('/dashboard')->assertOk();
 
         $response->assertSee('Estimated fare total, not collected');
-        $response->assertSee('1,234.56');
+        $response->assertSee(MoneyFormatter::format(123456));
         $response->assertViewHas('totalDrivers', 1);
         $response->assertViewHas('totalRides', 1);
     }
@@ -224,7 +225,8 @@ class RidePrivacyTest extends TestCase
         // The ride list is not theirs (S-08); the fleet aggregates are.
         $response->assertViewHas('totalRides', 0);
         $response->assertViewHas('totalRevenue', fn ($revenue) => (float) $revenue === 100.0);
-        $response->assertDontSee('7,000.00');
+        $response->assertDontSee(MoneyFormatter::format(700000));
+        $response->assertSee(MoneyFormatter::format(10000));
     }
 
     public function test_dashboard_revenue_ignores_completed_rides_with_a_null_final_fare(): void

@@ -26,7 +26,7 @@ class DashboardTest extends TestCase
             ->get('/dashboard')
             ->assertOk()
             ->assertViewIs('dashboard')
-            ->assertSee('Ehail Operations Dashboard');
+            ->assertSee('Welcome, ');
     }
 
     public function test_dashboard_shows_empty_state_when_there_are_no_rides(): void

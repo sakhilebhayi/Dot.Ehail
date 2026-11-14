@@ -35,6 +35,9 @@
     </head>
     <body>
         <div class="eh-error">
+            @hasSection('bar')
+                @yield('bar')
+            @else
             <header class="eh-error__bar">
                 <x-eh.logo href="{{ url('/') }}" />
                 @auth
@@ -45,12 +48,14 @@
                     @endif
                 @endauth
             </header>
+            @endif
 
             <main id="main" class="eh-error__main">
                 <div class="eh-error__line" aria-hidden="true"><span></span><i></i><span></span></div>
                 <h1 class="eh-error__title">@yield('title')</h1>
                 <p class="eh-error__message">@yield('message') <span class="eh-error__code">(Error {{ $code }})</span></p>
                 <div class="eh-error__actions">@yield('actions')</div>
+                @yield('after')
 
             </main>
 
