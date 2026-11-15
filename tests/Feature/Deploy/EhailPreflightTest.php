@@ -61,7 +61,7 @@ class EhailPreflightTest extends TestCase
             File::copy(public_path($file), $dir.'/'.$file);
         }
 
-        File::copyDirectory(public_path('fonts'), $dir.'/fonts');
+        File::copyDirectory(public_path('dot-ui'), $dir.'/dot-ui');
         File::copyDirectory(public_path('icons'), $dir.'/icons');
 
         $manifest = [];

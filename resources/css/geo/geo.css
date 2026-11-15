@@ -422,3 +422,11 @@
 @media (max-width: 767.98px), (pointer: coarse) {
     .eh-map.leaflet-container .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: var(--eh-text-xl); }
 }
+
+/* R-52: Leaflet's own controls draw their + and - in Lucida Console; the glyphs are UI text, so they follow the one face. */
+.eh-map .leaflet-bar a, .eh-map .leaflet-control-zoom-in, .eh-map .leaflet-control-zoom-out, .eh-map .leaflet-control { font-family: var(--eh-font-ui, system-ui, sans-serif); }
+/* R-52: the attribution links are 14px tall inline text in a sentence (OSMF: never hidden, never resized). Their touch area grows to 44px with a pseudo-element, so the line looks the same. */
+@media (pointer: coarse), (max-width: 1024px) {
+    .eh-map .leaflet-control-attribution a { position: relative; }
+    .eh-map .leaflet-control-attribution a::after { content: ""; position: absolute; inset: -15px -6px; }
+}

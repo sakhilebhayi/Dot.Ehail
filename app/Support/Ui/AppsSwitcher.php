@@ -21,6 +21,9 @@ final class AppsSwitcher
 {
     public const PLATFORM = 'ehail';
 
+    /** Request attribute a page sets to be treated as live (cache only) for this request, e.g. /dashboard with a trip in progress. */
+    public const CACHE_ONLY_ATTRIBUTE = 'apps.cache_only';
+
     /** Route names (Str::is patterns) that are live: cache only, never an InfoDot call. */
     public const LIVE_ROUTES = [
         // Rider: booking and fares, the trip as it runs, safety, the places and overview APIs the trip screens read.
@@ -75,7 +78,7 @@ final class AppsSwitcher
                 return $switcher->for(null);
             }
 
-            if (self::isLive($routeName)) {
+            if (self::isLive($routeName) || (bool) request()->attributes->get(self::CACHE_ONLY_ATTRIBUTE, false)) {
                 $cached = app('cache')->store()->get($switcher->cacheKeyFor(strtolower($company)));
 
                 return is_array($cached) && array_key_exists('ok', $cached) ? $switcher->for($company) : null;

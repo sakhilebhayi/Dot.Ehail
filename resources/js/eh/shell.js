@@ -1,70 +1,14 @@
 // Dot.Ehail shell behaviour (ds, R-46): theme choice, side drawer, account menu, bottom sheet, tabs, dialogs,
 // toasts and service-worker registration. No dependencies; every feature is progressive (markup works without it).
 import { initInlineActions } from './inline-actions.js';
-import { initSheets } from './sheet.js';
-import { resolveTheme } from './theme.js';
+import { initKeyboardInset, initSheets } from './sheet.js';
+import { initHeader } from './header.js';
 
 const doc = document;
 const root = doc.documentElement;
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-function applyTheme(choice) {
-    if (root.hasAttribute('data-theme-lock')) return;
-    const theme = resolveTheme(choice);
-    if (theme) root.dataset.theme = theme;
-    else delete root.dataset.theme;
-    root.classList.toggle('dark', (theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark');
-}
-
-function initTheme() {
-    const key = root.dataset.themeKey || 'eh-theme';
-    let current;
-    try { current = localStorage.getItem(key); } catch { current = null; }
-    current = current || root.dataset.themeDefault || 'system';
-    doc.querySelectorAll('input[data-eh-theme-choice]').forEach((input) => {
-        input.checked = input.value === current;
-        input.addEventListener('change', () => {
-            if (!input.checked) return;
-            try { localStorage.setItem(key, input.value); } catch { /* private mode: applies for this page only */ }
-            applyTheme(input.value);
-        });
-    });
-}
-
-// Side drawer (ops, business, fleet below 1024px)
-function initDrawer() {
-    const nav = doc.getElementById('eh-side-nav');
-    if (!nav) return;
-    const openers = doc.querySelectorAll('[data-eh-drawer-open]');
-    const behind = doc.querySelectorAll('[data-eh-drawer-behind]');
-    let lastFocus = null;
-    const set = (open) => {
-        root.classList.toggle('eh-drawer-open', open);
-        openers.forEach((b) => b.setAttribute('aria-expanded', String(open)));
-        behind.forEach((el) => { el.inert = open; });
-        if (open) {
-            lastFocus = doc.activeElement;
-            nav.querySelector('[data-eh-drawer-close]')?.focus();
-        } else if (lastFocus) {
-            lastFocus.focus();
-        }
-    };
-    openers.forEach((b) => b.addEventListener('click', () => set(true)));
-    doc.querySelectorAll('[data-eh-drawer-close]').forEach((b) => b.addEventListener('click', () => set(false)));
-    doc.addEventListener('keydown', (e) => { if (e.key === 'Escape' && root.classList.contains('eh-drawer-open')) set(false); });
-    window.matchMedia('(min-width: 1024px)').addEventListener('change', (e) => { if (e.matches) set(false); });
-}
-
-// Account menu: a <details> that closes on outside click and Escape
-function initMenus() {
-    const menus = doc.querySelectorAll('details[data-eh-menu]');
-    if (!menus.length) return;
-    doc.addEventListener('click', (e) => menus.forEach((m) => { if (m.open && !m.contains(e.target)) m.open = false; }));
-    doc.addEventListener('keydown', (e) => {
-        if (e.key !== 'Escape') return;
-        menus.forEach((m) => { if (m.open) { m.open = false; m.querySelector('summary')?.focus(); } });
-    });
-}
+// The theme choice, the account menu and the side drawer are the shared header's now (dot-ui, dot-nav.js): see layouts/partials/eh-header.blade.php.
 
 // Tabs (ARIA tablist): arrow keys, Home, End
 function initTabs() {
@@ -197,12 +141,11 @@ function initScrollRegions() {
 
 window.ehToast = toast;
 initInlineActions();
-initTheme();
-initDrawer();
-initMenus();
+initHeader();
 initTabs();
 initDialogs();
 initSheets({ reducedMotion });
+initKeyboardInset();
 initFlashes();
 initScrollRegions();
 initServiceWorker();

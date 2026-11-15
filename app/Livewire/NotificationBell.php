@@ -10,7 +10,8 @@ use Livewire\Component;
 
 class NotificationBell extends Component
 {
-    public bool $open = false;
+    /** Set when the bell is first opened (dot-ui's `dot:menu-open`): until then a page carries only the unread count. dot-ui owns whether the panel is open. */
+    public bool $loaded = false;
 
     #[Computed]
     public function notifications(): Collection
@@ -24,9 +25,9 @@ class NotificationBell extends Component
         return Inbox::countFor(auth()->user());
     }
 
-    public function toggle(): void
+    public function load(): void
     {
-        $this->open = ! $this->open;
+        $this->loaded = true;
     }
 
     public function markAsRead(string $notificationId): void

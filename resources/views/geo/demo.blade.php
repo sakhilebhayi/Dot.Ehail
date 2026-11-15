@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="noindex">
     <title>Geo module demo · Dot.Ehail</title>
+    @include('layouts.partials.eh-roboto')
     <script type="application/json" data-geo-config>@json($geoConfig)</script>
     @vite(['resources/js/geo/index.js'])
     <style>

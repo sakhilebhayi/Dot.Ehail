@@ -548,13 +548,13 @@ class EhailPreflight extends Command
             }
         }
 
+        // R-52: Roboto is the shared dot-ui's (public/dot-ui/css/dot-roboto.css names ../fonts/roboto/*.woff2): the stylesheet and every file it names must be served.
         $fontRefs = [];
+        $robotoCss = public_path('dot-ui/css/dot-roboto.css');
 
-        foreach (File::allFiles(resource_path('css')) as $css) {
-            if (preg_match_all('#/fonts/[A-Za-z0-9._/-]+\.woff2#', (string) file_get_contents($css->getPathname()), $m)) {
-                foreach ($m[0] as $ref) {
-                    $fontRefs[$ref] = true;
-                }
+        if (is_file($robotoCss) && preg_match_all('#url\([\'"]?\.\./(fonts/roboto/[A-Za-z0-9._-]+\.woff2)#', (string) file_get_contents($robotoCss), $m)) {
+            foreach ($m[1] as $ref) {
+                $fontRefs['/dot-ui/'.$ref] = true;
             }
         }
 
@@ -563,7 +563,7 @@ class EhailPreflight extends Command
             $fontRefs !== [] && $fontMissing === [] ? self::PASS : self::FAIL,
             'Frontend',
             'Self-hosted fonts',
-            $fontRefs === [] ? 'The stylesheets reference no font under /fonts.' : ($fontMissing === [] ? count($fontRefs).' font files referenced by the stylesheets are present' : 'Missing: '.implode(', ', $fontMissing)),
+            $fontRefs === [] ? 'public/dot-ui/css/dot-roboto.css is missing or names no font file.' : ($fontMissing === [] ? count($fontRefs).' Roboto font files named by dot-roboto.css are present' : 'Missing: '.implode(', ', $fontMissing)),
         );
 
         $this->addAll(self::pwaRows(public_path()));

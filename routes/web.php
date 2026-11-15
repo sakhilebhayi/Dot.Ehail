@@ -118,7 +118,7 @@ Route::middleware([
     Route::post('/drive/apply', [DriverApplicationController::class, 'store'])->name('drive.apply.store');
 
     // R-46 domain routes (docs/R46_ARCHITECTURE.md section 1): one file per owner.
-    foreach (['geo', 'pricing', 'dispatch', 'safety', 'money', 'passenger', 'driver', 'ops', 'business', 'fleet', 'comms', 'security'] as $ehailRoutes) {
+    foreach (['geo', 'pricing', 'dispatch', 'safety', 'money', 'passenger', 'driver', 'ops', 'business', 'fleet', 'comms', 'security', 'search'] as $ehailRoutes) {
         require __DIR__.'/ehail/'.$ehailRoutes.'.php';
     }
     require __DIR__.'/ehail/perf.php';

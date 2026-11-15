@@ -89,3 +89,15 @@ export function initSheets() {
         handle.addEventListener('pointercancel', end);
     });
 }
+
+// iOS Safari keeps the layout viewport when the on-screen keyboard opens, so a bottom sheet would sit under it. The visual viewport says how much the keyboard
+// covers; the sheet lifts by that much (--eh-kb, a CSSOM write, allowed by the CSP). Chrome on Android resizes the page itself (viewport meta), so this reads 0 there.
+export function initKeyboardInset(win = window) {
+    const vv = win.visualViewport;
+    if (!vv) return;
+    const root = win.document.documentElement;
+    const sync = () => root.style.setProperty('--eh-kb', `${Math.max(0, Math.round(win.innerHeight - vv.height - vv.offsetTop))}px`);
+    vv.addEventListener('resize', sync);
+    vv.addEventListener('scroll', sync);
+    sync();
+}

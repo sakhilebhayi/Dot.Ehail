@@ -1,6 +1,6 @@
-/* Host token mapping for the shared Dot UI (public/dot-ui, copied by dot-ui/sync.sh; never edited here).
-   Dot.Ehail has no header search pill, so only the compact in-page filter (.dsr-filter) and the platform switcher (.dsw)
-   are mapped. Every package default is under :where() (zero specificity), so this plain mapping wins in light and dark,
+/* Host token mapping for the shared Dot UI (dot-ui 0.6.0, public/dot-ui, copied by dot-ui/sync.sh; never edited here).
+   The shared header (--dh-*), the search pill and its dropdown and the compact in-page filter (--dsr-*) and the platform switcher (--dsw-*)
+   are mapped here. Every package default is under :where() (zero specificity), so this plain mapping wins in light and dark,
    in either load order. Route Line tokens only: the surfaces flip with the theme because the --eh-* tokens do. */
 body {
     --dsr-panel: var(--eh-surface);
@@ -36,39 +36,38 @@ body {
     --dsw-tile-ink: #1b2124;
 }
 
-/* Where the switcher sits. The panel hangs from the nearest positioned ancestor, which is each shell's header. */
-.eh-topbar__apps { display: flex; align-items: center; }
-.eh-side__apps { display: none; }
-.eh-side__bar .dsw { margin-left: auto; }
-.eh-side__bar .eh-logo { margin-right: 0; }
-.eh-legacy .topbar .dsw { margin-left: auto; }
-.eh-legacy .topbar-title { flex: 1 1 auto; }
+/* The header (dot-ui HEADER.md "Tokens"). Mapped on :root so the drawer, which is printed after the header, follows too. Surfaces flip with the theme because the --eh-* tokens do. */
+:root {
+    --dh-bg: var(--eh-ground);
+    --dh-ink: var(--eh-ink);
+    --dh-ink-2: var(--eh-ink-2);
+    --dh-rule: var(--eh-rule);
+    --dh-hover: var(--eh-surface-2);
+    --dh-accent: var(--eh-accent);
+    --dh-focus: var(--eh-focus);
+    --dh-avatar-bg: var(--eh-accent);
+    --dh-avatar-ink: var(--eh-accent-ink);
+    --dh-radius: var(--eh-radius-sm);
+    --dh-logo-h: 52px;
+    /* Above the map, the sheet (40) and the tab bar (30); below a driver's offer (60), the SOS screen (70) and toasts (90). dot-ui's drawer and search sheet use their own, higher layers. */
+    --dh-z: 50;
+    /* Ops and fleet carry a logo, a scope name and a state in the start column: a narrower search leaves them room at 1280 and 1440. */
+    --dh-search-w: clamp(280px, 30vw, 600px);
+    /* The old fixed 56px token now follows the header (52px on a phone, 56px from 861px). */
+    --eh-topbar: var(--dot-header-h, 56px);
+}
+/* The original logo files (never redrawn): the day file in the light bar, the light-on-dark file at night. The PNGs carry clear space, which the old bar cropped
+   with negative margins; the same crop here keeps the mark the size it was. */
+.dh-brand img { margin-block: -10px; margin-inline: -8px; }
+/* The pill is the header's own; the dropdown rows are dot-ui's. A group's "see every result" row is the bold action row. */
+.dh .dsr-item--action { font-weight: 600; }
 
-@media (min-width: 1024px) {
-    .eh-side { grid-template-rows: auto 1fr; }
-    .eh-side__main { grid-row: 2; }
-    /* The side shells (ops, business, fleet) have no header at this width; this slim strip over the page is their header,
-       so the switcher has the same place in every shell and its panel a bar to hang from. */
-    .eh-side__apps {
-        position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: flex-end;
-        grid-column: 2; grid-row: 1; height: var(--eh-topbar); padding: 0 var(--eh-space-10);
-        background: var(--eh-ground); border-bottom: 1px solid var(--eh-rule);
-    }
+/* Safety stays in the bar: a labelled pill from 481px, the shield and SOS alone below that, always 44px. */
+.dh .eh-safety-btn { min-height: var(--dot-hit, 44px); padding: 0 var(--eh-space-3); border-width: 2px; }
+.dh .eh-safety-btn svg { flex: none; }
+@media (max-width: 480px) {
+    .dh .eh-safety-btn { padding: 0 var(--eh-space-2); gap: var(--eh-space-1); font-size: var(--eh-text-sm); }
 }
 
-.eh-topbar__apps:empty { display: none; }
-
-/* 768 to 1099px: brand, four tabs, the switcher, Safety, bell and account do not all fit in one row. The switcher shows its
-   grid icon only (it keeps its accessible name; the package's own `compact` is any-width, so only the label rule stays here and the
-   square size comes from --dsw-btn-min-w / --dsw-btn-pad-x), and the tabs give up some side padding, so the account menu is never pushed
-   off the screen. From 1100px the label returns. */
-@media (min-width: 768px) and (max-width: 1099px) {
-    .eh-topbar .dsw-btn__label { display: none; }
-    .eh-topbar .dsw { --dsw-btn-min-w: var(--eh-target); --dsw-btn-pad-x: 0; }
-    .eh-topbar__nav a { padding: 0 var(--eh-space-2); gap: var(--eh-space-1); }
-    .eh-topbar { gap: var(--eh-space-2); }
-}
-/* The driver bar sets larger type, so at the very bottom of that range the tabs drop their icons (the words stay). */
-@media (min-width: 768px) and (max-width: 819px) {
-    .eh-drive .eh-topbar__nav a > svg { display: none; }
-}
+/* Where the switcher sits: in the header's tools. 861 to 1279px it shows its icon only (the package's own rule). */
+.dh-end .dsw { margin: 0; }

@@ -10,7 +10,7 @@
     $legacyPinDark = ! request()->routeIs('dashboard', 'profile.*', 'teams.*', 'api-tokens.*');
     $appsModel = \App\Support\Ui\AppsSwitcher::model(auth()->user(), request()->route()?->getName());
 @endphp
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh eh-legacy {{ $legacyPinDark ? 'dark' : '' }}" @if($legacyPinDark) data-theme="dark" data-theme-lock @endif data-theme-key="eh-theme">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh dot-roboto eh-legacy {{ $legacyPinDark ? 'dark' : '' }}" @if($legacyPinDark) data-theme="dark" data-theme-lock @endif data-theme-key="eh-theme" data-dh-theme-class="dark" data-dh-theme-key="eh-theme">
 <head>
     @include('layouts.partials.eh-head', ['title' => null, 'viteEntries' => ['resources/css/app.css', 'resources/js/app.js']])
     @livewireStyles
@@ -22,12 +22,10 @@
     <aside class="sidebar" id="app-sidebar" aria-label="Main navigation">
         <div class="sidebar-brand">
             <x-eh.logo :href="route('home')" />
-            <button type="button" class="shell-close" data-shell-close aria-label="Close menu">
+            <button type="button" class="shell-close" data-dh-close aria-label="Close menu">
                 <x-eh.icon name="close" />
             </button>
         </div>
-
-        <div class="sidebar-divider"></div>
 
         <nav class="sidebar-nav">
             <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -78,91 +76,28 @@
                 Fleet review
             </a>
             @endif
-            <div class="sidebar-divider"></div>
-            <a href="{{ route('profile.show') }}" class="nav-item {{ request()->routeIs('profile.show') ? 'active' : '' }}">
-                <x-eh.icon name="account" class="nav-icon" />
-                Profile and security
-            </a>
         </nav>
 
-        @auth
-        <div class="sidebar-footer">
-            <div class="user-row">
-                <x-eh.avatar :name="Auth::user()->name" size="32" />
-                <div style="min-width:0;flex:1;">
-                    <div class="user-name">{{ Auth::user()->name }}</div>
-                    <div class="user-team">{{ Auth::user()->currentTeam->name ?? 'Personal' }}</div>
-                </div>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="topbar-btn" title="Sign out" aria-label="Sign out">
-                        <x-eh.icon name="sign-out" />
-                    </button>
-                </form>
-            </div>
-            @if (Laravel\Jetstream\Jetstream::hasTeamFeatures() && Auth::user()->currentTeam)
-            <details class="team-switch">
-                <summary>
-                    <x-eh.icon name="users" class="nav-icon" />
-                    <span class="team-switch-name">Teams</span>
-                    <x-eh.icon name="chevron-down" class="team-switch-chevron" />
-                </summary>
-                <div class="team-switch-list">
-                    <a href="{{ route('teams.show', Auth::user()->currentTeam->id) }}" class="nav-item {{ request()->routeIs('teams.show') ? 'active' : '' }}">Team settings</a>
-                    @can('create', Laravel\Jetstream\Jetstream::newTeamModel())
-                    <a href="{{ route('teams.create') }}" class="nav-item {{ request()->routeIs('teams.create') ? 'active' : '' }}">Create new team</a>
-                    @endcan
-                    @if (Auth::user()->allTeams()->count() > 1)
-                    <div class="nav-section-label">Switch teams</div>
-                    @foreach (Auth::user()->allTeams() as $switchTeam)
-                    <form method="POST" action="{{ route('current-team.update') }}">
-                        @method('PUT')
-                        @csrf
-                        <input type="hidden" name="team_id" value="{{ $switchTeam->id }}">
-                        <button type="submit" class="nav-item {{ Auth::user()->isCurrentTeam($switchTeam) ? 'active' : '' }}" @if (Auth::user()->isCurrentTeam($switchTeam)) aria-current="true" @endif>{{ $switchTeam->name }}</button>
-                    </form>
-                    @endforeach
-                    @endif
-                </div>
-            </details>
-            @endif
-        </div>
-        @endauth
     </aside>
 
-    <div class="shell-backdrop" data-shell-close aria-hidden="true"></div>
-
-    <header class="topbar" data-shell-behind>
-        <button type="button" class="shell-menu-btn" data-shell-open aria-controls="app-sidebar" aria-expanded="false">
-            <x-eh.icon name="menu" />
-            <span>Menu</span>
-        </button>
-        <div class="topbar-title">
-            @isset($header){{ $header }}@else Dot.Ehail
-            @endisset
-        </div>
-        @include('layouts.partials.eh-apps', ['appsModel' => $appsModel])
-        @auth
-        <span class="topbar-team">{{ Auth::user()->currentTeam->name ?? 'Personal' }}</span>
-        <livewire:notification-bell />
-        @endauth
-                <a href="{{ route('profile.show') }}" class="topbar-btn topbar-profile" title="Profile" aria-label="Profile">
-            <x-eh.icon name="account" />
-        </a>
-    </header>
+    {{-- R-52: the shared header on top; the sidebar is its menu (adopt mode): dot-ui opens it, draws the scrim, locks the scroll and makes the page behind inert. --}}
+    @include('layouts.partials.eh-header', ['surface' => 'legacy', 'adopt' => 'app-sidebar', 'appsModel' => $appsModel, 'theme' => ! $legacyPinDark])
 
     <div class="shell-legacy-nav">
         @livewire('navigation-menu')
     </div>
 
-    <div class="content-wrap" data-shell-behind>
+    <div class="content-wrap">
         <x-banner />
-        <main id="main-content" tabindex="-1">{{ $slot }}</main>
+        <main id="main-content" tabindex="-1">
+            {{-- The page's own title used to sit in the top bar; the shared header has no title, so it heads the page. --}}
+            @isset($header)<div class="eh-pagehead eh-legacy-pagehead">{{ $header }}</div>@endisset
+            {{ $slot }}
+        </main>
         <x-eh.toasts />
     </div>
 
     @stack('modals')
-    @include('layouts.partials.shell-script')
     @livewireScripts
 </body>
 </html>

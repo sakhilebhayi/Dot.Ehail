@@ -267,7 +267,7 @@ for F in offline.html robots.txt apple-touch-icon.png $(cd public && ls icons/*.
   code=$(curl -s --max-time 30 -o "$BODY" -w '%{http_code}' "$BASE/$F")
   [ "$code" = "200" ] && [ -s "$BODY" ] && pass "/$F $code" || fail "/$F answered $code"
 done
-for F in $(cd public && ls fonts/*.woff2); do
+for F in $(cd public && ls dot-ui/fonts/roboto/*.woff2); do
   code=$(curl -s --max-time 30 -o "$BODY" -w '%{http_code}' "$BASE/$F")
   [ "$code" = "200" ] && [ "$(head -c4 "$BODY")" = "wOF2" ] && pass "/$F is a woff2 font" || fail "/$F answered $code or is not a woff2 file"
 done

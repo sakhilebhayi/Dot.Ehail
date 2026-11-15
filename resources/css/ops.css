@@ -63,6 +63,19 @@
 .ops-figures dt > a::after { content: ""; position: absolute; inset: 0; }
 .ops-figures > div:hover dt > a { color: var(--eh-ink); text-decoration: underline; text-underline-offset: 3px; }
 
+/* Live board (R-51): the figures read as one label/value list above the queues, not eight equal tiles. Static: this is a
+   screen people watch under pressure, so nothing here animates (the polling feed still rewrites the same counts). */
+.ops-now { margin: 0 0 var(--ops-gap); }
+.ops-now__h { margin: 0 0 var(--eh-space-2); font-size: var(--eh-text-xl); line-height: 1.2; font-weight: 700; }
+.ops-figures--list { display: block; background: none; border-radius: 0; overflow: visible; margin: 0; border-top: 1px solid var(--eh-rule-strong); }
+.ops-figures--list > div { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-4); min-height: 40px; padding: var(--eh-space-2) 0; box-shadow: none; border-bottom: 1px solid var(--eh-rule); }
+.ops-figures--list dt { font-size: var(--eh-text-sm); font-weight: 400; }
+.ops-figures--list dd { margin: 0; font-size: var(--eh-text-xl); font-weight: 700; font-family: var(--eh-font-display); }
+.ops-figures--list dd[data-live-count]:not([data-empty]) { color: var(--eh-ink); }
+.ops-figures--list [data-tone="stop"] dd { color: var(--eh-stop); }
+.ops-figures--list [data-tone="caution"] dd { color: var(--eh-caution); }
+@media (max-width: 599px) { .ops-figures--list { display: block; } }
+
 /* Tables: rules and alignment, numbers right and tabular, no zebra, no header band */
 .ops-tablewrap { overflow-x: auto; min-width: 0; position: relative; } /* keeps visually hidden header text inside the scroller */
 .ops-table { width: 100%; border-collapse: collapse; font-size: var(--eh-text-sm); }
@@ -301,3 +314,8 @@ a.ops-queue__title:hover { text-decoration: underline; text-underline-offset: 3p
 .ops-where__gps { color: var(--eh-ink-2); font-size: var(--eh-text-xs); }
 .ops-where__gps .num { font-variant-numeric: tabular-nums; color: var(--eh-ink); font-weight: 600; user-select: all; }
 .ops-where + .ops-legend, .ops-where ~ .ops-legend { margin-top: var(--eh-space-3); }
+
+/* R-52: the figure links ("Open incidents") are 21px tall text on a phone; the row is a 44px target there. */
+@media (max-width: 1024px), (pointer: coarse) {
+    .ops-figures--list dt a { display: inline-flex; align-items: center; min-height: var(--eh-target); }
+}

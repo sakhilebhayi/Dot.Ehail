@@ -7,6 +7,7 @@
     <meta name="referrer" content="no-referrer">
     <meta name="description" content="Answer a Dot.Ehail trusted-contact request.">
     <title>Trusted contact | Dot.Ehail</title>
+    @include('layouts.partials.eh-roboto')
     @include('safety.partials.public-style')
 </head>
 <body>

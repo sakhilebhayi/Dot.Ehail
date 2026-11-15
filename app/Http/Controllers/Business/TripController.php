@@ -8,6 +8,8 @@ use App\Domain\Business\Models\BusinessDepartment;
 use App\Domain\Business\Models\BusinessMember;
 use App\Domain\Business\Models\BusinessTrip;
 use App\Domain\Business\Statements;
+use App\Domain\Search\HeaderSearch;
+use App\Domain\Search\SearchText;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -76,7 +78,7 @@ class TripController extends BusinessController
     }
 
     /**
-     * @return array{person: ?int, department: ?int, from: ?string, to: ?string, state: ?string}
+     * @return array{person: ?int, department: ?int, from: ?string, to: ?string, state: ?string, q: ?string}
      */
     private function filters(Request $request): array
     {
@@ -88,11 +90,13 @@ class TripController extends BusinessController
             'from' => $date($request->query('from')),
             'to' => $date($request->query('to')),
             'state' => in_array($request->query('state'), ['booked', 'charged', 'released'], true) ? $request->query('state') : null,
+            // The header search's "see this trip" and the page's own text filter (R-52).
+            'q' => ($q = SearchText::clean($request->query('q'))) !== '' ? $q : null,
         ];
     }
 
     /**
-     * @param  array{person: ?int, department: ?int, from: ?string, to: ?string, state: ?string}  $filters
+     * @param  array{person: ?int, department: ?int, from: ?string, to: ?string, state: ?string, q: ?string}  $filters
      */
     private function query(BusinessMember $member, array $filters): Builder
     {
@@ -106,6 +110,7 @@ class TripController extends BusinessController
             ->when($filters['department'], fn ($q, $id) => $q->where('department_id', $id))
             ->when($filters['from'], fn ($q, $d) => $q->where('booked_at', '>=', CarbonImmutable::parse($d, $tz)->startOfDay()->utc()))
             ->when($filters['to'], fn ($q, $d) => $q->where('booked_at', '<', CarbonImmutable::parse($d, $tz)->addDay()->startOfDay()->utc()))
+            ->when($filters['q'], fn ($q, $text) => $q->where(fn ($w) => HeaderSearch::matchBusinessTrip($w, $text, Abilities::allows($member, 'view_all_trips'))))
             ->when($filters['state'], fn ($q, $s) => $q->where('status', $s), fn ($q) => $q->whereIn('status', [BusinessTrip::BOOKED, BusinessTrip::CHARGED, BusinessTrip::RELEASED]));
     }
 }

@@ -3,10 +3,10 @@
 
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
         <div>
-            <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#f4f4f5;margin:0 0 0.25rem;">Rides</h1>
+            <h1 style="font-size:1.5rem;font-weight:800;color:#f4f4f5;margin:0 0 0.25rem;">Rides</h1>
             <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">Search and browse every ride recorded on the platform.</p>
         </div>
-        <a href="{{ route('dashboard') }}" style="font-size:0.78rem;color:#a1a1aa;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+        <a href="{{ route('dashboard') }}" style="font-size:0.78rem;color:#a1a1aa;text-decoration:none;display:inline-flex;align-items:center;gap:4px;min-height:44px;">
             <x-eh.icon name="arrow-left" size="16" />
             Back to dashboard
         </a>
@@ -47,7 +47,7 @@
                 <tbody>
                     @foreach($rides as $ride)
                     <tr tabindex="0" class="eh-row-link" data-eh-href="{{ route('rides.show', $ride) }}" style="cursor:pointer;border-bottom:1px solid rgba(67,70,86,0.1);transition:background 0.15s;">
-                        <td style="padding:0.85rem 1.5rem;font-size:0.75rem;font-weight:600;color:#a1a1aa;font-family:'Syne',sans-serif;">#{{ $ride->id }}</td>
+                        <td style="padding:0.85rem 1.5rem;font-size:0.75rem;font-weight:600;color:#a1a1aa;">#{{ $ride->id }}</td>
                         <td style="padding:0.85rem 1rem;max-width:260px;">
                             <div style="font-size:0.75rem;color:#f4f4f5;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $ride->pickup_address }}</div>
                             <div style="font-size:0.7rem;color:#a1a1aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">→ {{ $ride->dropoff_address }}</div>

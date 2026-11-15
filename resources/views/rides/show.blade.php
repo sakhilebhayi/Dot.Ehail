@@ -29,7 +29,7 @@
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
         <div>
-            <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.2rem;letter-spacing:-0.01em;">
+            <h1 style="font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.2rem;letter-spacing:-0.01em;">
                 Ride #{{ $ride->id }}
             </h1>
             <p style="font-size:0.78rem;color:#a1a1aa;margin:0;">Requested {{ $ride->created_at->copy()->setTimezone(\App\Support\Ui\LocalTime::timezone())->format('l, F j, Y \a\t g:i A') }}</p>
@@ -146,7 +146,7 @@
     @endphp
     <div class="dot-card" style="padding:1.5rem;margin-bottom:1.25rem;" data-payment-state="{{ $payState->value }}">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem;">
-            <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0;">Fare payment</h3>
+            <h3 style="font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0;">Fare payment</h3>
             <div style="display:flex;align-items:center;gap:0.5rem;">
                 @if($testMode && ($owed || $payState === \App\Enums\PaymentStatus::Paid))
                 <span title="Paystack is in test mode: no real money moves" style="font-size:10px;font-weight:700;letter-spacing:0.09em;padding:3px 9px;border-radius:4px;border:1px solid rgba(245,158,11,0.45);color:#f59e0b;">TEST MODE</span>
@@ -225,7 +225,7 @@
 
     @can('cancel', $ride)
     <div class="dot-card" style="padding:1.5rem;margin-bottom:1.25rem;">
-        <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 0.35rem;">
+        <h3 style="font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 0.35rem;">
             {{ $viewerRole === \App\Enums\RideActor::Driver ? 'Leave this ride' : 'Cancel this ride' }}
         </h3>
         @if($viewerRole === \App\Enums\RideActor::Driver)
@@ -262,13 +262,13 @@
     @endphp
     <div class="dot-card" style="padding:1.5rem;">
         @if($myRating)
-            <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 0.75rem;">Your rating</h3>
+            <h3 style="font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 0.75rem;">Your rating</h3>
             <div style="display:flex;align-items:baseline;gap:0.75rem;">
                 <span class="metric-val" style="font-size:1.25rem;color:#f59e0b;">{{ $myRating->rating }}/5</span>
                 @if($myRating->comment)<span style="font-size:0.8rem;color:#a1a1aa;">{{ $myRating->comment }}</span>@endif
             </div>
         @elsecan('rate', $ride)
-            <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 0.25rem;">
+            <h3 style="font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 0.25rem;">
                 {{ $viewerRole === \App\Enums\RideActor::Passenger ? 'Rate your driver' : 'Rate your passenger' }}
             </h3>
             <p style="font-size:0.75rem;color:#a1a1aa;margin:0 0 1rem;">One rating per ride. It cannot be changed afterwards.</p>

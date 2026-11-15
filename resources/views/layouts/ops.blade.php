@@ -19,10 +19,7 @@
             $opsGroups[$label] = array_values(array_filter($keys, fn ($key) => ($route = $opsRoutes[$key] ?? null) !== null && $opsAccess->allowsRoute($opsUser, $route)));
         }
     }
-    ob_start();
 @endphp
-<x-comms::bell surface="ops" />
-@php($opsBell = new \Illuminate\Support\HtmlString(trim((string) ob_get_clean())))
 @include('layouts.partials.eh-side', [
     'surface' => 'ops',
     'navLabel' => 'Operations',
@@ -34,5 +31,4 @@
     'title' => $title ?? null,
     'header' => $header ?? null,
     'head' => $head ?? null,
-    'barExtra' => $opsBell,
 ])

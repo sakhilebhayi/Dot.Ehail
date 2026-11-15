@@ -1,7 +1,7 @@
 <x-app-layout>
 <div style="padding:2rem 2.5rem 3rem;max-width:1000px;">
     <div style="margin-bottom:1.5rem;">
-        <a href="{{ route('dashboard') }}" style="font-size:0.78rem;color:#a1a1aa;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+        <a href="{{ route('dashboard') }}" style="font-size:0.78rem;color:#a1a1aa;text-decoration:none;display:inline-flex;align-items:center;gap:4px;min-height:44px;">
             <x-eh.icon name="arrow-left" size="16" />
             Back to dashboard
         </a>
@@ -15,7 +15,7 @@
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
         <div>
-            <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.2rem;letter-spacing:-0.01em;">
+            <h1 style="font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.2rem;letter-spacing:-0.01em;">
                 {{ $driverProfile->user?->name ?? 'Driver' }}
             </h1>
             <p style="font-size:0.78rem;color:#a1a1aa;margin:0;">License {{ $licenceShown }} · ID {{ $idShown }}</p>
@@ -43,24 +43,24 @@
         <div class="dot-card" style="padding:1.25rem;">
             <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#a1a1aa;margin-bottom:0.5rem;">Rating</div>
             @if($ratingCount > 0)
-            <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#f59e0b;" data-figure="rating-average">{{ number_format((float) $driverProfile->rating, 2) }}</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#f59e0b;" data-figure="rating-average">{{ number_format((float) $driverProfile->rating, 2) }}</div>
             <div style="font-size:0.72rem;color:#a1a1aa;margin-top:0.25rem;">out of 5 from <span data-figure="rating-count">{{ $ratingCount }}</span> {{ \Illuminate\Support\Str::plural('rating', $ratingCount) }}</div>
             @else
-            <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:#a1a1aa;line-height:2.25rem;">No ratings yet</div>
+            <div style="font-size:1.1rem;font-weight:700;color:#a1a1aa;line-height:2.25rem;">No ratings yet</div>
             @endif
         </div>
         <div class="dot-card" style="padding:1.25rem;">
             <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#a1a1aa;margin-bottom:0.5rem;">Total Rides</div>
-            <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#f4f4f5;">{{ number_format($driverProfile->total_rides) }}</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#f4f4f5;">{{ number_format($driverProfile->total_rides) }}</div>
         </div>
         <div class="dot-card" style="padding:1.25rem;">
             <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#a1a1aa;margin-bottom:0.5rem;">Status</div>
-            <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:{{ $driverProfile->is_online ? '#4ade80' : '#a1a1aa' }};">{{ $driverProfile->is_online ? 'Online' : 'Offline' }}</div>
+            <div style="font-size:1.5rem;font-weight:800;color:{{ $driverProfile->is_online ? '#4ade80' : '#a1a1aa' }};">{{ $driverProfile->is_online ? 'Online' : 'Offline' }}</div>
         </div>
     </div>
 
     <div class="dot-card" style="padding:1.5rem;margin-bottom:1.5rem;">
-        <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 1rem;">Documents</h3>
+        <h3 style="font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 1rem;">Documents</h3>
 
         @if($driverProfile->documents->isEmpty())
         <p style="font-size:0.8rem;color:#a1a1aa;margin:0 0 1rem;">No documents uploaded yet.</p>
@@ -99,7 +99,7 @@
     @if($driverProfile->vehicles->isNotEmpty())
     <div class="dot-card" style="padding:1.5rem;margin-bottom:1.5rem;">
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 0 1rem;">
-            <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0;">Vehicles</h3>
+            <h3 style="font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0;">Vehicles</h3>
             @if(auth()->id() === $driverProfile->user_id)
             <a href="{{ route('drivers.vehicles.index') }}" style="font-size:0.78rem;color:#38bdf8;text-decoration:none;">Manage vehicles</a>
             @endif
@@ -116,7 +116,7 @@
 
     @if($recentRatings->isNotEmpty())
     <div class="dot-card" style="padding:1.5rem;margin-bottom:1.5rem;">
-        <h3 style="font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 1rem;">Recent comments</h3>
+        <h3 style="font-size:0.875rem;font-weight:700;color:#f4f4f5;margin:0 0 1rem;">Recent comments</h3>
         @foreach($recentRatings as $entry)
         <div style="padding:0.75rem 0;{{ $loop->last ? '' : 'border-bottom:1px solid rgba(255,255,255,0.06);' }}">
             <div style="display:flex;align-items:baseline;gap:0.6rem;margin-bottom:0.2rem;">
@@ -133,7 +133,7 @@
 
     <div class="dot-card" style="overflow:hidden;">
         <div style="padding:1.25rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.06);">
-            <h3 style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:#f4f4f5;margin:0;text-transform:uppercase;letter-spacing:0.08em;">Ride History</h3>
+            <h3 style="font-size:0.85rem;font-weight:700;color:#f4f4f5;margin:0;text-transform:uppercase;letter-spacing:0.08em;">Ride History</h3>
         </div>
         @if($rides->isEmpty())
         <div style="padding:3rem;text-align:center;color:#a1a1aa;">

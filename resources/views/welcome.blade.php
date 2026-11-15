@@ -29,7 +29,7 @@
     ];
 @endphp
 <!DOCTYPE html>
-<html lang="en-ZA" class="eh lp" data-theme-key="eh-theme" data-sw="on">
+<html lang="en-ZA" class="eh dot-roboto lp" data-theme-key="eh-theme" data-sw="on">
 <head>
     @include('layouts.partials.eh-head', [
         'title' => 'Rides with the full fare shown first',
@@ -261,7 +261,7 @@
             </div>
             <div class="lp-foot__fine">
                 <p>Dot.Ehail is part of the Dot ecosystem.</p>
-                <p>Pictures: <a href="https://commons.wikimedia.org/w/index.php?curid=76253417">"Johannesburg, Nelson Mandela Bridge"</a> by S'busiso siso, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Cape_Town_(ZA),_Sea_Point,_Nachtansicht_--_2024_--_1867-70_-_2.jpg">"Cape Town (ZA), Sea Point, Nachtansicht"</a> by Dietmar Rabich, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/w/index.php?curid=70630291">"Road signs N1 Johannesburg"</a> by Marco Scholtz, <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">CC0</a>; <a href="https://www.flickr.com/photos/25779097@N08/8722268247">"View of Joburg inner city from Gandhi Square"</a> by South African Tourism, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>. Cropped and resized. Fonts: Barlow (SIL Open Font License). Icons: Lucide (ISC) and our own.</p>
+                <p>Pictures: <a href="https://commons.wikimedia.org/w/index.php?curid=76253417">"Johannesburg, Nelson Mandela Bridge"</a> by S'busiso siso, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Cape_Town_(ZA),_Sea_Point,_Nachtansicht_--_2024_--_1867-70_-_2.jpg">"Cape Town (ZA), Sea Point, Nachtansicht"</a> by Dietmar Rabich, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/w/index.php?curid=70630291">"Road signs N1 Johannesburg"</a> by Marco Scholtz, <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">CC0</a>; <a href="https://www.flickr.com/photos/25779097@N08/8722268247">"View of Joburg inner city from Gandhi Square"</a> by South African Tourism, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>. Cropped and resized. Fonts: Roboto (SIL Open Font License). Icons: Lucide (ISC) and our own.</p>
             </div>
         </div>
     </footer>

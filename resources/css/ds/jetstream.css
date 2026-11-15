@@ -22,54 +22,35 @@
 .eh-js-modal__panel--sm { max-width: 24rem; } .eh-js-modal__panel--md { max-width: 28rem; } .eh-js-modal__panel--lg { max-width: 32rem; }
 .eh-js-modal__panel--xl { max-width: 36rem; } .eh-js-modal__panel--2xl { max-width: 42rem; }
 
-/* Legacy app shell (layouts/app.blade.php): the pre-R-46 pages until wave 2 replaces them */
+/* Legacy app shell (layouts/app.blade.php): the pre-R-46 pages until wave 2 replaces them. R-52: the shared header runs across the top and the sidebar is its
+   menu (dot-ui adopt mode). From 861px the sidebar sits under the header; under it, it is the drawer the menu button opens ([data-dh-open]). */
 .eh-legacy { --legacy-sidebar: 260px; }
-.eh-legacy .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--legacy-sidebar); display: flex; flex-direction: column; z-index: 40; background: var(--eh-ground); border-right: 1px solid var(--eh-rule); }
-.eh-legacy .sidebar-brand { display: flex; align-items: center; gap: var(--eh-space-2); padding: var(--eh-space-4); }
-.eh-legacy .sidebar-nav { flex: 1; overflow-y: auto; padding: 0 var(--eh-space-3); display: grid; align-content: start; gap: 2px; }
+.eh-legacy .sidebar { position: fixed; left: 0; top: var(--dot-header-offset, 56px); bottom: 0; width: var(--legacy-sidebar); display: flex; flex-direction: column; z-index: 40; background: var(--eh-ground); border-right: 1px solid var(--eh-rule); }
+.eh-legacy .sidebar-brand { display: none; align-items: center; gap: var(--eh-space-2); padding: var(--eh-space-4); }
+.eh-legacy .sidebar-nav { flex: 1; overflow-y: auto; padding: var(--eh-space-3); display: grid; align-content: start; gap: 2px; }
 .eh-legacy .nav-section-label { padding: var(--eh-space-4) var(--eh-space-3) var(--eh-space-1); font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
 .eh-legacy .nav-item { display: flex; align-items: center; gap: var(--eh-space-3); min-height: var(--eh-target); padding: 0 var(--eh-space-3); border-radius: var(--eh-radius-sm); color: var(--eh-ink-2); font-weight: 500; text-decoration: none; --eh-icon: 18px; }
 .eh-legacy .nav-item:hover { background: var(--eh-surface-2); color: var(--eh-ink); }
 .eh-legacy .nav-item.active { background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); font-weight: 600; }
 .eh-legacy .sidebar-divider { height: 1px; background: var(--eh-rule); margin: var(--eh-space-3) var(--eh-space-3); }
-.eh-legacy .sidebar-footer { padding: var(--eh-space-3); border-top: 1px solid var(--eh-rule); }
-.eh-legacy .user-row { display: flex; align-items: center; gap: var(--eh-space-3); padding: var(--eh-space-2); }
-.eh-legacy .user-name { font-weight: 600; font-size: var(--eh-text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.eh-legacy .user-team { font-size: var(--eh-text-sm); color: var(--eh-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.eh-legacy .team-switch summary { display: flex; align-items: center; gap: var(--eh-space-3); min-height: var(--eh-target); padding: 0 var(--eh-space-3); border-radius: var(--eh-radius-sm); cursor: pointer; list-style: none; color: var(--eh-ink-2); font-weight: 500; }
-.eh-legacy .team-switch summary::-webkit-details-marker { display: none; }
-.eh-legacy .team-switch summary:hover { background: var(--eh-surface-2); }
-.eh-legacy .team-switch-list form { margin: 0; }
-.eh-legacy .team-switch-list .nav-item { width: 100%; border: 0; background: none; cursor: pointer; text-align: left; font: inherit; }
-.eh-legacy .topbar { position: fixed; top: 0; left: var(--legacy-sidebar); right: 0; height: var(--eh-topbar); z-index: 30; display: flex; align-items: center; gap: var(--eh-space-3); padding: 0 var(--eh-space-5); background: var(--eh-ground); border-bottom: 1px solid var(--eh-rule); }
-.eh-legacy .topbar-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
-.eh-legacy .topbar-title :is(h1, h2) { font-size: var(--eh-text-lg); line-height: 1.3; margin: 0; font-weight: 700; color: var(--eh-ink); }
-.eh-legacy .topbar-team { font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
-.eh-legacy .topbar-btn { display: inline-grid; place-items: center; width: var(--eh-target); height: var(--eh-target); border-radius: 50%; color: var(--eh-ink); background: none; border: 0; cursor: pointer; text-decoration: none; }
-.eh-legacy .topbar-btn:hover { background: var(--eh-surface-2); }
-.eh-legacy .topbar-bell { position: relative; }
-.eh-legacy .notif-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-height: 420px; overflow-y: auto; background: var(--eh-surface); color: var(--eh-ink); border-radius: var(--eh-radius); box-shadow: var(--eh-shadow-float); z-index: 50; }
-.eh-legacy .content-wrap { margin-left: var(--legacy-sidebar); padding-top: var(--eh-topbar); min-height: 100vh; }
-.eh-legacy .shell-menu-btn, .eh-legacy .shell-close, .eh-legacy .shell-backdrop, .eh-legacy .shell-legacy-nav { display: none; }
-.eh-legacy .shell-menu-btn, .eh-legacy .shell-close { align-items: center; gap: var(--eh-space-2); min-height: var(--eh-target); min-width: var(--eh-target); padding: 0 var(--eh-space-3); border-radius: var(--eh-radius-pill); border: 1.5px solid var(--eh-rule-strong); background: var(--eh-surface); color: var(--eh-ink); font-weight: 600; cursor: pointer; }
-.eh-legacy .shell-close { margin-left: auto; padding: 0; justify-content: center; }
+.eh-legacy .content-wrap { margin-left: var(--legacy-sidebar); min-height: 100vh; min-height: 100dvh; }
+.eh-legacy .eh-legacy-pagehead { margin: 0; padding: var(--eh-space-6) var(--eh-space-6) 0; }
+.eh-legacy .shell-close, .eh-legacy .shell-legacy-nav { display: none; }
+.eh-legacy .shell-close { align-items: center; justify-content: center; gap: var(--eh-space-2); min-height: var(--eh-target); min-width: var(--eh-target); padding: 0; margin-left: auto; border-radius: var(--eh-radius-pill); border: 1.5px solid var(--eh-rule-strong); background: var(--eh-surface); color: var(--eh-ink); font-weight: 600; cursor: pointer; }
 .eh-legacy .table-scroll { overflow-x: auto; overscroll-behavior-x: contain; }
 .eh-legacy .dot-loading-overlay { display: flex; align-items: center; justify-content: center; padding: 2.5rem 0; }
 .eh-legacy .dot-spin { animation: eh-spin 0.9s linear infinite; }
-@media (max-width: 859.98px) {
-    html.shell-open, html.shell-open body { overflow: clip; }
-    .eh-legacy .shell-menu-btn, .eh-legacy .shell-close { display: inline-flex; }
-    .eh-legacy .sidebar { width: min(300px, 86dvw); z-index: 60; }
+@media (max-width: 860px) {
+    .eh-legacy .sidebar { top: 0; width: min(300px, 86dvw); z-index: var(--dh-z-drawer, 120); }
+    .eh-legacy .sidebar-brand { display: flex; }
+    .eh-legacy .shell-close { display: inline-flex; }
+    /* Hidden while closed (out of the tab order), slid in on [data-dh-open]; the delayed visibility keeps the slide-out visible. */
     .js .eh-legacy .sidebar, .eh-legacy.js .sidebar { transform: translateX(-100%); visibility: hidden; transition: transform var(--eh-duration) var(--eh-ease), visibility 0s linear var(--eh-duration); }
-    html.shell-open.eh-legacy.js .sidebar, html.shell-open .sidebar { transform: none; visibility: visible; box-shadow: var(--eh-shadow-float); transition: transform var(--eh-duration) var(--eh-ease), visibility 0s; }
-    .eh-legacy .shell-backdrop { display: block; position: fixed; inset: 0; z-index: 50; background: var(--eh-scrim); opacity: 0; visibility: hidden; transition: opacity var(--eh-duration) var(--eh-ease), visibility 0s linear var(--eh-duration); }
-    html.shell-open .eh-legacy .shell-backdrop { opacity: 1; visibility: visible; transition: opacity var(--eh-duration) var(--eh-ease), visibility 0s; }
-    .eh-legacy .topbar { left: 0; padding: 0 var(--eh-space-2); }
-    .eh-legacy .topbar-team, .eh-legacy .topbar-profile { display: none; }
+    .eh-legacy .sidebar[data-dh-open] { transform: none; visibility: visible; box-shadow: var(--eh-shadow-float); transition: transform var(--eh-duration) var(--eh-ease), visibility 0s; }
     .eh-legacy .content-wrap { margin-left: 0; }
+    .eh-legacy .eh-legacy-pagehead { padding: var(--eh-space-5) var(--eh-gutter) 0; }
     .eh-legacy main [style*="padding:2rem 2.5rem"], .eh-legacy main [style*="padding: 2rem 2.5rem"] { padding: 1.25rem 1rem 2rem !important; }
     .eh-legacy main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), .eh-legacy main select, .eh-legacy main textarea { min-height: 44px; font-size: 16px !important; }
-    .eh-legacy .notif-panel { left: 8px; right: 8px; width: auto; position: fixed; top: calc(var(--eh-topbar) + 6px); }
 }
 @media (max-width: 639.98px) {
     .eh-legacy main [style*="grid-template-columns"] { grid-template-columns: minmax(0, 1fr) !important; }
@@ -85,3 +66,10 @@
 .eh-legacy .dot-btn-ghost { background: var(--eh-surface-2); color: var(--eh-ink); }
 .eh-legacy .dot-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--eh-radius-pill); font-size: var(--eh-text-xs); font-weight: 600; }
 .eh-legacy .dot-badge-accent { background: var(--eh-accent-tint); color: var(--eh-accent-tint-ink); }
+
+/* The legacy shell's notification panel rows (the Livewire bell inside dot-ui's panel bell) and the Jetstream dropdown link. */
+button.dh-panel__item { display: block; width: 100%; border: 0; background: transparent; text-align: start; font: inherit; color: inherit; cursor: pointer; }
+.eh-bell__text { display: grid; gap: 2px; min-width: 0; }
+.eh-bell__title { font-weight: 600; overflow-wrap: anywhere; }
+.eh-bell__msg { font-size: var(--eh-text-sm); color: var(--eh-ink-2); overflow-wrap: anywhere; }
+.eh-account__item { display: flex; align-items: center; gap: var(--eh-space-3); min-height: var(--eh-target); padding: 0 var(--eh-space-3); color: var(--eh-ink); text-decoration: none; }

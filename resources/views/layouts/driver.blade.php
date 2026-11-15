@@ -9,7 +9,7 @@
     $appsModel = \App\Support\Ui\AppsSwitcher::model(auth()->user(), request()->route()?->getName());
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh" data-theme-key="eh-theme-drive" data-theme-default="night" data-sw="on">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh dot-roboto" data-theme-key="eh-theme-drive" data-theme-default="night" data-dh-theme-class="dark" data-dh-theme-key="eh-theme-drive" data-sw="on">
 <head>
     @include('layouts.partials.eh-head', ['title' => $title ?? null])
     @vite(['resources/css/comms/comms.css'])
@@ -18,16 +18,7 @@
 <body>
     <a class="eh-skip" href="#main">Skip to content</a>
     <div class="eh-app eh-drive {{ ($bleed ?? false) ? 'eh-app--bleed' : '' }}" data-surface="driver">
-        <header class="eh-topbar">
-            <div class="eh-topbar__brand"><x-eh.logo :href="Route::has('drive.home') ? route('drive.home') : url('/')" /></div>
-            @include('layouts.partials.eh-topnav')
-            <div class="eh-topbar__apps">@include('layouts.partials.eh-apps', ['appsModel' => $appsModel])</div>
-            <div class="eh-topbar__slot">
-                @isset($safety){{ $safety }}@else @include('layouts.partials.eh-safety', ['safetyRoute' => 'drive.safety']) @endisset
-                <x-comms::bell surface="driver" />
-                @include('layouts.partials.eh-account', ['surface' => 'driver'])
-            </div>
-        </header>
+        @include('layouts.partials.eh-header', ['surface' => 'driver', 'safety' => $safety ?? null, 'appsModel' => $appsModel])
         @isset($state){{ $state }}@endisset
         <main id="main" class="eh-app__main" tabindex="-1">
             @isset($header)<div class="eh-pagehead">{{ $header }}</div>@endisset
