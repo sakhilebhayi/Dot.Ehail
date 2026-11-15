@@ -188,11 +188,12 @@ html.lp body { font-size: var(--lp-step-2); }
 .lp-foot { background: var(--eh-accent); color: var(--eh-accent-ink); padding: var(--eh-space-12) 0 var(--eh-space-8); }
 .lp-foot__mark { display: block; }
 /* The original light-on-dark file, shown whole; the clear space it carries is trimmed with margins, not by cropping. */
-.lp-foot__logo { display: block; width: auto; --eh-logo: clamp(160px, 30svh, 300px); height: var(--eh-logo); margin: calc(var(--eh-logo) * -0.14) 0 calc(var(--eh-logo) * -0.14) calc(var(--eh-logo) * -0.22); }
+.lp-foot__logo { display: block; width: auto; --eh-logo: clamp(160px, 30svh, 300px); height: var(--eh-logo); margin: calc(var(--eh-logo) * -0.14) 0 calc(var(--eh-logo) * -0.14) max(calc(var(--eh-logo) * -0.22), calc(-1 * var(--eh-gutter))); }
+@media (min-width: 768px) { .lp-foot__logo { margin-left: max(calc(var(--eh-logo) * -0.22), calc(-1 * var(--eh-space-8))); } }
 .lp-foot__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--eh-space-6); margin-top: var(--eh-space-10); }
 @media (min-width: 960px) { .lp-foot__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .lp-foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-.lp-foot a { color: inherit; display: inline-flex; align-items: center; min-height: var(--eh-target); text-decoration: underline; text-underline-offset: 0.25em; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
+.lp-foot a { color: inherit; display: inline-flex; align-items: center; justify-content: center; min-width: var(--eh-target); min-height: var(--eh-target); text-decoration: underline; text-underline-offset: 0.25em; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
 .lp-foot a:hover { text-decoration-color: currentColor; }
 .lp-foot :focus-visible { outline-color: var(--eh-signal); }
 .lp-foot__fine { margin-top: var(--eh-space-10); display: grid; gap: var(--eh-space-3); font-size: var(--lp-step-1); }
@@ -211,3 +212,6 @@ html.lp body { font-size: var(--lp-step-2); }
 @media (prefers-reduced-motion: reduce) {
     .js [data-lp-reveal] > * { opacity: 1; transform: none; transition: none; }
 }
+/* The mark's trimmed clear space may not push the logo past the bar's own left padding (it sat 5px off-screen at 320). */
+.lp-bar .eh-logo__img { margin-left: max(calc(var(--eh-logo, 72px) * -0.22), calc(-1 * var(--eh-space-4))); }
+@media (min-width: 960px) { .lp-bar .eh-logo__img { margin-left: calc(var(--eh-logo, 72px) * -0.22); } }
