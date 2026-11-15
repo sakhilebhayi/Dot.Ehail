@@ -23,7 +23,7 @@
 @vite($viteEntries ?? ['resources/css/app.css', 'resources/js/eh/shell.js'])
 @auth
 {{-- Shared Dot UI (the header, the search pill, the platform switcher), served from this site's own public/dot-ui: CSP 'self', no inline style or script.
-     Deferred, after the app's own entry so it never holds its script back. dot-ui.min.js, not dot-ui-core.min.js: resources/js/eh/header.js calls
+     Deferred, after the app's own entry so it never holds its script back. dot-ui.min.js, not dot-ui-core.min.js: the header search script calls
      DotSearchResults.attach() on DOMContentLoaded, and the core build only queues the results controller (it loads on first focus). --}}
 <script src="{{ asset('dot-ui/js/dot-ui.min.js') }}" nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}" defer></script>
 @endauth
