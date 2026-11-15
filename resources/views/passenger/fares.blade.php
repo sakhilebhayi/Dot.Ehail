@@ -3,7 +3,7 @@
     from pricing's public estimate endpoint (labelled estimates, nothing stored, nothing bookable from here).
 --}}
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh" data-theme-key="eh-theme" data-sw="on">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh dot-roboto" data-theme-key="eh-theme" data-sw="on">
 <head>
     @include('layouts.partials.eh-head', [
         'title' => 'Fare calculator',

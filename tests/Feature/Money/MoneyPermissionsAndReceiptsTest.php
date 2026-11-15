@@ -106,7 +106,7 @@ class MoneyPermissionsAndReceiptsTest extends TestCase
 
         // The passenger: the shared head (fonts, own theme, SAST), never indexed, and a link back to the trip.
         $this->actingAs($ride->passenger)->get(route('money.receipts.show', $receipt))->assertOk()
-            ->assertSee('<html lang="en-ZA" class="eh">', false)
+            ->assertSee('<html lang="en-ZA" class="eh dot-roboto">', false)
             ->assertSee('name="eh-tz" content="Africa/Johannesburg"', false)
             ->assertSee('name="robots" content="noindex, nofollow"', false)
             ->assertSee('Receipt '.$receipt->number.' | Dot.Ehail')

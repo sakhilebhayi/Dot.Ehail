@@ -490,7 +490,7 @@ jobs:
             echo "== docroot build/ did not exist; linked to $APPDIR/public/build"
           fi
 
-          # ---- every other public file: fonts/, icons/, images/, manifest.webmanifest, sw.js, offline.html, favicons
+          # ---- every other public file: dot-ui/ (Roboto, the header), icons/, images/, manifest.webmanifest, sw.js, offline.html, favicons
           # Same trap as build/: the docroot may hold COPIES of public/ files that git never refreshes (InfoDot R-17,
           # the Dopemine pilot). A stale sw.js would precache files that no longer exist and a stale manifest would name
           # the wrong icons, so every top-level entry of public/ except the build folders, index.php, .htaccess, hot and
@@ -739,11 +739,16 @@ jobs:
             CODE=$(fetch "$SITE_URL/build/$ASSET" 200)
             if [ "$CODE" = "200" ]; then echo "200 /build/$ASSET"; else bad "$SITE_URL/build/$ASSET answered ${CODE:-no response} (expected 200): the docroot is not serving the new build"; fi
           done
-          for F in $(cd public && ls fonts/*.woff2); do
+          for F in $(cd public && ls dot-ui/fonts/roboto/*.woff2); do
             CODE=$(fetch "$SITE_URL/$F" 200)
             CT=$(grep -i '^content-type:' "$WORK/h" | tail -1 | tr -d '\r' | tr '[:upper:]' '[:lower:]')
             if [ "$CODE" = "200" ] && [ "$(head -c4 "$WORK/b")" = "wOF2" ] && ! echo "$CT" | grep -q 'text/html'; then echo "200 /$F (${CT#content-type: })"
             else bad "$SITE_URL/$F answered ${CODE:-no response} / $CT / not a woff2 file: the docroot is not serving the fonts"; fi
+          done
+          # The shared Dot UI (Roboto, type scale, header, search, switcher) is served from /dot-ui/: a docroot that does not serve it leaves every signed-in page unstyled.
+          for DOTUI in dot-ui/css/dot-roboto.css dot-ui/css/dot-type.css dot-ui/css/dot-header.css dot-ui/css/dot-search.css dot-ui/css/dot-switcher.css dot-ui/js/dot-nav.js dot-ui/js/dot-search.js dot-ui/js/dot-search-results.js dot-ui/js/dot-switcher.js; do
+            CODE=$(fetch "$SITE_URL/$DOTUI" 200)
+            if [ "$CODE" = "200" ]; then echo "200 /$DOTUI"; else bad "$SITE_URL/$DOTUI answered ${CODE:-no response} (expected 200): the docroot is not serving public/dot-ui"; fi
           done
           CODE=$(fetch "$SITE_URL/manifest.webmanifest" 200)
           if [ "$CODE" = "200" ] && python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d.get("icons")' "$WORK/b" 2>/dev/null; then echo "200 /manifest.webmanifest (JSON with icons)"; else bad "/manifest.webmanifest answered ${CODE:-no response} or is not the web manifest"; fi

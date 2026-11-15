@@ -10,7 +10,7 @@
     $live = $payload && ! $payload['ended'];
 @endphp
 <!DOCTYPE html>
-<html lang="en-ZA" class="eh">
+<html lang="en-ZA" class="eh dot-roboto">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -22,8 +22,7 @@
     <meta name="theme-color" content="#1a2a24" media="(prefers-color-scheme: dark)">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
-    <link rel="preload" href="{{ asset('fonts/barlow-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="{{ asset('fonts/barlow-latin-600-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+    @include('layouts.partials.eh-roboto')
     @if($live)
         <noscript><meta http-equiv="refresh" content="30"></noscript>
     @endif

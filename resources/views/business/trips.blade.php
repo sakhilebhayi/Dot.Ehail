@@ -14,6 +14,7 @@
                 <x-eh.select label="Person" name="person" :options="$people->mapWithKeys(fn ($p) => [$p->id => $p->displayName()])->all()" :value="$filters['person']" placeholder="Everyone" />
                 <x-eh.select label="Department" name="department" :options="$departments->mapWithKeys(fn ($d) => [$d->id => $d->name])->all()" :value="$filters['department']" placeholder="All departments" />
             @endif
+            <div class="eh-field eh-field--grow"><label class="eh-field__label" for="f-q">Ride number, address, department or purpose</label><x-dot.filter-search id="f-q" name="q" :value="$filters['q']" label="Ride number, address, department or purpose" placeholder="" maxlength="80" /></div>
             <x-eh.field label="From" name="from" type="date" :value="$filters['from']" />
             <x-eh.field label="To" name="to" type="date" :value="$filters['to']" />
             <x-eh.select label="Billing" name="state" :options="['charged' => 'Billed', 'booked' => 'Held, not billed yet', 'released' => 'Not billed']" :value="$filters['state']" placeholder="Any" />

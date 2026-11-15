@@ -14,7 +14,7 @@
     $appsModel = \App\Support\Ui\AppsSwitcher::model(auth()->user(), request()->route()?->getName());
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh" data-theme-key="eh-theme" data-sw="on">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh dot-roboto" data-theme-key="eh-theme" data-dh-theme-class="dark" data-dh-theme-key="eh-theme" data-sw="on">
 <head>
     @include('layouts.partials.eh-head', ['title' => $title ?? null])
     {{ $head ?? '' }}
@@ -22,23 +22,13 @@
 <body>
     <a class="eh-skip" href="#main">Skip to content</a>
     <div class="eh-side {{ ($dense ?? false) ? 'eh-side--dense' : '' }}" data-surface="{{ $surface }}">
-        <header class="eh-side__bar" data-eh-drawer-behind>
-            <x-eh.icon-button icon="menu" label="Open navigation" data-eh-drawer-open aria-controls="eh-side-nav" aria-expanded="false" />
-            <x-eh.logo :href="Route::has($homeRoute) ? route($homeRoute) : url('/')" />
-            {{ $barExtra ?? '' }}
-            @include('layouts.partials.eh-apps', ['appsModel' => $appsModel, 'appsId' => 'dsw-panel'])
-            @include('layouts.partials.eh-account', ['surface' => $surface])
-        </header>
-        {{-- The desktop header: the side shells show no bar from 1024px up, so this slim strip carries the switcher there. --}}
-        @if (! empty($appsModel))
-        <div class="eh-side__apps">@include('layouts.partials.eh-apps', ['appsModel' => $appsModel, 'appsId' => 'dsw-panel-desk'])</div>
-        @endif
-        <div class="eh-side__scrim" data-eh-drawer-close aria-hidden="true"></div>
-        <nav class="eh-side__nav" id="eh-side-nav" aria-label="{{ $navLabel }}">
+        {{-- R-52: the shared header on top of every side shell, at every width. The sidebar below is its menu (adopt mode): the menu button
+             opens it under 861px, and from 861px it stays beside the page. --}}
+        @include('layouts.partials.eh-header', ['surface' => $surface, 'adopt' => 'eh-side-nav', 'appsModel' => $appsModel, 'context' => $scopeTitle, 'navLabel' => $navLabel])
+        <nav class="eh-side__nav" id="eh-side-nav" aria-label="{{ $navLabel }} menu">
             <div class="eh-side__head">
                 <x-eh.logo :href="Route::has($homeRoute) ? route($homeRoute) : url('/')" />
-                {{ $barExtra ?? '' }}
-                <x-eh.icon-button class="eh-side__close" icon="close" label="Close navigation" data-eh-drawer-close />
+                <x-eh.icon-button class="eh-side__close" icon="close" label="Close navigation" data-dh-close />
             </div>
             <p class="eh-side__scope" style="margin:0"><strong>{{ $scopeTitle }}</strong>{{ $scopeSub ?? '' }}</p>
             @foreach ($grouped as [$groupLabel, $groupItems])
@@ -49,18 +39,8 @@
                     @endforeach
                 </div>
             @endforeach
-            <div class="eh-side__foot">
-                @foreach (app(\App\Support\Ui\Navigation::class)->switches($surface, auth()->user()) as $switch)
-                    <a class="eh-side__link" href="{{ $switch['url'] }}"><x-eh.icon name="arrow-right" />{{ $switch['label'] }}</a>
-                @endforeach
-                <a class="eh-side__link" href="{{ route('profile.show') }}"><x-eh.icon name="account" />Profile and security</a>
-                <form method="POST" action="{{ route('logout') }}" style="margin:0">
-                    @csrf
-                    <button type="submit" class="eh-side__link" style="width:100%;border:0;background:none;cursor:pointer;font:inherit"><x-eh.icon name="sign-out" />Sign out</button>
-                </form>
-            </div>
         </nav>
-        <main id="main" class="eh-side__main" tabindex="-1" data-eh-drawer-behind>
+        <main id="main" class="eh-side__main" tabindex="-1">
             <div class="eh-side__inner">
                 @isset($header)<div class="eh-pagehead">{{ $header }}</div>@endisset
                 {{ $slot }}

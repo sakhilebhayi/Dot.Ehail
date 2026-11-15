@@ -82,29 +82,32 @@ class ResponsiveShellTest extends TestCase
         }
     }
 
-    public function test_the_drawer_footer_has_sign_out_and_a_team_switcher(): void
+    public function test_sign_out_and_the_team_switch_are_in_the_header_account_menu_not_a_second_copy_in_the_drawer(): void
     {
         $user = User::factory()->withPersonalTeam()->create();
         $second = Team::factory()->create(['user_id' => $user->id, 'personal_team' => false, 'name' => 'Cape Cabs Operations Team']);
 
         $xpath = $this->assertResponsiveShell($this->actingAs($user)->get(route('dashboard')));
 
-        $footer = '//aside[@id="app-sidebar"]//div[contains(@class, "sidebar-footer")]';
-        $this->assertSame(1, $xpath->query($footer.'//form[@action="'.route('logout').'"]//button[@aria-label="Sign out"]')->length);
-        $this->assertSame(1, $xpath->query($footer.'//details[contains(@class, "team-switch")]/summary')->length);
-        $this->assertSame(1, $xpath->query($footer.'//a[@href="'.route('teams.show', $user->currentTeam).'"]')->length);
-        $this->assertSame(2, $xpath->query($footer.'//form[@action="'.route('current-team.update').'"]//input[@name="team_id"]')->length);
-        $this->assertSame(1, $xpath->query($footer.'//input[@name="team_id"][@value="'.$second->id.'"]')->length);
+        $menu = '//header[contains(concat(" ", normalize-space(@class), " "), " dh ")]//div[contains(@class, "dh-account")]';
+        $this->assertSame(1, $xpath->query($menu.'//form[@action="'.route('logout').'"]//button[@type="submit"]')->length);
+        $this->assertSame(1, $xpath->query($menu.'//a[@href="'.route('teams.show', $user->currentTeam).'"]')->length);
+        $this->assertSame(2, $xpath->query($menu.'//form[@action="'.route('current-team.update').'"]//input[@name="team_id"]')->length);
+        $this->assertSame(1, $xpath->query($menu.'//input[@name="team_id"][@value="'.$second->id.'"]')->length);
+        $this->assertSame(0, $xpath->query('//aside[@id="app-sidebar"]//form[@action="'.route('logout').'"]')->length, 'the sidebar no longer repeats the sign-out');
     }
 
-    public function test_the_notification_panel_is_a_class_the_phone_layout_can_pin_inside_the_viewport(): void
+    public function test_the_legacy_notification_bell_is_dot_uis_panel_bell_and_loads_its_list_on_first_open(): void
     {
         $user = User::factory()->withPersonalTeam()->create();
 
         Livewire::actingAs($user)->test(NotificationBell::class)
-            ->assertDontSeeHtml('notif-panel')
+            ->assertSeeHtml('data-dh-bell')
             ->assertSeeHtml('aria-label="Notifications"')
-            ->set('open', true)
-            ->assertSeeHtml('class="notif-panel"');
+            ->assertSet('loaded', false)
+            ->assertSee('Loading')
+            ->call('load')
+            ->assertSet('loaded', true)
+            ->assertSee('No notifications yet.');
     }
 }

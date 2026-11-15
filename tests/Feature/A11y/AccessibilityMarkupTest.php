@@ -38,11 +38,11 @@ class AccessibilityMarkupTest extends TestCase
         $user = User::factory()->withPersonalTeam()->create(['name' => 'Thandi Mokoena']);
         $xpath = $this->xpath($this->actingAs($user)->get('/ride/trips')->assertOk());
 
-        $summary = $xpath->query('//details[contains(@class, "eh-account")]/summary')->item(0);
-        $this->assertSame('Account menu for Thandi Mokoena', $summary->getAttribute('aria-label'));
-        // WCAG 2.5.3: no visible text in the control that its name does not contain.
-        $this->assertSame('', trim($summary->textContent));
-        $this->assertSame('TM', $xpath->query('.//span[contains(@class, "eh-avatar")]', $summary)->item(0)->getAttribute('data-initials'));
+        // R-52: the account menu is dot-ui's: a button named "Account menu: <name>" whose avatar is hidden from assistive tech.
+        $button = $xpath->query('//header//div[contains(@class, "dh-account")]/button')->item(0);
+        $this->assertSame('Account menu: Thandi Mokoena', $button->getAttribute('aria-label'));
+        $this->assertSame('true', $xpath->query('.//span[contains(@class, "dh-avatar")]', $button)->item(0)->getAttribute('aria-hidden'));
+        $this->assertSame('TM', trim($xpath->query('.//span[contains(@class, "dh-avatar")]', $button)->item(0)->textContent));
 
         // Elsewhere the avatar keeps its text initials (the component's default).
         $this->assertStringContainsString('>TN<', Blade::render('<x-eh.avatar name="Thandi Nkosi" />'));

@@ -1,6 +1,6 @@
 <style>
 /* Hallmark · shape: app screen · direction: Dot control room (owner memory dot-design-language) · theme: none, ecosystem system (by request) · signature: the registration readout · posture: restrained · deal: manual */
-/* Hallmark · critique: utility page read under stress on a cheap phone; words before figures, one amber signal, panels share edges, no webfont download (privacy, no CDN) */
+/* Hallmark · critique: utility page read under stress on a cheap phone; words before figures, one amber signal, panels share edges, Roboto from this origin only (privacy, no CDN) */
 :root {
     --eh-ground: #0f1113;
     --eh-rule: #2a2f35;
@@ -13,9 +13,9 @@
     --eh-signal-ink: #1a1204;
     --eh-stop: #ff8a7a;
     --eh-focus: #f2a70b;
-    --eh-font-ui: "IBM Plex Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --eh-font-display: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", var(--eh-font-ui);
-    --eh-font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --eh-font-ui: var(--dot-font-sans, "Roboto", "Roboto Fallback", system-ui, sans-serif);
+    --eh-font-display: var(--eh-font-ui);
+    --eh-font-mono: var(--dot-font-mono, ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace);
     --eh-radius: 2px;
     --eh-ease: cubic-bezier(.2, .7, .2, 1);
 }

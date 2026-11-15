@@ -377,8 +377,8 @@ button.eh-row { width: 100%; border: 0; background: none; text-align: left; curs
 /* Bottom sheet with snap points (peek, half, full). Non-modal over the map; keyboard and reduced-motion safe. */
 .eh-sheet {
     --eh-sheet-peek: 168px;
-    position: fixed; z-index: 40; left: 0; right: 0; bottom: 0;
-    height: calc(100dvh - var(--eh-topbar) - var(--eh-space-4));
+    position: fixed; z-index: 40; left: 0; right: 0; bottom: var(--eh-kb, 0px);
+    height: calc(100dvh - var(--eh-topbar) - var(--eh-space-4) - var(--eh-kb, 0px));
     display: flex; flex-direction: column;
     background: var(--eh-surface); color: var(--eh-ink);
     border-radius: var(--eh-radius-lg) var(--eh-radius-lg) 0 0;
@@ -408,7 +408,7 @@ button.eh-row { width: 100%; border: 0; background: none; text-align: left; curs
     .eh-sheet--dock-desktop .eh-sheet__handle { display: none; }
 }
 @media (max-width: 767.98px) {
-    .eh-app .eh-tabbar ~ .eh-sheet, .eh-app:has(.eh-tabbar) .eh-sheet { bottom: calc(var(--eh-tabbar) + env(safe-area-inset-bottom, 0px)); height: calc(100dvh - var(--eh-topbar) - var(--eh-tabbar) - var(--eh-space-4)); }
+    .eh-app .eh-tabbar ~ .eh-sheet, .eh-app:has(.eh-tabbar) .eh-sheet { bottom: calc(var(--eh-tabbar) + env(safe-area-inset-bottom, 0px) + var(--eh-kb, 0px)); height: calc(100dvh - var(--eh-topbar) - var(--eh-tabbar) - var(--eh-space-4) - var(--eh-kb, 0px)); }
 }
 
 /* Touch targets (R-46 a11y, D-1712). On phones and any coarse pointer every control reaches 44 px: the small button,

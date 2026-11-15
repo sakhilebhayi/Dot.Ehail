@@ -184,7 +184,7 @@
 .bz-doc__bar { display: flex; flex-wrap: wrap; gap: var(--eh-space-2); justify-content: space-between; align-items: center; max-width: 64rem; margin: 0 auto var(--eh-space-4); }
 @media (max-width: 640px) { .bz-doc { padding: var(--eh-space-6) var(--eh-space-4); } }
 @media print {
-    .eh-side__bar, .eh-side__nav, .eh-side__scrim, .bz-doc__bar, .eh-toasts, .eh-skip { display: none !important; }
+    .dh, .dh-drawer, .eh-side__nav, .bz-doc__bar, .eh-toasts, .eh-skip { display: none !important; }
     .eh-side { display: block !important; }
     .eh-side__main, .eh-side__inner { padding: 0 !important; margin: 0 !important; max-width: none !important; }
     body, .eh, .bz-doc { background: #fff !important; color: #000 !important; }

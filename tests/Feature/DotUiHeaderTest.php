@@ -18,8 +18,9 @@ use Tests\TestCase;
 
 /**
  * R-51: every signed-in shell carries the shared "Dot Apps" switcher (dot-ui), and the in-page text filters use the
- * shared compact filter. Dot.Ehail has no header search, so none was added. The search forms, routes, parameters and
- * results did not change; the switcher only shows what InfoDot says the CURRENT company holds, links through InfoDot's
+ * shared compact filter. R-52 put the switcher in the shared dot-ui header (one header in every shell: the side shells
+ * no longer print it twice) and added the header search (Search/HeaderSearchTest). The in-page search forms, routes,
+ * parameters and results did not change; the switcher only shows what InfoDot says the CURRENT company holds, links through InfoDot's
  * /go (never straight to a host, never with a token), and can never hold up a trip: the live trip, driver and safety
  * screens never ask InfoDot at all.
  */
@@ -104,7 +105,7 @@ class DotUiHeaderTest extends TestCase
         $html = $this->actingAs($rider)->get(route('ride.trips'))->assertOk()->getContent();
 
         $this->assertCount(1, $this->switchers($html));
-        $this->assertMatchesRegularExpression('/<header class="eh-topbar">.*<div class="eh-topbar__apps">\s*<div class="dsw dsw--header"/s', $html, 'inside the top bar, before the safety button, bell and account');
+        $this->assertMatchesRegularExpression('/<header class="dh[^"]*" id="eh-header".*<div class="dh-end">.*<div class="dsw dsw--header"/s', $html, 'inside the shared header, in its tools area');
         $this->assertStringContainsString('data-platform="ehail"', $html);
     }
 
@@ -116,21 +117,20 @@ class DotUiHeaderTest extends TestCase
         $html = $this->actingAs($driver)->get(route('drive.trips'))->assertOk()->getContent();
 
         $this->assertCount(1, $this->switchers($html));
-        $this->assertStringContainsString('<div class="eh-topbar__apps">', $html);
+        $this->assertStringContainsString('id="eh-header"', $html);
     }
 
-    public function test_the_side_shells_carry_it_in_the_phone_bar_and_in_the_desktop_strip(): void
+    public function test_the_side_shells_carry_it_once_in_the_header_at_every_width(): void
     {
         $this->fakeInfoDot([self::url(self::ACME) => Http::response(self::body(self::ACME))]);
         $operator = $this->memberOf(self::ACME, 'Acme Ltd', $this->operatorWith(['admin']));
 
         $html = $this->actingAs($operator)->get(route('ops.drivers'))->assertOk()->getContent();
 
-        $this->assertCount(2, $this->switchers($html), 'one for the bar under 1024px, one for the strip from 1024px');
-        $this->assertStringContainsString('<div class="eh-side__apps">', $html);
-        $this->assertStringContainsString('id="dsw-panel-desk"', $html);
-        $this->assertSame(1, substr_count($html, 'id="dsw-panel"'), 'two switchers never share an id');
-        Http::assertSentCount(1); // one InfoDot read for both
+        $this->assertCount(1, $this->switchers($html), 'one in the header, at every width (the old desktop strip is gone)');
+        $this->assertStringNotContainsString('eh-side__apps', $html);
+        $this->assertSame(1, substr_count($html, 'id="dsw-panel"'));
+        Http::assertSentCount(1);
     }
 
     public function test_the_fleet_and_business_shells_carry_it_too(): void
@@ -138,8 +138,8 @@ class DotUiHeaderTest extends TestCase
         $this->fakeInfoDot([self::url(self::ACME) => Http::response(self::body(self::ACME))]);
         $person = $this->memberOf(self::ACME, 'Acme Ltd');
 
-        $this->assertCount(2, $this->switchers($this->actingAs($person)->get(route('fleet.home'))->assertOk()->getContent()));
-        $this->assertCount(2, $this->switchers($this->actingAs($person)->get(route('business.home'))->assertOk()->getContent()));
+        $this->assertCount(1, $this->switchers($this->actingAs($person)->get(route('fleet.home'))->assertOk()->getContent()));
+        $this->assertCount(1, $this->switchers($this->actingAs($person)->get(route('business.home'))->assertOk()->getContent()));
     }
 
     public function test_the_legacy_shell_carries_it_in_its_top_bar(): void
@@ -150,12 +150,14 @@ class DotUiHeaderTest extends TestCase
         $html = $this->actingAs($person)->get(route('dashboard'))->assertOk()->getContent();
 
         $this->assertCount(1, $this->switchers($html));
-        $this->assertMatchesRegularExpression('/<header class="topbar".*dsw dsw--header/s', $html);
+        $this->assertMatchesRegularExpression('/<header class="dh[^"]*" id="eh-header".*dsw dsw--header/s', $html);
     }
 
     public function test_a_guest_sees_no_switcher_and_loads_no_shared_assets(): void
     {
-        $this->get(route('login'))->assertOk()->assertDontSee('data-dsw', false)->assertDontSee('dot-ui/css', false);
+        // Roboto and the type scale load for everyone (R-52); the header, the search and the switcher only for a signed-in person.
+        $this->get(route('login'))->assertOk()->assertDontSee('data-dsw', false)->assertDontSee('dot-ui/css/dot-ui.min.css', false)
+            ->assertDontSee('dot-ui/css/dot-header.min.css', false)->assertDontSee('dot-ui/js/dot-ui.min.js', false)->assertSee('dot-ui/css/dot-roboto.min.css', false);
     }
 
     // ── What the switcher says ──────────────────────────────────────────────
@@ -318,12 +320,20 @@ class DotUiHeaderTest extends TestCase
         $page = $this->actingAs($this->memberOf(self::ACME, 'Acme Ltd'))->get(route('ride.trips'))->assertOk();
         $html = $page->getContent();
 
-        foreach (['dot-fonts', 'dot-tokens', 'dot-search', 'dot-switcher-fonts', 'dot-switcher'] as $css) {
-            $this->assertStringContainsString('/dot-ui/css/'.$css.'.css', $html);
-            $this->assertFileExists(public_path('dot-ui/css/'.$css.'.css'));
+        // 0.6.1: one minified stylesheet (Roboto + type + tokens + search + header + switcher) and one script (the static-stack build, because header.js
+        // calls DotSearchResults.attach(); nothing lazy). The six readable files stay distributed but are not linked.
+        $this->assertStringContainsString('/dot-ui/css/dot-ui.min.css', $html);
+        $this->assertFileExists(public_path('dot-ui/css/dot-ui.min.css'));
+        $this->assertStringContainsString('/dot-ui/js/dot-ui.min.js', $html);
+        $this->assertFileExists(public_path('dot-ui/js/dot-ui.min.js'));
+        foreach (['dot-roboto', 'dot-type', 'dot-tokens', 'dot-search', 'dot-header', 'dot-switcher'] as $css) {
+            $this->assertStringNotContainsString('/dot-ui/css/'.$css.'.css', $html, $css.' comes inside dot-ui.min.css');
         }
-        $this->assertStringContainsString('/dot-ui/js/dot-switcher.js', $html);
-        $this->assertFileExists(public_path('dot-ui/js/dot-switcher.js'));
+        foreach (['dot-switcher', 'dot-search', 'dot-search-results', 'dot-nav'] as $js) {
+            $this->assertStringNotContainsString('/dot-ui/js/'.$js.'.js', $html, $js.' comes inside dot-ui.min.js');
+        }
+        $this->assertStringNotContainsString('dot-fonts', $html, 'no Archivo');
+        $this->assertStringNotContainsString('dot-switcher-fonts', $html, 'no stencil face');
         $this->assertDoesNotMatchRegularExpression('#(?:src|href)="https?://(?!(?:localhost|infodot\.test)[/"])#', $this->withoutSwitcher($html), 'no foreign host in the page');
 
         $switcher = $this->switchers($html)[0];
@@ -381,14 +391,5 @@ class DotUiHeaderTest extends TestCase
         $this->assertMatchesRegularExpression('/<input[^>]*name="q"[^>]*value="Kloof"|<input[^>]*value="Kloof"[^>]*name="q"/', $html);
         $this->assertStringContainsString('aria-label="Search rides"', $html);
         $this->assertStringContainsString('placeholder="Search pickup, dropoff, driver, or passenger…"', $html);
-    }
-
-    public function test_there_is_still_no_header_search_pill(): void
-    {
-        $this->fakeInfoDot([self::url(self::ACME) => Http::response(self::body(self::ACME))]);
-        $html = $this->actingAs($this->memberOf(self::ACME, 'Acme Ltd'))->get(route('ride.trips'))->assertOk()->getContent();
-
-        $this->assertStringNotContainsString('class="dsr"', $html, 'Dot.Ehail has no header search, so none was added');
-        $this->assertStringNotContainsString('dsr-input', $html);
     }
 }

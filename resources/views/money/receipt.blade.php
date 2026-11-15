@@ -28,7 +28,7 @@
     $rideId = $s['ride_id'] ?? $receipt->ride_id;
 @endphp
 <!DOCTYPE html>
-<html lang="en-ZA" class="eh">
+<html lang="en-ZA" class="eh dot-roboto">
 <head>
     @include('layouts.partials.eh-head', ['title' => 'Receipt '.$receipt->number, 'viteEntries' => ['resources/css/app.css']])
     <meta name="robots" content="noindex, nofollow">
@@ -118,7 +118,7 @@
         .print:hover { opacity: .88; }
         .print:active { transform: translateY(1px); }
         @media (max-width: 36rem) {
-            .slip { margin: 0; border-radius: 0; box-shadow: none; min-height: 100vh; padding: 1.5rem 1rem 2rem; }
+            .slip { margin: 0; border-radius: 0; box-shadow: none; min-height: 100vh; min-height: 100dvh; padding: 1.5rem 1rem 2rem; }
             .paid .amount { font-size: 1.875rem; }
         }
         @media (prefers-reduced-motion: reduce) { .print { transition: none; } }

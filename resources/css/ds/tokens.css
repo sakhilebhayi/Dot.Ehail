@@ -77,9 +77,12 @@
     --eh-line-4: #6b2d5c;
 
     /* Type */
-    --eh-font-ui: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --eh-font-display: "Barlow Condensed", "Barlow", system-ui, sans-serif;
-    --eh-font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    /* R-52: Roboto (self-hosted by dot-ui at /dot-ui/fonts/roboto) is the one face. The signage identity (heavy, tight, tracked
+       display lettering and number plates) is kept with Roboto weights; the old condensed cut is gone. The mono stack prints
+       identifiers only (plates and codes in readouts), as dot-ui's TYPOGRAPHY.md allows. */
+    --eh-font-ui: var(--dot-font-sans, "Roboto", "Roboto Fallback", system-ui, -apple-system, "Segoe UI", sans-serif);
+    --eh-font-display: var(--eh-font-ui);
+    --eh-font-mono: var(--dot-font-mono, ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace);
     --eh-text-xs: 0.8125rem;   /* 13px floor */
     --eh-text-sm: 0.875rem;    /* 14 */
     --eh-text-md: 1rem;        /* 16 body */
@@ -128,7 +131,7 @@
 
     /* Layout */
     --eh-container: 72rem;
-    --eh-topbar: 56px;
+    --eh-topbar: 56px; /* the header's own height (dot-ui.css maps it to --dot-header-h) */
     --eh-tabbar: 64px;
     --eh-sidebar: 248px;
 }
