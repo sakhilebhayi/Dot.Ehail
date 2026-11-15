@@ -35,7 +35,6 @@
         : ['stop', 'stop'];
 @endphp
 <x-app-layout>
-<x-slot name="header">Today</x-slot>
 <div class="eh-dash" data-landing-role="{{ $role }}" data-booking-open="{{ $booking->isOpen() ? 'yes' : 'no' }}">
 
     <section class="eh-dash__arrive" aria-labelledby="eh-dash-title">

@@ -105,7 +105,8 @@ class ShellPagesTest extends TestCase
         $this->assertContains(route('ops.live'), $hrefs);
         $this->assertContains(route('ops.rides'), $hrefs);
         $this->assertContains(route('ops.fleets'), $hrefs);
-        $this->assertSame(1, $xpath->query('//button[@data-eh-drawer-open][@aria-controls="eh-side-nav"][@aria-expanded="false"]')->length);
+        // R-52: the shared header's menu button opens the sidebar (adopt mode).
+        $this->assertSame(1, $xpath->query('//header[contains(@class, "dh")]//button[@data-dh-menu-button][@aria-controls="eh-side-nav"][@aria-expanded="false"]')->length);
     }
 
     public function test_business_and_fleet_shells_render_honest_states(): void
@@ -141,9 +142,9 @@ class ShellPagesTest extends TestCase
     {
         $operator = $this->makeOperator();
         $xpath = $this->xpath($this->actingAs($operator)->get(route('ride.home'))->assertOk());
-        $switches = array_map(fn ($n) => $n->getAttribute('href'), iterator_to_array($xpath->query('//details[@data-eh-menu]//a[contains(@class, "eh-account__item")]')));
+        $switches = array_map(fn ($n) => $n->getAttribute('href'), iterator_to_array($xpath->query('//header//div[contains(@class, "dh-account")]//a[contains(@class, "dh-menu__item")]')));
         $this->assertContains(route('ops.home'), $switches);
         $this->assertNotContains(route('drive.home'), $switches);
-        $this->assertSame(1, $xpath->query('//details[@data-eh-menu]//form[@action="'.route('logout').'"]')->length);
+        $this->assertSame(1, $xpath->query('//header//div[contains(@class, "dh-account")]//form[@action="'.route('logout').'"]')->length);
     }
 }

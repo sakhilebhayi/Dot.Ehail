@@ -1,0 +1,10 @@
+/* R-52 touch targets, imported last so it outranks the feature files. */
+/* R-52 touch targets: on phones, tablets and any coarse pointer the list links, table links, inline fleet inputs and the place-search button reach 44px.
+   Desktop with a mouse keeps its denser rows. */
+@media (max-width: 1024px), (pointer: coarse) {
+    .ops-table td a, .ops-table th a, .ops-queue__title, .ops-figures dt a, .fl-table td a, .bz-table td a { display: inline-flex; align-items: center; min-height: var(--eh-target); }
+    .eh-dash .eh-dash__link, .eh-dash__block-head .eh-dash__link { min-height: var(--eh-target); }
+    .pax-trip-row__route { line-height: var(--eh-target); }
+    .eh-place__clear, .eh-place__go { width: var(--eh-target); height: var(--eh-target); }
+    .fl-inline .eh-input, .fl-inline .eh-select { min-height: var(--eh-target); }
+}

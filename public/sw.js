@@ -1,17 +1,15 @@
 // Dot.Ehail service worker (ds, R-46). It caches the app shell only: built CSS and JS, self-hosted fonts, icons and
 // the offline page. It never caches a page, an API response or anything carrying personal data: navigations always
 // go to the network and fall back to /offline.html only when the network is unreachable.
-const VERSION = 'eh-shell-v1';
+const VERSION = 'eh-shell-v2';
 const PRECACHE = [
     '/offline.html',
     '/manifest.webmanifest',
     '/icons/icon-192.png',
-    '/fonts/barlow-latin-400-normal.woff2',
-    '/fonts/barlow-latin-600-normal.woff2',
-    '/fonts/barlow-latin-700-normal.woff2',
-    '/fonts/barlow-condensed-latin-700-normal.woff2',
+    '/dot-ui/css/dot-roboto.css',
+    '/dot-ui/fonts/roboto/roboto-latin-wght-normal.woff2',
 ];
-const SHELL_PATHS = [/^\/build\/assets\/[\w.-]+\.(css|js|woff2)$/, /^\/fonts\/[\w.-]+\.woff2$/, /^\/icons\/[\w.-]+\.png$/];
+const SHELL_PATHS = [/^\/build\/assets\/[\w.-]+\.(css|js|woff2)$/, /^\/dot-ui\/fonts\/roboto\/[\w.-]+\.woff2$/, /^\/dot-ui\/css\/dot-roboto\.css$/, /^\/icons\/[\w.-]+\.png$/];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));

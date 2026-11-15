@@ -96,3 +96,16 @@
 .eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-datetime-edit-year-field:focus,
 .eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-datetime-edit-hour-field:focus,
 .eh-input:is([type="date"], [type="datetime-local"], [type="time"], [type="month"])::-webkit-datetime-edit-minute-field:focus { background: var(--eh-signal); color: var(--eh-signal-ink); border-radius: 3px; }
+
+/* R-52 header search results page (resources/views/search/index.blade.php) */
+.eh-search-page { display: grid; gap: var(--eh-space-8); max-width: 48rem; }
+.eh-search-page__group { display: grid; gap: var(--eh-space-3); }
+.eh-search-page__list { list-style: none; margin: 0; padding: 0; display: grid; border: 1px solid var(--eh-rule); border-radius: var(--eh-radius); background: var(--eh-surface); overflow: hidden; }
+.eh-search-page__list li + li { border-top: 1px solid var(--eh-rule); }
+.eh-search-page__row { display: flex; align-items: center; gap: var(--eh-space-3); min-height: var(--eh-target); padding: var(--eh-space-2) var(--eh-space-4); color: var(--eh-ink); text-decoration: none; }
+.eh-search-page__row:hover { background: var(--eh-surface-2); }
+.eh-search-page__row:focus-visible { outline-offset: -3px; }
+.eh-search-page__code { flex: none; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--eh-ink-2); }
+.eh-search-page__label { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.eh-search-page__tag { flex: none; font-size: var(--eh-text-sm); color: var(--eh-ink-2); }
+@media (max-width: 479.98px) { .eh-search-page__row { flex-wrap: wrap; } }

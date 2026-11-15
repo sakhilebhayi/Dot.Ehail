@@ -1,9 +1,11 @@
-import defaultTheme from 'tailwindcss/defaultTheme';
+import dotPreset from './dot-ui/tailwind/tailwind-preset.cjs';
 import forms from '@tailwindcss/forms';
 import typography from '@tailwindcss/typography';
 
 /** @type {import('tailwindcss').Config} */
 export default {
+    // R-52: the shared dot-ui preset makes font-sans Roboto and adds text-dot-* (TYPOGRAPHY.md); no host font override.
+    presets: [dotPreset],
     darkMode: 'class',
 
     content: [
@@ -12,14 +14,6 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
     ],
-
-    theme: {
-        extend: {
-            fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
-            },
-        },
-    },
 
     plugins: [forms, typography],
 };

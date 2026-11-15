@@ -67,7 +67,7 @@ class DashboardBuildTest extends TestCase
             $this->assertSame($role, $xpath->query('//*[@data-landing-role]')->item(0)->getAttribute('data-landing-role'));
             $this->assertSame(1, $xpath->query('//*[@data-primary-action]')->length, $role.' has one primary action');
             $this->assertSame(1, $xpath->query('//main//h1')->length, $role.' has one h1');
-            $this->assertSame('Today', trim($xpath->query('//header[contains(@class, "topbar")]//*[contains(@class, "topbar-title")]')->item(0)->textContent));
+            $this->assertSame(1, $xpath->query('//header[contains(@class, "dh")]')->length, $role.' sits under the shared header (no page title in the bar)');
         }
     }
 

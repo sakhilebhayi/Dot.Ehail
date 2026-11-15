@@ -3,7 +3,7 @@
 
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
         <div>
-            <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#f4f4f5;margin:0 0 0.25rem;">Available Rides</h1>
+            <h1 style="font-size:1.5rem;font-weight:800;color:#f4f4f5;margin:0 0 0.25rem;">Available Rides</h1>
             <p style="font-size:0.8rem;color:#a1a1aa;margin:0;">Open requests any driver can claim. First to accept wins.</p>
         </div>
         <a href="{{ route('rides.index') }}" style="font-size:0.78rem;color:#a1a1aa;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">

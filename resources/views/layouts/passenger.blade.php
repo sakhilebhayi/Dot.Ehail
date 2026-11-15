@@ -9,7 +9,7 @@
     $appsModel = \App\Support\Ui\AppsSwitcher::model(auth()->user(), request()->route()?->getName());
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh" data-theme-key="eh-theme" data-sw="on">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh dot-roboto" data-theme-key="eh-theme" data-dh-theme-class="dark" data-dh-theme-key="eh-theme" data-sw="on">
 <head>
     @include('layouts.partials.eh-head', ['title' => $title ?? null])
     {{ $head ?? '' }}
@@ -18,16 +18,7 @@
 <body>
     <a class="eh-skip" href="#main">Skip to content</a>
     <div class="eh-app {{ ($bleed ?? false) ? 'eh-app--bleed' : '' }}" data-surface="passenger">
-        <header class="eh-topbar">
-            <div class="eh-topbar__brand"><x-eh.logo :href="Route::has('ride.home') ? route('ride.home') : url('/')" /></div>
-            @include('layouts.partials.eh-topnav')
-            <div class="eh-topbar__apps">@include('layouts.partials.eh-apps', ['appsModel' => $appsModel])</div>
-            <div class="eh-topbar__slot">
-                @isset($safety){{ $safety }}@else @include('layouts.partials.eh-safety', ['safetyRoute' => 'ride.safety']) @endisset
-                <x-comms::bell surface="passenger" />
-                @include('layouts.partials.eh-account', ['surface' => 'passenger'])
-            </div>
-        </header>
+        @include('layouts.partials.eh-header', ['surface' => 'passenger', 'safety' => $safety ?? null, 'appsModel' => $appsModel])
         <main id="main" class="eh-app__main" tabindex="-1">
             @isset($header)<div class="eh-pagehead">{{ $header }}</div>@endisset
             {{ $slot }}

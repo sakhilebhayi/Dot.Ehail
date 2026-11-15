@@ -1,18 +1,14 @@
 {{--
-    Top-bar notifications link with the unread count (server-rendered; no polling). Include it in a shell's top bar:
-    <x-comms::bell surface="passenger" />   (surface: passenger | driver | ops)
+    The notifications link with the unread count (server-rendered; no polling), printed as the shared dot-ui bell (R-52). The shells' header
+    prints it: <x-comms::bell surface="passenger" />   (surface: passenger | driver | ops). A link bell: from 480px it sits in the bar, and under
+    480px the account menu and the drawer carry the same link with the count.
 --}}
 @props(['surface' => 'passenger'])
 @php
     $bellUser = auth()->user();
     $bellRoute = (\App\Http\Controllers\Ehail\Comms\CommsPagesController::SURFACE_ROUTES[$surface] ?? 'ride').'.notifications';
     $bellCount = $bellUser ? \App\Domain\Comms\Inbox::countFor($bellUser) : 0;
-    $bellLabel = $bellCount === 0 ? 'Notifications, none unread' : 'Notifications, '.$bellCount.' unread';
 @endphp
 @if ($bellUser && Route::has($bellRoute))
-<a href="{{ route($bellRoute) }}" {{ $attributes->class('eh-iconbtn eh-iconbtn--ghost comms-bell') }} aria-label="{{ $bellLabel }}" title="{{ $bellLabel }}"
-   @if(request()->routeIs($bellRoute, $bellRoute.'.*')) aria-current="page" @endif>
-    <x-eh.icon name="bell" />
-    @if ($bellCount > 0)<span class="comms-bell__count" aria-hidden="true">{{ \App\Domain\Comms\Inbox::badge($bellCount) }}</span>@endif
-</a>
+<x-dot.bell :href="route($bellRoute)" :count="$bellCount" :max="9" {{ $attributes->class('comms-bell') }} :aria-current="request()->routeIs($bellRoute, $bellRoute.'.*') ? 'page' : null" />
 @endif

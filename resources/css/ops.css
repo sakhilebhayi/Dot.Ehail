@@ -314,3 +314,8 @@ a.ops-queue__title:hover { text-decoration: underline; text-underline-offset: 3p
 .ops-where__gps { color: var(--eh-ink-2); font-size: var(--eh-text-xs); }
 .ops-where__gps .num { font-variant-numeric: tabular-nums; color: var(--eh-ink); font-weight: 600; user-select: all; }
 .ops-where + .ops-legend, .ops-where ~ .ops-legend { margin-top: var(--eh-space-3); }
+
+/* R-52: the figure links ("Open incidents") are 21px tall text on a phone; the row is a 44px target there. */
+@media (max-width: 1024px), (pointer: coarse) {
+    .ops-figures--list dt a { display: inline-flex; align-items: center; min-height: var(--eh-target); }
+}

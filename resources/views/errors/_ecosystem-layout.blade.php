@@ -2,13 +2,14 @@
 {{-- Error pages for every status (403, 404, 419, 429, 500, 503) in Dot.Ehail tokens; CSS only, no script, no third-party host.
      At most three destinations: the bar's sign-in (or the app) and the page's own actions. The list of every Dot
      product was removed (jury 81, R-46 polish D-2210): a person who hit a dead link needs a way back, not a catalogue. --}}
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="eh dot-roboto">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <title>{{ $code }} @yield('title') | Dot.Ehail</title>
         <meta name="robots" content="noindex">
         <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+        @include('layouts.partials.eh-roboto')
         @php
             $viteManifestPath = public_path('build/manifest.json');
             $viteEntries = [];

@@ -1,6 +1,6 @@
 <x-app-layout>
 <div style="padding:2rem 2.5rem 3rem;max-width:640px;">
-    <h1 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.3rem;letter-spacing:-0.01em;">
+    <h1 style="font-size:1.5rem;font-weight:700;color:#f4f4f5;margin:0 0 0.3rem;letter-spacing:-0.01em;">
         Request a Ride
     </h1>
     <p style="font-size:0.78rem;color:#a1a1aa;margin:0 0 1.5rem;">Coordinates are optional. Without coordinates the fare estimate is not available; the ride is still requested and a driver can still take it.</p>
@@ -58,7 +58,7 @@
             </select>
         </div>
 
-        <button type="submit" style="margin-top:0.5rem;padding:0.6rem;border-radius:8px;background:#f59e0b;color:#18181b;font-weight:700;border:none;cursor:pointer;">
+        <button type="submit" style="margin-top:0.5rem;padding:0.6rem;min-height:44px;border-radius:8px;background:#f59e0b;color:#18181b;font-weight:700;border:none;cursor:pointer;">
             Request Ride
         </button>
     </form>

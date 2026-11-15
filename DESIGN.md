@@ -62,66 +62,66 @@ colors:
   night-map-park: "#15291c"
 typography:
   display-xl:
-    fontFamily: Barlow Condensed
+    fontFamily: Roboto
     fontSize: 6rem
     fontWeight: 700
     lineHeight: 0.92
     letterSpacing: -0.02em
   display-lg:
-    fontFamily: Barlow Condensed
+    fontFamily: Roboto
     fontSize: 4.75rem
     fontWeight: 700
     lineHeight: 0.95
     letterSpacing: -0.015em
   display-md:
-    fontFamily: Barlow Condensed
+    fontFamily: Roboto
     fontSize: 3rem
     fontWeight: 700
     lineHeight: 1
     letterSpacing: -0.01em
   state-title:
-    fontFamily: Barlow Condensed
+    fontFamily: Roboto
     fontSize: 2.25rem
     fontWeight: 700
     lineHeight: 1
   h1:
-    fontFamily: Barlow
+    fontFamily: Roboto
     fontSize: 1.75rem
     fontWeight: 700
     lineHeight: 1.15
     letterSpacing: -0.01em
   h2:
-    fontFamily: Barlow
+    fontFamily: Roboto
     fontSize: 1.375rem
     fontWeight: 700
     lineHeight: 1.2
   h3:
-    fontFamily: Barlow
+    fontFamily: Roboto
     fontSize: 1.125rem
     fontWeight: 600
     lineHeight: 1.3
   body-lg:
-    fontFamily: Barlow
+    fontFamily: Roboto
     fontSize: 1.125rem
     fontWeight: 400
     lineHeight: 1.5
   body-md:
-    fontFamily: Barlow
+    fontFamily: Roboto
     fontSize: 1rem
     fontWeight: 400
     lineHeight: 1.55
   label:
-    fontFamily: Barlow
+    fontFamily: Roboto
     fontSize: 0.875rem
     fontWeight: 600
     lineHeight: 1.3
   caption:
-    fontFamily: Barlow
+    fontFamily: Roboto
     fontSize: 0.8125rem
     fontWeight: 600
     lineHeight: 1.2
   money-lg:
-    fontFamily: Barlow Condensed
+    fontFamily: Roboto
     fontSize: 2.25rem
     fontWeight: 700
     lineHeight: 1
@@ -334,7 +334,7 @@ Source of truth for tokens: `resources/css/ds/tokens.css` (`--eh-*` custom prope
 
 A ride is a line between two stops. Dot.Ehail draws everything from that: the logo's yellow disc is the stop, its green chevron is the direction of travel, and the product's promise ("you see the whole fare before you request") is shown as a route line whose stops are the parts of the fare, ending in the yellow stop that is your total. The same line runs down the side of the sign-in page (Your journey, Your safety, Your choice), through the driver's state bar, and through every empty state (a dashed line while a destination is still being built, solid when the person simply has nothing yet).
 
-The world comes from South African roads, not from ride-hailing apps: the green of national direction signs with white lettering, the yellow of road markings and kerb lines, Barlow (a typeface descended from highway and licence-plate lettering), and transit-map stops. It refuses the category's two defaults: black-and-white minimalism and neon-on-black.
+The world comes from South African roads, not from ride-hailing apps: the green of national direction signs with white lettering, the yellow of road markings and kerb lines, heavy, tight lettering in the one typeface (Roboto, at its heavy weights, set like a highway sign), and transit-map stops. It refuses the category's two defaults: black-and-white minimalism and neon-on-black.
 
 Modes: the app shells are Operate surfaces (the tool disappears into the task; colour on small marks and pale tints, flat surfaces, no decoration). The landing page is a Persuade surface (larger type, photographs of South African roads, whole fields of colour in the footer).
 
@@ -357,13 +357,13 @@ Every text pair is measured in `docs/R46_DS.md`: body ink 15.4:1 (light) and 12.
 
 ## Typography
 
-Barlow for everything people read and operate (400, 500, 600, 700); Barlow Condensed (600, 700) for display: page titles on the landing, the driver's state ("You are online"), large money and ETA figures. Self-hosted from `public/fonts/` (SIL OFL), Latin subset, about 22 KB per weight, two weights preloaded. Numbers in money, ETAs, PINs and tables use tabular lining figures.
+Roboto for everything (R-52, owner rule: one typeface across the Dot ecosystem). The shared dot-ui ships it: the variable Roboto file (latin and latin-ext, weights 100 to 900, SIL OFL) at `/dot-ui/fonts/roboto/`, `dot-roboto.css` declares it, `dot-type.css` holds the type scale. The signage identity this product had in Barlow Condensed is kept with Roboto weights instead of a second face: display (page titles on the landing, the driver's state "You are online", large money and ETA figures, number plates) stays weight 700, set tight (letter-spacing -0.01em to -0.02em, line-height 0.95 to 1) and plates stay tracked (0.02em to 0.06em); Roboto is wider than the condensed cut it replaced, so display sizes were re-checked at 320px and nothing clips or wraps badly. `--eh-font-display` is an alias of `--eh-font-ui` now, which keeps every display rule readable as "this is the signage voice". The only non-proportional text is the monospace stack (`--eh-font-mono`) for identifiers. Numbers in money, ETAs, PINs and tables use tabular lining figures.
 
 App scale is fixed rem with a tight ratio (13, 14, 16, 18, 22, 28, 36, 48 px); the landing uses five steps plus the two display sizes. Floor is 13px. Sentence case everywhere; no tracked capitals; no monospace except keyboard keys.
 
 ## Layout
 
-4px base spacing. Touch targets at least 44px; driver primary actions 56px. Passenger and driver apps are mobile-first: 56px top bar, content, 64px (driver 72px) bottom tab bar on phones; on tablets and desktop the tabs move into the top bar. Work surfaces (ops, business, fleet) use a 248px left navigation that becomes a drawer below 1024px. Content measure 68ch for prose. The landing uses a 12px outer gap with a capped 88rem container.
+4px base spacing. Touch targets at least 44px; driver primary actions 56px. Every signed-in screen sits under the shared dot-ui header (R-52): 56px on desktop and tablet, 52px on a phone, with the real role-scoped search centred between the logo and the switcher, bell and account. Passenger and driver apps are mobile-first: header, content, 64px (driver 72px) bottom tab bar on phones (the header's menu button opens a drawer with the same destinations plus Help and the account); from 861px the tabs are in the header. Work surfaces (ops, business, fleet) and the older pages use a 248px left navigation under the header that becomes the header's drawer below 861px. Content measure 68ch for prose. The landing uses a 12px outer gap with a capped 88rem container.
 
 ## Elevation & Depth
 
