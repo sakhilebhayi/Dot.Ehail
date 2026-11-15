@@ -1,6 +1,6 @@
 {{-- Shared <head> for every Dot.Ehail page: self-hosted fonts and assets only, no third-party host. --}}
 <meta charset="utf-8">
-{{-- interactive-widget: on Android Chrome the on-screen keyboard resizes the page (the booking sheet and every form stay above it); iOS Safari ignores it, see resources/js/eh/sheet.js (--eh-kb). --}}
+{{-- interactive-widget: on Android Chrome the on-screen keyboard resizes the page (the booking sheet and every form stay above it); iOS Safari ignores it, the sheet script sets --eh-kb. --}}
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <meta name="eh-tz" content="{{ \App\Support\Ui\LocalTime::timezone() }}">
