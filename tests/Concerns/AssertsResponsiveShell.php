@@ -46,7 +46,7 @@ trait AssertsResponsiveShell
         $this->assertSame(0, $xpath->query('//*[@data-shell-open or @data-shell-close or @data-shell-behind]')->length, 'the old hand-written drawer hooks are gone');
         $this->assertSame(0, $xpath->query('//script[contains(text(), "app-sidebar")]')->length, 'no page script: dot-nav.js owns the drawer');
         $this->assertSame(1, $xpath->query('//main[@id="main-content"]')->length, 'one main landmark');
-        $this->assertSame(1, $xpath->query('//script[contains(@src, "/dot-ui/js/dot-nav.js")][@defer]')->length, 'dot-nav.js is deferred');
+        $this->assertSame(1, $xpath->query('//script[contains(@src, "/dot-ui/js/dot-ui.min.js")][@defer]')->length, 'dot-ui.min.js (it carries dot-nav) is deferred');
 
         return $xpath;
     }

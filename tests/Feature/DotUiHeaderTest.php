@@ -156,8 +156,8 @@ class DotUiHeaderTest extends TestCase
     public function test_a_guest_sees_no_switcher_and_loads_no_shared_assets(): void
     {
         // Roboto and the type scale load for everyone (R-52); the header, the search and the switcher only for a signed-in person.
-        $this->get(route('login'))->assertOk()->assertDontSee('data-dsw', false)->assertDontSee('dot-ui/css/dot-header.css', false)
-            ->assertDontSee('dot-ui/css/dot-switcher.css', false)->assertDontSee('dot-ui/js/dot-nav.js', false)->assertSee('dot-ui/css/dot-roboto.css', false);
+        $this->get(route('login'))->assertOk()->assertDontSee('data-dsw', false)->assertDontSee('dot-ui/css/dot-ui.min.css', false)
+            ->assertDontSee('dot-ui/css/dot-header.min.css', false)->assertDontSee('dot-ui/js/dot-ui.min.js', false)->assertSee('dot-ui/css/dot-roboto.min.css', false);
     }
 
     // ── What the switcher says ──────────────────────────────────────────────
@@ -320,13 +320,17 @@ class DotUiHeaderTest extends TestCase
         $page = $this->actingAs($this->memberOf(self::ACME, 'Acme Ltd'))->get(route('ride.trips'))->assertOk();
         $html = $page->getContent();
 
+        // 0.6.1: one minified stylesheet (Roboto + type + tokens + search + header + switcher) and one script (the static-stack build, because header.js
+        // calls DotSearchResults.attach(); nothing lazy). The six readable files stay distributed but are not linked.
+        $this->assertStringContainsString('/dot-ui/css/dot-ui.min.css', $html);
+        $this->assertFileExists(public_path('dot-ui/css/dot-ui.min.css'));
+        $this->assertStringContainsString('/dot-ui/js/dot-ui.min.js', $html);
+        $this->assertFileExists(public_path('dot-ui/js/dot-ui.min.js'));
         foreach (['dot-roboto', 'dot-type', 'dot-tokens', 'dot-search', 'dot-header', 'dot-switcher'] as $css) {
-            $this->assertStringContainsString('/dot-ui/css/'.$css.'.css', $html);
-            $this->assertFileExists(public_path('dot-ui/css/'.$css.'.css'));
+            $this->assertStringNotContainsString('/dot-ui/css/'.$css.'.css', $html, $css.' comes inside dot-ui.min.css');
         }
         foreach (['dot-switcher', 'dot-search', 'dot-search-results', 'dot-nav'] as $js) {
-            $this->assertStringContainsString('/dot-ui/js/'.$js.'.js', $html);
-            $this->assertFileExists(public_path('dot-ui/js/'.$js.'.js'));
+            $this->assertStringNotContainsString('/dot-ui/js/'.$js.'.js', $html, $js.' comes inside dot-ui.min.js');
         }
         $this->assertStringNotContainsString('dot-fonts', $html, 'no Archivo');
         $this->assertStringNotContainsString('dot-switcher-fonts', $html, 'no stencil face');

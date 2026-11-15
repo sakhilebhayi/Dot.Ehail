@@ -144,8 +144,8 @@ class RobotoAndHeaderTest extends TestCase
     {
         $html = $this->get(route('login'))->assertOk()->getContent();
 
-        $this->assertStringContainsString('/dot-ui/css/dot-roboto.css', $html);
-        $this->assertStringContainsString('/dot-ui/css/dot-type.css', $html);
+        $this->assertStringContainsString('/dot-ui/css/dot-roboto.min.css', $html);
+        $this->assertStringContainsString('/dot-ui/css/dot-type.min.css', $html);
         $this->assertStringContainsString('as="font"', $html);
         $this->assertStringContainsString('class="eh dot-roboto"', $html);
 
@@ -191,11 +191,11 @@ class RobotoAndHeaderTest extends TestCase
     public function test_the_service_worker_and_the_offline_page_use_roboto_from_dot_ui(): void
     {
         $sw = (string) file_get_contents(public_path('sw.js'));
-        $this->assertStringContainsString('/dot-ui/css/dot-roboto.css', $sw);
+        $this->assertStringContainsString('/dot-ui/css/dot-roboto.min.css', $sw);
         $this->assertStringContainsString('/dot-ui/fonts/roboto/roboto-latin-wght-normal.woff2', $sw);
-        $this->assertStringContainsString("'eh-shell-v2'", $sw, 'the cache name changed, so the old Barlow files are dropped');
+        $this->assertStringContainsString("'eh-shell-v3'", $sw, 'the cache name changed, so the old Barlow files are dropped');
         $offline = (string) file_get_contents(public_path('offline.html'));
-        $this->assertStringContainsString('/dot-ui/css/dot-roboto.css', $offline);
+        $this->assertStringContainsString('/dot-ui/css/dot-roboto.min.css', $offline);
         $this->assertStringNotContainsString('@font-face', $offline);
     }
 
@@ -204,8 +204,8 @@ class RobotoAndHeaderTest extends TestCase
         $rider = User::factory()->withPersonalTeam()->create();
 
         $this->get(route('login'))->assertSee('class="eh dot-roboto"', false);
-        $this->get('/no-such-page-xyz')->assertNotFound()->assertSee('/dot-ui/css/dot-roboto.css', false);
-        $this->actingAs($rider)->get(route('rides.index'))->assertOk()->assertSee('/dot-ui/css/dot-roboto.css', false);
+        $this->get('/no-such-page-xyz')->assertNotFound()->assertSee('/dot-ui/css/dot-roboto.min.css', false);
+        $this->actingAs($rider)->get(route('rides.index'))->assertOk()->assertSee('/dot-ui/css/dot-ui.min.css', false);
     }
 
     public function test_the_display_type_keeps_its_tight_tracked_signage_character_in_roboto_weights(): void

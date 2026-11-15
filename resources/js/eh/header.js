@@ -48,9 +48,10 @@ export function keepBellOpen() {
 }
 
 export function initHeader() {
-    // dot-ui's scripts are deferred after this one, so the results controller exists from DOMContentLoaded on.
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => initHeaderSearch());
-    else initHeaderSearch();
+    // This module is deferred and runs BEFORE dot-ui's own deferred script, with readyState already "interactive": the results controller does not exist
+    // yet, so attach at DOMContentLoaded (it fires after every deferred script) unless it is already there or the page has finished loading.
+    if (document.readyState === 'complete' || window.DotSearchResults) initHeaderSearch();
+    else document.addEventListener('DOMContentLoaded', () => initHeaderSearch());
     document.addEventListener('livewire:navigated', () => initHeaderSearch());
     if (document.querySelector('[data-dh-bell]') || document.documentElement.classList.contains('eh-legacy')) keepBellOpen();
 }
