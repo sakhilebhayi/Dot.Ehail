@@ -19,6 +19,7 @@ use App\Providers\EhailSafetyServiceProvider;
 use App\Providers\EhailSecurityServiceProvider;
 use App\Providers\FortifyServiceProvider;
 use App\Providers\JetstreamServiceProvider;
+use Dot\SsoClient\DotSsoServiceProvider;
 
 return [
     AppServiceProvider::class,
@@ -41,4 +42,5 @@ return [
     EhailPerfServiceProvider::class,
     // Must stay last: binds every cross-domain seam to its real implementation (docs/R46_INTEGRATION.md).
     EhailIntegrationServiceProvider::class,
+    DotSsoServiceProvider::class,
 ];

@@ -1,5 +1,6 @@
 @php
-    $signInUrl = Route::has('login') ? route('login') : url('/login');
+    $signInUrl = \App\Support\CentralSignIn::login();
+    $registerUrl = \App\Support\CentralSignIn::active() ? \App\Support\CentralSignIn::register(route('register')) : null;
     $driveUrl = Route::has('drive.apply') ? route('drive.apply') : $signInUrl;
     $fareStops = [
         ['base', '', 'Base fare', 'A fixed amount for starting the trip, set for each city and ride type.'],
@@ -58,6 +59,7 @@
                             <x-eh.button size="sm" :href="route('home')">Open the app</x-eh.button>
                         @else
                             <x-eh.button size="sm" :href="$signInUrl">Sign in</x-eh.button>
+                            @if ($registerUrl)<x-eh.button size="sm" variant="secondary" :href="$registerUrl">Create account</x-eh.button>@endif
                         @endauth
                     </div>
                 </header>

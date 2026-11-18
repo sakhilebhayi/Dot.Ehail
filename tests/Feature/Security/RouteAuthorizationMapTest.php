@@ -66,6 +66,11 @@ class RouteAuthorizationMapTest extends TestCase
         'up' => 'health', 'up/realtime' => 'health (ok|degraded only)', 'auth/ecosystem' => 'InfoDot SSO (origin-checked, single-use token)',
         'broadcasting/auth' => 'channel callbacks decide (BroadcastChannelAuthorizationTest)', 'api/user' => 'sanctum-authenticated',
         'manifest.webmanifest' => 'static', 'offline' => 'static',
+        // R-54: the shared sign-in package (packages/dot-sso-client) and the public-page sign-in entry. Every sso/* route answers 404 while DOTSSO_ENABLED is false.
+        'sso/login' => 'central sign-in start (R-54)', 'sso/callback' => 'central sign-in return (state, nonce, PKCE checked)',
+        'sso/claim' => 'claim by emailed code (pending record in the session)', 'sso/claim/resend' => 'claim by emailed code', 'sso/claim/cancel' => 'claim by emailed code',
+        'sso/logout' => 'sign out here and at InfoDot', 'sso/backchannel-logout' => 'signed logout token from InfoDot',
+        'sign-in' => 'public-page sign-in entry (return path checked as a same-origin deep link)',
     ];
 
     /**

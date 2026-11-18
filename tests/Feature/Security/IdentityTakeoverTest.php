@@ -4,6 +4,7 @@ namespace Tests\Feature\Security;
 
 use App\Actions\Ecosystem\ProvisionUserFromInfoDot;
 use App\Domain\Business\Models\BusinessMember;
+use App\Exceptions\ClaimRequired;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\BusinessFixtures;
@@ -58,17 +59,24 @@ class IdentityTakeoverTest extends TestCase
         $this->assertSame(BusinessMember::INVITED, $invite->fresh()->status);
     }
 
-    public function test_infodot_sign_in_takes_back_an_address_another_account_claimed(): void
+    /** R-54: this used to be "adopted with a new password". An unproven account is no longer taken over: it goes to the emailed-code claim flow. */
+    public function test_infodot_sign_in_does_not_silently_take_over_an_address_another_account_claimed(): void
     {
         $attacker = User::factory()->withPersonalTeam()->create(['email' => 'mallory@example.test']);
         $this->actingAs($attacker)->put('/user/profile-information', ['name' => 'Mallory', 'email' => 'victim@example.test']);
         $oldHash = $attacker->fresh()->password;
 
-        $user = app(ProvisionUserFromInfoDot::class)(['user' => ['email' => 'victim@example.test', 'email_verified' => true, 'name' => 'Victim']]);
+        try {
+            app(ProvisionUserFromInfoDot::class)(['user' => ['uuid' => 'infodot-victim-1', 'email' => 'victim@example.test', 'email_verified' => true, 'name' => 'Victim']]);
+            $this->fail('the claim flow was expected');
+        } catch (ClaimRequired $claim) {
+            $this->assertSame($attacker->id, $claim->user->id);
+        }
 
-        // The unproven account is adopted with a new password, so the attacker can no longer sign in to it.
-        $this->assertSame($attacker->id, $user->id);
-        $this->assertNotSame($oldHash, $user->fresh()->password);
+        // Nothing is replaced and nothing is verified until the real owner proves the mailbox with the emailed code.
+        $this->assertSame($oldHash, $attacker->fresh()->password);
+        $this->assertNull($attacker->fresh()->email_verified_at);
+        $this->assertNull($attacker->fresh()->infodot_user_uuid);
     }
 
     public function test_sign_in_attempts_are_limited_per_address_as_well_as_per_account(): void

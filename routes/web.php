@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\EcosystemAuthController;
+use App\Http\Controllers\Auth\SignInAgainController;
+use App\Http\Controllers\Auth\SignInEntryController;
 use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\Ehail\DashboardController;
 use App\Http\Controllers\Ehail\DriverApplicationController;
@@ -36,6 +38,10 @@ Route::post('/auth/ecosystem', [EcosystemAuthController::class, 'handle'])
 // Links minted before the token moved into a POST body carried it in the URL. They are no longer honoured:
 // the visitor is sent to the normal sign-in page and the token in the URL is never read.
 Route::get('/auth/ecosystem', [EcosystemAuthController::class, 'legacy']);
+
+// R-54: "Sign in" from a public page keeps the page the person was on, then starts the central sign-in (only while DOTSSO_ENABLED).
+Route::get('/sign-in', SignInEntryController::class)->middleware('throttle:60,1,sign-in-entry')->name('sign-in');
+Route::post('/sign-in-again', SignInAgainController::class)->middleware(['auth', 'throttle:10,1,sign-in-again'])->name('sign-in-again');
 
 // Content-Security-Policy violation reports (the policy is report-only). The browser posts these by itself, so there is
 // no session, no cookie, no CSRF token and no user; the controller keeps only the directive and the blocked host.
