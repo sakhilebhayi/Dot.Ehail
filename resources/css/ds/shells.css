@@ -202,3 +202,8 @@ html:has(.dh) { scroll-padding-top: calc(var(--dot-header-offset, 56px) + var(--
 .eh-gate__list li { display: flex; align-items: center; justify-content: space-between; gap: var(--eh-space-3); padding: var(--eh-space-1) 0; border-bottom: 1px solid var(--eh-rule); }
 .eh-gate__list b { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
 .eh-gate__list form { margin: 0; flex: none; }
+
+/* R-54 claim page: the six-digit code reads as figures, spaced; every control keeps the 44px target. */
+.eh-claim__code .eh-input { letter-spacing: 0.35em; font-variant-numeric: tabular-nums; text-align: center; font-size: var(--eh-text-lg); min-height: 44px; }
+.eh-claim__row { display: flex; flex-wrap: wrap; gap: var(--eh-space-3); }
+.eh-claim__row .eh-btn { min-height: 44px; }

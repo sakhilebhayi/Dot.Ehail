@@ -19,7 +19,7 @@
             @auth
                 <x-eh.button size="sm" :href="route('ride.home')">Book a ride</x-eh.button>
             @else
-                <x-eh.button size="sm" variant="secondary" :href="route('login')">Sign in to ride</x-eh.button>
+                <x-eh.button size="sm" variant="secondary" :href="\App\Support\CentralSignIn::login()">Sign in to ride</x-eh.button>
             @endauth
         </header>
         <main id="main" tabindex="-1">
@@ -38,7 +38,7 @@
                             <li class="pax-route__stop"><span class="pax-route__dot" aria-hidden="true"></span><span class="pax-route__text"><span class="pax-route__label">Pickup</span><span class="pax-route__address" data-pax-calc="pickup" data-empty="true">Tap the map, or use your location</span></span></li>
                             <li class="pax-route__stop pax-route__stop--drop"><span class="pax-route__dot" aria-hidden="true"></span><span class="pax-route__text"><span class="pax-route__label">Destination</span><span class="pax-route__address" data-pax-calc="dropoff" data-empty="true">Then tap where you are going</span></span></li>
                         </ol>
-                        <p class="pax-rule">Address search is for signed-in riders. <a class="eh-link" href="{{ route('login') }}">Sign in</a> to search by street name.</p>
+                        <p class="pax-rule">Address search is for signed-in riders. <a class="eh-link" href="{{ \App\Support\CentralSignIn::login() }}">Sign in</a> to search by street name.</p>
                     @endif
                     <div class="pax-tap">
                         <x-eh.button variant="ghost" size="sm" icon="locate" data-pax-locate>Use my location as pickup</x-eh.button>
@@ -63,7 +63,7 @@
     <script type="application/json" data-geo-config>@json($geoConfig)</script>
     @php $paxIsland = [
         'canSearch' => $canSearch,
-        'urls' => ['estimate' => route('pricing.estimate'), 'book' => route('ride.home'), 'login' => route('login')],
+        'urls' => ['estimate' => route('pricing.estimate'), 'book' => route('ride.home'), 'login' => \App\Support\CentralSignIn::login()],
     ]; @endphp
     <script type="application/json" id="pax-fares-data">@json($paxIsland)</script>
 </body>

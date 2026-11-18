@@ -9,7 +9,7 @@
     <x-eh.button variant="secondary" :href="Route::has('home') ? route('home') : route('dashboard')">Open the app</x-eh.button>
     @else
         @if (Route::has('login'))
-    <x-eh.button variant="secondary" :href="route('login')">Sign in</x-eh.button>
+    <x-eh.button variant="secondary" :href="\App\Support\CentralSignIn::login()">Sign in</x-eh.button>
         @endif
     @endauth
 @endsection

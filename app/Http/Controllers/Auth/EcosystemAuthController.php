@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Auth;
 
 use App\Actions\Ecosystem\ProvisionUserFromInfoDot;
 use App\Actions\Ecosystem\SyncTeamsFromInfoDot;
+use App\Exceptions\ClaimRequired;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\EnsureCompanyEntitled;
 use App\Models\User;
 use App\Services\InfoDot\IdentityClient;
 use App\Services\InfoDot\InfoDotUnavailable;
+use App\Support\CentralSignIn;
 use App\Support\EntitlementRefusal;
+use Dot\SsoClient\Support\ClaimService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +25,7 @@ class EcosystemAuthController extends Controller
     /** A GET (an old link with the token in the URL) is not honoured: the token is never read. */
     public function legacy(): RedirectResponse
     {
-        return redirect()->to('/login');
+        return redirect()->to(CentralSignIn::start());
     }
 
     /**
@@ -78,7 +81,7 @@ class EcosystemAuthController extends Controller
 
     private function refused(bool $unavailable = false): RedirectResponse
     {
-        return redirect('/login', 303)->with('status', $unavailable
+        return redirect(CentralSignIn::start(), 303)->with('status', $unavailable
             ? 'Sign-in through InfoDot is unavailable right now. Please try again in a moment.'
             : 'We could not sign you in through InfoDot. Please open this app again from InfoDot.');
     }
@@ -109,7 +112,21 @@ class EcosystemAuthController extends Controller
                 return EntitlementRefusal::response($refusal['reason'], $refusal['company']);
             }
 
-            $user = $identity ? $provision($identity) : null;
+            try {
+                $user = $identity ? $provision($identity) : null;
+            } catch (ClaimRequired $claim) {
+                // R-54: an unverified or unlinked local account holds this address. Its password is NOT replaced; the person
+                // proves the address with a code first (the shared package's claim flow).
+                $raw = $request->post('redirect');
+
+                return app(ClaimService::class)->begin(
+                    $request,
+                    $claim->user,
+                    $claim->claims,
+                    is_string($raw) && $this->isSafeAppPath($raw) ? $raw : null,
+                    '',
+                );
+            }
 
             if ($user && $identity) {
                 $syncTeams($user, $identity);
