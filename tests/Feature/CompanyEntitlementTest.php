@@ -316,7 +316,7 @@ class CompanyEntitlementTest extends TestCase
         Log::shouldHaveReceived('warning')->once()->withArgs(fn ($message) => str_contains($message, 'InfoDot entitlement check gave no answer'));
     }
 
-    public function test_a_failure_is_remembered_for_a_minute_and_an_answer_for_ten(): void
+    public function test_a_failure_is_remembered_for_a_minute_and_an_answer_for_a_minute_too(): void
     {
         [$owner] = $this->company();
         $this->infodotSays([self::readUrl(self::ACME) => Http::sequence()
@@ -326,6 +326,7 @@ class CompanyEntitlementTest extends TestCase
 
         $this->actingAs($owner)->get(route('dashboard'))->assertOk();
 
+        $this->assertSame(60, EntitlementClient::ANSWER_TTL);
         $this->travel(EntitlementClient::FAILURE_TTL + 1)->seconds();
         $this->actingAs($owner)->get(route('dashboard'))->assertStatus(403);
 
@@ -661,5 +662,167 @@ class CompanyEntitlementTest extends TestCase
         $this->actingAs($owner)->get(route('dashboard'))->assertOk();
 
         Http::assertNotSent(fn (Request $request) => str_contains($request->url(), self::GLOBEX));
+    }
+
+    // ---- R-61 availability contract -------------------------------------------------------------------------------
+
+    private function availability(bool $entitled, ?bool $available, ?string $message = null): array
+    {
+        $body = self::platforms(self::ACME, $entitled, $entitled ? 'active' : 'suspended');
+
+        foreach ($body['platforms'] as &$row) {
+            if ($row['key'] === 'ehail') {
+                if ($available !== null) {
+                    $row['available'] = $available;
+                }
+                if ($message !== null) {
+                    $row['message'] = $message;
+                }
+            }
+        }
+
+        return $body;
+    }
+
+    private function answers(array $body): void
+    {
+        $this->infodotSays([self::readUrl(self::ACME) => Http::response($body)]);
+    }
+
+    public function test_a_platform_switched_off_gives_503_even_when_the_company_holds_it(): void
+    {
+        [$owner] = $this->company();
+        $this->answers($this->availability(true, false, 'Back at 18:00.'));
+
+        $response = $this->actingAs($owner)->get(route('rides.create'))->assertStatus(503);
+        $this->assertStringContainsString('Back at 18:00.', $response->getContent());
+        $this->assertSame('60', $response->headers->get('Retry-After'));
+        $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+
+        $json = $this->actingAs($owner)->getJson(route('rides.create'))->assertStatus(503);
+        $this->assertSame('platform_unavailable', $json->json('reason'));
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', ['id' => $owner->id]);
+    }
+
+    public function test_it_is_checked_before_what_the_company_holds(): void
+    {
+        [$owner] = $this->company();
+        $this->answers($this->availability(false, false));
+
+        $this->actingAs($owner)->get(route('dashboard'))->assertStatus(503);
+    }
+
+    public function test_a_livewire_update_gets_a_json_503_while_switched_off(): void
+    {
+        [$owner] = $this->company();
+        $this->infodotSays([self::readUrl(self::ACME) => Http::sequence()
+            ->push($this->availability(true, true))
+            ->push($this->availability(true, false, 'Back at 18:00.'))]);
+        $this->actingAs($owner);
+        $owner->notify(new RideCompletedNotification($this->ride(User::factory()->create(), $owner, 'completed')));
+        $snapshot = $this->bellSnapshot();
+
+        $this->travel(EntitlementClient::ANSWER_TTL + 1)->seconds();
+        $response = $this->livewireMarkAllRead($snapshot);
+
+        $this->assertSame(503, $response->getStatusCode());
+        $this->assertSame('platform_unavailable', $response->json('reason'));
+        $this->assertArrayNotHasKey('components', (array) $response->json());
+        $this->assertSame(1, $owner->unreadNotifications()->count(), 'the data is unchanged');
+    }
+
+    public function test_it_is_back_within_a_minute_of_switching_on(): void
+    {
+        [$owner] = $this->company();
+        $this->answers($this->availability(true, false));
+        $this->actingAs($owner)->get(route('rides.create'))->assertStatus(503);
+
+        $this->answers($this->availability(true, true));
+        $this->travel(70)->seconds();
+        $this->actingAs($owner)->get(route('rides.create'))->assertOk();
+    }
+
+    public function test_an_older_infodot_without_the_fields_is_not_a_switch_off(): void
+    {
+        [$owner] = $this->company();
+        $this->answers($this->availability(true, null));
+
+        $this->actingAs($owner)->get(route('rides.create'))->assertOk();
+    }
+
+    public function test_an_outage_keeps_the_last_unavailable_answer_for_six_hours_then_carries_on(): void
+    {
+        [$owner] = $this->company();
+        $this->answers($this->availability(true, false));
+        $this->actingAs($owner)->get(route('rides.create'))->assertStatus(503);
+
+        $this->infodotSays([self::readUrl(self::ACME) => Http::response('', 500)]);
+        $this->travel(2)->minutes();
+        $this->actingAs($owner)->get(route('rides.create'))->assertStatus(503);
+        $this->travel(5)->hours();
+        $this->actingAs($owner)->get(route('rides.create'))->assertStatus(503);
+
+        $this->travel(2)->hours();
+        $this->actingAs($owner)->get(route('rides.create'))->assertOk();
+    }
+
+    public function test_available_stays_available_through_an_outage(): void
+    {
+        [$owner] = $this->company();
+        $this->answers($this->availability(true, true));
+        $this->actingAs($owner)->get(route('rides.create'))->assertOk();
+
+        $this->infodotSays([self::readUrl(self::ACME) => Http::response('', 500)]);
+        $this->travel(2)->minutes();
+        $this->actingAs($owner)->get(route('rides.create'))->assertOk();
+    }
+
+    public function test_a_trip_in_progress_is_not_interrupted_while_switched_off(): void
+    {
+        [$owner] = $this->company();
+        $this->answers($this->availability(true, false, 'Back at 18:00.'));
+        $this->ride($owner, User::factory()->create(), 'in_progress');
+
+        $this->actingAs($owner)->get(route('rides.create'))->assertOk();
+        $this->actingAs($owner)->get(route('dashboard'))->assertOk();
+
+        Ride::query()->update(['status' => 'completed']);
+        $this->actingAs($owner)->get(route('rides.create'))->assertStatus(503);
+    }
+
+    #[DataProvider('neverRefused')]
+    public function test_the_safety_dispatch_location_and_payment_routes_still_work_while_switched_off(string $method, string $route, array $parameters): void
+    {
+        [$owner] = $this->company();
+        $this->answers($this->availability(true, false));
+
+        $response = $this->actingAs($owner)->{$method}(route($route, $parameters));
+
+        Http::assertNothingSent();
+        $this->assertNotSame(503, $response->getStatusCode());
+        $this->assertStringNotContainsString('platform_unavailable', (string) $response->getContent());
+    }
+
+    public function test_the_payment_webhook_and_trip_share_links_still_work_while_switched_off(): void
+    {
+        [$owner] = $this->company();
+        $this->answers($this->availability(true, false));
+        $this->actingAs($owner);
+
+        $this->post(route('paystack.webhook'), [])->assertStatus(401);
+        $this->get(route('trip-share.show', 'no-such-token'))->assertStatus(404);
+        $this->get('/up')->assertOk();
+        Http::assertNothingSent();
+    }
+
+    public function test_the_operator_console_is_not_switched_off(): void
+    {
+        [$owner] = $this->company();
+        $owner->forceFill(['is_platform_operator' => true])->save();
+        $this->answers($this->availability(true, false));
+
+        $this->actingAs($owner->fresh())->get(route('ops.home'))->assertRedirect();
+        Http::assertNothingSent();
     }
 }
