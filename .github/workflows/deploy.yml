@@ -706,6 +706,18 @@ jobs:
           # ---- pages and JSON a guest can open
           for PAGE in "/" "/login" "/fares" "/up"; do
             CODE=$(fetch "$SITE_URL$PAGE" 200)
+            # Central sign-in (R-54, DOTSSO_ENABLED): /login hands over to this app's own /sso/login instead of showing a form. That is a
+            # healthy answer, accepted only for that exact redirect, and the target must itself answer (a page or a redirect), never an error.
+            if [ "$PAGE" = "/login" ] && [ "$CODE" = "302" ]; then
+              TARGET=$(curl -s --max-time 30 -o /dev/null -w '%{redirect_url}' "$SITE_URL$PAGE" || true)
+              if [ "$TARGET" = "$SITE_URL/sso/login" ]; then
+                HOP=$(curl -s --max-time 30 -o /dev/null -w '%{http_code}' "$TARGET" || true)
+                case "$HOP" in
+                  200|302) echo "302 $PAGE -> $TARGET ($HOP): central sign-in is on"; continue ;;
+                  *) bad "$SITE_URL$PAGE redirects to central sign-in, but $TARGET answered ${HOP:-no response}"; continue ;;
+                esac
+              fi
+            fi
             if [ "$CODE" = "200" ]; then echo "200 $PAGE"; else bad "$SITE_URL$PAGE answered ${CODE:-no response} (expected 200)"; fi
           done
           CODE=$(fetch "$SITE_URL/fare-estimate/categories" 200 -H 'Accept: application/json')
@@ -725,14 +737,14 @@ jobs:
           elif grep -qiE 'stack trace|vendor/laravel' "$WORK/b"; then bad "/t/<unknown token> leaks internals"
           else echo "404 /t/<unknown token>, no cookie, noindex, nothing leaked"; fi
           # Security headers (SecurityHeaders middleware) on a guest page, and which CSP mode is live.
-          fetch "$SITE_URL/login" 200 > /dev/null
+          fetch "$SITE_URL/fares" 200 > /dev/null
           for HDR in x-content-type-options x-frame-options referrer-policy permissions-policy; do
-            if grep -Eqi "^$HDR:" "$WORK/h"; then echo "header $HDR present"; else bad "header $HDR missing on /login"; fi
+            if grep -Eqi "^$HDR:" "$WORK/h"; then echo "header $HDR present"; else bad "header $HDR missing on /fares"; fi
           done
-          if grep -qi '^strict-transport-security:' "$WORK/h"; then echo "header strict-transport-security present"; else echo "::warning::no Strict-Transport-Security on /login (SECURITY_HSTS_SECONDS=0 in the host .env?)"; fi
+          if grep -qi '^strict-transport-security:' "$WORK/h"; then echo "header strict-transport-security present"; else echo "::warning::no Strict-Transport-Security on /fares (SECURITY_HSTS_SECONDS=0 in the host .env?)"; fi
           if grep -qi '^content-security-policy:' "$WORK/h"; then echo "Content-Security-Policy: ENFORCED"
           elif grep -qi '^content-security-policy-report-only:' "$WORK/h"; then echo "::warning::Content-Security-Policy is REPORT-ONLY on the live site (SECURITY_CSP_REPORT_ONLY=true in the host .env): nothing is blocked."
-          else bad "no Content-Security-Policy header on /login"; fi
+          else bad "no Content-Security-Policy header on /fares"; fi
 
           # ---- what the DOCROOT must serve: the build, fonts, the installable app
           for ASSET in $(python3 -c "import json; m=json.load(open('public/build/manifest.json')); print(' '.join(sorted({v['file'] for v in m.values() if v.get('isEntry')} | {f for v in m.values() if v.get('isEntry') for f in v.get('css', [])})))"); do
